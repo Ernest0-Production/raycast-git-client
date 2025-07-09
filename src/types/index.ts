@@ -15,6 +15,8 @@ export interface Preferences {
   maxBranchesToShow: string;
   /** Maximum number of commits to load in history. */
   maxCommitsToLoad: string;
+  /** System prompt for AI-generated commit messages. */
+  aiCommitPrompt: string;
 }
 
 /**

@@ -60,6 +60,14 @@
       "title": "Max Commits to Load",
       "default": "100",
       "description": "Maximum number of commits to load in the commit history view"
+    },
+    {
+      "name": "aiCommitPrompt",
+      "required": false,
+      "type": "textfield",
+      "title": "AI Commit Message System Prompt",
+      "default": "You are a helpful assistant that generates concise, clear Git commit messages. Analyze the provided git diff and generate a conventional commit message that accurately describes the changes. Use conventional commit format: type(scope): description. Focus on what changed and why.",
+      "description": "System prompt used when generating commit messages with Raycast AI"
     }
   ],
   "dependencies": {
