@@ -61,9 +61,9 @@ export interface FileStatus {
   /** The relative path from the repository root. */
   relativePath: string;
   /** The status of the file in the working area. */
-  status: "staged" | "unstaged" | "untracked" | "conflicted";
+  status: "staged" | "unstaged";
   /** The type of change to the file. */
-  type: "added" | "modified" | "deleted" | "renamed" | "copied";
+  type: "added" | "modified" | "deleted" | "renamed" | "copied" | "conflicted";
   /** The old path (for renamed files). */
   oldPath?: string;
 }

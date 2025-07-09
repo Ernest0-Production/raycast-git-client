@@ -124,7 +124,11 @@ export function CommitHistoryActions({ onRefresh, currentBranch }: { onRefresh: 
         shortcut={{ modifiers: ["cmd"], key: "r" }}
       />
       {currentBranch && (
-        <Action.CopyToClipboard title="Copy Branch Name" content={currentBranch} icon={Icon.Clipboard} />
+        <Action.CopyToClipboard
+          title="Copy Branch Name"
+          content={currentBranch}
+          shortcut={{ modifiers: ["cmd"], key: "c" }}
+        />
       )}
     </>
   );

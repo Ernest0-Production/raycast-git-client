@@ -236,7 +236,6 @@ function FileListItem({ file, commit, gitManager, navigationActions, isShowingDe
                         <Action.OpenWith
                             title="Open With..."
                             path={getAbsolutePath(file.path)}
-                            icon={Icon.Ellipsis}
                             shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
                         />
                         <Action.ShowInFinder

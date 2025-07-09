@@ -57,7 +57,6 @@ export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
 
   const stagedFiles = files.filter((f) => f.status === "staged");
   const unstagedFiles = files.filter((f) => f.status === "unstaged");
-  const untrackedFiles = files.filter((f) => f.status === "untracked");
 
   return (
     <List
@@ -89,22 +88,6 @@ export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
         </ActionPanel>
       }
     >
-      {stagedFiles.length > 0 && (
-        <List.Section title="Staged Files">
-          {stagedFiles.map((file) => (
-            <FileListItem
-              key={file.path}
-              file={file}
-              gitManager={gitManager}
-              onRefresh={revalidate}
-              navigationActions={navigationActions}
-              isShowingDetail={isShowingDetail}
-              onToggleDetail={toggleDetail}
-            />
-          ))}
-        </List.Section>
-      )}
-
       {unstagedFiles.length > 0 && (
         <List.Section title="Unstaged Files">
           {unstagedFiles.map((file) => (
@@ -121,9 +104,9 @@ export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
         </List.Section>
       )}
 
-      {untrackedFiles.length > 0 && (
-        <List.Section title="Untracked Files">
-          {untrackedFiles.map((file) => (
+      {stagedFiles.length > 0 && (
+        <List.Section title="Staged Files">
+          {stagedFiles.map((file) => (
             <FileListItem
               key={file.path}
               file={file}
@@ -136,6 +119,8 @@ export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
           ))}
         </List.Section>
       )}
+
+
     </List>
   );
 }
@@ -158,11 +143,18 @@ function FileListItem({ file, gitManager, onRefresh, navigationActions, isShowin
   return (
     <List.Item
       title={file.relativePath}
-      icon={{ source: getFileStatusIcon(file), tintColor: getFileStatusColor(file) }}
+      icon={{
+        value: { source: getFileStatusIcon(file), tintColor: getFileStatusColor(file) },
+        tooltip: file.type.charAt(0).toUpperCase() + file.type.slice(1),
+      }}
       detail={isShowingDetail ? <List.Item.Detail isLoading={isLoading} markdown={diff} /> : undefined}
       quickLook={{ path: file.path, name: file.relativePath }}
       actions={
         <ActionPanel>
+          <ActionPanel.Section title="File Operations">
+            <FileActions file={file} gitManager={gitManager} onRefresh={onRefresh} />
+          </ActionPanel.Section>
+
           <ActionPanel.Section title="View Controls">
             <Action.ToggleQuickLook
               shortcut={{ modifiers: ["cmd"], key: "y" }}
@@ -173,10 +165,6 @@ function FileListItem({ file, gitManager, onRefresh, navigationActions, isShowin
               onAction={onToggleDetail}
               shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
             />
-          </ActionPanel.Section>
-
-          <ActionPanel.Section title="File Operations">
-            <FileActions file={file} gitManager={gitManager} onRefresh={onRefresh} />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Commit Operations">

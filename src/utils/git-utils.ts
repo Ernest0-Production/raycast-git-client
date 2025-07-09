@@ -220,61 +220,17 @@ export class GitManager {
   }
 
   /**
-   * Gets the status of files in the repository.
+   * Gets the status of files in the repository using detailed FileStatusResult.
    */
   async getStatus(): Promise<FileStatus[]> {
     const status = await this.git.status();
     const files: FileStatus[] = [];
 
-    // Staged files
-    status.staged.forEach((file) => {
-      files.push({
-        path: this.getAbsolutePath(file),
-        relativePath: file,
-        status: "staged",
-        type: this.getFileChangeType(file, status),
-      });
-    });
-
-    // Modified files
-    status.modified.forEach((file) => {
-      files.push({
-        path: this.getAbsolutePath(file),
-        relativePath: file,
-        status: "unstaged",
-        type: "modified",
-      });
-    });
-
-    // Deleted files
-    status.deleted.forEach((file) => {
-      files.push({
-        path: this.getAbsolutePath(file),
-        relativePath: file,
-        status: "unstaged",
-        type: "deleted",
-      });
-    });
-
-    // Untracked files
-    status.not_added.forEach((file) => {
-      files.push({
-        path: this.getAbsolutePath(file),
-        relativePath: file,
-        status: "untracked",
-        type: "added",
-      });
-    });
-
-    // Conflicted files
-    status.conflicted.forEach((file) => {
-      files.push({
-        path: this.getAbsolutePath(file),
-        relativePath: file,
-        status: "conflicted",
-        type: "modified",
-      });
-    });
+    // Process each file using detailed status information
+    for (const fileStatus of status.files) {
+      const fileEntries = this.parseFileStatus(fileStatus);
+      files.push(...fileEntries);
+    }
 
     // Limit the number of files for performance
     const { maxFilesToShow } = this.getPreferences();
@@ -288,6 +244,187 @@ export class GitManager {
     }
 
     return files;
+  }
+
+  /**
+   * Parses a FileStatusResult into one or more FileStatus entries.
+   * A single file can appear in both staged and unstaged states.
+   *
+   * Git status format:
+   * - index (first char): status in staged area
+   * - working_dir (second char): status in working directory
+   *
+   * Common combinations:
+   * - ' M' = modified in working directory only (unstaged)
+   * - 'M ' = modified in index only (staged)
+   * - 'MM' = modified in both index and working directory (staged + unstaged)
+   * - 'A ' = added to index (staged)
+   * - ' A' = added to working directory (unstaged, untracked)
+   * - 'D ' = deleted from index (staged)
+   * - ' D' = deleted from working directory (unstaged)
+   * - 'R ' = renamed in index (staged)
+   * - 'C ' = copied in index (staged)
+   * - 'UU' = unmerged, both modified (conflicted)
+   * - '??' = untracked file (unstaged)
+   */
+  private parseFileStatus(fileStatus: any): FileStatus[] {
+    const results: FileStatus[] = [];
+    const { index, working_dir, path, from } = fileStatus;
+
+    // Helper function to create file status object
+    const createFileStatus = (status: 'staged' | 'unstaged', type: FileStatus["type"]): FileStatus => ({
+      path: this.getAbsolutePath(path),
+      relativePath: path,
+      status,
+      type,
+      oldPath: from ? this.getAbsolutePath(from) : undefined,
+    });
+
+    // Explicit handling of all possible index + working_dir combinations
+    const combination = `${index}${working_dir}`;
+
+    switch (combination) {
+      // ============================================================================
+      // CONFLICT STATES (unmerged files)
+      // ============================================================================
+      case 'DD': // unmerged, both deleted
+        results.push(createFileStatus('staged', 'conflicted'));
+        results.push(createFileStatus('unstaged', 'conflicted'));
+        break;
+
+      case 'AU': // unmerged, added by us
+        results.push(createFileStatus('staged', 'conflicted'));
+        results.push(createFileStatus('unstaged', 'conflicted'));
+        break;
+
+      case 'UD': // unmerged, deleted by them
+        results.push(createFileStatus('staged', 'conflicted'));
+        results.push(createFileStatus('unstaged', 'conflicted'));
+        break;
+
+      case 'UA': // unmerged, added by them
+        results.push(createFileStatus('staged', 'conflicted'));
+        results.push(createFileStatus('unstaged', 'conflicted'));
+        break;
+
+      case 'DU': // unmerged, deleted by us
+        results.push(createFileStatus('staged', 'conflicted'));
+        results.push(createFileStatus('unstaged', 'conflicted'));
+        break;
+
+      case 'AA': // unmerged, both added
+        results.push(createFileStatus('staged', 'conflicted'));
+        results.push(createFileStatus('unstaged', 'conflicted'));
+        break;
+
+      case 'UU': // unmerged, both modified
+        results.push(createFileStatus('staged', 'conflicted'));
+        results.push(createFileStatus('unstaged', 'conflicted'));
+        break;
+
+      // ============================================================================
+      // NORMAL STATES - STAGED ONLY
+      // ============================================================================
+      case 'A ': // added to index
+        results.push(createFileStatus('staged', 'added'));
+        break;
+
+      case 'M ': // modified in index
+        results.push(createFileStatus('staged', 'modified'));
+        break;
+
+      case 'D ': // deleted from index
+        results.push(createFileStatus('staged', 'deleted'));
+        break;
+
+      case 'R ': // renamed in index
+        results.push(createFileStatus('staged', 'renamed'));
+        break;
+
+      case 'C ': // copied in index
+        results.push(createFileStatus('staged', 'copied'));
+        break;
+
+      case 'T ': // file type changed in index
+        results.push(createFileStatus('staged', 'modified'));
+        break;
+
+      // ============================================================================
+      // NORMAL STATES - UNSTAGED ONLY
+      // ============================================================================
+      case ' M': // modified in working directory
+        results.push(createFileStatus('unstaged', 'modified'));
+        break;
+
+      case ' D': // deleted in working directory
+        results.push(createFileStatus('unstaged', 'deleted'));
+        break;
+
+      case ' T': // file type changed in working directory
+        results.push(createFileStatus('unstaged', 'modified'));
+        break;
+
+      case '??': // untracked file
+        results.push(createFileStatus('unstaged', 'added'));
+        break;
+
+      case '!!': // ignored file (should not normally appear in status)
+        // Skip ignored files
+        break;
+
+      // ============================================================================
+      // NORMAL STATES - BOTH STAGED AND UNSTAGED
+      // ============================================================================
+      case 'MM': // modified in both index and working directory
+        results.push(createFileStatus('staged', 'modified'));
+        results.push(createFileStatus('unstaged', 'modified'));
+        break;
+
+      case 'AM': // added in index, modified in working directory
+        results.push(createFileStatus('staged', 'added'));
+        results.push(createFileStatus('unstaged', 'modified'));
+        break;
+
+      case 'AD': // added in index, deleted in working directory
+        results.push(createFileStatus('staged', 'added'));
+        results.push(createFileStatus('unstaged', 'deleted'));
+        break;
+
+      case 'MD': // modified in index, deleted in working directory
+        results.push(createFileStatus('staged', 'modified'));
+        results.push(createFileStatus('unstaged', 'deleted'));
+        break;
+
+      case 'RM': // renamed in index, modified in working directory
+        results.push(createFileStatus('staged', 'renamed'));
+        results.push(createFileStatus('unstaged', 'modified'));
+        break;
+
+      case 'RD': // renamed in index, deleted in working directory
+        results.push(createFileStatus('staged', 'renamed'));
+        results.push(createFileStatus('unstaged', 'deleted'));
+        break;
+
+      case 'CM': // copied in index, modified in working directory
+        results.push(createFileStatus('staged', 'copied'));
+        results.push(createFileStatus('unstaged', 'modified'));
+        break;
+
+      case 'CD': // copied in index, deleted in working directory
+        results.push(createFileStatus('staged', 'copied'));
+        results.push(createFileStatus('unstaged', 'deleted'));
+        break;
+
+      // ============================================================================
+      // EDGE CASES AND UNKNOWN COMBINATIONS
+      // ============================================================================
+      default:
+        // Log unexpected combinations for debugging
+        console.error(`Unknown Git status combination: "${combination}" for file: ${path}`);
+        break;
+    }
+
+    return results;
   }
 
   /**
@@ -324,7 +461,7 @@ export class GitManager {
         refs?: string;
         diff?: DiffResult;
       }) => {
-        const changedFiles = this.parseCommitChangedFiles(commit.diff);
+        const changedFiles = this.parseCommitChangedFiles(commit.diff!);
 
         return {
           hash: commit.hash,
@@ -472,6 +609,13 @@ export class GitManager {
   }
 
   /**
+   * Discards all unstaged changes in the repository.
+   */
+  async discardAllChanges(): Promise<void> {
+    await this.git.checkout(["--", "."]);
+  }
+
+  /**
    * Cherry-picks a commit.
    */
   async cherryPick(commitHash: string): Promise<void> {
@@ -613,19 +757,6 @@ export class GitManager {
    */
   private getAbsolutePath(relativePath: string): string {
     return join(this.repoPath, relativePath);
-  }
-
-  /**
-   * Determines the type of change for a file.
-   */
-  private getFileChangeType(
-    file: string,
-    status: { created: string[]; deleted: string[]; renamed: { to: string }[] },
-  ): FileStatus["type"] {
-    if (status.created.includes(file)) return "added";
-    if (status.deleted.includes(file)) return "deleted";
-    if (status.renamed.find((r: { to: string }) => r.to === file)) return "renamed";
-    return "modified";
   }
 
   /**

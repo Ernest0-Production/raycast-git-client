@@ -39,13 +39,11 @@ export function RepositoryActions({ repositoryPath, secondary = false }: Reposit
             />
             <Action.OpenWith
                 path={repositoryPath}
-                icon={Icon.Upload}
                 shortcut={secondary ? undefined : { modifiers: ["cmd", "opt"], key: "o" }}
             />
             <Action.CopyToClipboard
                 title="Copy Directory Path"
                 content={repositoryPath}
-                icon={Icon.Clipboard}
                 shortcut={secondary ? undefined : { modifiers: ["cmd", "shift"], key: "," }}
             />
         </>

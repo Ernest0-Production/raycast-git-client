@@ -64,7 +64,6 @@ export function FileActions({ file, gitManager, onRefresh }: FileActionsProps) {
           title="Unstage"
           onAction={handleUnstageFile}
           icon={Icon.ArrowDown}
-          shortcut={{ modifiers: ["cmd"], key: "u" }}
         />
         <Action.Open
           title="Open File"
@@ -76,7 +75,6 @@ export function FileActions({ file, gitManager, onRefresh }: FileActionsProps) {
         <Action.OpenWith
           title="Open With..."
           path={file.path}
-          icon={Icon.Ellipsis}
           shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
         />
         <Action.ShowInFinder
@@ -93,23 +91,32 @@ export function FileActions({ file, gitManager, onRefresh }: FileActionsProps) {
     );
   }
 
-  // Actions for unstaged files
+  // Actions for unstaged files (includes former untracked and conflicted files)
   if (file.status === "unstaged") {
+    const stageTitle = file.type === "conflicted" ? "Stage Resolution" : "Stage";
+
     return (
       <>
         <Action
-          title="Stage"
+          title={stageTitle}
           onAction={handleStageFile}
           icon={Icon.ArrowUp}
-          shortcut={{ modifiers: ["cmd"], key: "s" }}
         />
-        <Action
-          title="Discard Changes"
-          onAction={handleDiscardChanges}
-          icon={Icon.ArrowCounterClockwise}
-          style={Action.Style.Destructive}
-          shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
-        />
+        {file.type === "added" ? (
+          <Action.Trash
+            title="Move to Trash"
+            shortcut={{ modifiers: ["ctrl"], key: "d" }}
+            paths={[file.path]}
+          />
+        ) : file.type === "conflicted" ? null : (
+          <Action
+            title="Discard Changes"
+            onAction={handleDiscardChanges}
+            icon={Icon.ArrowCounterClockwise}
+            style={Action.Style.Destructive}
+            shortcut={{ modifiers: ["ctrl"], key: "x" }}
+          />
+        )}
         <Action.Open
           title="Open File"
           target={file.path}
@@ -120,7 +127,6 @@ export function FileActions({ file, gitManager, onRefresh }: FileActionsProps) {
         <Action.OpenWith
           title="Open With..."
           path={file.path}
-          icon={Icon.Ellipsis}
           shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
         />
         <Action.ShowInFinder
@@ -132,44 +138,7 @@ export function FileActions({ file, gitManager, onRefresh }: FileActionsProps) {
     );
   }
 
-  // Actions for untracked files
-  if (file.status === "untracked") {
-    return (
-      <>
-        <Action
-          title="Stage"
-          onAction={handleStageFile}
-          icon={Icon.ArrowUp}
-          shortcut={{ modifiers: ["cmd"], key: "s" }}
-        />
-        <Action
-          title="Delete File"
-          onAction={() => handleDeleteFile(file, onRefresh)}
-          icon={Icon.Trash}
-          style={Action.Style.Destructive}
-          shortcut={{ modifiers: ["ctrl"], key: "x" }}
-        />
-        <Action.Open
-          title="Open File"
-          target={file.path}
-          application={preferences.defaultEditor}
-          icon={Icon.BlankDocument}
-          shortcut={{ modifiers: ["cmd"], key: "o" }}
-        />
-        <Action.OpenWith
-          title="Open With..."
-          path={file.path}
-          icon={Icon.Ellipsis}
-          shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
-        />
-        <Action.ShowInFinder
-          path={file.path}
-          title="Show in Finder"
-          shortcut={{ modifiers: ["cmd", "shift"], key: "o" }}
-        />
-      </>
-    );
-  }
+
 
   return null;
 }
@@ -196,6 +165,26 @@ export function CommitActions({ gitManager, onRefresh }: { gitManager: GitManage
     }
   };
 
+  const handleDiscardAll = async () => {
+    const confirmed = await confirmAlert({
+      title: "Discard All Changes",
+      message: "Are you sure you want to discard all unstaged changes? This action cannot be undone.",
+      primaryAction: {
+        title: "Discard All Changes",
+        style: Alert.ActionStyle.Destructive,
+      },
+    });
+
+    if (confirmed) {
+      try {
+        await gitManager.discardAllChanges();
+        onRefresh();
+      } catch (error) {
+        // Git error is already shown by GitManager
+      }
+    }
+  };
+
   return (
     <>
       <Action.Push
@@ -214,6 +203,13 @@ export function CommitActions({ gitManager, onRefresh }: { gitManager: GitManage
         onAction={handleUnstageAll}
         icon={Icon.ArrowDown}
         shortcut={{ modifiers: ["cmd", "shift"], key: "u" }}
+      />
+      <Action
+        title="Discard All Changes"
+        onAction={handleDiscardAll}
+        icon={Icon.ArrowCounterClockwise}
+        style={Action.Style.Destructive}
+        shortcut={{ modifiers: ["cmd", "shift"], key: "x" }}
       />
     </>
   );
@@ -264,34 +260,6 @@ function CommitForm({ gitManager, onRefresh }: { gitManager: GitManager; onRefre
 }
 
 /**
- * Delete an untracked file.
- */
-async function handleDeleteFile(file: FileStatus, onRefresh: () => void) {
-  const confirmed = await confirmAlert({
-    title: "Delete file",
-    message: `Are you sure you want to delete file "${file.relativePath}"? This action cannot be undone.`,
-    primaryAction: {
-      title: "Delete",
-      style: Alert.ActionStyle.Destructive,
-    },
-  });
-
-  if (confirmed) {
-    try {
-      const fs = await import("fs");
-      fs.unlinkSync(file.path);
-      onRefresh();
-    } catch (error) {
-      await showToast({
-        style: Toast.Style.Failure,
-        title: "Failed to delete file",
-        message: error instanceof Error ? error.message : "Unknown error occurred",
-      });
-    }
-  }
-}
-
-/**
  * Icons for different types of changes
  */
 export const getFileStatusIcon = (file: FileStatus) => {
@@ -306,6 +274,8 @@ export const getFileStatusIcon = (file: FileStatus) => {
       return Icon.ArrowRight;
     case "copied":
       return Icon.Duplicate;
+    case "conflicted":
+      return Icon.ExclamationMark;
     default:
       return Icon.Document;
   }
@@ -315,11 +285,20 @@ export const getFileStatusIcon = (file: FileStatus) => {
  * Colors for different types of changes
  */
 export const getFileStatusColor = (file: FileStatus) => {
-  if (file.status === "staged") {
-    return Color.Green;
+  switch (file.type) {
+    case "added":
+      return Color.Green;
+    case "modified":
+      return Color.Blue;
+    case "deleted":
+      return Color.Red;
+    case "renamed":
+      return Color.Purple;
+    case "copied":
+      return Color.Orange;
+    case "conflicted":
+      return Color.Red;
+    default:
+      return Color.SecondaryText;
   }
-  if (file.status === "untracked") {
-    return Color.Orange;
-  }
-  return Color.Yellow; // unstaged
 };
