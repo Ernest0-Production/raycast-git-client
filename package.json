@@ -60,6 +60,24 @@
       "title": "Max Commits to Load",
       "default": "100",
       "description": "Maximum number of commits to load in the commit history view"
+    },
+    {
+      "name": "ticketRegex",
+      "required": false,
+      "type": "textfield",
+      "title": "Ticket Regex Pattern",
+      "default": "",
+      "placeholder": "([A-Z]+-\\d+)",
+      "description": "Regular expression to extract ticket numbers from commit messages (e.g., JIRA-123)"
+    },
+    {
+      "name": "ticketUrlTemplate",
+      "required": false,
+      "type": "textfield",
+      "title": "Ticket URL Template",
+      "default": "",
+      "placeholder": "https://company.atlassian.net/browse/@key",
+      "description": "URL template for ticket links. Use @key as placeholder for the extracted ticket number"
     }
   ],
   "dependencies": {
@@ -73,7 +91,7 @@
     "@types/react": "19.0.10",
     "eslint": "^9.22.0",
     "prettier": "^3.5.3",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.3"
   },
   "scripts": {
     "build": "ray build",

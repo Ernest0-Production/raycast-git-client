@@ -10,6 +10,7 @@ import { FetchAction } from "../../components/actions/BranchActions";
 import { RepositoryDirectoryActions } from "../../components/actions/RepositoryDirectoryActions";
 import { CommitDiffView } from "./CommitDiffView";
 import { GitManager } from "../../utils/git-utils";
+import { getTicketInfoFromCommit } from "../../utils/ticket-utils";
 import { Branch, Commit } from "../../types";
 import { useMemo, useState } from "react";
 
@@ -236,6 +237,9 @@ function CommitListItem({
     onToggleMetadata,
 }: CommitListItemProps) {
     const { push } = useNavigation();
+    
+    // Extract ticket information from commit message
+    const ticketInfo = getTicketInfoFromCommit(commit.message);
     const formatCommitDetail = (commit: Commit): string => {
         const getAbsolutePath = (relativePath: string): string => {
             return `file://${gitManager.repoPath}/${relativePath}`;
@@ -360,6 +364,14 @@ function CommitListItem({
                                 />
                             )}
                         />
+                        {ticketInfo && (
+                            <Action.OpenInBrowser
+                                title={`Open Ticket ${ticketInfo.ticketKey}`}
+                                url={ticketInfo.ticketUrl}
+                                icon={Icon.Bug}
+                                shortcut={{ modifiers: ["cmd"], key: "t" }}
+                            />
+                        )}
                     </ActionPanel.Section>
 
                     <ActionPanel.Section title="View Controls">
