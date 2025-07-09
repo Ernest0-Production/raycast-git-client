@@ -1,0 +1,219 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# Cursor Rules для разработки Raycast Git Client расширения
+
+## Общие принципы разработки
+
+### Архитектура и структура файлов
+- Команды содержат весь UI код - никаких отдельных компонентов для интерфейсов команд
+- Переиспользуемые Action и ActionPanel компоненты выносить в `/components/actions/`
+- Общие UI компоненты для состояний в `/components/shared/`
+- Минимальные утилиты - только действительно необходимые файлы
+- Использовать нативные возможности Raycast API вместо создания дополнительных абстракций
+
+### Соглашения по именованию
+- **Команды**: `kebab-case` (open-repository.tsx)
+- **Компоненты**: `PascalCase` (FileActions.tsx)
+- **Утилиты**: `kebab-case` (git-utils.ts)
+- **Хуки**: `camelCase` с префиксом `use` (useGitRepository.ts)
+- **Типы**: `PascalCase` (Repository, GitBranch)
+- **Константы**: `UPPER_SNAKE_CASE`
+
+## Raycast API Best Practices
+
+### Обработка ошибок и Toast уведомления
+- **НЕ создавать** отдельные утилиты для тостов (toast-utils.ts и подобные)
+- Использовать прямые вызовы `showToast()` из `@raycast/api` в каждом действии
+- Для потоковых операций: обновлять `toast.message` с каждой строкой stdout
+
+```typescript
+// ✅ Правильно - прямое использование API
+const handleAction = async () => {
+  try {
+    await operation();
+    await showToast({
+      style: Toast.Style.Success,
+      title: "Операция выполнена"
+    });
+  } catch (error) {
+    await showToast({
+      style: Toast.Style.Failure,
+      title: "Ошибка операции",
+      message: error instanceof Error ? error.message : 'Неизвестная ошибка'
+    });
+  }
+};
+
+// ❌ Неправильно - создание обёрток
+// export async function showSuccessToast(title: string) { ... }
+```
+
+- Для отображения дефолтных наборов `Action`-ов в List, их нужно одновременно указывать и в `List.actions` и в каждом `List.Item.actions`. `List.actions` отображается только если нет элементов в списке.
+
+### Хуки и состояние
+- Использовать `useCachedPromise` из `@raycast/utils` для операций загрузки данных
+- Использовать `useFrecencySorting` для недавних элементов (автоматический кэш)
+- **НЕ создавать** отдельные storage утилиты для frecency данных
+
+```typescript
+// ✅ Правильно - useFrecencySorting с автоматическим кэшем
+export function useRecentRepositories() {
+  const { data, isLoading, visitItem, resetRanking } = useFrecencySorting([] as Repository[]);
+
+  const addToRecent = (path: string) => {
+    const name = path.split('/').pop() || path;
+    const id = Buffer.from(path).toString('base64');
+    visitItem({ id, name, path });
+  };
+
+  return { repositories: data || [], isLoading, addToRecent };
+}
+```
+
+### Иконки и UI
+- Использовать встроенные иконки Raycast вместо эмодзи или внешних иконок
+- Для Git операций использовать соответствующие иконки из `Icon`
+
+```typescript
+// ✅ Правильно - встроенные иконки
+import { Icon } from "@raycast/api";
+
+const statusIcons = {
+  added: Icon.Plus,
+  modified: Icon.Pencil,
+  deleted: Icon.Trash,
+  renamed: Icon.Document,
+  copied: Icon.Duplicate
+};
+
+// ❌ Неправильно - эмодзи
+// const statusIcons = { added: "➕", modified: "✏️" };
+```
+
+### Подтверждения деструктивных операций
+- Использовать `confirmAlert()` для всех деструктивных операций
+- Стиль `Alert.ActionStyle.Destructive` для опасных действий
+
+```typescript
+// ✅ Правильно - подтверждение через Alert
+const handleDeleteBranch = async (branchName: string) => {
+  const confirmed = await confirmAlert({
+    title: "Удалить ветку",
+    message: `Вы уверены, что хотите удалить ветку "${branchName}"?`,
+    primaryAction: {
+      title: "Удалить",
+      style: Alert.ActionStyle.Destructive,
+    },
+  });
+
+  if (confirmed) {
+    // Выполнить удаление
+  }
+};
+```
+
+### Preferences и настройки
+- Использовать `getPreferenceValues()` напрямую из `@raycast/api`
+- **НЕ создавать** отдельные config/preferences файлы
+
+```typescript
+// ✅ Правильно - прямое использование API
+import { getPreferenceValues } from '@raycast/api';
+
+interface Preferences {
+  defaultEditor: string;
+}
+
+const preferences = getPreferenceValues<Preferences>();
+```
+
+### Группировка Action-ов в секции
+- Использовать `ActionPanel.Section` для группировки Action-ов в секции по принципу общего назначения в контексте Git GUI клиентов
+- Использовать `ActionPanel.Section.title` если у этого общего назначения есть общепринятое название
+- Если нет однозначного принципа группировки действий, то не группировать их вообще
+
+
+## TypeScript и типизация
+
+### JSDoc комментарии
+- Добавлять JSDoc комментарии к интерфейсам и сложным типам
+- Документировать параметры функций для лучшего понимания
+
+```typescript
+// ✅ Правильно - JSDoc для типов
+/**
+ * Представляет Git ветку с информацией о статусе
+ */
+export interface Branch {
+  /** Название ветки */
+  name: string;
+  /** Тип ветки: текущая, локальная или удалённая */
+  type: 'current' | 'local' | 'remote';
+  /** Upstream ветка (если есть) */
+  upstream?: string;
+  /** Количество коммитов впереди upstream */
+  ahead?: number;
+  /** Количество коммитов позади upstream */
+  behind?: number;
+}
+```
+
+### Обработка ошибок
+- Всегда проверять `error instanceof Error` перед доступом к `error.message`
+- Предоставлять fallback для неизвестных ошибок
+
+```typescript
+// ✅ Правильно - безопасная обработка ошибок
+} catch (error) {
+  const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+  await showToast({
+    style: Toast.Style.Failure,
+    title: "Ошибка операции",
+    message: errorMessage
+  });
+}
+```
+
+## Git операции
+
+### Git CLI
+- Использовать пакет simple-git для работы с Git CLI
+
+
+### Валидация репозиториев
+- Проверять существование директории
+- Проверять наличие .git папки/файла
+- Использовать git status для финальной валидации
+
+### Производительность
+- Ограничивать количество показываемых элементов для больших репозиториев
+- Использовать пагинацию для списка коммитов
+- Кэшировать результаты через `useCachedPromise`
+
+```typescript
+// ✅ Правильно - ограничения для производительности
+const MAX_COMMITS_TO_LOAD = 100;
+const MAX_FILES_TO_SHOW = 500;
+```
+
+## Документация и ссылки
+
+### Официальная документация Raycast
+- Основная документация: https://developers.raycast.com/
+- Полная документация для AI и расширений: https://raw.githubusercontent.com/raycast/extensions/refs/heads/gh-pages/llms-full.txt
+- Примеры расширений: https://github.com/raycast/extensions
+- Описание API simple-git: node_modules/simple-git/readme.md
+
+### Что НЕ делать
+- ❌ Не создавать отдельные toast-utils или подобные хелперы
+- ❌ Не использовать эмодзи вместо встроенных иконок
+- ❌ Не создавать отдельные storage менеджеры для frecency данных
+- ❌ Не создавать config файлы для preferences (использовать API)
+- ❌ Не создавать NavigationActions (есть в Raycast API)
+- ❌ Не выносить код интерфейсов команд в отдельные компоненты
+- ❌ Не логируй в Toast ошибки в Action-ах, если они были уже выведены в Toast из gitManager-а.
+- ❌ Не используй русскую локализацию в коде, используй только английскую в обще принятой терминалогии Git GUI клиентов
+- ❌ Не используй следующие комбинации shortcut в Action-ах: `cmd+enter`, `cmd+k`, `cmd+p`

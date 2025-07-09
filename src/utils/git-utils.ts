@@ -1,0 +1,846 @@
+import { DiffResult, DiffResultBinaryFile, DiffResultNameStatusFile, DiffResultTextFile, LogOptions, simpleGit, SimpleGit } from "simple-git";
+import { showToast, Toast, getPreferenceValues } from "@raycast/api";
+import { join } from "path";
+import { Branch, FileStatus, Commit, Stash, BranchesState, DetachedHead, CommitFileChange, Preferences } from "../types";
+
+/**
+ * Manager for Git operations within a repository.
+ * Provides a high-level API for all Git operations.
+ */
+export class GitManager {
+  private git: SimpleGit;
+  public readonly repoPath: string;
+
+  constructor(repoPath: string) {
+    this.repoPath = repoPath;
+    this.git = simpleGit(repoPath);
+
+    // Global logging of all git commands for debugging
+    this.setupGlobalLogging();
+  }
+
+  /**
+   * Gets user preferences with parsed numeric values.
+   */
+  private getPreferences() {
+    const preferences = getPreferenceValues<Preferences>();
+    return {
+      maxFilesToShow: parseInt(preferences.maxFilesToShow, 10) || 500,
+      maxBranchesToShow: parseInt(preferences.maxBranchesToShow, 10) || 200,
+      maxCommitsToLoad: parseInt(preferences.maxCommitsToLoad, 10) || 100,
+    };
+  }
+
+  /**
+   * Gets the repository name from the path.
+   */
+  get repoName(): string {
+    return this.repoPath.split("/").pop() || "Unknown Repository";
+  }
+
+  /**
+   * Sets up global logging of git commands and streaming output.
+   */
+  private setupGlobalLogging(): void {
+    this.git.outputHandler((command, stdout, stderr, args) => {
+      const command_description = `${command} ${args.join(" ")}`;
+
+      // Log the full command for debugging
+      console.log(`[GIT] ${command_description}`);
+
+      // Create a separate technical toast for git streaming output
+      showToast({
+        style: Toast.Style.Animated,
+        title: command_description,
+        message: "Running...",
+      }).then((gitOutputToast) => {
+        let lastOutput = "";
+        let hasError = false;
+
+        // Process stdout (standard output)
+        stdout.on("data", (data: Buffer) => {
+          const output = data.toString().trim();
+          if (output) {
+            lastOutput = output;
+            gitOutputToast.message = output;
+            // console.log(`[GIT STDOUT] ${output}`);
+          }
+        });
+
+        // Process stderr (errors)
+        stderr.on("data", (data: Buffer) => {
+          const error = data.toString().trim();
+          if (error) {
+            hasError = true;
+            lastOutput = error;
+            gitOutputToast.style = Toast.Style.Failure;
+            gitOutputToast.title = `Error running command: ${command_description}`;
+            gitOutputToast.message = error;
+            console.error(`[GIT STDERR] ${error}`);
+          }
+        });
+
+        // Show the final result on completion
+        stdout.on("end", () => {
+          if (!hasError) {
+            gitOutputToast.style = Toast.Style.Success;
+            gitOutputToast.title = command_description;
+            if (lastOutput) {
+              gitOutputToast.message = lastOutput;
+            } else {
+              gitOutputToast.message = "Command executed successfully";
+            }
+          } else {
+            gitOutputToast.title = `Error running command: ${command_description}`;
+          }
+        });
+      });
+    });
+  }
+
+  /**
+   * Gets the branches state including current branch, detached HEAD, local and remote branches.
+   */
+  async getBranches(): Promise<BranchesState> {
+    // -vv flag is needed to get upstream information
+    const summary = await this.git.branch(["-a", "-vv"]);
+
+    // Get uncommitted changes status for current branch
+    const hasUncommittedChanges = await this.hasUncommittedChanges();
+
+    const parseBranchInfo = (label: string): { ahead: number; behind: number; upstream?: string } => {
+      const aheadMatch = label.match(/ahead (\d+)/);
+      const behindMatch = label.match(/behind (\d+)/);
+      const upstreamMatch = label.match(/\[(.*?)(: ahead \d+| behind \d+)*\]/);
+
+      return {
+        ahead: aheadMatch ? parseInt(aheadMatch[1], 10) : 0,
+        behind: behindMatch ? parseInt(behindMatch[1], 10) : 0,
+        upstream: upstreamMatch ? upstreamMatch[1] : undefined,
+      };
+    };
+
+    let currentBranch: Branch | undefined;
+    let detachedHead: DetachedHead | undefined;
+    const localBranches: Branch[] = [];
+    const remoteBranches: Branch[] = [];
+
+    // Handle detached HEAD state
+    if (summary.detached === true) {
+      // In detached HEAD, summary.current contains the commit hash
+      const commitHash = summary.current || "unknown";
+
+      // Get current commit info for detached HEAD
+      const currentCommitInfo = await this.git.show(["--format=%s|%cd", "--no-patch", "HEAD"]);
+      const [message, dateStr] = currentCommitInfo.split("|");
+
+      detachedHead = {
+        commitHash,
+        shortCommitHash: commitHash,
+        commitMessage: message?.trim() || "No commit message",
+        commitDate: dateStr ? new Date(dateStr) : new Date(),
+        hasUncommittedChanges,
+      };
+    } else if (summary.current) {
+      // Current Branch
+      const currentBranchDetails = summary.branches[summary.current];
+      if (currentBranchDetails) {
+        const { ahead, behind, upstream } = parseBranchInfo(currentBranchDetails.label);
+
+        currentBranch = {
+          name: currentBranchDetails.name,
+          type: "current",
+          ahead,
+          behind,
+          upstream,
+          hasUncommittedChanges,
+          lastCommitMessage: this.extractCommitMessage(currentBranchDetails.label),
+          lastCommitHash: currentBranchDetails.commit,
+        };
+      }
+    }
+
+    // Local Branches
+    Object.values(summary.branches).forEach((branch) => {
+      if (!branch.name.startsWith("remotes/") && !branch.current) {
+        const { ahead, behind, upstream } = parseBranchInfo(branch.label);
+
+        localBranches.push({
+          name: branch.name,
+          type: "local",
+          ahead,
+          behind,
+          upstream,
+          lastCommitMessage: this.extractCommitMessage(branch.label),
+          lastCommitHash: branch.commit,
+        });
+      }
+    });
+
+    // Remote Branches
+    Object.values(summary.branches).forEach((branch) => {
+      if (branch.name.startsWith("remotes/")) {
+        const remoteNameParts = branch.name.replace("remotes/", "").split("/");
+        const remote = remoteNameParts.shift();
+        const branchName = remoteNameParts.join("/");
+
+        // Avoid adding remote HEAD pointers
+        if (branchName === "HEAD" || !branchName) return;
+
+        remoteBranches.push({
+          name: branchName,
+          type: "remote",
+          remote: remote,
+          upstream: branch.name, // The full remote name is the upstream ref
+          lastCommitMessage: this.extractCommitMessage(branch.label),
+          lastCommitHash: branch.commit,
+        });
+      }
+    });
+
+    // Apply performance limits
+    const { maxBranchesToShow } = this.getPreferences();
+    const totalBranches = localBranches.length + remoteBranches.length + (currentBranch ? 1 : 0);
+    if (totalBranches > maxBranchesToShow) {
+      const limitPerType = Math.floor(maxBranchesToShow / 2);
+      return {
+        currentBranch,
+        detachedHead,
+        localBranches: localBranches.slice(0, limitPerType),
+        remoteBranches: remoteBranches.slice(0, limitPerType),
+      };
+    }
+
+    return {
+      currentBranch,
+      detachedHead,
+      localBranches,
+      remoteBranches,
+    };
+  }
+
+  /**
+   * Gets the status of files in the repository.
+   */
+  async getStatus(): Promise<FileStatus[]> {
+    const status = await this.git.status();
+    const files: FileStatus[] = [];
+
+    // Staged files
+    status.staged.forEach((file) => {
+      files.push({
+        path: this.getAbsolutePath(file),
+        relativePath: file,
+        status: "staged",
+        type: this.getFileChangeType(file, status),
+      });
+    });
+
+    // Modified files
+    status.modified.forEach((file) => {
+      files.push({
+        path: this.getAbsolutePath(file),
+        relativePath: file,
+        status: "unstaged",
+        type: "modified",
+      });
+    });
+
+    // Deleted files
+    status.deleted.forEach((file) => {
+      files.push({
+        path: this.getAbsolutePath(file),
+        relativePath: file,
+        status: "unstaged",
+        type: "deleted",
+      });
+    });
+
+    // Untracked files
+    status.not_added.forEach((file) => {
+      files.push({
+        path: this.getAbsolutePath(file),
+        relativePath: file,
+        status: "untracked",
+        type: "added",
+      });
+    });
+
+    // Conflicted files
+    status.conflicted.forEach((file) => {
+      files.push({
+        path: this.getAbsolutePath(file),
+        relativePath: file,
+        status: "conflicted",
+        type: "modified",
+      });
+    });
+
+    // Limit the number of files for performance
+    const { maxFilesToShow } = this.getPreferences();
+    if (files.length > maxFilesToShow) {
+      await showToast({
+        style: Toast.Style.Animated,
+        title: "Performance Optimization",
+        message: `Showing ${maxFilesToShow} of ${files.length} files for better performance`,
+      });
+      return files.slice(0, maxFilesToShow);
+    }
+
+    return files;
+  }
+
+  /**
+   * Extracts commit message from branch label.
+   * Branch label can contain upstream info like "[origin/main: ahead 2] commit message"
+   * or just the commit message without upstream info.
+   */
+  private extractCommitMessage(label: string): string {
+    // The label format from git branch -vv is usually:
+    // "commit_message" or "[upstream: ahead/behind info] commit_message"
+
+    // Remove upstream information in brackets [upstream: ahead/behind info]
+    const cleanLabel = label.replace(/^\[.*?\]\s*/, "").trim();
+
+    // If there's still content, it's the commit message, otherwise use a default
+    return cleanLabel || "No commit message";
+  }
+
+  /**
+   * Gets the commit history.
+   */
+  async getCommits(branch?: string): Promise<Commit[]> {
+    const { maxCommitsToLoad } = this.getPreferences();
+    const log = await this.git.log([`--max-count=${maxCommitsToLoad}`, "--name-status", ...(branch ? [branch] : [])]);
+
+    return log.all.map(
+      (commit: {
+        hash: string;
+        message: string;
+        body: string;
+        author_name: string;
+        author_email: string;
+        date: string;
+        refs?: string;
+        diff?: DiffResult;
+      }) => {
+        const changedFiles = this.parseCommitChangedFiles(commit.diff);
+
+        return {
+          hash: commit.hash,
+          shortHash: commit.hash.substring(0, 7),
+          message: commit.message,
+          body: commit.body,
+          author: commit.author_name,
+          authorEmail: commit.author_email,
+          date: new Date(commit.date),
+          refs: commit.refs && commit.refs.trim() ? commit.refs.split(", ") : [],
+          changedFiles,
+        };
+      },
+    );
+  }
+
+  /**
+   * Parses the changed files from git log --name-status diff output.
+   */
+  private parseCommitChangedFiles(diff: DiffResult): CommitFileChange[] {
+    if (!diff || !diff.files) {
+      return [];
+    }
+
+    return diff.files.map((file: DiffResultTextFile | DiffResultBinaryFile | DiffResultNameStatusFile) => {
+      // Handle renamed files (format: "R100 oldpath -> newpath")
+      if (file.file && file.file.includes(" -> ")) {
+        const [oldPath, newPath] = file.file.split(" -> ");
+        return {
+          status: "R",
+          path: newPath.trim(),
+          oldPath: oldPath.trim(),
+        };
+      }
+
+      return {
+        status: this.mapDiffStatusToGitStatus(file),
+        path: file.file,
+        oldPath: "from" in file ? file.from : undefined,
+      };
+    });
+  }
+
+  /**
+   * Maps simple-git diff status to standard git name-status format.
+   */
+  private mapDiffStatusToGitStatus(file: any): string {
+    // Check if file has binary flag
+    if (file.binary) {
+      return "M"; // Binary files are considered modified
+    }
+
+    // Check for insertions/deletions to determine status
+    if (file.insertions > 0 && file.deletions === 0) {
+      return "A"; // Added
+    }
+    if (file.insertions === 0 && file.deletions > 0) {
+      return "D"; // Deleted
+    }
+    if (file.insertions > 0 && file.deletions > 0) {
+      return "M"; // Modified
+    }
+
+    // Default to modified if we can't determine
+    return "M";
+  }
+
+  /**
+   * Checks out the specified branch.
+   */
+  async checkout(branch: string): Promise<void> {
+    if (!branch || typeof branch !== "string" || branch.trim().length === 0) {
+      throw new Error("Invalid branch name");
+    }
+    if (branch.includes("..") || branch.includes(" ")) {
+      throw new Error("Branch name contains invalid characters");
+    }
+    await this.git.checkout(branch.trim());
+  }
+
+  /**
+   * Creates a new branch.
+   */
+  async createBranch(name: string): Promise<void> {
+    if (!name || typeof name !== "string" || name.trim().length === 0) {
+      throw new Error("Invalid branch name");
+    }
+    if (name.includes("..") || name.includes(" ") || name.startsWith("-")) {
+      throw new Error("Branch name contains invalid characters");
+    }
+    await this.git.checkoutLocalBranch(name.trim());
+  }
+
+  /**
+   * Deletes a local branch.
+   */
+  async deleteBranch(name: string, force = false): Promise<void> {
+    if (!name || typeof name !== "string" || name.trim().length === 0) {
+      throw new Error("Invalid branch name");
+    }
+    if (name.includes("..") || name.includes(" ")) {
+      throw new Error("Branch name contains invalid characters");
+    }
+    await this.git.deleteLocalBranch(name.trim(), force);
+  }
+
+  /**
+   * Deletes a remote branch.
+   */
+  async deleteRemoteBranch(remote: string, branchName: string): Promise<void> {
+    if (!remote || !branchName) {
+      throw new Error("Invalid remote or branch name");
+    }
+    await this.git.push(remote, branchName, ["--delete"]);
+  }
+
+  /**
+   * Adds a file to the staging area.
+   */
+  async stageFile(file: string): Promise<void> {
+    if (!file || typeof file !== "string" || file.trim().length === 0) {
+      throw new Error("Invalid file path");
+    }
+    await this.git.add(file.trim());
+  }
+
+  /**
+   * Removes a file from the staging area.
+   */
+  async unstageFile(file: string): Promise<void> {
+    if (!file || typeof file !== "string" || file.trim().length === 0) {
+      throw new Error("Invalid file path");
+    }
+    await this.git.reset(["HEAD", file.trim()]);
+  }
+
+  /**
+   * Discards changes in a file.
+   */
+  async discardChanges(file: string): Promise<void> {
+    if (!file || typeof file !== "string" || file.trim().length === 0) {
+      throw new Error("Invalid file path");
+    }
+    await this.git.checkout(["--", file.trim()]);
+  }
+
+  /**
+   * Cherry-picks a commit.
+   */
+  async cherryPick(commitHash: string): Promise<void> {
+    if (!commitHash || typeof commitHash !== "string" || !/^[a-f0-9]{7,40}$/i.test(commitHash.trim())) {
+      throw new Error("Invalid commit hash");
+    }
+    await this.git.raw(["cherry-pick", commitHash.trim()]);
+  }
+
+  /**
+   * Reverts a commit.
+   */
+  async revert(commitHash: string): Promise<void> {
+    if (!commitHash || typeof commitHash !== "string" || !/^[a-f0-9]{7,40}$/i.test(commitHash.trim())) {
+      throw new Error("Invalid commit hash");
+    }
+    await this.git.raw(["revert", "--no-edit", commitHash.trim()]);
+  }
+
+  /**
+   * Resets to the specified commit.
+   */
+  async reset(commitHash: string, mode = "--hard"): Promise<void> {
+    if (!commitHash || typeof commitHash !== "string" || !/^[a-f0-9]{7,40}$/i.test(commitHash.trim())) {
+      throw new Error("Invalid commit hash");
+    }
+    const allowedModes = ["--soft", "--mixed", "--hard"];
+    if (!allowedModes.includes(mode)) {
+      throw new Error("Invalid reset mode");
+    }
+    await this.git.raw(["reset", mode, commitHash.trim()]);
+  }
+
+  /**
+   * Creates a commit with a message.
+   */
+  async commit(message: string, amend = false): Promise<void> {
+    if (amend) {
+      await this.git.raw(["commit", "--amend", "-m", message]);
+    } else {
+      await this.git.commit(message);
+    }
+  }
+
+  /**
+   * Pushes changes.
+   */
+  async push(force = false): Promise<void> {
+    const options = force ? ["--force-with-lease"] : [];
+    await this.git.push(undefined, undefined, options);
+  }
+
+  /**
+   * Pulls changes.
+   */
+  async pull(rebase = false): Promise<void> {
+    if (rebase) {
+      await this.git.pull(undefined, undefined, ["--rebase"]);
+    } else {
+      await this.git.pull();
+    }
+  }
+
+  /**
+   * Fetches changes.
+   */
+  async fetch(): Promise<void> {
+    await this.git.fetch();
+  }
+
+  /**
+   * Creates a stash with an optional message.
+   */
+  async stash(message?: string): Promise<void> {
+    if (message) {
+      await this.git.stash(["push", "-m", message]);
+    } else {
+      await this.git.stash();
+    }
+  }
+
+  /**
+   * Applies a stash by index.
+   */
+  async applyStash(index = 0): Promise<void> {
+    await this.git.stash(["apply", `stash@{${index}}`]);
+  }
+
+  /**
+   * Applies and removes a stash (pop).
+   */
+  async popStash(index = 0): Promise<void> {
+    await this.git.stash(["pop", `stash@{${index}}`]);
+  }
+
+  /**
+   * Drops a stash by index.
+   */
+  async dropStash(index = 0): Promise<void> {
+    await this.git.stash(["drop", `stash@{${index}}`]);
+  }
+
+  /**
+   * Gets a list of all stashes.
+   */
+  async getStashes(): Promise<Stash[]> {
+    const stashList = await this.git.stashList();
+    return stashList.all.map((stash) => ({
+      ref: stash.refs,
+      message: stash.message,
+      hash: stash.hash,
+      date: stash.date,
+    }));
+  }
+
+  /**
+   * Creates a tag.
+   */
+  async createTag(tagName: string, commitHash: string, message?: string): Promise<void> {
+    if (!tagName || typeof tagName !== "string" || tagName.trim().length === 0) {
+      throw new Error("Invalid tag name");
+    }
+    if (!commitHash || typeof commitHash !== "string" || !/^[a-f0-9]{7,40}$/i.test(commitHash.trim())) {
+      throw new Error("Invalid commit hash");
+    }
+
+    const args = ["tag"];
+    if (message && message.trim()) {
+      args.push("-a", tagName.trim(), "-m", message.trim(), commitHash.trim());
+    } else {
+      args.push(tagName.trim(), commitHash.trim());
+    }
+
+    await this.git.raw(args);
+  }
+
+  /**
+   * Gets the absolute path to a file.
+   */
+  private getAbsolutePath(relativePath: string): string {
+    return join(this.repoPath, relativePath);
+  }
+
+  /**
+   * Determines the type of change for a file.
+   */
+  private getFileChangeType(
+    file: string,
+    status: { created: string[]; deleted: string[]; renamed: { to: string }[] },
+  ): FileStatus["type"] {
+    if (status.created.includes(file)) return "added";
+    if (status.deleted.includes(file)) return "deleted";
+    if (status.renamed.find((r: { to: string }) => r.to === file)) return "renamed";
+    return "modified";
+  }
+
+  /**
+   * Gets the diff for a file or commit.
+   */
+  async getDiff(options: { file?: string; commitHash?: string; staged?: boolean }): Promise<string> {
+    if (options.commitHash) {
+      return this.git.show(options.commitHash);
+    }
+    if (options.file) {
+      const diffOptions = options.staged ? ["--staged"] : [];
+      diffOptions.push(options.file);
+      return this.git.diff(diffOptions);
+    }
+    return Promise.reject("File or commit hash must be specified");
+  }
+
+  /**
+   * Merges a branch into the current branch.
+   */
+  async mergeBranch(branchName: string, noFF = false): Promise<void> {
+    if (!branchName || typeof branchName !== "string" || branchName.trim().length === 0) {
+      throw new Error("Invalid branch name");
+    }
+    const options = noFF ? ["--no-ff"] : [];
+    await this.git.merge([branchName.trim(), ...options]);
+  }
+
+  /**
+   * Rebases the current branch onto the specified branch.
+   */
+  async rebase(targetBranch: string, interactive = false): Promise<void> {
+    if (!targetBranch || typeof targetBranch !== "string" || targetBranch.trim().length === 0) {
+      throw new Error("Invalid target branch name");
+    }
+    const options = interactive ? ["--interactive"] : [];
+    await this.git.rebase([targetBranch.trim(), ...options]);
+  }
+
+  /**
+   * Aborts an ongoing rebase.
+   */
+  async abortRebase(): Promise<void> {
+    await this.git.rebase(["--abort"]);
+  }
+
+  /**
+   * Continues an ongoing rebase.
+   */
+  async continueRebase(): Promise<void> {
+    await this.git.rebase(["--continue"]);
+  }
+
+  /**
+   * Gets a list of all remotes.
+   */
+  async getRemotes(): Promise<{ name: string; url: string }[]> {
+    const remotes = await this.git.getRemotes(true);
+    return remotes.map((remote) => ({
+      name: remote.name,
+      url: remote.refs.fetch || remote.refs.push || "",
+    }));
+  }
+
+  /**
+   * Gets the default remote name (usually 'origin', but can be the first available remote).
+   */
+  async getDefaultRemote(): Promise<string> {
+    try {
+      const remotes = await this.getRemotes();
+
+      if (remotes.length === 0) {
+        throw new Error("No remotes found");
+      }
+
+      // Prefer 'origin' if it exists
+      const originRemote = remotes.find((remote) => remote.name === "origin");
+      if (originRemote) {
+        return originRemote.name;
+      }
+
+      // Otherwise, return the first available remote
+      return remotes[0].name;
+    } catch (error) {
+      throw new Error("Failed to get default remote");
+    }
+  }
+
+  /**
+   * Adds a new remote.
+   */
+  async addRemote(name: string, url: string): Promise<void> {
+    if (!name || typeof name !== "string" || name.trim().length === 0) {
+      throw new Error("Invalid remote name");
+    }
+    if (!url || typeof url !== "string" || url.trim().length === 0) {
+      throw new Error("Invalid remote URL");
+    }
+    await this.git.addRemote(name.trim(), url.trim());
+  }
+
+  /**
+   * Removes a remote.
+   */
+  async removeRemote(name: string): Promise<void> {
+    if (!name || typeof name !== "string" || name.trim().length === 0) {
+      throw new Error("Invalid remote name");
+    }
+    await this.git.removeRemote(name.trim());
+  }
+
+  /**
+   * Gets a list of all tags.
+   */
+  async getTags(): Promise<string[]> {
+    const tags = await this.git.tags();
+    return tags.all;
+  }
+
+  /**
+   * Deletes a tag.
+   */
+  async deleteTag(tagName: string): Promise<void> {
+    if (!tagName || typeof tagName !== "string" || tagName.trim().length === 0) {
+      throw new Error("Invalid tag name");
+    }
+    await this.git.raw(["tag", "-d", tagName.trim()]);
+  }
+
+  /**
+   * Pushes a tag to remote.
+   */
+  async pushTag(tagName: string, remoteName?: string): Promise<void> {
+    if (!tagName || typeof tagName !== "string" || tagName.trim().length === 0) {
+      throw new Error("Invalid tag name");
+    }
+
+    // Use provided remote name or get the default remote
+    const targetRemote = remoteName || (await this.getDefaultRemote());
+    await this.git.pushTags(targetRemote);
+  }
+
+  /**
+   * Gets detailed information about a specific commit.
+   */
+  async getCommitInfo(commitHash: string): Promise<Commit | null> {
+    if (!commitHash || typeof commitHash !== "string" || !/^[a-f0-9]{7,40}$/i.test(commitHash.trim())) {
+      throw new Error("Invalid commit hash");
+    }
+
+    try {
+      const log = await this.git.log({
+        maxCount: 1,
+        from: commitHash.trim(),
+        to: commitHash.trim(),
+      });
+
+      if (log.latest) {
+        const commit = log.latest;
+        return {
+          hash: commit.hash,
+          shortHash: commit.hash.substring(0, 7),
+          message: commit.message,
+          body: commit.body,
+          author: commit.author_name,
+          authorEmail: commit.author_email,
+          date: new Date(commit.date),
+          refs: commit.refs ? commit.refs.split(", ") : undefined,
+        };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Checks if the repository has any uncommitted changes.
+   */
+  async hasUncommittedChanges(): Promise<boolean> {
+    const status = await this.git.status();
+    return status.files.length > 0;
+  }
+
+  /**
+   * Checks if the repository has any unresolved conflicts.
+   */
+  async hasConflicts(): Promise<boolean> {
+    const status = await this.git.status();
+    return status.conflicted.length > 0;
+  }
+
+  /**
+   * Gets the current branch name.
+   */
+  async getCurrentBranch(): Promise<string | null> {
+    try {
+      const status = await this.git.status();
+      return status.current || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Stage all modified files.
+   */
+  async stageAll(): Promise<void> {
+    await this.git.add(".");
+  }
+
+  /**
+   * Unstage all staged files.
+   */
+  async unstageAll(): Promise<void> {
+    await this.git.reset(["HEAD"]);
+  }
+}
