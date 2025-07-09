@@ -282,6 +282,25 @@ ${diff}`;
       return;
     }
 
+    // Confirm force push if requested
+    if (push && forcePush) {
+      const confirmed = await confirmAlert({
+        title: "Force Push Confirmation",
+        message: "Force push will rewrite Git history on the remote repository. This can cause problems for other collaborators. Are you sure you want to continue?",
+        primaryAction: {
+          title: "Force Push",
+          style: Alert.ActionStyle.Destructive,
+        },
+        dismissAction: {
+          title: "Cancel",
+        },
+      });
+
+      if (!confirmed) {
+        return;
+      }
+    }
+
     try {
       // Commit changes
       await gitManager.commit(draftMessage.trim(), amend);
@@ -331,25 +350,15 @@ ${diff}`;
             />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="AI Assistant">
-            <Action
-              title="Generate Commit Message"
-              onAction={generateCommitMessage}
-              icon={Icon.Wand}
-              shortcut={{ modifiers: ["cmd"], key: "g" }}
-              isLoading={isGenerating}
-            />
-          </ActionPanel.Section>
-
-          <ActionPanel.Section title="Draft Management">
-            <Action
-              title="Clear Draft"
-              onAction={clearDraft}
-              icon={Icon.Trash}
-              style={Action.Style.Destructive}
-              shortcut={{ modifiers: ["cmd"], key: "d" }}
-            />
-          </ActionPanel.Section>
+                     <ActionPanel.Section title="AI Assistant">
+             <Action
+               title="Generate Commit Message"
+               onAction={generateCommitMessage}
+               icon={Icon.Wand}
+               shortcut={{ modifiers: ["cmd"], key: "g" }}
+               isLoading={isGenerating}
+             />
+           </ActionPanel.Section>
         </ActionPanel>
       }
     >
