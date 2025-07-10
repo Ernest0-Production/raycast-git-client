@@ -10,6 +10,7 @@ import {
   getFileStatusColor,
 } from "../../components/actions/FileActions";
 import { RepositoryActions } from "../../components/actions/RepositoryActions";
+import { CreateStashAction } from "../../components/actions/StashActions";
 import { GitManager } from "../../utils/git-utils";
 import { FileStatus } from "../../types";
 import { useState } from "react";
@@ -78,6 +79,10 @@ export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
             <FileCommitActions gitManager={gitManager} onRefresh={revalidate} />
           </ActionPanel.Section>
 
+          <ActionPanel.Section title="Stash Operations">
+            <CreateStashAction gitManager={gitManager} onRefresh={revalidate} />
+          </ActionPanel.Section>
+
           <ActionPanel.Section title="Repository">
             <RepositoryActions repositoryPath={gitManager.repoPath} secondary />
           </ActionPanel.Section>
@@ -89,7 +94,7 @@ export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
       }
     >
       {unstagedFiles.length > 0 && (
-        <List.Section title="Unstaged Files">
+        <List.Section title="Unstaged Files" subtitle={`${unstagedFiles.length}`}>
           {unstagedFiles.map((file) => (
             <FileListItem
               key={file.path}
@@ -105,7 +110,7 @@ export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
       )}
 
       {stagedFiles.length > 0 && (
-        <List.Section title="Staged Files">
+        <List.Section title="Staged Files" subtitle={`${stagedFiles.length}`}>
           {stagedFiles.map((file) => (
             <FileListItem
               key={file.path}
@@ -153,6 +158,11 @@ function FileListItem({ file, gitManager, onRefresh, navigationActions, isShowin
         <ActionPanel>
           <ActionPanel.Section title="File Operations">
             <FileActions file={file} gitManager={gitManager} onRefresh={onRefresh} />
+            <CreateStashAction
+              gitManager={gitManager}
+              onRefresh={onRefresh}
+              filePath={file.relativePath}
+            />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="View Controls">
@@ -169,6 +179,10 @@ function FileListItem({ file, gitManager, onRefresh, navigationActions, isShowin
 
           <ActionPanel.Section title="Commit Operations">
             <FileCommitActions gitManager={gitManager} onRefresh={onRefresh} />
+          </ActionPanel.Section>
+
+          <ActionPanel.Section title="Stash Operations">
+            <CreateStashAction gitManager={gitManager} onRefresh={onRefresh} />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Repository">

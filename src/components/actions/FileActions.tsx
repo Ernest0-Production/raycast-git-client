@@ -63,7 +63,7 @@ export function FileActions({ file, gitManager, onRefresh }: FileActionsProps) {
         <Action
           title="Unstage"
           onAction={handleUnstageFile}
-          icon={Icon.ArrowDown}
+          icon={Icon.Minus}
         />
         <Action.Open
           title="Open File"
@@ -93,19 +93,17 @@ export function FileActions({ file, gitManager, onRefresh }: FileActionsProps) {
 
   // Actions for unstaged files (includes former untracked and conflicted files)
   if (file.status === "unstaged") {
-    const stageTitle = file.type === "conflicted" ? "Stage Resolution" : "Stage";
-
     return (
       <>
         <Action
-          title={stageTitle}
+          title={file.type === "conflicted" ? "Stage Resolution" : "Stage"}
           onAction={handleStageFile}
-          icon={Icon.ArrowUp}
+          icon={Icon.Plus}
         />
         {file.type === "added" ? (
           <Action.Trash
             title="Move to Trash"
-            shortcut={{ modifiers: ["ctrl"], key: "d" }}
+            shortcut={{ modifiers: ["ctrl"], key: "x" }}
             paths={[file.path]}
           />
         ) : file.type === "conflicted" ? null : (
@@ -137,8 +135,6 @@ export function FileActions({ file, gitManager, onRefresh }: FileActionsProps) {
       </>
     );
   }
-
-
 
   return null;
 }
@@ -189,20 +185,20 @@ export function CommitActions({ gitManager, onRefresh }: { gitManager: GitManage
     <>
       <Action.Push
         title="Commit Changes"
-        icon={Icon.CheckCircle}
+        icon={Icon.Checkmark}
         target={<CommitForm gitManager={gitManager} onRefresh={onRefresh} />}
       />
       <Action
         title="Stage All Files"
         onAction={handleStageAll}
-        icon={Icon.ArrowUp}
-        shortcut={{ modifiers: ["cmd", "shift"], key: "s" }}
+        icon={Icon.Plus}
+        shortcut={{ modifiers: ["cmd", "shift"], key: "a" }}
       />
       <Action
         title="Unstage All Files"
         onAction={handleUnstageAll}
-        icon={Icon.ArrowDown}
-        shortcut={{ modifiers: ["cmd", "shift"], key: "u" }}
+        icon={Icon.Minus}
+        shortcut={{ modifiers: ["cmd", "shift"], key: "z" }}
       />
       <Action
         title="Discard All Changes"
@@ -289,7 +285,7 @@ export const getFileStatusColor = (file: FileStatus) => {
     case "added":
       return Color.Green;
     case "modified":
-      return Color.Blue;
+      return Color.Yellow;
     case "deleted":
       return Color.Red;
     case "renamed":

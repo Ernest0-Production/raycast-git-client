@@ -698,6 +698,18 @@ export class GitManager {
   }
 
   /**
+   * Creates a stash for a specific file with an optional message.
+   */
+  async stashFile(filePath: string, message?: string): Promise<void> {
+    const args = ["push"];
+    if (message) {
+      args.push("-m", message);
+    }
+    args.push("--", filePath);
+    await this.git.stash(args);
+  }
+
+  /**
    * Applies a stash by index.
    */
   async applyStash(index = 0): Promise<void> {
