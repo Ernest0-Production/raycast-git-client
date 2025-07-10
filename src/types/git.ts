@@ -110,14 +110,16 @@ export interface Commit {
  * Represents an entry in the stash (staged changes).
  */
 export interface Stash {
-  /** A unique identifier for the stash (e.g., stash@{0}). */
-  ref: string;
   /** The message associated with the stash. */
   message: string;
   /** The hash of the commit on which the stash was created. */
   hash: string;
   /** The date the stash was created. */
-  date: string;
+  date: Date;
+  /** The author of the stash. */
+  author: string;
+  /** The author's email. */
+  authorEmail: string;
 }
 
 /**

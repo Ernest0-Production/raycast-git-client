@@ -7,7 +7,7 @@ import { ErrorView } from "../../components/shared/ErrorView";
 import { EmptyView } from "../../components/shared/EmptyView";
 import { CommitActions, CommitHistoryActions } from "../../components/actions/CommitActions";
 import { FetchAction } from "../../components/actions/BranchActions";
-import { RepositoryActions } from "../../components/actions/RepositoryActions";
+import { RepositoryDirectoryActions } from "../../components/actions/RepositoryDirectoryActions";
 import { CommitDiffView } from "./CommitDiffView";
 import { GitManager } from "../../utils/git-utils";
 import { Branch, Commit } from "../../types";
@@ -188,7 +188,7 @@ export function CommitsView({ gitManager, navigationActions }: CommitsViewProps)
                     </ActionPanel.Section>
 
                     <ActionPanel.Section title="Repository">
-                        <RepositoryActions repositoryPath={gitManager.repoPath} secondary />
+                        <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
                     </ActionPanel.Section>
 
                     <ActionPanel.Section>
@@ -384,7 +384,7 @@ function CommitListItem({
                     </ActionPanel.Section>
 
                     <ActionPanel.Section title="Repository Operations">
-                        <RepositoryActions repositoryPath={gitManager.repoPath} secondary />
+                        <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
                         <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
                     </ActionPanel.Section>
 

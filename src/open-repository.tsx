@@ -81,7 +81,7 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
     case "commits":
       return <CommitsView gitManager={gitManager} navigationActions={navigationActions} />;
     case "stashes":
-      return <StashesView gitManager={gitManager} navigationActions={navigationActions} />;
+      return <StashesView gitManager={gitManager} navigationActions={navigationActions} onNavigateToStatus={() => setCurrentView("status")} />;
     default:
       return <StatusView gitManager={gitManager} navigationActions={navigationActions} />;
   }

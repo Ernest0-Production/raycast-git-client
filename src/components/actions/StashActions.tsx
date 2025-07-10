@@ -5,8 +5,10 @@ import { GitManager } from "../../utils/git-utils";
 
 interface StashActionsProps {
   stash: Stash;
+  index: number;
   gitManager: GitManager;
   onRefresh: () => void;
+  onNavigateToStatus?: () => void;
 }
 
 async function handleStashAction(action: () => Promise<void>, onRefresh: () => void) {
@@ -18,16 +20,41 @@ async function handleStashAction(action: () => Promise<void>, onRefresh: () => v
   }
 }
 
-export function StashActions({ stash, gitManager, onRefresh }: StashActionsProps) {
-  const getStashIndex = (ref: string): number => {
-    const match = ref.match(/stash@\{(\d+)\}/);
-    return match ? parseInt(match[1], 10) : 0;
+export function StashActions({ stash, index, gitManager, onRefresh, onNavigateToStatus }: StashActionsProps) {
+
+  const handleApply = async () => {
+    if (
+      await confirmAlert({
+        title: "Apply Stash?",
+        message: `Are you sure you want to apply "${stash.message}"?`,
+        primaryAction: { title: "Apply", style: Alert.ActionStyle.Default },
+      })
+    ) {
+      try {
+        await gitManager.applyStash(index);
+        onRefresh();
+
+        // Ask if user wants to drop the applied stash
+        if (
+          await confirmAlert({
+            title: "Drop Applied Stash?",
+            message: `Stash "${stash.message}" has been applied. Do you want to drop it?`,
+            primaryAction: { title: "Drop", style: Alert.ActionStyle.Destructive },
+          })
+        ) {
+          await gitManager.dropStash(index);
+          onRefresh();
+        }
+
+        // Automatically switch to StatusView after applying stash
+        if (onNavigateToStatus) {
+          onNavigateToStatus();
+        }
+      } catch (error) {
+        // Git error is already shown by GitManager
+      }
+    }
   };
-
-  const stashIndex = getStashIndex(stash.ref);
-
-  const handleApply = () => handleStashAction(() => gitManager.applyStash(stashIndex), onRefresh);
-  const handlePop = () => handleStashAction(() => gitManager.popStash(stashIndex), onRefresh);
 
   const handleDrop = async () => {
     if (
@@ -37,18 +64,23 @@ export function StashActions({ stash, gitManager, onRefresh }: StashActionsProps
         primaryAction: { title: "Drop", style: Alert.ActionStyle.Destructive },
       })
     ) {
-      await handleStashAction(() => gitManager.dropStash(stashIndex), onRefresh);
+      await handleStashAction(() => gitManager.dropStash(index), onRefresh);
     }
   };
 
   return (
-    <ActionPanel title={`Stash Actions: ${stash.message}`}>
-      <ActionPanel.Section title="Stash Operations">
-        <Action title="Apply Stash" icon={Icon.Download} onAction={handleApply} />
-        <Action title="Pop Stash" icon={Icon.ChevronUp} onAction={handlePop} />
-        <Action title="Drop Stash" icon={Icon.Trash} onAction={handleDrop} shortcut={{ modifiers: ["ctrl"], key: "x" }} />
-      </ActionPanel.Section>
-    </ActionPanel>
+    <>
+      <Action title="Apply Stash"
+        icon={Icon.Download}
+        onAction={handleApply}
+      />
+      <Action title="Drop Stash"
+        style={Action.Style.Destructive}
+        icon={Icon.Trash}
+        onAction={handleDrop}
+        shortcut={{ modifiers: ["ctrl"], key: "x" }}
+      />
+    </>
   );
 }
 

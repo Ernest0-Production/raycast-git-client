@@ -2,16 +2,18 @@ import { ActionPanel, Action, List, Icon } from "@raycast/api";
 import { useGitStash } from "../../hooks/useGitStash";
 import { EmptyView } from "../../components/shared/EmptyView";
 import { StashActions, CreateStashAction } from "../../components/actions/StashActions";
-import { RepositoryActions } from "../../components/actions/RepositoryActions";
+import { RepositoryDirectoryActions } from "../../components/actions/RepositoryDirectoryActions";
 import { GitManager } from "../../utils/git-utils";
 import { Stash } from "../../types";
+import { getAvatarIcon } from "@raycast/utils";
 
 interface StashesViewProps {
   gitManager: GitManager;
   navigationActions: React.ReactNode;
+  onNavigateToStatus?: () => void;
 }
 
-export function StashesView({ gitManager, navigationActions }: StashesViewProps) {
+export function StashesView({ gitManager, navigationActions, onNavigateToStatus }: StashesViewProps) {
   const { stashes, isLoading, revalidate } = useGitStash(gitManager);
 
   if (!stashes || stashes.length === 0) {
@@ -38,12 +40,8 @@ export function StashesView({ gitManager, navigationActions }: StashesViewProps)
       navigationTitle={`Stash - ${gitManager.repoName}`}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title="Stash Management">
-            <CreateStashAction gitManager={gitManager} onRefresh={revalidate} />
-          </ActionPanel.Section>
-
           <ActionPanel.Section title="Repository">
-            <RepositoryActions repositoryPath={gitManager.repoPath} secondary />
+            <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
           </ActionPanel.Section>
 
           <ActionPanel.Section>
@@ -56,9 +54,11 @@ export function StashesView({ gitManager, navigationActions }: StashesViewProps)
         <StashListItem
           key={index}
           stash={stash}
+          index={index}
           gitManager={gitManager}
           onRefresh={revalidate}
           navigationActions={navigationActions}
+          onNavigateToStatus={onNavigateToStatus}
         />
       ))}
     </List>
@@ -67,32 +67,33 @@ export function StashesView({ gitManager, navigationActions }: StashesViewProps)
 
 function StashListItem({
   stash,
+  index,
   gitManager,
   onRefresh,
   navigationActions,
+  onNavigateToStatus,
 }: {
   stash: Stash;
+  index: number;
   gitManager: GitManager;
   onRefresh: () => void;
   navigationActions: React.ReactNode;
+  onNavigateToStatus?: () => void;
 }) {
   return (
     <List.Item
       title={stash.message}
-      subtitle={stash.ref}
-      icon={Icon.Box}
+      icon={{ source: getAvatarIcon(stash.author), tooltip: stash.author }}
+      subtitle={{ value: stash.author, tooltip: stash.authorEmail }}
+      accessories={[{ date: stash.date }]}
       actions={
         <ActionPanel>
           <ActionPanel.Section title="Stash Operations">
-            <StashActions stash={stash} gitManager={gitManager} onRefresh={onRefresh} />
-          </ActionPanel.Section>
-
-          <ActionPanel.Section title="Stash Management">
-            <CreateStashAction gitManager={gitManager} onRefresh={onRefresh} />
+            <StashActions stash={stash} index={index} gitManager={gitManager} onRefresh={onRefresh} onNavigateToStatus={onNavigateToStatus} />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Repository">
-            <RepositoryActions repositoryPath={gitManager.repoPath} secondary />
+            <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
           </ActionPanel.Section>
 
           <ActionPanel.Section>

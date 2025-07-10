@@ -735,11 +735,13 @@ export class GitManager {
    */
   async getStashes(): Promise<Stash[]> {
     const stashList = await this.git.stashList();
+
     return stashList.all.map((stash) => ({
-      ref: stash.refs,
-      message: stash.message,
+      message: stash.message.replace(/^On [^:]+: /, ""),
       hash: stash.hash,
-      date: stash.date,
+      date: new Date(stash.date),
+      author: stash.author_name,
+      authorEmail: stash.author_email,
     }));
   }
 

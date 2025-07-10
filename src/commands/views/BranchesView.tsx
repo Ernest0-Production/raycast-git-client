@@ -4,7 +4,7 @@ import { useGitBranches } from "../../hooks/useGitBranches";
 import { ErrorView } from "../../components/shared/ErrorView";
 import { EmptyView } from "../../components/shared/EmptyView";
 import { BranchActions, CreateBranchAction, FetchAction } from "../../components/actions/BranchActions";
-import { RepositoryActions } from "../../components/actions/RepositoryActions";
+import { RepositoryDirectoryActions } from "../../components/actions/RepositoryDirectoryActions";
 import { GitManager } from "../../utils/git-utils";
 import { Branch, DetachedHead } from "../../types";
 
@@ -89,7 +89,7 @@ export function BranchesView({ gitManager, navigationActions }: BranchesViewProp
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Repository">
-            <RepositoryActions repositoryPath={gitManager.repoPath} secondary />
+            <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
           </ActionPanel.Section>
 
           <ActionPanel.Section>
@@ -222,7 +222,7 @@ function BranchListItem({
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Repository">
-            <RepositoryActions repositoryPath={gitManager.repoPath} secondary />
+            <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
           </ActionPanel.Section>
 
           <ActionPanel.Section>
@@ -269,7 +269,7 @@ function DetachedHeadListItem({
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Repository">
-            <RepositoryActions repositoryPath={gitManager.repoPath} secondary />
+            <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
           </ActionPanel.Section>
 
           <ActionPanel.Section>

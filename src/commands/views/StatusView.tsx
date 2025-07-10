@@ -9,7 +9,7 @@ import {
   getFileStatusIcon,
   getFileStatusColor,
 } from "../../components/actions/FileActions";
-import { RepositoryActions } from "../../components/actions/RepositoryActions";
+import { RepositoryDirectoryActions } from "../../components/actions/RepositoryDirectoryActions";
 import { CreateStashAction } from "../../components/actions/StashActions";
 import { GitManager } from "../../utils/git-utils";
 import { FileStatus } from "../../types";
@@ -84,7 +84,7 @@ export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Repository">
-            <RepositoryActions repositoryPath={gitManager.repoPath} secondary />
+            <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
           </ActionPanel.Section>
 
           <ActionPanel.Section>
@@ -143,6 +143,7 @@ function FileListItem({ file, gitManager, onRefresh, navigationActions, isShowin
   const { diff, isLoading } = useGitDiff({
     gitManager,
     options: { file: file.relativePath, staged: file.status === "staged" },
+    execute: isShowingDetail,
   });
 
   return (
@@ -186,7 +187,7 @@ function FileListItem({ file, gitManager, onRefresh, navigationActions, isShowin
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Repository">
-            <RepositoryActions repositoryPath={gitManager.repoPath} secondary />
+            <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
           </ActionPanel.Section>
 
           <ActionPanel.Section>

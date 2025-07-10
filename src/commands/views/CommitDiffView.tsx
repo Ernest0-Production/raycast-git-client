@@ -167,8 +167,6 @@ function FileListItem({ file, commit, gitManager, navigationActions, isShowingDe
         return join(gitManager.repoPath, relativePath);
     };
 
-
-
     const getFileIcon = (status: string) => {
         switch (status) {
             case "A": return Icon.Plus;

@@ -1,6 +1,6 @@
 import { ActionPanel, Action, Icon, List, confirmAlert, Alert, showToast, Toast, LaunchType } from "@raycast/api";
 import { useRecentRepositories } from "./hooks/useRecentRepositories";
-import { RepositoryActions } from "./components/actions/RepositoryActions";
+import { RepositoryDirectoryActions } from "./components/actions/RepositoryDirectoryActions";
 import OpenRepository from "./open-repository";
 
 export default function RecentRepositories() {
@@ -59,7 +59,7 @@ export default function RecentRepositories() {
                 </ActionPanel.Section>
 
                 <ActionPanel.Section title="File System">
-                  <RepositoryActions repositoryPath={repo.path} />
+                  <RepositoryDirectoryActions repositoryPath={repo.path} />
                 </ActionPanel.Section>
 
                 <ActionPanel.Section title="Raycast">

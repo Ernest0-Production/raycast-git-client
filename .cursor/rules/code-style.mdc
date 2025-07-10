@@ -217,3 +217,4 @@ const MAX_FILES_TO_SHOW = 500;
 - ❌ Не логируй в Toast ошибки в Action-ах, если они были уже выведены в Toast из gitManager-а.
 - ❌ Не используй русскую локализацию в коде, используй только английскую в обще принятой терминалогии Git GUI клиентов
 - ❌ Не используй следующие комбинации shortcut в Action-ах: `cmd+enter`, `cmd+k`, `cmd+p`
+- ❌ Не назначай shortcut для первого Action-а в ActionPanel

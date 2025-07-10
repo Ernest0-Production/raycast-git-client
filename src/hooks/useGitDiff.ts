@@ -30,7 +30,7 @@ export function useGitDiff({ gitManager, options, execute = true }: UseGitDiffPr
       // Commit diffs never change, cache them longer
       keepPreviousData: true,
       // For file diffs, revalidate more frequently
-      initialData: "",
+      initialData: "Loading...",
       onError: (error) => {
         console.error("Failed to fetch diff:", error);
       },
