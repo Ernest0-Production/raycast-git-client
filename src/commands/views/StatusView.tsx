@@ -23,6 +23,7 @@ interface StatusViewProps {
 export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
   const { data: files, isLoading, error, revalidate } = useGitStatus(gitManager);
   const [isShowingDetail, setIsShowingDetail] = useState(false);
+  const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
 
   const toggleDetail = () => {
     setIsShowingDetail(!isShowingDetail);
@@ -63,13 +64,14 @@ export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
     <List
       isLoading={isLoading}
       navigationTitle={`Status - ${gitManager.repoName}`}
+      onSelectionChange={(id) => setSelectedFilePath(id)}
       isShowingDetail={isShowingDetail}
       actions={
         <ActionPanel>
           <ActionPanel.Section title="View Controls">
             <Action
-              title={isShowingDetail ? "Hide Detail" : "Show Detail"}
-              icon={Icon.AppWindowSidebarLeft}
+              title={isShowingDetail ? "Hide Diff" : "Show Diff"}
+              icon={Icon.CodeBlock}
               onAction={toggleDetail}
               shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
             />
@@ -102,6 +104,7 @@ export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
               navigationActions={navigationActions}
               isShowingDetail={isShowingDetail}
               onToggleDetail={toggleDetail}
+              selectedFilePath={selectedFilePath}
             />
           ))}
         </List.Section>
@@ -118,6 +121,7 @@ export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
               navigationActions={navigationActions}
               isShowingDetail={isShowingDetail}
               onToggleDetail={toggleDetail}
+              selectedFilePath={selectedFilePath}
             />
           ))}
         </List.Section>
@@ -133,6 +137,7 @@ interface FileListItemProps {
   navigationActions: React.ReactNode;
   isShowingDetail: boolean;
   onToggleDetail: () => void;
+  selectedFilePath: string | null;
 }
 
 function FileListItem({
@@ -142,15 +147,23 @@ function FileListItem({
   navigationActions,
   isShowingDetail,
   onToggleDetail,
+  selectedFilePath,
 }: FileListItemProps) {
+  // Create a unique identifier for each file item
+  const fileId = `${file.relativePath}-${file.status}`;
+
+  // Only load diff if this file is selected and detail view is showing
+  const shouldLoadDiff = isShowingDetail && selectedFilePath === fileId;
+
   const { diff, isLoading } = useGitDiff({
     gitManager,
     options: { file: file.relativePath, staged: file.status === "staged" },
-    execute: isShowingDetail,
+    execute: shouldLoadDiff,
   });
 
   return (
     <List.Item
+      id={fileId}
       title={file.relativePath}
       icon={{
         value: { source: getFileStatusIcon(file), tintColor: getFileStatusColor(file) },

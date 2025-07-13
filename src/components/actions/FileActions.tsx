@@ -167,7 +167,7 @@ export function CommitActions({ gitManager, onRefresh }: { gitManager: GitManage
     <>
       <Action.Push
         title="Commit Changes"
-        icon={Icon.Checkmark}
+        icon={Icon.Message}
         target={<CommitForm gitManager={gitManager} onRefresh={onRefresh} />}
       />
       <Action
