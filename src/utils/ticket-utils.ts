@@ -1,65 +1,55 @@
-import { getPreferenceValues } from "@raycast/api";
-import { Preferences } from "../types";
+import { extractUrlsFromCommit } from "./url-tracker-cache";
 
 /**
- * Extracts ticket number from commit message using configured regex pattern.
+ * Legacy function - kept for backward compatibility.
+ * Now delegates to the new URL tracker system.
+ * @deprecated Use extractUrlsFromCommit directly
  */
-export function extractTicketFromMessage(message: string): string | null {
-  const preferences = getPreferenceValues<Preferences>();
-  const { ticketRegex } = preferences;
+export async function getTicketInfoFromCommit(
+  message: string,
+): Promise<{ ticketKey: string; ticketUrl: string } | null> {
+  const urls = await extractUrlsFromCommit(message);
 
-  if (!ticketRegex || ticketRegex.trim() === "") {
-    return null;
+  // Return the first URL tracker result for backward compatibility
+  if (urls.length > 0) {
+    const firstResult = urls[0];
+    // Extract key from URL by reversing the @key replacement
+    // This is a best-effort attempt for backward compatibility
+    const ticketKey = extractKeyFromUrl(firstResult.url, firstResult.title);
+    return {
+      ticketKey: ticketKey || "Unknown",
+      ticketUrl: firstResult.url,
+    };
   }
 
-  try {
-    const regex = new RegExp(ticketRegex, "i");
-    const match = message.match(regex);
-    
-    if (match && match.length > 1) {
-      // Return first capture group
+  return null;
+}
+
+/**
+ * Attempts to extract the key from a generated URL for backward compatibility.
+ * This is a best-effort function and may not work for all URL patterns.
+ */
+function extractKeyFromUrl(url: string, _title: string): string | null {
+  // Try common patterns to extract the key
+  const patterns = [
+    /\/([A-Z]+-\d+)(?:[/#?]|$)/i, // JIRA-style: PROJ-123
+    /\/(\d+)(?:[/#?]|$)/, // GitHub issues: #123
+    /\/([A-Z]{2,4}-\d+)(?:[/#?]|$)/i, // Linear-style: ABC-123
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) {
       return match[1];
-    } else if (match && match.length === 1) {
-      // Return full match if no capture groups
-      return match[0];
     }
-    
-    return null;
-  } catch (error) {
-    // Invalid regex pattern - silently fail
-    return null;
-  }
-}
-
-/**
- * Generates ticket URL from template and ticket key.
- */
-export function generateTicketUrl(ticketKey: string): string | null {
-  const preferences = getPreferenceValues<Preferences>();
-  const { ticketUrlTemplate } = preferences;
-
-  if (!ticketUrlTemplate || ticketUrlTemplate.trim() === "" || !ticketKey) {
-    return null;
   }
 
-  return ticketUrlTemplate.replace("@key", ticketKey);
-}
-
-/**
- * Extracts ticket from commit message and generates URL if possible.
- */
-export function getTicketInfoFromCommit(message: string): { ticketKey: string; ticketUrl: string } | null {
-  const ticketKey = extractTicketFromMessage(message);
-  
-  if (!ticketKey) {
-    return null;
+  // If no pattern matches, try to extract the last path segment
+  const urlObj = new URL(url);
+  const pathSegments = urlObj.pathname.split("/").filter((segment) => segment.length > 0);
+  if (pathSegments.length > 0) {
+    return pathSegments[pathSegments.length - 1];
   }
 
-  const ticketUrl = generateTicketUrl(ticketKey);
-  
-  if (!ticketUrl) {
-    return null;
-  }
-
-  return { ticketKey, ticketUrl };
+  return null;
 }

@@ -1,7 +1,24 @@
-import { DiffResult, DiffResultBinaryFile, DiffResultNameStatusFile, DiffResultTextFile, LogOptions, simpleGit, SimpleGit } from "simple-git";
+import {
+  DiffResult,
+  DiffResultBinaryFile,
+  DiffResultNameStatusFile,
+  DiffResultTextFile,
+  LogOptions,
+  simpleGit,
+  SimpleGit,
+} from "simple-git";
 import { showToast, Toast, getPreferenceValues } from "@raycast/api";
 import { join } from "path";
-import { Branch, FileStatus, Commit, Stash, BranchesState, DetachedHead, CommitFileChange, Preferences } from "../types";
+import {
+  Branch,
+  FileStatus,
+  Commit,
+  Stash,
+  BranchesState,
+  DetachedHead,
+  CommitFileChange,
+  Preferences,
+} from "../types";
 
 /**
  * Manager for Git operations within a repository.
@@ -272,7 +289,7 @@ export class GitManager {
     const { index, working_dir, path, from } = fileStatus;
 
     // Helper function to create file status object
-    const createFileStatus = (status: 'staged' | 'unstaged', type: FileStatus["type"]): FileStatus => ({
+    const createFileStatus = (status: "staged" | "unstaged", type: FileStatus["type"]): FileStatus => ({
       path: this.getAbsolutePath(path),
       relativePath: path,
       status,
@@ -287,132 +304,132 @@ export class GitManager {
       // ============================================================================
       // CONFLICT STATES (unmerged files)
       // ============================================================================
-      case 'DD': // unmerged, both deleted
-        results.push(createFileStatus('staged', 'conflicted'));
-        results.push(createFileStatus('unstaged', 'conflicted'));
+      case "DD": // unmerged, both deleted
+        results.push(createFileStatus("staged", "conflicted"));
+        results.push(createFileStatus("unstaged", "conflicted"));
         break;
 
-      case 'AU': // unmerged, added by us
-        results.push(createFileStatus('staged', 'conflicted'));
-        results.push(createFileStatus('unstaged', 'conflicted'));
+      case "AU": // unmerged, added by us
+        results.push(createFileStatus("staged", "conflicted"));
+        results.push(createFileStatus("unstaged", "conflicted"));
         break;
 
-      case 'UD': // unmerged, deleted by them
-        results.push(createFileStatus('staged', 'conflicted'));
-        results.push(createFileStatus('unstaged', 'conflicted'));
+      case "UD": // unmerged, deleted by them
+        results.push(createFileStatus("staged", "conflicted"));
+        results.push(createFileStatus("unstaged", "conflicted"));
         break;
 
-      case 'UA': // unmerged, added by them
-        results.push(createFileStatus('staged', 'conflicted'));
-        results.push(createFileStatus('unstaged', 'conflicted'));
+      case "UA": // unmerged, added by them
+        results.push(createFileStatus("staged", "conflicted"));
+        results.push(createFileStatus("unstaged", "conflicted"));
         break;
 
-      case 'DU': // unmerged, deleted by us
-        results.push(createFileStatus('staged', 'conflicted'));
-        results.push(createFileStatus('unstaged', 'conflicted'));
+      case "DU": // unmerged, deleted by us
+        results.push(createFileStatus("staged", "conflicted"));
+        results.push(createFileStatus("unstaged", "conflicted"));
         break;
 
-      case 'AA': // unmerged, both added
-        results.push(createFileStatus('staged', 'conflicted'));
-        results.push(createFileStatus('unstaged', 'conflicted'));
+      case "AA": // unmerged, both added
+        results.push(createFileStatus("staged", "conflicted"));
+        results.push(createFileStatus("unstaged", "conflicted"));
         break;
 
-      case 'UU': // unmerged, both modified
-        results.push(createFileStatus('staged', 'conflicted'));
-        results.push(createFileStatus('unstaged', 'conflicted'));
+      case "UU": // unmerged, both modified
+        results.push(createFileStatus("staged", "conflicted"));
+        results.push(createFileStatus("unstaged", "conflicted"));
         break;
 
       // ============================================================================
       // NORMAL STATES - STAGED ONLY
       // ============================================================================
-      case 'A ': // added to index
-        results.push(createFileStatus('staged', 'added'));
+      case "A ": // added to index
+        results.push(createFileStatus("staged", "added"));
         break;
 
-      case 'M ': // modified in index
-        results.push(createFileStatus('staged', 'modified'));
+      case "M ": // modified in index
+        results.push(createFileStatus("staged", "modified"));
         break;
 
-      case 'D ': // deleted from index
-        results.push(createFileStatus('staged', 'deleted'));
+      case "D ": // deleted from index
+        results.push(createFileStatus("staged", "deleted"));
         break;
 
-      case 'R ': // renamed in index
-        results.push(createFileStatus('staged', 'renamed'));
+      case "R ": // renamed in index
+        results.push(createFileStatus("staged", "renamed"));
         break;
 
-      case 'C ': // copied in index
-        results.push(createFileStatus('staged', 'copied'));
+      case "C ": // copied in index
+        results.push(createFileStatus("staged", "copied"));
         break;
 
-      case 'T ': // file type changed in index
-        results.push(createFileStatus('staged', 'modified'));
+      case "T ": // file type changed in index
+        results.push(createFileStatus("staged", "modified"));
         break;
 
       // ============================================================================
       // NORMAL STATES - UNSTAGED ONLY
       // ============================================================================
-      case ' M': // modified in working directory
-        results.push(createFileStatus('unstaged', 'modified'));
+      case " M": // modified in working directory
+        results.push(createFileStatus("unstaged", "modified"));
         break;
 
-      case ' D': // deleted in working directory
-        results.push(createFileStatus('unstaged', 'deleted'));
+      case " D": // deleted in working directory
+        results.push(createFileStatus("unstaged", "deleted"));
         break;
 
-      case ' T': // file type changed in working directory
-        results.push(createFileStatus('unstaged', 'modified'));
+      case " T": // file type changed in working directory
+        results.push(createFileStatus("unstaged", "modified"));
         break;
 
-      case '??': // untracked file
-        results.push(createFileStatus('unstaged', 'added'));
+      case "??": // untracked file
+        results.push(createFileStatus("unstaged", "added"));
         break;
 
-      case '!!': // ignored file (should not normally appear in status)
+      case "!!": // ignored file (should not normally appear in status)
         // Skip ignored files
         break;
 
       // ============================================================================
       // NORMAL STATES - BOTH STAGED AND UNSTAGED
       // ============================================================================
-      case 'MM': // modified in both index and working directory
-        results.push(createFileStatus('staged', 'modified'));
-        results.push(createFileStatus('unstaged', 'modified'));
+      case "MM": // modified in both index and working directory
+        results.push(createFileStatus("staged", "modified"));
+        results.push(createFileStatus("unstaged", "modified"));
         break;
 
-      case 'AM': // added in index, modified in working directory
-        results.push(createFileStatus('staged', 'added'));
-        results.push(createFileStatus('unstaged', 'modified'));
+      case "AM": // added in index, modified in working directory
+        results.push(createFileStatus("staged", "added"));
+        results.push(createFileStatus("unstaged", "modified"));
         break;
 
-      case 'AD': // added in index, deleted in working directory
-        results.push(createFileStatus('staged', 'added'));
-        results.push(createFileStatus('unstaged', 'deleted'));
+      case "AD": // added in index, deleted in working directory
+        results.push(createFileStatus("staged", "added"));
+        results.push(createFileStatus("unstaged", "deleted"));
         break;
 
-      case 'MD': // modified in index, deleted in working directory
-        results.push(createFileStatus('staged', 'modified'));
-        results.push(createFileStatus('unstaged', 'deleted'));
+      case "MD": // modified in index, deleted in working directory
+        results.push(createFileStatus("staged", "modified"));
+        results.push(createFileStatus("unstaged", "deleted"));
         break;
 
-      case 'RM': // renamed in index, modified in working directory
-        results.push(createFileStatus('staged', 'renamed'));
-        results.push(createFileStatus('unstaged', 'modified'));
+      case "RM": // renamed in index, modified in working directory
+        results.push(createFileStatus("staged", "renamed"));
+        results.push(createFileStatus("unstaged", "modified"));
         break;
 
-      case 'RD': // renamed in index, deleted in working directory
-        results.push(createFileStatus('staged', 'renamed'));
-        results.push(createFileStatus('unstaged', 'deleted'));
+      case "RD": // renamed in index, deleted in working directory
+        results.push(createFileStatus("staged", "renamed"));
+        results.push(createFileStatus("unstaged", "deleted"));
         break;
 
-      case 'CM': // copied in index, modified in working directory
-        results.push(createFileStatus('staged', 'copied'));
-        results.push(createFileStatus('unstaged', 'modified'));
+      case "CM": // copied in index, modified in working directory
+        results.push(createFileStatus("staged", "copied"));
+        results.push(createFileStatus("unstaged", "modified"));
         break;
 
-      case 'CD': // copied in index, deleted in working directory
-        results.push(createFileStatus('staged', 'copied'));
-        results.push(createFileStatus('unstaged', 'deleted'));
+      case "CD": // copied in index, deleted in working directory
+        results.push(createFileStatus("staged", "copied"));
+        results.push(createFileStatus("unstaged", "deleted"));
         break;
 
       // ============================================================================

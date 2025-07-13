@@ -92,9 +92,7 @@ export function BranchesView({ gitManager, navigationActions }: BranchesViewProp
             <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
           </ActionPanel.Section>
 
-          <ActionPanel.Section>
-            {navigationActions}
-          </ActionPanel.Section>
+          <ActionPanel.Section>{navigationActions}</ActionPanel.Section>
         </ActionPanel>
       }
     >
@@ -225,9 +223,7 @@ function BranchListItem({
             <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
           </ActionPanel.Section>
 
-          <ActionPanel.Section>
-            {navigationActions}
-          </ActionPanel.Section>
+          <ActionPanel.Section>{navigationActions}</ActionPanel.Section>
         </ActionPanel>
       }
     />
@@ -272,9 +268,7 @@ function DetachedHeadListItem({
             <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
           </ActionPanel.Section>
 
-          <ActionPanel.Section>
-            {navigationActions}
-          </ActionPanel.Section>
+          <ActionPanel.Section>{navigationActions}</ActionPanel.Section>
         </ActionPanel>
       }
     />

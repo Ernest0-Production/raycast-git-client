@@ -44,9 +44,7 @@ export function StashesView({ gitManager, navigationActions, onNavigateToStatus 
             <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
           </ActionPanel.Section>
 
-          <ActionPanel.Section>
-            {navigationActions}
-          </ActionPanel.Section>
+          <ActionPanel.Section>{navigationActions}</ActionPanel.Section>
         </ActionPanel>
       }
     >
@@ -89,16 +87,20 @@ function StashListItem({
       actions={
         <ActionPanel>
           <ActionPanel.Section title="Stash Operations">
-            <StashActions stash={stash} index={index} gitManager={gitManager} onRefresh={onRefresh} onNavigateToStatus={onNavigateToStatus} />
+            <StashActions
+              stash={stash}
+              index={index}
+              gitManager={gitManager}
+              onRefresh={onRefresh}
+              onNavigateToStatus={onNavigateToStatus}
+            />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Repository">
             <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
           </ActionPanel.Section>
 
-          <ActionPanel.Section>
-            {navigationActions}
-          </ActionPanel.Section>
+          <ActionPanel.Section>{navigationActions}</ActionPanel.Section>
         </ActionPanel>
       }
     />

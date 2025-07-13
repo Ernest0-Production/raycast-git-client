@@ -54,17 +54,11 @@ export function FileActions({ file, gitManager, onRefresh }: FileActionsProps) {
     }
   };
 
-
-
   // Actions for staged files
   if (file.status === "staged") {
     return (
       <>
-        <Action
-          title="Unstage"
-          onAction={handleUnstageFile}
-          icon={Icon.Minus}
-        />
+        <Action title="Unstage" onAction={handleUnstageFile} icon={Icon.Minus} />
         <Action.Open
           title="Open File"
           target={file.path}
@@ -72,11 +66,7 @@ export function FileActions({ file, gitManager, onRefresh }: FileActionsProps) {
           icon={Icon.BlankDocument}
           shortcut={{ modifiers: ["cmd"], key: "o" }}
         />
-        <Action.OpenWith
-          title="Open With..."
-          path={file.path}
-          shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
-        />
+        <Action.OpenWith title="Open with…" path={file.path} shortcut={{ modifiers: ["cmd", "opt"], key: "o" }} />
         <Action.ShowInFinder
           path={file.path}
           title="Show in Finder"
@@ -101,11 +91,7 @@ export function FileActions({ file, gitManager, onRefresh }: FileActionsProps) {
           icon={Icon.Plus}
         />
         {file.type === "added" ? (
-          <Action.Trash
-            title="Move to Trash"
-            shortcut={{ modifiers: ["ctrl"], key: "x" }}
-            paths={[file.path]}
-          />
+          <Action.Trash title="Move to Trash" shortcut={{ modifiers: ["ctrl"], key: "x" }} paths={[file.path]} />
         ) : file.type === "conflicted" ? null : (
           <Action
             title="Discard Changes"
@@ -122,11 +108,7 @@ export function FileActions({ file, gitManager, onRefresh }: FileActionsProps) {
           icon={Icon.BlankDocument}
           shortcut={{ modifiers: ["cmd"], key: "o" }}
         />
-        <Action.OpenWith
-          title="Open With..."
-          path={file.path}
-          shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
-        />
+        <Action.OpenWith title="Open with…" path={file.path} shortcut={{ modifiers: ["cmd", "opt"], key: "o" }} />
         <Action.ShowInFinder
           path={file.path}
           title="Show in Finder"

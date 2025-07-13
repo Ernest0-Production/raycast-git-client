@@ -87,9 +87,7 @@ export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
             <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
           </ActionPanel.Section>
 
-          <ActionPanel.Section>
-            {navigationActions}
-          </ActionPanel.Section>
+          <ActionPanel.Section>{navigationActions}</ActionPanel.Section>
         </ActionPanel>
       }
     >
@@ -124,8 +122,6 @@ export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
           ))}
         </List.Section>
       )}
-
-
     </List>
   );
 }
@@ -139,7 +135,14 @@ interface FileListItemProps {
   onToggleDetail: () => void;
 }
 
-function FileListItem({ file, gitManager, onRefresh, navigationActions, isShowingDetail, onToggleDetail }: FileListItemProps) {
+function FileListItem({
+  file,
+  gitManager,
+  onRefresh,
+  navigationActions,
+  isShowingDetail,
+  onToggleDetail,
+}: FileListItemProps) {
   const { diff, isLoading } = useGitDiff({
     gitManager,
     options: { file: file.relativePath, staged: file.status === "staged" },
@@ -159,17 +162,11 @@ function FileListItem({ file, gitManager, onRefresh, navigationActions, isShowin
         <ActionPanel>
           <ActionPanel.Section title="File Operations">
             <FileActions file={file} gitManager={gitManager} onRefresh={onRefresh} />
-            <CreateStashAction
-              gitManager={gitManager}
-              onRefresh={onRefresh}
-              filePath={file.relativePath}
-            />
+            <CreateStashAction gitManager={gitManager} onRefresh={onRefresh} filePath={file.relativePath} />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="View Controls">
-            <Action.ToggleQuickLook
-              shortcut={{ modifiers: ["cmd"], key: "y" }}
-            />
+            <Action.ToggleQuickLook shortcut={{ modifiers: ["cmd"], key: "y" }} />
             <Action
               title={isShowingDetail ? "Hide Detail" : "Show Detail"}
               icon={Icon.AppWindowSidebarLeft}
@@ -190,9 +187,7 @@ function FileListItem({ file, gitManager, onRefresh, navigationActions, isShowin
             <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
           </ActionPanel.Section>
 
-          <ActionPanel.Section>
-            {navigationActions}
-          </ActionPanel.Section>
+          <ActionPanel.Section>{navigationActions}</ActionPanel.Section>
         </ActionPanel>
       }
     />

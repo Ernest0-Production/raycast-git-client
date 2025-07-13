@@ -21,7 +21,6 @@ async function handleStashAction(action: () => Promise<void>, onRefresh: () => v
 }
 
 export function StashActions({ stash, index, gitManager, onRefresh, onNavigateToStatus }: StashActionsProps) {
-
   const handleApply = async () => {
     if (
       await confirmAlert({
@@ -70,11 +69,9 @@ export function StashActions({ stash, index, gitManager, onRefresh, onNavigateTo
 
   return (
     <>
-      <Action title="Apply Stash"
-        icon={Icon.Download}
-        onAction={handleApply}
-      />
-      <Action title="Drop Stash"
+      <Action title="Apply Stash" icon={Icon.Download} onAction={handleApply} />
+      <Action
+        title="Drop Stash"
         style={Action.Style.Destructive}
         icon={Icon.Trash}
         onAction={handleDrop}
@@ -102,7 +99,15 @@ export function CreateStashAction({ gitManager, onRefresh, filePath }: CreateSta
   );
 }
 
-function CreateStashForm({ gitManager, onRefresh, filePath }: { gitManager: GitManager; onRefresh: () => void; filePath?: string }) {
+function CreateStashForm({
+  gitManager,
+  onRefresh,
+  filePath,
+}: {
+  gitManager: GitManager;
+  onRefresh: () => void;
+  filePath?: string;
+}) {
   const [message, setMessage] = useState("");
 
   const handleSubmit = async (values: { message: string }) => {
@@ -133,9 +138,7 @@ function CreateStashForm({ gitManager, onRefresh, filePath }: { gitManager: GitM
   };
 
   const formTitle = filePath ? "Stash File" : "Stash Changes";
-  const placeholder = filePath
-    ? `Describe changes for ${filePath}`
-    : "Describe the changes being stashed";
+  const placeholder = filePath ? `Describe changes for ${filePath}` : "Describe the changes being stashed";
 
   return (
     <Form
@@ -154,9 +157,7 @@ function CreateStashForm({ gitManager, onRefresh, filePath }: { gitManager: GitM
         value={message}
         onChange={setMessage}
       />
-      {filePath && (
-        <Form.Description text={`This will stash changes for: ${filePath}`} />
-      )}
+      {filePath && <Form.Description text={`This will stash changes for: ${filePath}`} />}
     </Form>
   );
 }

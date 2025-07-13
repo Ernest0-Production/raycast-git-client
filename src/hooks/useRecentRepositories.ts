@@ -20,7 +20,7 @@ export function useRecentRepositories() {
   const addToRecent = useCallback(
     (path: string) => {
       // Resolve tilde path
-      let resolvedPath = resolveTildePath(path)
+      const resolvedPath = resolveTildePath(path)
         // Trim '/' from last component
         .replace(/\/+$/, "");
 
