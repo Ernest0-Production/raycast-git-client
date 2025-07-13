@@ -6,6 +6,7 @@ import { GitManager } from "../../utils/git-utils";
 import { Commit, CommitFileChange, Preferences } from "../../types";
 import { join } from "path";
 import { useState } from "react";
+import { existsSync } from "fs";
 
 interface CommitDiffViewProps {
   commit: Commit;
@@ -15,6 +16,7 @@ interface CommitDiffViewProps {
 
 export function CommitDiffView({ commit, gitManager, navigationActions }: CommitDiffViewProps) {
   const [isShowingDetail, setIsShowingDetail] = useState(false);
+  const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
 
   const toggleDetail = () => {
     setIsShowingDetail(!isShowingDetail);
@@ -42,6 +44,7 @@ export function CommitDiffView({ commit, gitManager, navigationActions }: Commit
   return (
     <List
       navigationTitle={`Files - ${commit.shortHash}`}
+      onSelectionChange={(id) => setSelectedFilePath(id)}
       isShowingDetail={isShowingDetail}
       actions={
         <ActionPanel>
@@ -69,6 +72,7 @@ export function CommitDiffView({ commit, gitManager, navigationActions }: Commit
               navigationActions={navigationActions}
               isShowingDetail={isShowingDetail}
               onToggleDetail={toggleDetail}
+              selectedFilePath={selectedFilePath}
             />
           ))}
         </List.Section>
@@ -85,6 +89,7 @@ export function CommitDiffView({ commit, gitManager, navigationActions }: Commit
               navigationActions={navigationActions}
               isShowingDetail={isShowingDetail}
               onToggleDetail={toggleDetail}
+              selectedFilePath={selectedFilePath}
             />
           ))}
         </List.Section>
@@ -101,6 +106,7 @@ export function CommitDiffView({ commit, gitManager, navigationActions }: Commit
               navigationActions={navigationActions}
               isShowingDetail={isShowingDetail}
               onToggleDetail={toggleDetail}
+              selectedFilePath={selectedFilePath}
             />
           ))}
         </List.Section>
@@ -117,6 +123,7 @@ export function CommitDiffView({ commit, gitManager, navigationActions }: Commit
               navigationActions={navigationActions}
               isShowingDetail={isShowingDetail}
               onToggleDetail={toggleDetail}
+              selectedFilePath={selectedFilePath}
             />
           ))}
         </List.Section>
@@ -133,6 +140,7 @@ export function CommitDiffView({ commit, gitManager, navigationActions }: Commit
               navigationActions={navigationActions}
               isShowingDetail={isShowingDetail}
               onToggleDetail={toggleDetail}
+              selectedFilePath={selectedFilePath}
             />
           ))}
         </List.Section>
@@ -148,6 +156,7 @@ interface FileListItemProps {
   navigationActions: React.ReactNode;
   isShowingDetail: boolean;
   onToggleDetail: () => void;
+  selectedFilePath: string | null;
 }
 
 function FileListItem({
@@ -157,11 +166,20 @@ function FileListItem({
   navigationActions,
   isShowingDetail,
   onToggleDetail,
+  selectedFilePath,
 }: FileListItemProps) {
   const preferences = getPreferenceValues<Preferences>();
+
+  // Create a unique identifier for each file item
+  const fileId = `${file.path}-${commit.hash}`;
+
+  // Only load diff if this file is selected and detail view is showing
+  const shouldLoadDiff = isShowingDetail && selectedFilePath === fileId;
+
   const { diff, isLoading, error } = useGitDiff({
     gitManager,
     options: { file: file.path, commitHash: commit.hash },
+    execute: shouldLoadDiff,
   });
 
   const getAbsolutePath = (relativePath: string): string => {
@@ -209,8 +227,12 @@ function FileListItem({
     return file.path;
   };
 
+  const absolutePath = getAbsolutePath(file.path);
+  const fileExists = existsSync(absolutePath);
+
   return (
     <List.Item
+      id={fileId}
       title={getFileTitle(file)}
       icon={{ source: getFileIcon(file.status), tintColor: getFileColor(file.status) }}
       detail={
@@ -218,11 +240,11 @@ function FileListItem({
           <List.Item.Detail isLoading={isLoading} markdown={error ? `Error loading diff: ${error.message}` : diff} />
         ) : undefined
       }
-      quickLook={{ path: getAbsolutePath(file.path), name: file.path }}
+      quickLook={fileExists ? { path: absolutePath, name: file.path } : undefined}
       actions={
         <ActionPanel>
           <ActionPanel.Section title="View Controls">
-            <Action.ToggleQuickLook shortcut={{ modifiers: ["cmd"], key: "y" }} />
+            {fileExists && <Action.ToggleQuickLook shortcut={{ modifiers: ["cmd"], key: "y" }} />}
             <Action
               title={isShowingDetail ? "Hide Detail" : "Show Detail"}
               icon={Icon.AppWindowSidebarLeft}
@@ -232,23 +254,27 @@ function FileListItem({
           </ActionPanel.Section>
 
           <ActionPanel.Section title="File Access">
-            <Action.Open
-              title="Open File"
-              target={getAbsolutePath(file.path)}
-              application={preferences.defaultEditor}
-              icon={Icon.BlankDocument}
-              shortcut={{ modifiers: ["cmd"], key: "o" }}
-            />
-            <Action.OpenWith
-              title="Open with…"
-              path={getAbsolutePath(file.path)}
-              shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
-            />
-            <Action.ShowInFinder
-              path={getAbsolutePath(file.path)}
-              title="Show in Finder"
-              shortcut={{ modifiers: ["cmd", "shift"], key: "o" }}
-            />
+            {fileExists && (
+              <>
+                <Action.Open
+                  title="Open File"
+                  target={absolutePath}
+                  application={preferences.defaultEditor}
+                  icon={Icon.BlankDocument}
+                  shortcut={{ modifiers: ["cmd"], key: "o" }}
+                />
+                <Action.OpenWith
+                  title="Open with…"
+                  path={absolutePath}
+                  shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
+                />
+                <Action.ShowInFinder
+                  path={absolutePath}
+                  title="Show in Finder"
+                  shortcut={{ modifiers: ["cmd", "shift"], key: "o" }}
+                />
+              </>
+            )}
             <Action.CopyToClipboard
               title="Copy File Path"
               content={file.path}

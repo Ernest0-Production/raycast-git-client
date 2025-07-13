@@ -785,18 +785,14 @@ export class GitManager {
   /**
    * Gets the diff for a file or commit.
    */
-  async getDiff(options: { file?: string; commitHash?: string; staged?: boolean }): Promise<string> {
+  async getDiff(options: { file: string; commitHash?: string; staged?: boolean }): Promise<string> {
     if (options.commitHash) {
-      return this.git.show(options.commitHash);
+      return await this.git.diff([`${options.commitHash}^`, options.commitHash, "--", options.file]);
     }
-    if (options.file) {
-      // Always pass "--" before the file path to disambiguate between paths and revisions.
-      // This fixes errors when the file is deleted or the path looks like a revision.
-      const diffOptions = options.staged ? ["--staged"] : [];
-      diffOptions.push("--", options.file);
-      return this.git.diff(diffOptions);
-    }
-    return Promise.reject("File or commit hash must be specified");
+
+    const diffOptions = options.staged ? ["--staged"] : [];
+    diffOptions.push("--", options.file);
+    return await this.git.diff(diffOptions);
   }
 
   /**

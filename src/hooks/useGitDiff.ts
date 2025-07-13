@@ -1,9 +1,9 @@
-import { useCachedPromise } from "@raycast/utils";
+import { useCachedPromise, usePromise } from "@raycast/utils";
 import { GitManager } from "../utils/git-utils";
 
 interface UseGitDiffProps {
   gitManager: GitManager;
-  options: { file?: string; commitHash?: string; staged?: boolean };
+  options: { file: string; commitHash?: string; staged?: boolean };
   execute?: boolean;
 }
 
@@ -20,17 +20,13 @@ export function useGitDiff({ gitManager, options, execute = true }: UseGitDiffPr
     isLoading,
     error,
     revalidate,
-  } = useCachedPromise(
+  } = usePromise(
     async (file, commitHash, staged, repoPath) => {
       return await gitManager.getDiff({ file, commitHash, staged });
     },
     [file, commitHash, staged, gitManager.repoPath],
     {
       execute,
-      // Commit diffs never change, cache them longer
-      keepPreviousData: true,
-      // For file diffs, revalidate more frequently
-      initialData: "Loading...",
       onError: (error) => {
         console.error("Failed to fetch diff:", error);
       },
@@ -38,7 +34,7 @@ export function useGitDiff({ gitManager, options, execute = true }: UseGitDiffPr
   );
 
   // Format the diff with markdown syntax
-  const diff = rawDiff ? "```diff\n" + rawDiff + "\n```" : execute ? "No changes to display" : "";
+  const diff = rawDiff ? `\`\`\`diff\n${rawDiff}\n\`\`\`` : execute ? "No changes to display" : "";
 
   return {
     diff,
