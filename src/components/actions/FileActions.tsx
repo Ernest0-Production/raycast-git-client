@@ -3,6 +3,7 @@ import { useState } from "react";
 import { getPreferenceValues } from "@raycast/api";
 import { GitManager } from "../../utils/git-utils";
 import { FileStatus, Preferences } from "../../types";
+import { existsSync } from "fs";
 
 interface FileActionsProps {
   file: FileStatus;
@@ -15,6 +16,9 @@ interface FileActionsProps {
  */
 export function FileActions({ file, gitManager, onRefresh }: FileActionsProps) {
   const preferences = getPreferenceValues<Preferences>();
+
+  // Check if file actually exists on disk using existsSync
+  const fileExistsOnDisk = existsSync(file.path);
 
   const handleStageFile = async () => {
     try {
@@ -59,19 +63,23 @@ export function FileActions({ file, gitManager, onRefresh }: FileActionsProps) {
     return (
       <>
         <Action title="Unstage" onAction={handleUnstageFile} icon={Icon.Minus} />
-        <Action.Open
-          title="Open File"
-          target={file.path}
-          application={preferences.defaultEditor}
-          icon={Icon.BlankDocument}
-          shortcut={{ modifiers: ["cmd"], key: "o" }}
-        />
-        <Action.OpenWith title="Open with…" path={file.path} shortcut={{ modifiers: ["cmd", "opt"], key: "o" }} />
-        <Action.ShowInFinder
-          path={file.path}
-          title="Show in Finder"
-          shortcut={{ modifiers: ["cmd", "shift"], key: "o" }}
-        />
+        {fileExistsOnDisk && (
+          <>
+            <Action.Open
+              title="Open File"
+              target={file.path}
+              application={preferences.defaultEditor}
+              icon={Icon.BlankDocument}
+              shortcut={{ modifiers: ["cmd"], key: "o" }}
+            />
+            <Action.OpenWith title="Open with…" path={file.path} shortcut={{ modifiers: ["cmd", "opt"], key: "o" }} />
+            <Action.ShowInFinder
+              path={file.path}
+              title="Show in Finder"
+              shortcut={{ modifiers: ["cmd", "shift"], key: "o" }}
+            />
+          </>
+        )}
         <Action.CopyToClipboard
           title="Copy Path"
           content={file.relativePath}
@@ -101,19 +109,23 @@ export function FileActions({ file, gitManager, onRefresh }: FileActionsProps) {
             shortcut={{ modifiers: ["ctrl"], key: "x" }}
           />
         )}
-        <Action.Open
-          title="Open File"
-          target={file.path}
-          application={preferences.defaultEditor}
-          icon={Icon.BlankDocument}
-          shortcut={{ modifiers: ["cmd"], key: "o" }}
-        />
-        <Action.OpenWith title="Open with…" path={file.path} shortcut={{ modifiers: ["cmd", "opt"], key: "o" }} />
-        <Action.ShowInFinder
-          path={file.path}
-          title="Show in Finder"
-          shortcut={{ modifiers: ["cmd", "shift"], key: "o" }}
-        />
+        {fileExistsOnDisk && (
+          <>
+            <Action.Open
+              title="Open File"
+              target={file.path}
+              application={preferences.defaultEditor}
+              icon={Icon.BlankDocument}
+              shortcut={{ modifiers: ["cmd"], key: "o" }}
+            />
+            <Action.OpenWith title="Open with…" path={file.path} shortcut={{ modifiers: ["cmd", "opt"], key: "o" }} />
+            <Action.ShowInFinder
+              path={file.path}
+              title="Show in Finder"
+              shortcut={{ modifiers: ["cmd", "shift"], key: "o" }}
+            />
+          </>
+        )}
       </>
     );
   }

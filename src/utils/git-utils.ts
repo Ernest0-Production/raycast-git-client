@@ -65,52 +65,44 @@ export class GitManager {
       // Log the full command for debugging
       console.log(`[GIT] ${command_description}`);
 
-      // Create a separate technical toast for git streaming output
-      showToast({
-        style: Toast.Style.Animated,
-        title: command_description,
-        message: "Running...",
-      }).then((gitOutputToast) => {
-        let lastOutput = "";
-        let hasError = false;
+      showToast({ style: Toast.Style.Animated, title: command_description, message: "Running..." });
 
-        // Process stdout (standard output)
-        stdout.on("data", (data: Buffer) => {
-          const output = data.toString().trim();
-          if (output) {
-            lastOutput = output;
-            gitOutputToast.message = output;
-            // console.log(`[GIT STDOUT] ${output}`);
-          }
-        });
+      let lastOutput = "";
+      let hasError = false;
 
-        // Process stderr (errors)
-        stderr.on("data", (data: Buffer) => {
-          const error = data.toString().trim();
-          if (error) {
-            hasError = true;
-            lastOutput = error;
-            gitOutputToast.style = Toast.Style.Failure;
-            gitOutputToast.title = `Error running command: ${command_description}`;
-            gitOutputToast.message = error;
-            console.error(`[GIT STDERR] ${error}`);
-          }
-        });
+      // Process stdout (standard output)
+      stdout.on("data", (data: Buffer) => {
+        const output = data.toString().trim();
+        if (output) {
+          lastOutput = output;
+          showToast({ style: Toast.Style.Animated, title: command_description, message: output });
+          // console.log(`[GIT STDOUT] ${output}`);
+        }
+      });
 
-        // Show the final result on completion
-        stdout.on("end", () => {
-          if (!hasError) {
-            gitOutputToast.style = Toast.Style.Success;
-            gitOutputToast.title = command_description;
-            if (lastOutput) {
-              gitOutputToast.message = lastOutput;
-            } else {
-              gitOutputToast.message = "Command executed successfully";
-            }
+      // Process stderr (errors)
+      stderr.on("data", (data: Buffer) => {
+        const error = data.toString().trim();
+        if (error) {
+          hasError = true;
+          lastOutput = error;
+          showToast({ style: Toast.Style.Failure, title: `Error running command: ${command_description}`, message: error });
+          console.error(`[GIT STDERR] ${error}`);
+        }
+      });
+
+      // Show the final result on completion
+      stdout.on("end", () => {
+        if (!hasError) {
+          showToast({ style: Toast.Style.Success, title: command_description, message: lastOutput });
+          if (lastOutput) {
+            showToast({ style: Toast.Style.Success, title: command_description, message: lastOutput });
           } else {
-            gitOutputToast.title = `Error running command: ${command_description}`;
+            showToast({ style: Toast.Style.Success, title: command_description, message: "Command executed successfully" });
           }
-        });
+        } else {
+          showToast({ style: Toast.Style.Failure, title: `Error running command: ${command_description}`, message: "Command failed" });
+        }
       });
     });
   }
@@ -798,8 +790,10 @@ export class GitManager {
       return this.git.show(options.commitHash);
     }
     if (options.file) {
+      // Always pass "--" before the file path to disambiguate between paths and revisions.
+      // This fixes errors when the file is deleted or the path looks like a revision.
       const diffOptions = options.staged ? ["--staged"] : [];
-      diffOptions.push(options.file);
+      diffOptions.push("--", options.file);
       return this.git.diff(diffOptions);
     }
     return Promise.reject("File or commit hash must be specified");

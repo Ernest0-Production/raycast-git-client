@@ -14,6 +14,7 @@ import { CreateStashAction } from "../../components/actions/StashActions";
 import { GitManager } from "../../utils/git-utils";
 import { FileStatus } from "../../types";
 import { useState } from "react";
+import { existsSync } from "fs";
 
 interface StatusViewProps {
   gitManager: GitManager;
@@ -170,7 +171,7 @@ function FileListItem({
         tooltip: file.type.charAt(0).toUpperCase() + file.type.slice(1),
       }}
       detail={isShowingDetail ? <List.Item.Detail isLoading={isLoading} markdown={diff} /> : undefined}
-      quickLook={{ path: file.path, name: file.relativePath }}
+      quickLook={existsSync(file.path) ? { path: file.path, name: file.relativePath } : undefined}
       actions={
         <ActionPanel>
           <ActionPanel.Section title="File Operations">
@@ -179,7 +180,7 @@ function FileListItem({
           </ActionPanel.Section>
 
           <ActionPanel.Section title="View Controls">
-            <Action.ToggleQuickLook shortcut={{ modifiers: ["cmd"], key: "y" }} />
+            {existsSync(file.path) && <Action.ToggleQuickLook shortcut={{ modifiers: ["cmd"], key: "y" }} />}
             <Action
               title={isShowingDetail ? "Hide Detail" : "Show Detail"}
               icon={Icon.AppWindowSidebarLeft}
