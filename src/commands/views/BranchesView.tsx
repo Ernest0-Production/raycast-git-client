@@ -208,6 +208,10 @@ function BranchListItem({
       subtitle={branch.lastCommitMessage || "No commit message"}
       icon={getIcon()}
       accessories={accessories}
+      keywords={[
+        branch.upstream,
+        branch.remote
+      ].filter((keyword): keyword is string => Boolean(keyword))}
       actions={
         <ActionPanel>
           <ActionPanel.Section title="Branch Operations">
@@ -257,6 +261,9 @@ function DetachedHeadListItem({
       subtitle={detachedHead.commitMessage}
       icon={{ source: Icon.Anchor }}
       accessories={accessories}
+      keywords={[
+        detachedHead.commitHash,
+      ]}
       actions={
         <ActionPanel>
           <ActionPanel.Section title="Branch Management">

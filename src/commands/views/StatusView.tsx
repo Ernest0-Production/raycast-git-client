@@ -170,6 +170,10 @@ function FileListItem({
         value: { source: getFileStatusIcon(file), tintColor: getFileStatusColor(file) },
         tooltip: file.type.charAt(0).toUpperCase() + file.type.slice(1),
       }}
+      keywords={[
+        file.path,
+        file.oldPath
+      ].filter((keyword): keyword is string => Boolean(keyword))}
       detail={isShowingDetail ? <List.Item.Detail isLoading={isLoading} markdown={diff} /> : undefined}
       quickLook={existsSync(file.path) ? { path: file.path, name: file.relativePath } : undefined}
       actions={

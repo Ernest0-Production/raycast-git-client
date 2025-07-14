@@ -84,6 +84,11 @@ function StashListItem({
       icon={{ source: getAvatarIcon(stash.author), tooltip: stash.author }}
       subtitle={{ value: stash.author, tooltip: stash.authorEmail }}
       accessories={[{ date: stash.date }]}
+      keywords={[
+        stash.hash,
+        stash.author,
+        stash.authorEmail
+      ].filter(Boolean)}
       actions={
         <ActionPanel>
           <ActionPanel.Section title="Stash Operations">

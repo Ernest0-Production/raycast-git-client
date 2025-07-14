@@ -11,7 +11,7 @@ import { RepositoryDirectoryActions } from "../../components/actions/RepositoryD
 import { CommitDiffView } from "./CommitDiffView";
 import { ConfigureUrlTrackerForm } from "../../components/shared/ConfigureUrlTrackerForm";
 import { GitManager } from "../../utils/git-utils";
-import { loadUrlTrackerConfigs, extractUrlsFromCommitWithConfigs } from "../../utils/url-tracker-cache";
+import { loadUrlTrackerConfigs, extractUrlsFromCommitWithConfigs, replaceUrlPatternsWithLinks } from "../../utils/url-tracker-cache";
 import { Branch, Commit, UrlTrackerConfig } from "../../types";
 import { useMemo, useState, useEffect } from "react";
 
@@ -251,13 +251,10 @@ function CommitListItem({
     }
   }, [selectedCommitId, commit.hash, commit.message, urlTrackerConfigs]);
 
-  const formatCommitDetail = (commit: Commit): string => {
-    const getAbsolutePath = (relativePath: string): string => {
-      return `file://${gitManager.repoPath}/${relativePath}`;
-    };
-
-    // 1. Commit title (## heading)
-    let detail = `### ${commit.message}\n\n`;
+  const formatCommitDetail = (commit: Commit, urlTrackerConfigs: UrlTrackerConfig[]): string => {
+    // 1. Commit title (## heading) with URL patterns replaced by links
+    const commitMessageWithLinks = replaceUrlPatternsWithLinks(commit.message, urlTrackerConfigs);
+    let detail = `### ${commitMessageWithLinks}\n\n`;
 
     // 2. Rest of commit description (if exists)
     if (commit.body && commit.body.trim()) {
@@ -280,7 +277,7 @@ function CommitListItem({
                 .split("\n")
                 .map((line) => {
                   // Escape markdown special characters
-                  const escapedLine = line.trim().replace(/[*_#[\]()>\-+|~!]/g, "\\$&");
+                  const escapedLine = line.trim().replace(/[_#>+|~!]/g, "\\$&");
                   return escapedLine;
                 })
                 .filter((line) => line.length > 0)
@@ -295,60 +292,7 @@ function CommitListItem({
       detail += `${formattedBody}\n\n`;
     }
 
-    // 3. Changed files section with clickable links
-    if (commit.changedFiles && commit.changedFiles.length > 0) {
-      detail += "---\n\n";
-      detail += "### Changed Files\n\n";
-
-      commit.changedFiles.forEach((file) => {
-        const statusIcon = getFileStatusIcon(file.status);
-        const statusName = getFileStatusName(file.status);
-        const fileLink = `[${file.path}](${getAbsolutePath(file.path)})`;
-
-        if (file.oldPath) {
-          const oldFileLink = `[${file.oldPath}](${getAbsolutePath(file.oldPath)})`;
-          detail += `- ${statusIcon} **${statusName}**: ${oldFileLink} → ${fileLink}\n`;
-        } else {
-          detail += `- ${statusIcon} **${statusName}**: ${fileLink}\n`;
-        }
-      });
-    }
-
     return detail;
-  };
-
-  const getFileStatusIcon = (status: string): string => {
-    switch (status) {
-      case "A":
-        return "➕";
-      case "M":
-        return "✏️";
-      case "D":
-        return "❌";
-      case "R":
-        return "🔄";
-      case "C":
-        return "📋";
-      default:
-        return "📄";
-    }
-  };
-
-  const getFileStatusName = (status: string): string => {
-    switch (status) {
-      case "A":
-        return "Added";
-      case "M":
-        return "Modified";
-      case "D":
-        return "Deleted";
-      case "R":
-        return "Renamed";
-      case "C":
-        return "Copied";
-      default:
-        return "Unknown";
-    }
   };
 
   return (
@@ -358,10 +302,20 @@ function CommitListItem({
       icon={{ source: getAvatarIcon(commit.author), tooltip: commit.author }}
       subtitle={isShowingDetail ? undefined : { value: commit.author, tooltip: commit.authorEmail }}
       accessories={isShowingDetail ? undefined : [{ date: commit.date }]}
+      keywords={[
+        commit.hash,
+        commit.shortHash,
+        commit.body,
+        commit.author,
+        commit.authorEmail,
+        commit.branch,
+        ...(commit.refs || []),
+        ...(commit.changedFiles?.map(f => f.path.split("/").pop()) || [])
+      ].filter((keyword): keyword is string => Boolean(keyword))}
       detail={
         isShowingDetail ? (
           <List.Item.Detail
-            markdown={formatCommitDetail(commit)}
+            markdown={formatCommitDetail(commit, urlTrackerConfigs)}
             metadata={
               isShowingMetadata ? (
                 <List.Item.Detail.Metadata>

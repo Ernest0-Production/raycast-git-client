@@ -99,6 +99,51 @@ export function extractUrlsFromCommitWithConfigs(
 }
 
 /**
+ * Replaces URL patterns in text with markdown links using provided configurations.
+ */
+export function replaceUrlPatternsWithLinks(text: string, configs: UrlTrackerConfig[]): string {
+  let result = text;
+
+  for (const config of configs) {
+    try {
+      const regex = new RegExp(config.regex, "gi"); // Global flag to replace all matches
+
+      result = result.replace(regex, (match, captureGroup, offset, string) => {
+        // Check if this match is already inside a markdown link
+        const beforeMatch = string.substring(0, offset);
+        const afterMatch = string.substring(offset + match.length);
+
+        // Simple check for existing markdown link format [text](url)
+        const isInsideLink = beforeMatch.includes('[') && afterMatch.includes('](') &&
+          beforeMatch.lastIndexOf('[') > beforeMatch.lastIndexOf(']');
+
+        if (isInsideLink) {
+          return match; // Don't replace if already inside a link
+        }
+
+        let extractedKey: string;
+
+        if (captureGroup) {
+          // Use first capture group if available
+          extractedKey = captureGroup;
+        } else {
+          // Use full match if no capture groups
+          extractedKey = match;
+        }
+
+        const url = config.url_placeholder.replace("@key", extractedKey);
+        return `[${match}](${url})`;
+      });
+    } catch {
+      // Skip invalid regex patterns
+      console.error(`Invalid regex pattern in config "${config.title}"`);
+    }
+  }
+
+  return result;
+}
+
+/**
  * Extracts URLs from commit message using cached configurations.
  * @deprecated Use extractUrlsFromCommitWithConfigs with pre-loaded configs for better performance
  */

@@ -234,7 +234,15 @@ function FileListItem({
     <List.Item
       id={fileId}
       title={getFileTitle(file)}
-      icon={{ source: getFileIcon(file.status), tintColor: getFileColor(file.status) }}
+      icon={{
+        source: getFileIcon(file.status),
+        tintColor: getFileColor(file.status),
+        tooltip: file.status.charAt(0).toUpperCase() + file.status.slice(1),
+      }}
+      keywords={[
+        file.path,
+        file.oldPath
+      ].filter((keyword): keyword is string => Boolean(keyword))}
       detail={
         isShowingDetail ? (
           <List.Item.Detail isLoading={isLoading} markdown={error ? `Error loading diff: ${error.message}` : diff} />

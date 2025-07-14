@@ -47,7 +47,8 @@ export default function RecentRepositories() {
             key={repo.id}
             icon={Icon.Folder}
             title={repo.name}
-            accessories={[{ text: repo.path }]}
+            subtitle={repo.path}
+            keywords={[repo.path]}
             actions={
               <ActionPanel>
                 <ActionPanel.Section title="Repository Actions">
