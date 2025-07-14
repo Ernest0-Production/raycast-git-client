@@ -541,14 +541,25 @@ export class GitManager {
   /**
    * Checks out the specified branch.
    */
-  async checkout(branch: string): Promise<void> {
-    if (!branch || typeof branch !== "string" || branch.trim().length === 0) {
+  async checkoutBranch(branchName: string): Promise<void> {
+    if (!branchName || typeof branchName !== "string" || branchName.trim().length === 0) {
       throw new Error("Invalid branch name");
     }
-    if (branch.includes("..") || branch.includes(" ")) {
+    if (branchName.includes("..") || branchName.includes(" ")) {
       throw new Error("Branch name contains invalid characters");
     }
-    await this.git.checkout(branch.trim());
+    await this.git.checkout(branchName.trim());
+  }
+
+  /**
+   * Checks out a specific commit (creates detached HEAD state).
+   */
+  async checkoutCommit(commitHash: string): Promise<void> {
+    if (!commitHash || typeof commitHash !== "string" || commitHash.trim().length === 0) {
+      throw new Error("Invalid commit hash");
+    }
+
+    await this.git.checkout(commitHash.trim());
   }
 
   /**
@@ -681,18 +692,18 @@ export class GitManager {
    * Pulls changes.
    */
   async pull(rebase = false): Promise<void> {
+    const pullArgs = ["--prune", "--tags"];
     if (rebase) {
-      await this.git.pull(undefined, undefined, ["--rebase"]);
-    } else {
-      await this.git.pull();
+      pullArgs.push("--rebase");
     }
+    await this.git.pull(undefined, undefined, pullArgs);
   }
 
   /**
    * Fetches changes.
    */
   async fetch(): Promise<void> {
-    await this.git.fetch();
+    await this.git.fetch(["--all", "--prune", "--tags"]);
   }
 
   /**

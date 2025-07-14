@@ -6,7 +6,7 @@ import { useCommitsBranchFilter, ALL_BRANCHES_FILTER, DETACHED_HEAD_FILTER } fro
 import { ErrorView } from "../../components/shared/ErrorView";
 import { EmptyView } from "../../components/shared/EmptyView";
 import { CommitActions, CommitHistoryActions } from "../../components/actions/CommitActions";
-import { FetchAction } from "../../components/actions/BranchActions";
+import { FetchAction, PullAction } from "../../components/actions/BranchActions";
 import { RepositoryDirectoryActions } from "../../components/actions/RepositoryDirectoryActions";
 import { CommitDiffView } from "./CommitDiffView";
 import { ConfigureUrlTrackerForm } from "../../components/shared/ConfigureUrlTrackerForm";
@@ -44,6 +44,18 @@ export function CommitsView({ gitManager, navigationActions }: CommitsViewProps)
     branchesState?.detachedHead,
   );
   const { data: commits, isLoading, error, revalidate } = useGitCommits(gitManager, getActualBranchFilter());
+
+  // Check if the selected branch is a local branch (current or local)
+  const isLocalBranchSelected = useMemo(() => {
+    if (selectedBranch === ALL_BRANCHES_FILTER || selectedBranch === DETACHED_HEAD_FILTER) {
+      return false;
+    }
+
+    // Check if it's a local branch (current or local type)
+    return allBranches.some(branch =>
+      (branch.type === "current" || branch.type === "local") && branch.name === selectedBranch
+    );
+  }, [selectedBranch, allBranches]);
 
   if (error) {
     return (
@@ -166,6 +178,7 @@ export function CommitsView({ gitManager, navigationActions }: CommitsViewProps)
 
           <ActionPanel.Section title="History Management">
             <CommitHistoryActions onRefresh={revalidate} currentBranch={getActualBranchFilter()} />
+            {isLocalBranchSelected && <PullAction gitManager={gitManager} onRefresh={revalidate} />}
             <FetchAction gitManager={gitManager} onRefresh={revalidate} />
           </ActionPanel.Section>
 
@@ -191,6 +204,7 @@ export function CommitsView({ gitManager, navigationActions }: CommitsViewProps)
           onToggleMetadata={toggleMetadata}
           urlTrackerConfigs={urlTrackerConfigs}
           selectedCommitId={selectedCommitId}
+          isLocalBranchSelected={isLocalBranchSelected}
         />
       ))}
     </List>
@@ -208,6 +222,7 @@ interface CommitListItemProps {
   onToggleMetadata: () => void;
   urlTrackerConfigs: UrlTrackerConfig[];
   selectedCommitId: string | null;
+  isLocalBranchSelected: boolean;
 }
 
 function CommitListItem({
@@ -221,6 +236,7 @@ function CommitListItem({
   onToggleMetadata,
   urlTrackerConfigs,
   selectedCommitId,
+  isLocalBranchSelected,
 }: CommitListItemProps) {
   const { push } = useNavigation();
   const [commitUrls, setCommitUrls] = useState<Array<{ title: string; url: string }>>([]);
@@ -407,6 +423,7 @@ function CommitListItem({
           <ActionPanel.Section title="Repository Operations">
             <Action.Push title="Configure URL Tracker" icon={Icon.Gear} target={<ConfigureUrlTrackerForm />} />
             <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
+            {isLocalBranchSelected && <PullAction gitManager={gitManager} onRefresh={onRefresh} />}
             <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
           </ActionPanel.Section>
 

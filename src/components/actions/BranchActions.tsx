@@ -14,11 +14,22 @@ interface BranchActionsProps {
  */
 export function BranchActions({ branch, gitManager, onRefresh }: BranchActionsProps) {
   const handleCheckout = async () => {
-    try {
-      await gitManager.checkout(branch.name);
-      onRefresh();
-    } catch (error) {
-      // Git error is already shown by GitManager
+    const confirmed = await confirmAlert({
+      title: "Checkout branch",
+      message: `Are you sure you want to checkout branch "${branch.name}"?`,
+      primaryAction: {
+        title: "Checkout",
+        style: Alert.ActionStyle.Default,
+      },
+    });
+
+    if (confirmed) {
+      try {
+        await gitManager.checkoutBranch(branch.name);
+        onRefresh();
+      } catch (error) {
+        // Git error is already shown by GitManager
+      }
     }
   };
 
@@ -45,24 +56,6 @@ export function BranchActions({ branch, gitManager, onRefresh }: BranchActionsPr
   const handlePush = async () => {
     try {
       await gitManager.push();
-      onRefresh();
-    } catch (error) {
-      // Git error is already shown by GitManager
-    }
-  };
-
-  const handlePull = async () => {
-    try {
-      await gitManager.pull();
-      onRefresh();
-    } catch (error) {
-      // Git error is already shown by GitManager
-    }
-  };
-
-  const handleFetch = async () => {
-    try {
-      await gitManager.fetch();
       onRefresh();
     } catch (error) {
       // Git error is already shown by GitManager
@@ -141,24 +134,14 @@ export function BranchActions({ branch, gitManager, onRefresh }: BranchActionsPr
   if (branch.type === "current") {
     return (
       <>
-        <Action
-          title="Pull"
-          onAction={handlePull}
-          icon={Icon.ArrowDown}
-          shortcut={{ modifiers: ["cmd", "shift"], key: "l" }}
-        />
+        <PullAction gitManager={gitManager} onRefresh={onRefresh} />
         <Action
           title="Push"
           onAction={handlePush}
           icon={Icon.ArrowUp}
           shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
         />
-        <Action
-          title="Fetch"
-          onAction={handleFetch}
-          icon={Icon.ArrowClockwise}
-          shortcut={{ modifiers: ["cmd"], key: "r" }}
-        />
+        <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
       </>
     );
   }
@@ -197,11 +180,11 @@ export function BranchActions({ branch, gitManager, onRefresh }: BranchActionsPr
     return (
       <>
         <Action
-          title="Checkout as New Local Branch"
+          title="Checkout Remote Branch"
           onAction={() => handleCheckoutRemote(branch, gitManager, onRefresh)}
           icon={Icon.ArrowRight}
         />
-        <Action title="Fetch" onAction={handleFetch} icon={Icon.ArrowClockwise} />
+        <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
         <Action
           title="Delete Remote Branch"
           onAction={handleDeleteRemoteBranch}
@@ -220,12 +203,24 @@ export function BranchActions({ branch, gitManager, onRefresh }: BranchActionsPr
  * Create a local branch from a remote branch.
  */
 async function handleCheckoutRemote(branch: Branch, gitManager: GitManager, onRefresh: () => void) {
-  try {
-    // Create a local branch with the same name that tracks the remote branch
-    await gitManager.createBranch(branch.name);
-    onRefresh();
-  } catch (error) {
-    // Git error is already shown by GitManager
+  const confirmed = await confirmAlert({
+    title: "Checkout remote branch",
+    message: `Are you sure you want to checkout remote branch "${branch.name}"?`,
+    primaryAction: {
+      title: "Checkout",
+      style: Alert.ActionStyle.Default,
+    },
+  });
+
+  if (confirmed) {
+    try {
+      // Create a local branch with the same name that tracks the remote branch
+      await gitManager.createBranch(branch.name);
+      await gitManager.checkoutBranch(branch.name);
+      onRefresh();
+    } catch (error) {
+      // Git error is already shown by GitManager
+    }
   }
 }
 
@@ -248,6 +243,29 @@ export function FetchAction({ gitManager, onRefresh }: { gitManager: GitManager;
       onAction={handleFetch}
       icon={Icon.ArrowClockwise}
       shortcut={{ modifiers: ["cmd"], key: "r" }}
+    />
+  );
+}
+
+/**
+ * Global pull action that can be reused across different views.
+ */
+export function PullAction({ gitManager, onRefresh }: { gitManager: GitManager; onRefresh: () => void }) {
+  const handlePull = async () => {
+    try {
+      await gitManager.pull();
+      onRefresh();
+    } catch (error) {
+      // Git error is already shown by GitManager
+    }
+  };
+
+  return (
+    <Action
+      title="Pull"
+      onAction={handlePull}
+      icon={Icon.ArrowDown}
+      shortcut={{ modifiers: ["cmd", "shift"], key: "l" }}
     />
   );
 }

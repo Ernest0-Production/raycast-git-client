@@ -12,6 +12,26 @@ interface CommitActionsProps {
  * Reusable actions for working with commits.
  */
 export function CommitActions({ commit, gitManager, onRefresh }: CommitActionsProps) {
+  const handleCheckoutCommit = async () => {
+    const confirmed = await confirmAlert({
+      title: "Checkout commit",
+      message: `Are you sure you want to checkout commit "${commit.shortHash}"? This will put you in a detached HEAD state.`,
+      primaryAction: {
+        title: "Checkout",
+        style: Alert.ActionStyle.Default,
+      },
+    });
+
+    if (confirmed) {
+      try {
+        await gitManager.checkoutCommit(commit.hash);
+        onRefresh();
+      } catch (error) {
+        // Git error is already shown by GitManager
+      }
+    }
+  };
+
   const handleCherryPick = async () => {
     try {
       await gitManager.cherryPick(commit.hash);
@@ -63,6 +83,11 @@ export function CommitActions({ commit, gitManager, onRefresh }: CommitActionsPr
 
   return (
     <>
+      <Action
+        title="Checkout Commit"
+        onAction={handleCheckoutCommit}
+        icon={Icon.Checkmark}
+      />
       <Action
         title="Cherry-Pick Commit"
         onAction={handleCherryPick}
