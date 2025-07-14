@@ -797,12 +797,17 @@ export class GitManager {
    * Gets the diff for a file or commit.
    */
   async getDiff(options: { file: string; commitHash?: string; staged?: boolean }): Promise<string> {
+    const diffOptions: string[] = [];
+
     if (options.commitHash) {
-      return await this.git.diff([`${options.commitHash}^`, options.commitHash, "--", options.file]);
+      diffOptions.push(`${options.commitHash}^`, options.commitHash);
+    } else if (options.staged) {
+      diffOptions.push("--staged");
     }
 
-    const diffOptions = options.staged ? ["--staged"] : [];
+    diffOptions.push("--no-prefix");
     diffOptions.push("--", options.file);
+
     return await this.git.diff(diffOptions);
   }
 

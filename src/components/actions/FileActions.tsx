@@ -83,7 +83,7 @@ export function FileActions({ file, gitManager, onRefresh }: FileActionsProps) {
         <Action.CopyToClipboard
           title="Copy Path"
           content={file.relativePath}
-          shortcut={{ modifiers: ["cmd"], key: "c" }}
+          shortcut={{ modifiers: ["cmd", "shift"], key: "," }}
         />
       </>
     );

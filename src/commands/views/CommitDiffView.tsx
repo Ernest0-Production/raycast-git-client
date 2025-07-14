@@ -220,6 +220,23 @@ function FileListItem({
     }
   };
 
+  const getFileStatusText = (status: string) => {
+    switch (status) {
+      case "A":
+        return "Added";
+      case "M":
+        return "Modified";
+      case "D":
+        return "Deleted";
+      case "R":
+        return "Renamed";
+      case "C":
+        return "Copied";
+      default:
+        return status;
+    }
+  };
+
   const getFileTitle = (file: CommitFileChange): string => {
     if (file.oldPath && file.status === "R") {
       return `${file.oldPath} → ${file.path}`;
@@ -237,7 +254,7 @@ function FileListItem({
       icon={{
         source: getFileIcon(file.status),
         tintColor: getFileColor(file.status),
-        tooltip: file.status.charAt(0).toUpperCase() + file.status.slice(1),
+        tooltip: getFileStatusText(file.status),
       }}
       keywords={[
         file.path,
