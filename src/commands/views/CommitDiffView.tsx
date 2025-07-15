@@ -238,6 +238,9 @@ function FileListItem({
   };
 
   const getFileTitle = (file: CommitFileChange): string => {
+    if (isShowingDetail) {
+      return file.path.split('/').pop() || file.path;
+    }
     if (file.oldPath && file.status === "R") {
       return `${file.oldPath} → ${file.path}`;
     }
@@ -262,7 +265,10 @@ function FileListItem({
       ].filter((keyword): keyword is string => Boolean(keyword))}
       detail={
         isShowingDetail ? (
-          <List.Item.Detail isLoading={isLoading} markdown={error ? `Error loading diff: ${error.message}` : diff} />
+          <List.Item.Detail
+            isLoading={isLoading}
+            markdown={`${file.path}:\n\n${error ? `Error loading diff: ${error.message}` : diff ?? ""}`}
+          />
         ) : undefined
       }
       quickLook={fileExists ? { path: absolutePath, name: file.path } : undefined}
@@ -303,7 +309,7 @@ function FileListItem({
             <Action.CopyToClipboard
               title="Copy File Path"
               content={file.path}
-              shortcut={{ modifiers: ["cmd"], key: "c" }}
+              shortcut={{ modifiers: ["cmd", "shift"], key: "," }}
             />
           </ActionPanel.Section>
 

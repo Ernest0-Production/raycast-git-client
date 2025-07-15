@@ -6,6 +6,8 @@ interface RepositoryDirectoryActionsProps {
   repositoryPath: string;
   /** Whether repository actions have secondary priority (removes shortcuts) */
   secondary?: boolean;
+  /** Callback called when repository is opened via any "Open" action */
+  onOpen?: () => void;
 }
 
 /**
@@ -13,7 +15,7 @@ interface RepositoryDirectoryActionsProps {
  * Includes file system operations and opening in various applications.
  * When secondary=true, removes shortcuts to avoid conflicts with primary file actions.
  */
-export function RepositoryDirectoryActions({ repositoryPath, secondary = false }: RepositoryDirectoryActionsProps) {
+export function RepositoryDirectoryActions({ repositoryPath, secondary = false, onOpen }: RepositoryDirectoryActionsProps) {
   const preferences = getPreferenceValues<Preferences>();
 
   return (
@@ -24,6 +26,7 @@ export function RepositoryDirectoryActions({ repositoryPath, secondary = false }
         application={preferences.defaultEditor}
         icon={Icon.Folder}
         shortcut={secondary ? undefined : { modifiers: ["cmd"], key: "o" }}
+        onOpen={() => onOpen?.()}
       />
       <Action.ShowInFinder
         path={repositoryPath}
@@ -36,11 +39,13 @@ export function RepositoryDirectoryActions({ repositoryPath, secondary = false }
         application="Terminal"
         icon={Icon.Terminal}
         shortcut={{ modifiers: ["cmd", "shift"], key: "t" }}
+        onOpen={() => onOpen?.()}
       />
       <Action.OpenWith
         path={repositoryPath}
         title={secondary ? "Open Repository with…" : undefined}
         shortcut={secondary ? undefined : { modifiers: ["cmd", "opt"], key: "o" }}
+        onOpen={() => onOpen?.()}
       />
       <Action.CopyToClipboard
         title={secondary ? "Copy Repository Path" : "Copy Directory Path"}

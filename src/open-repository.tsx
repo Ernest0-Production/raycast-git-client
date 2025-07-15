@@ -1,9 +1,7 @@
 import { Action, Icon } from "@raycast/api";
-import { useEffect } from "react";
 import { GitView } from "./types";
 import { useCachedState } from "@raycast/utils";
 import { useGitRepository } from "./hooks/useGitRepository";
-import { useRecentRepositories } from "./hooks/useRecentRepositories";
 import { ErrorView } from "./components/shared/ErrorView";
 import { BranchesView } from "./commands/views/BranchesView";
 import { StatusView } from "./commands/views/StatusView";
@@ -17,17 +15,9 @@ interface Arguments {
 export default function OpenRepository({ arguments: args }: { arguments: Arguments }) {
   const [currentView, setCurrentView] = useCachedState<GitView>("git-current-view", "commits");
   const repositoryPath = args.path;
-  const { addToRecent } = useRecentRepositories();
 
   // Hook for working with a Git repository (synchronous validation)
   const { data: gitManager, error: repoError } = useGitRepository(repositoryPath);
-
-  // Add to recent repositories on successful validation
-  useEffect(() => {
-    if (gitManager && repositoryPath) {
-      addToRecent(repositoryPath);
-    }
-  }, [gitManager, repositoryPath, addToRecent]);
 
   // Validation error state
   if (repoError || !gitManager) {

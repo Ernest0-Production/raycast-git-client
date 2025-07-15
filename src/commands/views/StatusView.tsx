@@ -162,10 +162,17 @@ function FileListItem({
     execute: shouldLoadDiff,
   });
 
+  const getFileTitle = (file: FileStatus): string => {
+    if (isShowingDetail) {
+      return file.path.split('/').pop() || file.path;
+    }
+    return file.relativePath;
+  };
+
   return (
     <List.Item
       id={fileId}
-      title={file.relativePath}
+      title={getFileTitle(file)}
       icon={{
         value: { source: getFileStatusIcon(file), tintColor: getFileStatusColor(file) },
         tooltip: file.type.charAt(0).toUpperCase() + file.type.slice(1),
@@ -174,7 +181,15 @@ function FileListItem({
         file.path,
         file.oldPath
       ].filter((keyword): keyword is string => Boolean(keyword))}
-      detail={isShowingDetail ? <List.Item.Detail isLoading={isLoading} markdown={diff} /> : undefined}
+      detail={
+        isShowingDetail ? (
+          <List.Item.Detail
+            isLoading={isLoading}
+            markdown={`${file.relativePath}:\n\n${diff ?? ""}`}
+            metadata
+          />
+        ) : undefined
+      }
       quickLook={existsSync(file.path) ? { path: file.path, name: file.relativePath } : undefined}
       actions={
         <ActionPanel>

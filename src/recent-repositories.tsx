@@ -4,7 +4,7 @@ import { RepositoryDirectoryActions } from "./components/actions/RepositoryDirec
 import OpenRepository from "./open-repository";
 
 export default function RecentRepositories() {
-  const { repositories, clearRecentRepositories } = useRecentRepositories();
+  const { repositories, addToRecent, clearRecentRepositories } = useRecentRepositories();
 
   const handleClearRepositories = async () => {
     const confirmed = await confirmAlert({
@@ -56,18 +56,22 @@ export default function RecentRepositories() {
                     title="Open Repository"
                     target={<OpenRepository arguments={{ path: repo.path }} />}
                     icon={Icon.ArrowRight}
+                    onPush={() => addToRecent(repo.path)}
                   />
                 </ActionPanel.Section>
 
                 <ActionPanel.Section title="File System">
-                  <RepositoryDirectoryActions repositoryPath={repo.path} />
+                  <RepositoryDirectoryActions
+                    repositoryPath={repo.path}
+                    onOpen={() => addToRecent(repo.path)}
+                  />
                 </ActionPanel.Section>
 
                 <ActionPanel.Section title="Raycast">
                   <Action.CreateQuicklink
                     quicklink={{
                       link: `raycast://extensions/ernest0n/git-client/open-repository?arguments=${encodeURIComponent(JSON.stringify({ path: repo.path }))}`,
-                      name: `Git: ${repo.name}`,
+                      name: `Show ${repo.name} repository`,
                     }}
                     title="Create Quicklink"
                   />

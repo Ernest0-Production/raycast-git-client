@@ -805,10 +805,24 @@ export class GitManager {
       diffOptions.push("--staged");
     }
 
-    diffOptions.push("--no-prefix");
     diffOptions.push("--", options.file);
 
-    return await this.git.diff(diffOptions);
+    const cleanGitDiff = (diff: string): string => {
+      const lines = diff.split('\n');
+
+      // Найти первую строку с @@ (начало хунка изменений)
+      const firstChunkIndex = lines.findIndex(line => line.startsWith('@@'));
+
+      if (firstChunkIndex === -1) {
+        // Если нет @@, значит нет изменений контента
+        return '';
+      }
+
+      // Взять всё начиная с первой @@
+      return lines.slice(firstChunkIndex).join("\n");
+    };
+
+    return cleanGitDiff(await this.git.diff(diffOptions));
   }
 
   /**
