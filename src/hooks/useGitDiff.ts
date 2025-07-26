@@ -16,13 +16,30 @@ export function useGitDiff({ gitManager, options, execute = true }: UseGitDiffPr
   const { file, commitHash, staged } = options;
 
   const {
-    data: rawDiff,
+    data: rawDiffData,
     isLoading,
     error,
     revalidate,
   } = usePromise(
     async (file, commitHash, staged, repoPath) => {
-      return await gitManager.getDiff({ file, commitHash, staged });
+      const rawDiff = await gitManager.getDiff({ file, commitHash, staged });
+
+      if (rawDiff) {
+        const lines = rawDiff.split("\n");
+        if (lines.length > 200) {
+          return (
+            [
+              "```text",
+              "⚠️ Diff is too large to display (more than 200 lines).",
+              "Open this file in external editor to view the full diff.",
+              "```",
+            ].join("\n")
+          );
+        }
+        return `\`\`\`diff\n${rawDiff}\n\`\`\``;
+      }
+
+      return "";
     },
     [file, commitHash, staged, gitManager.repoPath],
     {
@@ -33,8 +50,8 @@ export function useGitDiff({ gitManager, options, execute = true }: UseGitDiffPr
     },
   );
 
-  // Format the diff with markdown syntax
-  const diff = rawDiff ? `\`\`\`diff\n${rawDiff}\n\`\`\`` : execute ? "No changes to display" : "";
+  // Return loading text while diff is being fetched
+  const diff = isLoading ? "Loading..." : rawDiffData;
 
   return {
     diff,

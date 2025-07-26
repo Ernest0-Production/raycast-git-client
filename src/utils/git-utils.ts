@@ -1,4 +1,5 @@
 import {
+  DiffNameStatus,
   DiffResult,
   DiffResultBinaryFile,
   DiffResultNameStatusFile,
@@ -491,51 +492,42 @@ export class GitManager {
    * Parses the changed files from git log --name-status diff output.
    */
   private parseCommitChangedFiles(diff: DiffResult): CommitFileChange[] {
+    // Helper function to map DiffNameStatus to typed status names
+    function mapDiffNameStatusToTypedStatus(status: DiffNameStatus): CommitFileChange["status"] {
+      switch (status) {
+        case DiffNameStatus.ADDED:
+          return "added";
+        case DiffNameStatus.MODIFIED:
+          return "modified";
+        case DiffNameStatus.DELETED:
+          return "deleted";
+        case DiffNameStatus.RENAMED:
+          return "renamed";
+        case DiffNameStatus.COPIED:
+          return "copied";
+        case DiffNameStatus.CHANGED:
+          return "changed";
+        default:
+          // Fallback for any unexpected status
+          return "modified";
+      }
+    }
+
     if (!diff || !diff.files) {
       return [];
     }
 
     return diff.files.map((file: DiffResultTextFile | DiffResultBinaryFile | DiffResultNameStatusFile) => {
-      // Handle renamed files (format: "R100 oldpath -> newpath")
-      if (file.file && file.file.includes(" -> ")) {
-        const [oldPath, newPath] = file.file.split(" -> ");
+      if ("status" in file && file.status) {
         return {
-          status: "R",
-          path: newPath.trim(),
-          oldPath: oldPath.trim(),
+          status: mapDiffNameStatusToTypedStatus(file.status),
+          path: file.file,
+          oldPath: file.from,
         };
       }
 
-      return {
-        status: this.mapDiffStatusToGitStatus(file),
-        path: file.file,
-        oldPath: "from" in file ? file.from : undefined,
-      };
+      throw new Error("Failed to parse commit changed files: unknown diff format");
     });
-  }
-
-  /**
-   * Maps simple-git diff status to standard git name-status format.
-   */
-  private mapDiffStatusToGitStatus(file: any): string {
-    // Check if file has binary flag
-    if (file.binary) {
-      return "M"; // Binary files are considered modified
-    }
-
-    // Check for insertions/deletions to determine status
-    if (file.insertions > 0 && file.deletions === 0) {
-      return "A"; // Added
-    }
-    if (file.insertions === 0 && file.deletions > 0) {
-      return "D"; // Deleted
-    }
-    if (file.insertions > 0 && file.deletions > 0) {
-      return "M"; // Modified
-    }
-
-    // Default to modified if we can't determine
-    return "M";
   }
 
   /**

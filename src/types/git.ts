@@ -72,8 +72,8 @@ export interface FileStatus {
  * Represents a changed file in a commit with git name-status information.
  */
 export interface CommitFileChange {
-  /** The status of the file change (A=added, M=modified, D=deleted, R=renamed, C=copied). */
-  status: string;
+  /** The status of the file change. */
+  status: "added" | "modified" | "deleted" | "renamed" | "copied" | "changed";
   /** The file path. */
   path: string;
   /** The old file path (for renamed/copied files). */

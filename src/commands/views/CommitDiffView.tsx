@@ -34,13 +34,6 @@ export function CommitDiffView({ commit, gitManager, navigationActions }: Commit
     );
   }
 
-  // Group files by status for better organization
-  const addedFiles = commit.changedFiles.filter((f) => f.status === "A");
-  const modifiedFiles = commit.changedFiles.filter((f) => f.status === "M");
-  const deletedFiles = commit.changedFiles.filter((f) => f.status === "D");
-  const renamedFiles = commit.changedFiles.filter((f) => f.status === "R");
-  const copiedFiles = commit.changedFiles.filter((f) => f.status === "C");
-
   return (
     <List
       navigationTitle={`Files - ${commit.shortHash}`}
@@ -61,90 +54,18 @@ export function CommitDiffView({ commit, gitManager, navigationActions }: Commit
         </ActionPanel>
       }
     >
-      {addedFiles.length > 0 && (
-        <List.Section title="Added Files">
-          {addedFiles.map((file) => (
-            <FileListItem
-              key={file.path}
-              file={file}
-              commit={commit}
-              gitManager={gitManager}
-              navigationActions={navigationActions}
-              isShowingDetail={isShowingDetail}
-              onToggleDetail={toggleDetail}
-              selectedFilePath={selectedFilePath}
-            />
-          ))}
-        </List.Section>
-      )}
-
-      {modifiedFiles.length > 0 && (
-        <List.Section title="Modified Files">
-          {modifiedFiles.map((file) => (
-            <FileListItem
-              key={file.path}
-              file={file}
-              commit={commit}
-              gitManager={gitManager}
-              navigationActions={navigationActions}
-              isShowingDetail={isShowingDetail}
-              onToggleDetail={toggleDetail}
-              selectedFilePath={selectedFilePath}
-            />
-          ))}
-        </List.Section>
-      )}
-
-      {deletedFiles.length > 0 && (
-        <List.Section title="Deleted Files">
-          {deletedFiles.map((file) => (
-            <FileListItem
-              key={file.path}
-              file={file}
-              commit={commit}
-              gitManager={gitManager}
-              navigationActions={navigationActions}
-              isShowingDetail={isShowingDetail}
-              onToggleDetail={toggleDetail}
-              selectedFilePath={selectedFilePath}
-            />
-          ))}
-        </List.Section>
-      )}
-
-      {renamedFiles.length > 0 && (
-        <List.Section title="Renamed Files">
-          {renamedFiles.map((file) => (
-            <FileListItem
-              key={file.path}
-              file={file}
-              commit={commit}
-              gitManager={gitManager}
-              navigationActions={navigationActions}
-              isShowingDetail={isShowingDetail}
-              onToggleDetail={toggleDetail}
-              selectedFilePath={selectedFilePath}
-            />
-          ))}
-        </List.Section>
-      )}
-
-      {copiedFiles.length > 0 && (
-        <List.Section title="Copied Files">
-          {copiedFiles.map((file) => (
-            <FileListItem
-              key={file.path}
-              file={file}
-              commit={commit}
-              gitManager={gitManager}
-              navigationActions={navigationActions}
-              isShowingDetail={isShowingDetail}
-              onToggleDetail={toggleDetail}
-              selectedFilePath={selectedFilePath}
-            />
-          ))}
-        </List.Section>
-      )}
+      {commit.changedFiles.map((file) => (
+        <FileListItem
+          key={file.path}
+          file={file}
+          commit={commit}
+          gitManager={gitManager}
+          navigationActions={navigationActions}
+          isShowingDetail={isShowingDetail}
+          onToggleDetail={toggleDetail}
+          selectedFilePath={selectedFilePath}
+        />
+      ))}
     </List>
   );
 }
@@ -186,54 +107,54 @@ function FileListItem({
     return join(gitManager.repoPath, relativePath);
   };
 
-  const getFileIcon = (status: string) => {
+  const getFileIcon = (status: CommitFileChange["status"]) => {
     switch (status) {
-      case "A":
+      case "added":
         return Icon.Plus;
-      case "M":
+      case "modified":
         return Icon.Pencil;
-      case "D":
+      case "deleted":
         return Icon.Trash;
-      case "R":
+      case "renamed":
         return Icon.ArrowsContract;
-      case "C":
+      case "copied":
         return Icon.Duplicate;
-      default:
-        return Icon.Document;
+      case "changed":
+        return Icon.Pencil;
     }
   };
 
-  const getFileColor = (status: string) => {
+  const getFileColor = (status: CommitFileChange["status"]) => {
     switch (status) {
-      case "A":
+      case "added":
         return "#22c55e"; // green
-      case "M":
+      case "modified":
         return "#f59e0b"; // amber
-      case "D":
+      case "deleted":
         return "#ef4444"; // red
-      case "R":
+      case "renamed":
         return "#3b82f6"; // blue
-      case "C":
+      case "copied":
         return "#8b5cf6"; // purple
-      default:
-        return undefined;
+      case "changed":
+        return "#f59e0b"; // amber
     }
   };
 
-  const getFileStatusText = (status: string) => {
+  const getFileStatusText = (status: CommitFileChange["status"]) => {
     switch (status) {
-      case "A":
+      case "added":
         return "Added";
-      case "M":
+      case "modified":
         return "Modified";
-      case "D":
+      case "deleted":
         return "Deleted";
-      case "R":
+      case "renamed":
         return "Renamed";
-      case "C":
+      case "copied":
         return "Copied";
-      default:
-        return status;
+      case "changed":
+        return "Changed";
     }
   };
 
