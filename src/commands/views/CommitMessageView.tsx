@@ -50,6 +50,7 @@ export function CommitMessageForm({ gitManager, onRefresh }: { gitManager: GitMa
             aiResponse.on("data", (chunk) => {
                 setAiMessage(prev => prev + chunk);
             });
+            setAiMessage("");
             setDraftMessage(await aiResponse);
 
             await showToast({
