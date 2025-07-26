@@ -299,14 +299,13 @@ function CommitListItem({
     <List.Item
       id={commit.hash}
       title={commit.message}
-      icon={{ source: getAvatarIcon(commit.author), tooltip: commit.author }}
       subtitle={isShowingDetail ? undefined : { value: commit.author, tooltip: commit.authorEmail }}
       accessories={isShowingDetail ? undefined : [{ date: commit.date }]}
       keywords={[
         commit.hash,
         commit.shortHash,
         commit.body,
-        commit.author,
+        ...commit.author.split(" "),
         commit.authorEmail,
         commit.branch,
         ...(commit.refs || []),

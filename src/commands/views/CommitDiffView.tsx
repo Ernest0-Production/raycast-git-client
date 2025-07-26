@@ -237,23 +237,14 @@ function FileListItem({
     }
   };
 
-  const getFileTitle = (file: CommitFileChange): string => {
-    if (isShowingDetail) {
-      return file.path.split('/').pop() || file.path;
-    }
-    if (file.oldPath && file.status === "R") {
-      return `${file.oldPath} → ${file.path}`;
-    }
-    return file.path;
-  };
-
   const absolutePath = getAbsolutePath(file.path);
   const fileExists = existsSync(absolutePath);
 
   return (
     <List.Item
       id={fileId}
-      title={getFileTitle(file)}
+      title={file.path.split('/').pop() || file.path}
+      subtitle={isShowingDetail ? undefined : file.path}
       icon={{
         source: getFileIcon(file.status),
         tintColor: getFileColor(file.status),

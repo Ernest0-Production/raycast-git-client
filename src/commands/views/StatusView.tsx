@@ -162,17 +162,11 @@ function FileListItem({
     execute: shouldLoadDiff,
   });
 
-  const getFileTitle = (file: FileStatus): string => {
-    if (isShowingDetail) {
-      return file.path.split('/').pop() || file.path;
-    }
-    return file.relativePath;
-  };
-
   return (
     <List.Item
       id={fileId}
-      title={getFileTitle(file)}
+      title={file.path.split('/').pop() || file.path}
+      subtitle={isShowingDetail ? undefined : file.relativePath}
       icon={{
         value: { source: getFileStatusIcon(file), tintColor: getFileStatusColor(file) },
         tooltip: file.type.charAt(0).toUpperCase() + file.type.slice(1),

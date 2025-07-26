@@ -99,7 +99,12 @@ export function FileActions({ file, gitManager, onRefresh }: FileActionsProps) {
           icon={Icon.Plus}
         />
         {file.type === "added" ? (
-          <Action.Trash title="Move to Trash" shortcut={{ modifiers: ["ctrl"], key: "x" }} paths={[file.path]} />
+          <Action.Trash
+            title="Move to Trash"
+            shortcut={{ modifiers: ["ctrl"], key: "x" }}
+            paths={[file.path]}
+            onTrash={onRefresh}
+          />
         ) : file.type === "conflicted" ? null : (
           <Action
             title="Discard Changes"
