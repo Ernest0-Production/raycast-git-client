@@ -59,7 +59,7 @@ export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
   }
 
   const stagedFiles = files.filter((f) => f.status === "staged");
-  const unstagedFiles = files.filter((f) => f.status === "unstaged");
+  const unstagedFiles = files.filter((f) => f.status === "unstaged" || f.status === "untracked");
 
   return (
     <List
@@ -158,7 +158,7 @@ function FileListItem({
 
   const { diff, isLoading } = useGitDiff({
     gitManager,
-    options: { file: file.relativePath, staged: file.status === "staged" },
+    options: { file: file.relativePath, status: file.status },
     execute: shouldLoadDiff,
   });
 

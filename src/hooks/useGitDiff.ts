@@ -1,9 +1,10 @@
 import { useCachedPromise, usePromise } from "@raycast/utils";
 import { GitManager } from "../utils/git-utils";
+import { FileStatus } from "../types";
 
 interface UseGitDiffProps {
   gitManager: GitManager;
-  options: { file: string; commitHash?: string; staged?: boolean };
+  options: { file: string; commitHash?: string; status?: FileStatus["status"] };
   execute?: boolean;
 }
 
@@ -13,7 +14,7 @@ interface UseGitDiffProps {
  * - File diffs are cached short-term with revalidation
  */
 export function useGitDiff({ gitManager, options, execute = true }: UseGitDiffProps) {
-  const { file, commitHash, staged } = options;
+  const { file, commitHash, status } = options;
 
   const {
     data: rawDiffData,
@@ -21,8 +22,8 @@ export function useGitDiff({ gitManager, options, execute = true }: UseGitDiffPr
     error,
     revalidate,
   } = usePromise(
-    async (file, commitHash, staged, repoPath) => {
-      const rawDiff = await gitManager.getDiff({ file, commitHash, staged });
+    async (file, commitHash, status, repoPath) => {
+      const rawDiff = await gitManager.getDiff({ file, commitHash, status });
 
       if (rawDiff) {
         const lines = rawDiff.split("\n");
@@ -41,7 +42,7 @@ export function useGitDiff({ gitManager, options, execute = true }: UseGitDiffPr
 
       return "";
     },
-    [file, commitHash, staged, gitManager.repoPath],
+    [file, commitHash, status, gitManager.repoPath],
     {
       execute,
       onError: (error) => {

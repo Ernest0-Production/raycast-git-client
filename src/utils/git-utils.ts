@@ -4,12 +4,13 @@ import {
   DiffResultBinaryFile,
   DiffResultNameStatusFile,
   DiffResultTextFile,
-  LogOptions,
+  FileStatusResult,
   simpleGit,
   SimpleGit,
 } from "simple-git";
 import { showToast, Toast, getPreferenceValues } from "@raycast/api";
 import { join } from "path";
+import { readFileSync, existsSync } from "fs";
 import {
   Branch,
   FileStatus,
@@ -277,12 +278,12 @@ export class GitManager {
    * - 'UU' = unmerged, both modified (conflicted)
    * - '??' = untracked file (unstaged)
    */
-  private parseFileStatus(fileStatus: any): FileStatus[] {
+  private parseFileStatus(fileStatus: FileStatusResult): FileStatus[] {
     const results: FileStatus[] = [];
     const { index, working_dir, path, from } = fileStatus;
 
     // Helper function to create file status object
-    const createFileStatus = (status: "staged" | "unstaged", type: FileStatus["type"]): FileStatus => ({
+    const createFileStatus = (status: FileStatus["status"], type: FileStatus["type"]): FileStatus => ({
       path: this.getAbsolutePath(path),
       relativePath: path,
       status,
@@ -375,7 +376,7 @@ export class GitManager {
         break;
 
       case "??": // untracked file
-        results.push(createFileStatus("unstaged", "added"));
+        results.push(createFileStatus("untracked", "added"));
         break;
 
       case "!!": // ignored file (should not normally appear in status)
@@ -788,12 +789,17 @@ export class GitManager {
   /**
    * Gets the diff for a file or commit.
    */
-  async getDiff(options: { file: string; commitHash?: string; staged?: boolean }): Promise<string> {
+  async getDiff(options: { file: string; commitHash?: string; status?: FileStatus["status"] }): Promise<string> {
     const diffOptions: string[] = [];
+
+    if (options.status === "untracked") {
+      const filePath = this.getAbsolutePath(options.file);
+      return readFileSync(filePath, 'utf-8').replace(/^/gm, '+');
+    }
 
     if (options.commitHash) {
       diffOptions.push(`${options.commitHash}^`, options.commitHash);
-    } else if (options.staged) {
+    } else if (options.status === "staged") {
       diffOptions.push("--staged");
     }
 
@@ -814,7 +820,8 @@ export class GitManager {
       return lines.slice(firstChunkIndex).join("\n");
     };
 
-    return cleanGitDiff(await this.git.diff(diffOptions));
+    const diff = await this.git.diff(diffOptions);
+    return cleanGitDiff(diff);
   }
 
   /**

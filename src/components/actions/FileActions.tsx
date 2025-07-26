@@ -90,7 +90,7 @@ export function FileActions({ file, gitManager, onRefresh }: FileActionsProps) {
   }
 
   // Actions for unstaged files (includes former untracked and conflicted files)
-  if (file.status === "unstaged") {
+  if (file.status === "unstaged" || file.status === "untracked") {
     return (
       <>
         <Action
