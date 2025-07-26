@@ -79,7 +79,7 @@ export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
           </ActionPanel.Section>
 
           <ActionPanel.Section title="File Operations">
-            <FileCommitActions gitManager={gitManager} onRefresh={revalidate} />
+            <FileCommitActions gitManager={gitManager} onRefresh={revalidate} hasStagedChanges={stagedFiles.length > 0} />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Stash Operations">
@@ -106,6 +106,7 @@ export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
               isShowingDetail={isShowingDetail}
               onToggleDetail={toggleDetail}
               selectedFilePath={selectedFilePath}
+              hasStagedChanges={stagedFiles.length > 0}
             />
           ))}
         </List.Section>
@@ -123,6 +124,7 @@ export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
               isShowingDetail={isShowingDetail}
               onToggleDetail={toggleDetail}
               selectedFilePath={selectedFilePath}
+              hasStagedChanges={stagedFiles.length > 0}
             />
           ))}
         </List.Section>
@@ -139,6 +141,7 @@ interface FileListItemProps {
   isShowingDetail: boolean;
   onToggleDetail: () => void;
   selectedFilePath: string | null;
+  hasStagedChanges: boolean;
 }
 
 function FileListItem({
@@ -149,6 +152,7 @@ function FileListItem({
   isShowingDetail,
   onToggleDetail,
   selectedFilePath,
+  hasStagedChanges,
 }: FileListItemProps) {
   // Create a unique identifier for each file item
   const fileId = `${file.relativePath}-${file.status}`;
@@ -203,7 +207,7 @@ function FileListItem({
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Commit Operations">
-            <FileCommitActions gitManager={gitManager} onRefresh={onRefresh} />
+            <FileCommitActions gitManager={gitManager} onRefresh={onRefresh} hasStagedChanges={hasStagedChanges} />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Stash Operations">

@@ -141,7 +141,15 @@ export function FileActions({ file, gitManager, onRefresh }: FileActionsProps) {
 /**
  * Actions for committing changes.
  */
-export function CommitActions({ gitManager, onRefresh }: { gitManager: GitManager; onRefresh: () => void }) {
+export function CommitActions({
+  gitManager,
+  onRefresh,
+  hasStagedChanges
+}: {
+  gitManager: GitManager;
+  onRefresh: () => void;
+  hasStagedChanges: boolean;
+}) {
   const handleStageAll = async () => {
     try {
       await gitManager.stageAll();
@@ -182,11 +190,13 @@ export function CommitActions({ gitManager, onRefresh }: { gitManager: GitManage
 
   return (
     <>
-      <Action.Push
-        title="Commit Changes"
-        icon={Icon.Message}
-        target={<CommitMessageForm gitManager={gitManager} onRefresh={onRefresh} />}
-      />
+      {hasStagedChanges && (
+        <Action.Push
+          title="Commit Changes"
+          icon={Icon.Message}
+          target={<CommitMessageForm gitManager={gitManager} onRefresh={onRefresh} />}
+        />
+      )}
       <Action
         title="Stage All Files"
         onAction={handleStageAll}

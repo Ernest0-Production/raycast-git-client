@@ -134,7 +134,7 @@ export function CommitMessageForm({ gitManager, onRefresh }: { gitManager: GitMa
                             onAction={() => handleCommit(true, true)}
                             icon={Icon.ExclamationMark}
                             style={Action.Style.Destructive}
-                            shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
+                            shortcut={{ modifiers: ["cmd", "opt", "shift"], key: "enter" }}
                         />
                     </ActionPanel.Section>
 
