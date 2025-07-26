@@ -1,10 +1,9 @@
-import { ActionPanel, Action, Icon, Color, confirmAlert, Alert, showToast, Toast, Form, environment, popToRoot, AI } from "@raycast/api";
-import { useState } from "react";
+import { Action, Icon, Color, confirmAlert, Alert } from "@raycast/api";
 import { getPreferenceValues } from "@raycast/api";
-import { useCachedState } from "@raycast/utils";
 import { GitManager } from "../../utils/git-utils";
 import { FileStatus, Preferences } from "../../types";
 import { existsSync } from "fs";
+import { CommitMessageForm } from "../../commands/views/CommitMessageView";
 
 interface FileActionsProps {
   file: FileStatus;
@@ -186,7 +185,7 @@ export function CommitActions({ gitManager, onRefresh }: { gitManager: GitManage
       <Action.Push
         title="Commit Changes"
         icon={Icon.Message}
-        target={<CommitForm gitManager={gitManager} onRefresh={onRefresh} />}
+        target={<CommitMessageForm gitManager={gitManager} onRefresh={onRefresh} />}
       />
       <Action
         title="Stage All Files"
@@ -211,176 +210,7 @@ export function CommitActions({ gitManager, onRefresh }: { gitManager: GitManage
   );
 }
 
-/**
- * Form for creating a commit with AI generation support.
- */
-function CommitForm({ gitManager, onRefresh }: { gitManager: GitManager; onRefresh: () => void }) {
-  const preferences = getPreferenceValues<Preferences>();
-  const [draftMessage, setDraftMessage] = useCachedState(`commit-draft-${gitManager.repoPath}`, "");
-  const [amend, setAmend] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
 
-  const clearDraft = () => {
-    setDraftMessage("");
-  };
-
-    const generateCommitMessage = async () => {
-    try {
-      setIsGenerating(true);
-      
-      // Get staged changes diff
-      const diff = await gitManager.getDiff({ staged: true });
-      if (!diff || diff.trim() === "") {
-        await showToast({
-          style: Toast.Style.Failure,
-          title: "No staged changes",
-          message: "Please stage some changes before generating commit message."
-        });
-        return;
-      }
-
-      // Check if AI is available and use it
-      try {
-        const prompt = `${preferences.aiCommitPrompt}
-
-Git diff:
-${diff}`;
-
-        const aiResponse = await AI.ask(prompt);
-        setDraftMessage(aiResponse.trim());
-        
-        await showToast({
-          style: Toast.Style.Success,
-          title: "Commit message generated",
-          message: "AI generated commit message. Review and edit as needed."
-        });
-      } catch (aiError) {
-        // Fallback: AI not available, show manual generation prompt
-        await showToast({
-          style: Toast.Style.Failure,
-          title: "AI not available",
-          message: "Raycast AI is not available. Please enter commit message manually."
-        });
-      }
-    } catch (error) {
-      await showToast({
-        style: Toast.Style.Failure,
-        title: "Failed to generate commit message",
-        message: error instanceof Error ? error.message : "Unknown error occurred"
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleCommit = async (push = false, forcePush = false) => {
-    if (!draftMessage || !draftMessage.trim()) {
-      await showToast({
-        style: Toast.Style.Failure,
-        title: "Commit message is required",
-      });
-      return;
-    }
-
-    // Confirm force push if requested
-    if (push && forcePush) {
-      const confirmed = await confirmAlert({
-        title: "Force Push Confirmation",
-        message: "Force push will rewrite Git history on the remote repository. This can cause problems for other collaborators. Are you sure you want to continue?",
-        primaryAction: {
-          title: "Force Push",
-          style: Alert.ActionStyle.Destructive,
-        },
-        dismissAction: {
-          title: "Cancel",
-        },
-      });
-
-      if (!confirmed) {
-        return;
-      }
-    }
-
-    try {
-      // Commit changes
-      await gitManager.commit(draftMessage.trim(), amend);
-      
-      // Clear draft after successful commit
-      clearDraft();
-      
-      // Push if requested
-      if (push) {
-        await gitManager.push(forcePush);
-      }
-      
-      onRefresh();
-      await popToRoot();
-    } catch (error) {
-      // Git error is already shown by GitManager
-    }
-  };
-
-  const handleSubmit = async (values: { message: string; amend: boolean }) => {
-    setDraftMessage(values.message);
-    await handleCommit();
-  };
-
-  return (
-    <Form
-      actions={
-        <ActionPanel>
-          <ActionPanel.Section title="Commit Actions">
-            <Action.SubmitForm 
-              title={amend ? "Amend Commit" : "Create Commit"} 
-              onSubmit={handleSubmit}
-              icon={Icon.CheckCircle}
-            />
-            <Action
-              title={amend ? "Amend and Push" : "Commit and Push"}
-              onAction={() => handleCommit(true, false)}
-              icon={Icon.Upload}
-              shortcut={{ modifiers: ["cmd"], key: "p" }}
-            />
-            <Action
-              title={amend ? "Amend and Force Push" : "Commit and Force Push"}
-              onAction={() => handleCommit(true, true)}
-              icon={Icon.ExclamationMark}
-              style={Action.Style.Destructive}
-              shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
-            />
-          </ActionPanel.Section>
-
-                     <ActionPanel.Section title="AI Assistant">
-             <Action
-               title="Generate Commit Message"
-               onAction={generateCommitMessage}
-               icon={Icon.Wand}
-               shortcut={{ modifiers: ["cmd"], key: "g" }}
-               isLoading={isGenerating}
-             />
-           </ActionPanel.Section>
-        </ActionPanel>
-      }
-    >
-      <Form.TextArea
-        id="message"
-        title="Commit message"
-        placeholder="Enter commit message or use AI generation..."
-        value={draftMessage}
-        onChange={setDraftMessage}
-        info="Draft is automatically saved and will be cleared after successful commit"
-      />
-      <Form.Checkbox 
-        id="amend" 
-        title="Amend last commit" 
-        label="Amend last commit" 
-        value={amend} 
-        onChange={setAmend}
-        info="Modify the last commit instead of creating a new one"
-      />
-    </Form>
-  );
-}
 
 /**
  * Icons for different types of changes

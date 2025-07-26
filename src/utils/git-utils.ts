@@ -789,14 +789,18 @@ export class GitManager {
   /**
    * Gets the diff for a file or commit.
    */
-  async getDiff(options: { file: string; commitHash?: string; status?: FileStatus["status"] }): Promise<string> {
-    const diffOptions: string[] = [];
+  async getDiff(options?: { file: string; commitHash?: string; status?: FileStatus["status"] }): Promise<string> {
+    // If no commitHash and no status, return diff of all staged changes
+    if (!options) {
+      return await this.git.diff(["--staged"]);
+    }
 
     if (options.status === "untracked") {
       const filePath = this.getAbsolutePath(options.file);
       return readFileSync(filePath, 'utf-8').replace(/^/gm, '+');
     }
 
+    const diffOptions: string[] = [];
     if (options.commitHash) {
       diffOptions.push(`${options.commitHash}^`, options.commitHash);
     } else if (options.status === "staged") {

@@ -66,7 +66,7 @@
       "required": false,
       "type": "textfield",
       "title": "AI Commit Message System Prompt",
-      "default": "You are a helpful assistant that generates concise, clear Git commit messages. Analyze the provided git diff and generate a conventional commit message that accurately describes the changes. Use conventional commit format: type(scope): description. Focus on what changed and why.",
+      "default": "You are a helpful assistant that generates concise, clear Git commit messages. Analyze the provided git diff and generate a conventional commit message that accurately describes the changes. Use conventional commit format: <short title>\n<listed changes>. Focus on what changed and why.",
       "description": "System prompt used when generating commit messages with Raycast AI"
     }
   ],
