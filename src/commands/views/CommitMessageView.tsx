@@ -50,8 +50,8 @@ export function CommitMessageForm({ gitManager, onRefresh }: { gitManager: GitMa
             aiResponse.on("data", (chunk) => {
                 setAiMessage(prev => prev + chunk);
             });
-            setAiMessage("");
             setDraftMessage(await aiResponse);
+            setAiMessage("");
 
             await showToast({
                 style: Toast.Style.Success,
@@ -156,7 +156,7 @@ export function CommitMessageForm({ gitManager, onRefresh }: { gitManager: GitMa
                 id="message"
                 title="Commit message"
                 placeholder="Enter commit message or use AI generation..."
-                value={aiMessage || draftMessage}
+                value={aiMessage.length > 0 ? aiMessage : draftMessage}
                 error={draftMessage.length > 0 ? undefined : "Required"}
                 onChange={setDraftMessage}
                 info="Draft is automatically saved and will be cleared after successful commit"

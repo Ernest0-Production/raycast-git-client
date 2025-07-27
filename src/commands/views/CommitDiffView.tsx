@@ -38,6 +38,7 @@ export function CommitDiffView({ commit, gitManager, navigationActions }: Commit
     <List
       navigationTitle={`Files - ${commit.shortHash}`}
       onSelectionChange={(id) => setSelectedFilePath(id)}
+      filtering={{ keepSectionOrder: true }}
       isShowingDetail={isShowingDetail}
       actions={
         <ActionPanel>

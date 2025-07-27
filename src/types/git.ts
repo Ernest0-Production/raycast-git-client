@@ -98,10 +98,14 @@ export interface Commit {
   authorEmail: string;
   /** The date the commit was created. */
   date: Date;
-  /** The commit's branch (if applicable). */
-  branch?: string;
-  /** A list of tags and branches associated with the commit. */
-  refs?: string[];
+  /** Local branches that contain this commit. */
+  localBranches: string[];
+  /** Remote branches that contain this commit. */
+  remoteBranches: string[];
+  /** Tags pointing to this commit. */
+  tags: string[];
+  /** Name of the current branch if commit is on it. */
+  currentBranchName?: string;
   /** List of files changed in this commit with their status. */
   changedFiles?: CommitFileChange[];
 }

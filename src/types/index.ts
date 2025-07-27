@@ -13,8 +13,8 @@ export interface Preferences {
   maxFilesToShow: string;
   /** Maximum number of branches to display. */
   maxBranchesToShow: string;
-  /** Maximum number of commits to load in history. */
-  maxCommitsToLoad: string;
+  /** Number of commits to load per pagination page. */
+  commitsPerPage: string;
   /** System prompt for AI-generated commit messages. */
   aiCommitPrompt: string;
 }

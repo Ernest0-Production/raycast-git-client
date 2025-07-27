@@ -66,6 +66,7 @@ export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
       isLoading={isLoading}
       navigationTitle={`Status - ${gitManager.repoName}`}
       onSelectionChange={(id) => setSelectedFilePath(id)}
+      filtering={{ keepSectionOrder: true }}
       isShowingDetail={isShowingDetail}
       actions={
         <ActionPanel>

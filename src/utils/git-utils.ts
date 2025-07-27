@@ -10,7 +10,7 @@ import {
 } from "simple-git";
 import { showToast, Toast, getPreferenceValues } from "@raycast/api";
 import { join } from "path";
-import { readFileSync, existsSync } from "fs";
+import { readFileSync } from "fs";
 import {
   Branch,
   FileStatus,
@@ -46,7 +46,7 @@ export class GitManager {
     return {
       maxFilesToShow: parseInt(preferences.maxFilesToShow, 10) || 500,
       maxBranchesToShow: parseInt(preferences.maxBranchesToShow, 10) || 200,
-      maxCommitsToLoad: parseInt(preferences.maxCommitsToLoad, 10) || 100,
+      commitsPerPage: parseInt(preferences.commitsPerPage, 10) || 20,
     };
   }
 
@@ -77,7 +77,6 @@ export class GitManager {
         const output = data.toString().trim();
         if (output) {
           lastOutput = output;
-          showToast({ style: Toast.Style.Animated, title: command_description, message: output });
           // console.log(`[GIT STDOUT] ${output}`);
         }
       });
@@ -455,11 +454,76 @@ export class GitManager {
   }
 
   /**
-   * Gets the commit history.
+   * Parses git commit refs string into categorized ref types.
    */
-  async getCommits(branch?: string): Promise<Commit[]> {
-    const { maxCommitsToLoad } = this.getPreferences();
-    const log = await this.git.log([`--max-count=${maxCommitsToLoad}`, "--name-status", ...(branch ? [branch] : [])]);
+  private parseCommitRefs(refsString: string | undefined): {
+    localBranches: string[];
+    remoteBranches: string[];
+    tags: string[];
+    currentBranchName?: string;
+  } {
+    const result = {
+      localBranches: [] as string[],
+      remoteBranches: [] as string[],
+      tags: [] as string[],
+      currentBranchName: undefined as string | undefined,
+    };
+
+    if (!refsString || !refsString.trim()) {
+      return result;
+    }
+
+    console.log("refsString", refsString);
+
+    const refs = refsString.split(", ").map((ref) => ref.trim());
+
+    for (const ref of refs) {
+      if (ref.startsWith("tag:")) {
+        // Extract tag name: "tag: v1.0.0" -> "v1.0.0"
+        const tagName = ref.replace(/^tag:\s*/, "").trim();
+        if (tagName) {
+          result.tags.push(tagName);
+        }
+      } else if (ref.includes("HEAD ->")) {
+        // Current branch: "HEAD -> main" or "origin/HEAD -> origin/main"
+        const match = ref.match(/HEAD\s*->\s*(.+)/);
+        if (!match) continue;
+
+        const branchName = match[1].trim();
+        result.currentBranchName = branchName;
+      } else if (ref.includes("/") && !ref.startsWith("HEAD")) {
+        // Remote branch: "origin/main", "upstream/feature"
+        const parts = ref.split("/");
+        if (parts.length >= 2) {
+          if (!result.remoteBranches.includes(ref)) {
+            result.remoteBranches.push(ref);
+          }
+        }
+      } else if (ref && !ref.includes("HEAD")) {
+        // Local branch
+        if (!result.localBranches.includes(ref)) {
+          result.localBranches.push(ref);
+        }
+      }
+    }
+
+    return result;
+  }
+
+
+  /**
+   * Gets the commit history with optional offset for pagination.
+   * @param branch Branch name to get commits from (optional)
+   * @param page Page number for pagination (optional, default 0)
+   */
+  async getCommits(branch?: string, page: number = 0): Promise<Commit[]> {
+    const { commitsPerPage } = this.getPreferences();
+    const log = await this.git.log([
+      `--max-count=${commitsPerPage}`,
+      `--skip=${page * commitsPerPage}`,
+      "--name-status",
+      ...(branch ? [branch] : []),
+    ]);
 
     return log.all.map(
       (commit: {
@@ -473,6 +537,7 @@ export class GitManager {
         diff?: DiffResult;
       }) => {
         const changedFiles = this.parseCommitChangedFiles(commit.diff!);
+        const parsedRefs = this.parseCommitRefs(commit.refs);
 
         return {
           hash: commit.hash,
@@ -482,7 +547,10 @@ export class GitManager {
           author: commit.author_name,
           authorEmail: commit.author_email,
           date: new Date(commit.date),
-          refs: commit.refs && commit.refs.trim() ? commit.refs.split(", ") : [],
+          localBranches: parsedRefs.localBranches,
+          remoteBranches: parsedRefs.remoteBranches,
+          tags: parsedRefs.tags,
+          currentBranchName: parsedRefs.currentBranchName,
           changedFiles,
         };
       },
@@ -951,40 +1019,6 @@ export class GitManager {
     // Use provided remote name or get the default remote
     const targetRemote = remoteName || (await this.getDefaultRemote());
     await this.git.pushTags(targetRemote);
-  }
-
-  /**
-   * Gets detailed information about a specific commit.
-   */
-  async getCommitInfo(commitHash: string): Promise<Commit | null> {
-    if (!commitHash || typeof commitHash !== "string" || !/^[a-f0-9]{7,40}$/i.test(commitHash.trim())) {
-      throw new Error("Invalid commit hash");
-    }
-
-    try {
-      const log = await this.git.log({
-        maxCount: 1,
-        from: commitHash.trim(),
-        to: commitHash.trim(),
-      });
-
-      if (log.latest) {
-        const commit = log.latest;
-        return {
-          hash: commit.hash,
-          shortHash: commit.hash.substring(0, 7),
-          message: commit.message,
-          body: commit.body,
-          author: commit.author_name,
-          authorEmail: commit.author_email,
-          date: new Date(commit.date),
-          refs: commit.refs ? commit.refs.split(", ") : undefined,
-        };
-      }
-      return null;
-    } catch {
-      return null;
-    }
   }
 
   /**

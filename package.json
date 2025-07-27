@@ -54,12 +54,12 @@
       "description": "Maximum number of branches to display for performance optimization"
     },
     {
-      "name": "maxCommitsToLoad",
+      "name": "commitsPerPage",
       "required": false,
       "type": "textfield",
       "title": "Max Commits to Load",
-      "default": "100",
-      "description": "Maximum number of commits to load in the commit history view"
+      "default": "50",
+      "description": "Number of commits to load per pagination page"
     },
     {
       "name": "aiCommitPrompt",

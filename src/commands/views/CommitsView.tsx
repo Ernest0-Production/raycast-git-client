@@ -1,4 +1,4 @@
-import { ActionPanel, List, Icon, Action, useNavigation } from "@raycast/api";
+import { ActionPanel, List, Icon, Action, useNavigation, Color } from "@raycast/api";
 import { getAvatarIcon, useCachedPromise, useCachedState } from "@raycast/utils";
 import { useGitBranches } from "../../hooks/useGitBranches";
 import { useGitCommits } from "../../hooks/useGitCommits";
@@ -43,7 +43,7 @@ export function CommitsView({ gitManager, navigationActions }: CommitsViewProps)
     allBranches,
     branchesState?.detachedHead,
   );
-  const { data: commits, isLoading, error, revalidate } = useGitCommits(gitManager, getActualBranchFilter());
+  const { isLoading, data: commits, error, revalidate, pagination } = useGitCommits(gitManager, getActualBranchFilter());
 
   // Check if the selected branch is a local branch (current or local)
   const isLocalBranchSelected = useMemo(() => {
@@ -143,6 +143,7 @@ export function CommitsView({ gitManager, navigationActions }: CommitsViewProps)
   return (
     <List
       isLoading={isLoading}
+      pagination={pagination}
       navigationTitle={`Commits - ${gitManager.repoName}`}
       onSelectionChange={(id) => setSelectedCommitId(id)}
       searchBarAccessory={
@@ -205,6 +206,7 @@ export function CommitsView({ gitManager, navigationActions }: CommitsViewProps)
           urlTrackerConfigs={urlTrackerConfigs}
           selectedCommitId={selectedCommitId}
           isLocalBranchSelected={isLocalBranchSelected}
+          isAllBranchesFilter={selectedBranch === ALL_BRANCHES_FILTER}
         />
       ))}
     </List>
@@ -223,6 +225,7 @@ interface CommitListItemProps {
   urlTrackerConfigs: UrlTrackerConfig[];
   selectedCommitId: string | null;
   isLocalBranchSelected: boolean;
+  isAllBranchesFilter: boolean;
 }
 
 function CommitListItem({
@@ -237,6 +240,7 @@ function CommitListItem({
   urlTrackerConfigs,
   selectedCommitId,
   isLocalBranchSelected,
+  isAllBranchesFilter,
 }: CommitListItemProps) {
   const { push } = useNavigation();
   const [commitUrls, setCommitUrls] = useState<Array<{ title: string; url: string }>>([]);
@@ -295,20 +299,88 @@ function CommitListItem({
     return detail;
   };
 
+  // Prepare accessories based on filter and detail view state
+  const accessories = useMemo(() => {
+    if (isShowingDetail) {
+      return undefined;
+    }
+
+    const accessoryItems = [];
+
+    // Handle tags - show maximum 1 tag
+    if (commit.tags.length > 0) {
+      let title = commit.tags[0];
+      let tooltip: string | undefined = undefined;
+
+      // Add remaining tags to remainingRefs
+      if (commit.tags.length > 1) {
+        title += ` (+${commit.tags.length - 1})`;
+        tooltip = commit.tags.slice(1).join('\n');
+      }
+
+      accessoryItems.push({
+        tag: { value: title, color: Color.Blue },
+        tooltip: tooltip,
+        icon: Icon.Tag
+      });
+    }
+
+    // Handle branches only when All branches filter is selected - show maximum 1 branch
+    if (isAllBranchesFilter) {
+      let title: string | undefined = undefined;
+      let tooltip: string | undefined = undefined;
+      let color: Color = Color.SecondaryText;
+      let icon: Icon = Icon.Dot;
+
+      const allCommitBranches = commit.localBranches.concat(commit.remoteBranches);
+
+      if (commit.currentBranchName) {
+        title = commit.currentBranchName;
+        color = Color.Green;
+        if (allCommitBranches.length > 0) {
+          title += ` (+${allCommitBranches.length})`;
+          tooltip = allCommitBranches.join('\n');
+        }
+      } else if (allCommitBranches.length > 0) {
+        const firstBranch = allCommitBranches[0];
+        title = firstBranch;
+        if (allCommitBranches.length > 1) {
+          title += ` (+${allCommitBranches.length - 1})`;
+          tooltip = allCommitBranches.slice(1).join('\n');
+        }
+
+        if (commit.localBranches.length > 0) {
+          icon = Icon.Dot;
+        } else if (commit.remoteBranches.length > 0) {
+          icon = Icon.Globe;
+        }
+      }
+
+      if (title) {
+        accessoryItems.push({
+          tag: { value: title, color: color },
+          tooltip: tooltip,
+          icon: icon
+        });
+      }
+    }
+
+    return accessoryItems;
+  }, [isShowingDetail, isAllBranchesFilter]);
+
   return (
     <List.Item
       id={commit.hash}
       title={commit.message}
       subtitle={isShowingDetail ? undefined : { value: commit.author, tooltip: commit.authorEmail }}
-      accessories={isShowingDetail ? undefined : [{ date: commit.date }]}
+      accessories={accessories}
       keywords={[
         commit.hash,
         commit.shortHash,
         commit.body,
         ...commit.author.split(" "),
         commit.authorEmail,
-        commit.branch,
-        ...(commit.refs || []),
+        ...commit.tags,
         ...(commit.changedFiles?.map(f => f.path.split("/").pop()) || [])
       ].filter((keyword): keyword is string => Boolean(keyword))}
       detail={
@@ -322,8 +394,39 @@ function CommitListItem({
                   <List.Item.Detail.Metadata.Label title="Email" text={commit.authorEmail} />
                   <List.Item.Detail.Metadata.Label title="Date" text={commit.date.toLocaleString()} />
                   <List.Item.Detail.Metadata.Label title="Hash" text={commit.hash} />
-                  {commit.refs && commit.refs.length > 0 && (
-                    <List.Item.Detail.Metadata.Label title="Refs" text={commit.refs.join(", ")} />
+                  {/* Tags as TagList */}
+                  {commit.tags.length > 0 && (
+                    <List.Item.Detail.Metadata.TagList title="Tags">
+                      {commit.tags.map((tag) => (
+                        <List.Item.Detail.Metadata.TagList.Item
+                          key={tag}
+                          icon={Icon.Tag}
+                          text={tag}
+                          color={Color.Blue}
+                        />
+                      ))}
+                    </List.Item.Detail.Metadata.TagList>
+                  )}
+                  {/* Branches as TagList */}
+                  {(commit.localBranches.length > 0 || commit.remoteBranches.length > 0) && (
+                    <List.Item.Detail.Metadata.TagList title="Branches">
+                      {commit.localBranches.map((branch) => (
+                        <List.Item.Detail.Metadata.TagList.Item
+                          key={branch}
+                          icon={Icon.Dot}
+                          text={branch}
+                          color={Color.SecondaryText}
+                        />
+                      ))}
+                      {commit.remoteBranches.map((branch) => (
+                        <List.Item.Detail.Metadata.TagList.Item
+                          key={branch}
+                          icon={Icon.Globe}
+                          text={branch}
+                          color={Color.SecondaryText}
+                        />
+                      ))}
+                    </List.Item.Detail.Metadata.TagList>
                   )}
                 </List.Item.Detail.Metadata>
               ) : undefined
