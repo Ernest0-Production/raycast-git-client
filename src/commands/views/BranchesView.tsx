@@ -173,6 +173,8 @@ function BranchListItem({
   if (branch.type === "current" && hasConflicts) {
     accessories.push({
       tag: { value: "Conflicts", color: Color.Red },
+      icon: Icon.ExclamationMark,
+      tooltip: "There are unresolved merge conflicts",
     });
   }
 
@@ -180,6 +182,8 @@ function BranchListItem({
   if (branch.type === "current" && branch.hasUncommittedChanges) {
     accessories.push({
       tag: { value: "Uncommitted", color: Color.Orange },
+      icon: Icon.Document,
+      tooltip: "There are uncommitted changes",
     });
   }
 
@@ -188,7 +192,15 @@ function BranchListItem({
     const parts = [];
     if (branch.ahead) parts.push(`${branch.ahead} ↑`);
     if (branch.behind) parts.push(`${branch.behind} ↓`);
-    accessories.push({ text: parts.join(" ") });
+    accessories.push({
+      text: parts.join(" "),
+      tooltip: [
+        branch.ahead ? `↑ ahead by ${branch.ahead} commits` : null,
+        branch.behind ? `↓ behind by ${branch.behind} commits` : null,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    });
   }
 
   // Determine icon based on branch type

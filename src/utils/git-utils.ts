@@ -112,8 +112,7 @@ export class GitManager {
    * Gets the branches state including current branch, detached HEAD, local and remote branches.
    */
   async getBranches(): Promise<BranchesState> {
-    // -vv flag is needed to get upstream information
-    const summary = await this.git.branch(["-a", "-vv"]);
+    const summary = await this.git.branch(["--all", "-vv", "--sort=-committerdate"]);
 
     // Get uncommitted changes status for current branch
     const hasUncommittedChanges = await this.hasUncommittedChanges();

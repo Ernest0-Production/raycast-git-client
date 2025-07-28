@@ -1,5 +1,5 @@
 import { ActionPanel, List, Icon, Action, useNavigation, Color } from "@raycast/api";
-import { getAvatarIcon, useCachedPromise, useCachedState } from "@raycast/utils";
+import { useCachedPromise, useCachedState } from "@raycast/utils";
 import { useGitBranches } from "../../hooks/useGitBranches";
 import { useGitCommits } from "../../hooks/useGitCommits";
 import { useCommitsBranchFilter, ALL_BRANCHES_FILTER, DETACHED_HEAD_FILTER } from "../../hooks/useCommitsBranchFilter";
@@ -364,6 +364,8 @@ function CommitListItem({
         });
       }
     }
+
+    accessoryItems.push({ date: commit.date })
 
     return accessoryItems;
   }, [isShowingDetail, isAllBranchesFilter]);
