@@ -144,10 +144,12 @@ export function FileActions({ file, gitManager, onRefresh }: FileActionsProps) {
 export function CommitActions({
   gitManager,
   onRefresh,
+  onCommitSuccess,
   hasStagedChanges
 }: {
   gitManager: GitManager;
   onRefresh: () => void;
+  onCommitSuccess: () => void;
   hasStagedChanges: boolean;
 }) {
   const handleStageAll = async () => {
@@ -194,7 +196,7 @@ export function CommitActions({
         <Action.Push
           title="Commit Changes"
           icon={Icon.Message}
-          target={<CommitMessageForm gitManager={gitManager} onRefresh={onRefresh} />}
+          target={<CommitMessageForm gitManager={gitManager} onFinish={onCommitSuccess} />}
         />
       )}
       <Action

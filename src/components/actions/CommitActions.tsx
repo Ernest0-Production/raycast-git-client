@@ -126,7 +126,14 @@ export function CommitActions({ commit, gitManager, onRefresh }: CommitActionsPr
       <Action.CopyToClipboard
         title="Copy Short Hash"
         content={commit.shortHash}
-        shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
+      />
+      <Action.CopyToClipboard
+        title="Copy Author Name"
+        content={commit.author}
+      />
+      <Action.CopyToClipboard
+        title="Copy Author Email"
+        content={commit.authorEmail}
       />
     </>
   );

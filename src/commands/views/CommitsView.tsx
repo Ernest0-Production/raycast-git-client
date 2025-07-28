@@ -6,6 +6,7 @@ import { useCommitsBranchFilter, ALL_BRANCHES_FILTER, DETACHED_HEAD_FILTER } fro
 import { ErrorView } from "../../components/shared/ErrorView";
 import { EmptyView } from "../../components/shared/EmptyView";
 import { CommitActions, CommitHistoryActions } from "../../components/actions/CommitActions";
+import { TagActions } from "../../components/actions/TagActions";
 import { FetchAction, PullAction } from "../../components/actions/BranchActions";
 import { RepositoryDirectoryActions } from "../../components/actions/RepositoryDirectoryActions";
 import { CommitDiffView } from "./CommitDiffView";
@@ -365,16 +366,23 @@ function CommitListItem({
       }
     }
 
-    accessoryItems.push({ date: commit.date })
+    accessoryItems.push({
+      text: { value: commit.author, color: Color.SecondaryText },
+      tooltip: commit.authorEmail
+    });
+
+    accessoryItems.push({
+      date: commit.date,
+      tooltip: commit.date.toLocaleString()
+    });
 
     return accessoryItems;
-  }, [isShowingDetail, isAllBranchesFilter]);
+  }, [isShowingDetail, isAllBranchesFilter, commit.tags, commit.localBranches, commit.remoteBranches, commit.currentBranchName]);
 
   return (
     <List.Item
       id={commit.hash}
       title={commit.message}
-      subtitle={isShowingDetail ? undefined : { value: commit.author, tooltip: commit.authorEmail }}
       accessories={accessories}
       keywords={[
         commit.hash,
@@ -476,6 +484,10 @@ function CommitListItem({
 
           <ActionPanel.Section title="Commit Operations">
             <CommitActions commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
+          </ActionPanel.Section>
+
+          <ActionPanel.Section title="Tags">
+            <TagActions commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Repository Operations">

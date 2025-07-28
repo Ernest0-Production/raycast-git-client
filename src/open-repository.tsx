@@ -67,7 +67,11 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
     case "branches":
       return <BranchesView gitManager={gitManager} navigationActions={navigationActions} />;
     case "status":
-      return <StatusView gitManager={gitManager} navigationActions={navigationActions} />;
+      return <StatusView
+        gitManager={gitManager}
+        navigationActions={navigationActions}
+        onNavigateToCommits={() => setCurrentView("commits")}
+      />;
     case "commits":
       return <CommitsView gitManager={gitManager} navigationActions={navigationActions} />;
     case "stashes":
@@ -79,6 +83,6 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
         />
       );
     default:
-      return <StatusView gitManager={gitManager} navigationActions={navigationActions} />;
+      return <ErrorView title="Unknown state of cache" message="Try invalidating the cache of extension" />;
   }
 }

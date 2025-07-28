@@ -509,6 +509,42 @@ export class GitManager {
     return result;
   }
 
+  /**
+   * Gets the last commit from the repository.
+   */
+  async getLastCommit(): Promise<Commit | null> {
+    try {
+      const log = await this.git.log([
+        "--max-count=1",
+        "--name-status",
+      ]);
+
+      if (!log.latest) {
+        return null;
+      }
+
+      const commit = log.latest;
+      const changedFiles = this.parseCommitChangedFiles(commit.diff!);
+      const parsedRefs = this.parseCommitRefs(commit.refs);
+
+      return {
+        hash: commit.hash,
+        shortHash: commit.hash.substring(0, 7),
+        message: commit.message,
+        body: commit.body,
+        author: commit.author_name,
+        authorEmail: commit.author_email,
+        date: new Date(commit.date),
+        localBranches: parsedRefs.localBranches,
+        remoteBranches: parsedRefs.remoteBranches,
+        tags: parsedRefs.tags,
+        currentBranchName: parsedRefs.currentBranchName,
+        changedFiles,
+      };
+    } catch (error) {
+      return null;
+    }
+  }
 
   /**
    * Gets the commit history with optional offset for pagination.
@@ -1008,16 +1044,23 @@ export class GitManager {
   }
 
   /**
-   * Pushes a tag to remote.
-   */
-  async pushTag(tagName: string, remoteName?: string): Promise<void> {
+ * Pushes tags to remote with optional delete flag.
+ */
+  async pushTag(tagName: string, remoteName?: string, deleteTag: boolean = false): Promise<void> {
     if (!tagName || typeof tagName !== "string" || tagName.trim().length === 0) {
       throw new Error("Invalid tag name");
     }
 
     // Use provided remote name or get the default remote
     const targetRemote = remoteName || (await this.getDefaultRemote());
-    await this.git.pushTags(targetRemote);
+
+    if (deleteTag) {
+      // Delete tag from remote using --delete flag
+      await this.git.push(targetRemote, tagName, ['--delete']);
+    } else {
+      // Push specific tag to remote
+      await this.git.push(targetRemote, tagName);
+    }
   }
 
   /**

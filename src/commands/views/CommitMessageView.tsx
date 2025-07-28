@@ -1,6 +1,6 @@
 import { GitManager } from "../../utils/git-utils";
 import { Preferences } from "../../types";
-import { useCachedState } from "@raycast/utils";
+import { useCachedState, usePromise } from "@raycast/utils";
 import { useState } from "react";
 import { showToast, Toast, getPreferenceValues, confirmAlert, popToRoot, environment } from "@raycast/api";
 import { AI } from "@raycast/api";
@@ -9,15 +9,39 @@ import { Action, ActionPanel, Form, Icon, Alert } from "@raycast/api";
 /**
  * Form for creating a commit with AI generation support.
  */
-export function CommitMessageForm({ gitManager, onRefresh }: { gitManager: GitManager; onRefresh: () => void }) {
+export function CommitMessageForm({ gitManager, onFinish }: { gitManager: GitManager; onFinish: () => void }) {
     const preferences = getPreferenceValues<Preferences>();
-    const [aiMessage, setAiMessage] = useState("");
     const [draftMessage, setDraftMessage] = useCachedState(`commit-draft-${gitManager.repoPath}`, "");
-    const [amend, setAmend] = useState(false);
+    const [amend, setAmend] = useCachedState(`commit-amend-${gitManager.repoPath}`, false);
+    const [aiMessage, setAiMessage] = useState("");
     const [isGenerating, setIsGenerating] = useState(false);
+
+    // Load the last commit for amend functionality
+    const { data: lastCommit } = usePromise(
+        async (repoPath: string) => await gitManager.getLastCommit(),
+        [gitManager.repoPath]
+    );
+
+    // Handle amend checkbox changes
+    const handleAmendChange = (newAmendValue: boolean) => {
+        setAmend(newAmendValue);
+
+        if (newAmendValue === amend) {
+            return;
+        }
+
+        if (newAmendValue && lastCommit) {
+            // If amend is enabled, populate with last commit message
+            setDraftMessage(lastCommit.message + '\n\n' + lastCommit.body);
+        } else if (!newAmendValue) {
+            // If amend is disabled, clear draft message
+            setDraftMessage("");
+        }
+    };
 
     const clearDraft = () => {
         setDraftMessage("");
+        setAmend(false);
     };
 
     const generateCommitMessage = async () => {
@@ -28,17 +52,39 @@ export function CommitMessageForm({ gitManager, onRefresh }: { gitManager: GitMa
             const diff = await gitManager.getDiff();
 
             // Form a more structured and readable prompt for AI generation of commit message
-            const prompt = [
+            const promptParts = [
                 preferences.aiCommitPrompt!.trim(),
                 "",
+            ];
+
+            // If amend is enabled and we have a last commit, include it in the context
+            if (amend && lastCommit) {
+                promptParts.push(
+                    "--------------------",
+                    "PREVIOUS COMMIT MESSAGE (for amend):",
+                    "--------------------",
+                    lastCommit.message.trim(),
+                    "",
+                    lastCommit.body.trim(),
+                    "",
+                );
+            }
+
+            promptParts.push(
                 "--------------------",
                 "GIT DIFF:",
                 "--------------------",
                 diff.trim(),
                 "",
                 "--------------------",
-                "Please provide only the commit message, no explanations."
-            ].join("\n");
+                amend && lastCommit
+                    ? "Please provide an summarized commit message based on the previous commit message and the new changes. Only return the commit message, no explanations."
+                    : "Please provide only the commit message, no explanations."
+            );
+
+            const prompt = promptParts.join("\n");
+
+            console.log(prompt);
 
             const aiResponse = AI.ask(prompt, { creativity: "none" });
             await showToast({
@@ -102,7 +148,7 @@ export function CommitMessageForm({ gitManager, onRefresh }: { gitManager: GitMa
                 await gitManager.push(forcePush);
             }
 
-            onRefresh();
+            onFinish();
             await popToRoot();
         } catch (error) {
             // Git error is already shown by GitManager
@@ -165,7 +211,7 @@ export function CommitMessageForm({ gitManager, onRefresh }: { gitManager: GitMa
                 id="amend"
                 label="Amend last commit"
                 value={amend}
-                onChange={setAmend}
+                onChange={handleAmendChange}
                 info="Modify the last commit instead of creating a new one"
             />
         </Form>

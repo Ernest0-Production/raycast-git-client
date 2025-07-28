@@ -1,4 +1,4 @@
-import { ActionPanel, Action, Icon, showToast, Toast, confirmAlert, Alert, Form } from "@raycast/api";
+import { ActionPanel, Action, Icon, showToast, Toast, confirmAlert, Alert, Form, useNavigation } from "@raycast/api";
 import { useState } from "react";
 import { Stash } from "../../types";
 import { GitManager } from "../../utils/git-utils";
@@ -109,6 +109,7 @@ function CreateStashForm({
   filePath?: string;
 }) {
   const [message, setMessage] = useState("");
+  const { pop } = useNavigation();
 
   const handleSubmit = async (values: { message: string }) => {
     try {
@@ -132,6 +133,7 @@ function CreateStashForm({
       }
 
       onRefresh();
+      pop();
     } catch (error) {
       // Git error is already shown by GitManager
     }

@@ -19,12 +19,19 @@ import { existsSync } from "fs";
 interface StatusViewProps {
   gitManager: GitManager;
   navigationActions: React.ReactNode;
+  onNavigateToCommits?: () => void;
 }
 
-export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
+export function StatusView({ gitManager, navigationActions, onNavigateToCommits }: StatusViewProps) {
   const { data: files, isLoading, error, revalidate } = useGitStatus(gitManager);
   const [isShowingDetail, setIsShowingDetail] = useState(false);
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
+
+  // Combined callback for commit actions: refresh data and navigate
+  const refreshAndNavigateToCommits = () => {
+    revalidate();
+    onNavigateToCommits?.();
+  };
 
   const toggleDetail = () => {
     setIsShowingDetail(!isShowingDetail);
@@ -80,7 +87,12 @@ export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
           </ActionPanel.Section>
 
           <ActionPanel.Section title="File Operations">
-            <FileCommitActions gitManager={gitManager} onRefresh={revalidate} hasStagedChanges={stagedFiles.length > 0} />
+            <FileCommitActions
+              gitManager={gitManager}
+              onRefresh={revalidate}
+              onCommitSuccess={refreshAndNavigateToCommits}
+              hasStagedChanges={stagedFiles.length > 0}
+            />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Stash Operations">
@@ -108,6 +120,7 @@ export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
               onToggleDetail={toggleDetail}
               selectedFilePath={selectedFilePath}
               hasStagedChanges={stagedFiles.length > 0}
+              onCommitSuccess={refreshAndNavigateToCommits}
             />
           ))}
         </List.Section>
@@ -126,6 +139,7 @@ export function StatusView({ gitManager, navigationActions }: StatusViewProps) {
               onToggleDetail={toggleDetail}
               selectedFilePath={selectedFilePath}
               hasStagedChanges={stagedFiles.length > 0}
+              onCommitSuccess={refreshAndNavigateToCommits}
             />
           ))}
         </List.Section>
@@ -143,6 +157,7 @@ interface FileListItemProps {
   onToggleDetail: () => void;
   selectedFilePath: string | null;
   hasStagedChanges: boolean;
+  onCommitSuccess: () => void;
 }
 
 function FileListItem({
@@ -154,6 +169,7 @@ function FileListItem({
   onToggleDetail,
   selectedFilePath,
   hasStagedChanges,
+  onCommitSuccess,
 }: FileListItemProps) {
   // Create a unique identifier for each file item
   const fileId = `${file.relativePath}-${file.status}`;
@@ -208,7 +224,12 @@ function FileListItem({
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Commit Operations">
-            <FileCommitActions gitManager={gitManager} onRefresh={onRefresh} hasStagedChanges={hasStagedChanges} />
+            <FileCommitActions
+              gitManager={gitManager}
+              onRefresh={onRefresh}
+              onCommitSuccess={onCommitSuccess}
+              hasStagedChanges={hasStagedChanges}
+            />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Stash Operations">
