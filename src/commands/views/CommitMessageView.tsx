@@ -2,7 +2,7 @@ import { GitManager } from "../../utils/git-utils";
 import { Preferences } from "../../types";
 import { useCachedState, usePromise } from "@raycast/utils";
 import { useState } from "react";
-import { showToast, Toast, getPreferenceValues, confirmAlert, popToRoot, environment } from "@raycast/api";
+import { showToast, Toast, getPreferenceValues, confirmAlert, environment } from "@raycast/api";
 import { AI } from "@raycast/api";
 import { Action, ActionPanel, Form, Icon, Alert } from "@raycast/api";
 
@@ -84,8 +84,6 @@ export function CommitMessageForm({ gitManager, onFinish }: { gitManager: GitMan
 
             const prompt = promptParts.join("\n");
 
-            console.log(prompt);
-
             const aiResponse = AI.ask(prompt, { creativity: "none" });
             await showToast({
                 style: Toast.Style.Animated,
@@ -149,7 +147,6 @@ export function CommitMessageForm({ gitManager, onFinish }: { gitManager: GitMan
             }
 
             onFinish();
-            await popToRoot();
         } catch (error) {
             // Git error is already shown by GitManager
         }
