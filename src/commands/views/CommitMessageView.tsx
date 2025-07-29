@@ -2,7 +2,7 @@ import { GitManager } from "../../utils/git-utils";
 import { Preferences } from "../../types";
 import { useCachedState, usePromise } from "@raycast/utils";
 import { useState } from "react";
-import { showToast, Toast, getPreferenceValues, confirmAlert, environment } from "@raycast/api";
+import { showToast, Toast, getPreferenceValues, confirmAlert, environment, useNavigation } from "@raycast/api";
 import { AI } from "@raycast/api";
 import { Action, ActionPanel, Form, Icon, Alert } from "@raycast/api";
 
@@ -15,6 +15,7 @@ export function CommitMessageForm({ gitManager, onFinish }: { gitManager: GitMan
     const [amend, setAmend] = useCachedState(`commit-amend-${gitManager.repoPath}`, false);
     const [aiMessage, setAiMessage] = useState("");
     const [isGenerating, setIsGenerating] = useState(false);
+    const { pop } = useNavigation();
 
     // Load the last commit for amend functionality
     const { data: lastCommit } = usePromise(
@@ -146,6 +147,7 @@ export function CommitMessageForm({ gitManager, onFinish }: { gitManager: GitMan
                 await gitManager.push(forcePush);
             }
 
+            pop()
             onFinish();
         } catch (error) {
             // Git error is already shown by GitManager
