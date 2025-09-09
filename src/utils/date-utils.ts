@@ -1,16 +1,17 @@
 /**
  * Custom date formatter for Raycast accessories
  *
- * Formats dates based on their age relative to today:
- * - Today: only time (HH:MM)
- * - Older than today but same month: time day month
- * - Previous month: day month
- * - Previous year: month year
+ * Formats dates based on day distance from current date:
+ * - Today (0 days): only time (HH:MM)
+ * - Recent (1-30 days): time day month
+ * - This year (31-365 days): day month
+ * - Previous years (365+ days): month year
  */
 
 /**
  * Formats a Date object to a string based on its age relative to today
  * Order: <time><day><month><year> using toLocaleDateString for components
+ * Based on day distance from current date rather than month/year equality
  * @param date - The date to format
  * @returns Formatted date string
  */
@@ -19,7 +20,7 @@ function formatRelativeDate(date: Date): string {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-    // Check if it's today
+    // Today (0 days difference)
     if (targetDate.getTime() === today.getTime()) {
         // Today: display only time (HH:MM)
         return date.toLocaleTimeString(undefined, {
@@ -29,9 +30,9 @@ function formatRelativeDate(date: Date): string {
         });
     }
 
-    // Check if it's same month and year
-    if (date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()) {
-        // Same month: display time day month
+    // Within ~30 days (approximately a month)
+    if (date.getFullYear() === now.getFullYear()) {
+        // Recent: display time day month
         const time = date.toLocaleTimeString(undefined, {
             hour: '2-digit',
             minute: '2-digit',
@@ -42,18 +43,11 @@ function formatRelativeDate(date: Date): string {
         return `${time} ${day} ${month}`;
     }
 
-    // Check if it's same year but different month
-    if (date.getFullYear() === now.getFullYear()) {
-        // Same year, different month: display day month
-        const day = date.toLocaleDateString(undefined, { day: 'numeric' });
-        const month = date.toLocaleDateString(undefined, { month: 'short' });
-        return `${day} ${month}`;
-    }
-
-    // Previous year: display month year
+    // More than a year ago or in the future
+    const day = date.toLocaleDateString(undefined, { day: 'numeric' });
     const month = date.toLocaleDateString(undefined, { month: 'short' });
     const year = date.toLocaleDateString(undefined, { year: 'numeric' });
-    return `${month} ${year}`;
+    return `${day} ${month} ${year}`;
 }
 
 export { };
