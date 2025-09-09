@@ -22,10 +22,11 @@ import { FetchAction, PullAction } from "../../components/actions/BranchActions"
 import { RepositoryDirectoryActions } from "../../components/actions/RepositoryDirectoryActions";
 import { CommitDiffView } from "./CommitDiffView";
 import { ConfigureUrlTrackerForm } from "../../components/shared/ConfigureUrlTrackerForm";
+import { CommitBranchFilterAction, getBranchFilterDisplayName } from "../../components/actions/CommitBranchFilterActions";
 import { GitManager } from "../../utils/git-utils";
 import { loadUrlTrackerConfigs, extractUrlsFromCommitWithConfigs, replaceUrlPatternsWithLinks } from "../../utils/url-tracker-cache";
 import "../../utils/date-utils";
-import { Branch, Commit, UrlTrackerConfig } from "../../types";
+import { Branch, Commit, UrlTrackerConfig, DetachedHead } from "../../types";
 import { useMemo, useState, useEffect } from "react";
 
 interface CommitsViewProps {
@@ -81,51 +82,13 @@ export function CommitsView({ gitManager, navigationActions }: CommitsViewProps)
     );
   }
 
-  const { currentBranchOption, otherBranchOptions } = useMemo(() => {
-    const currentBranch = branchesState?.currentBranch;
-    const detachedHead = branchesState?.detachedHead;
-    let currentOption: React.ReactNode = null;
-    const otherOptions: React.ReactNode[] = [];
-
-    // Handle detached HEAD state
-    if (detachedHead) {
-      const detachedHeadItem = (
-        <List.Dropdown.Item
-          key="detached-head"
-          title={`HEAD (${detachedHead.shortCommitHash})`}
-          value={DETACHED_HEAD_FILTER}
-          icon={Icon.Anchor}
-        />
-      );
-      currentOption = detachedHeadItem;
-    } else if (currentBranch) {
-      // Handle current branch (when not in detached HEAD)
-      const uniqueKey = `${currentBranch.type}-${currentBranch.name}`;
-      const displayName = currentBranch.name;
-      const icon = Icon.Dot;
-
-      currentOption = <List.Dropdown.Item key={uniqueKey} title={displayName} value={currentBranch.name} icon={icon} />;
-    }
-
-    // Handle other branches
-    allBranches.forEach((branch: Branch) => {
-      // Skip current branch if we're not in detached HEAD (it's already in currentOption)
-      if (!detachedHead && currentBranch && branch.name === currentBranch.name && branch.type === currentBranch.type) {
-        return;
-      }
-
-      const uniqueKey = branch.type === "remote" ? `${branch.remote}/${branch.name}` : `${branch.type}-${branch.name}`;
-      const displayName = branch.type === "remote" ? `${branch.remote}/${branch.name}` : branch.name;
-      const branchValue = branch.type === "remote" ? `${branch.remote}/${branch.name}` : branch.name;
-      const icon = branch.type === "remote" ? Icon.Globe : Icon.Dot;
-
-      const dropdownItem = <List.Dropdown.Item key={uniqueKey} title={displayName} value={branchValue} icon={icon} />;
-
-      otherOptions.push(dropdownItem);
-    });
-
-    return { currentBranchOption: currentOption, otherBranchOptions: otherOptions };
-  }, [allBranches, branchesState?.currentBranch, branchesState?.detachedHead]);
+  // Get current filter display name for List.Section title
+  const currentFilterDisplayName = getBranchFilterDisplayName(
+    selectedBranch,
+    allBranches,
+    branchesState?.detachedHead,
+    branchesState?.currentBranch,
+  );
 
   const toggleDetail = () => {
     setIsShowingDetail(!isShowingDetail);
@@ -144,6 +107,16 @@ export function CommitsView({ gitManager, navigationActions }: CommitsViewProps)
         navigationTitle={`Commits - ${gitManager.repoName}`}
         actions={
           <ActionPanel>
+            <ActionPanel.Section title="Filter">
+              <CommitBranchFilterAction
+                selectedBranch={selectedBranch}
+                updateSelectedBranch={updateSelectedBranch}
+                allBranches={allBranches}
+                detachedHead={branchesState?.detachedHead}
+                currentBranch={branchesState?.currentBranch}
+              />
+            </ActionPanel.Section>
+
             <ActionPanel.Section title="History Management">
               <CommitRefreshHistoryAction onRefresh={revalidate} />
               {getActualBranchFilter() && (
@@ -165,20 +138,19 @@ export function CommitsView({ gitManager, navigationActions }: CommitsViewProps)
       pagination={pagination}
       navigationTitle={`Commits - ${gitManager.repoName}`}
       onSelectionChange={(id) => setSelectedCommitId(id)}
-      searchBarAccessory={
-        <List.Dropdown tooltip="Filter by branch" value={selectedBranch} onChange={updateSelectedBranch}>
-          <List.Dropdown.Section>
-            <List.Dropdown.Item title="All Branches" value={ALL_BRANCHES_FILTER} icon={Icon.List} />
-          </List.Dropdown.Section>
-
-          {currentBranchOption && <List.Dropdown.Section>{currentBranchOption}</List.Dropdown.Section>}
-
-          {otherBranchOptions.length > 0 && <List.Dropdown.Section>{otherBranchOptions}</List.Dropdown.Section>}
-        </List.Dropdown>
-      }
       isShowingDetail={isShowingDetail}
       actions={
         <ActionPanel>
+          <ActionPanel.Section title="Filter">
+            <CommitBranchFilterAction
+              selectedBranch={selectedBranch}
+              updateSelectedBranch={updateSelectedBranch}
+              allBranches={allBranches}
+              detachedHead={branchesState?.detachedHead}
+              currentBranch={branchesState?.currentBranch}
+            />
+          </ActionPanel.Section>
+
           <ActionPanel.Section title="View Controls">
             <Action
               title={isShowingDetail ? "Hide Detail" : "Show Detail"}
@@ -214,23 +186,30 @@ export function CommitsView({ gitManager, navigationActions }: CommitsViewProps)
         </ActionPanel>
       }
     >
-      {commits.map((commit) => (
-        <CommitListItem
-          key={commit.hash}
-          commit={commit}
-          gitManager={gitManager}
-          onRefresh={revalidate}
-          navigationActions={navigationActions}
-          isShowingDetail={isShowingDetail}
-          isShowingMetadata={isShowingMetadata}
-          onToggleDetail={toggleDetail}
-          onToggleMetadata={toggleMetadata}
-          urlTrackerConfigs={urlTrackerConfigs}
-          selectedCommitId={selectedCommitId}
-          isLocalBranchSelected={isLocalBranchSelected}
-          isAllBranchesFilter={selectedBranch === ALL_BRANCHES_FILTER}
-        />
-      ))}
+      <List.Section title={`Commits on ${currentFilterDisplayName}`}>
+        {commits.map((commit) => (
+          <CommitListItem
+            key={commit.hash}
+            commit={commit}
+            gitManager={gitManager}
+            onRefresh={revalidate}
+            navigationActions={navigationActions}
+            isShowingDetail={isShowingDetail}
+            isShowingMetadata={isShowingMetadata}
+            onToggleDetail={toggleDetail}
+            onToggleMetadata={toggleMetadata}
+            urlTrackerConfigs={urlTrackerConfigs}
+            selectedCommitId={selectedCommitId}
+            isLocalBranchSelected={isLocalBranchSelected}
+            isAllBranchesFilter={selectedBranch === ALL_BRANCHES_FILTER}
+            selectedBranch={selectedBranch}
+            updateSelectedBranch={updateSelectedBranch}
+            allBranches={allBranches}
+            detachedHead={branchesState?.detachedHead}
+            currentBranch={branchesState?.currentBranch}
+          />
+        ))}
+      </List.Section>
     </List>
   );
 }
@@ -248,6 +227,11 @@ interface CommitListItemProps {
   selectedCommitId: string | null;
   isLocalBranchSelected: boolean;
   isAllBranchesFilter: boolean;
+  selectedBranch: string;
+  updateSelectedBranch: (branchName: string) => void;
+  allBranches: Branch[];
+  detachedHead?: DetachedHead;
+  currentBranch?: Branch;
 }
 
 function CommitListItem({
@@ -263,6 +247,11 @@ function CommitListItem({
   selectedCommitId,
   isLocalBranchSelected,
   isAllBranchesFilter,
+  selectedBranch,
+  updateSelectedBranch,
+  allBranches,
+  detachedHead,
+  currentBranch,
 }: CommitListItemProps) {
   const { push } = useNavigation();
   const [commitUrls, setCommitUrls] = useState<Array<{ title: string; url: string }>>([]);
@@ -484,6 +473,16 @@ function CommitListItem({
                 shortcut={index === 0 ? { modifiers: ["cmd"], key: "l" } : undefined}
               />
             ))}
+          </ActionPanel.Section>
+
+          <ActionPanel.Section title="Filter">
+            <CommitBranchFilterAction
+              selectedBranch={selectedBranch}
+              updateSelectedBranch={updateSelectedBranch}
+              allBranches={allBranches}
+              detachedHead={detachedHead}
+              currentBranch={currentBranch}
+            />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="View Controls">
