@@ -24,6 +24,7 @@ import { CommitDiffView } from "./CommitDiffView";
 import { ConfigureUrlTrackerForm } from "../../components/shared/ConfigureUrlTrackerForm";
 import { GitManager } from "../../utils/git-utils";
 import { loadUrlTrackerConfigs, extractUrlsFromCommitWithConfigs, replaceUrlPatternsWithLinks } from "../../utils/url-tracker-cache";
+import "../../utils/date-utils";
 import { Branch, Commit, UrlTrackerConfig } from "../../types";
 import { useMemo, useState, useEffect } from "react";
 
@@ -392,7 +393,7 @@ function CommitListItem({
     });
 
     accessoryItems.push({
-      date: commit.date,
+      text: commit.date.toRelativeDateString(),
       tooltip: commit.date.toLocaleString()
     });
 

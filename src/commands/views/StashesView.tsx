@@ -4,6 +4,7 @@ import { EmptyView } from "../../components/shared/EmptyView";
 import { StashApplyAction, StashDropAction, CreateStashAction } from "../../components/actions/StashActions";
 import { RepositoryDirectoryActions } from "../../components/actions/RepositoryDirectoryActions";
 import { GitManager } from "../../utils/git-utils";
+import "../../utils/date-utils";
 import { Stash } from "../../types";
 import { getAvatarIcon } from "@raycast/utils";
 
@@ -83,7 +84,7 @@ function StashListItem({
       title={stash.message}
       icon={{ source: getAvatarIcon(stash.author), tooltip: stash.author }}
       subtitle={{ value: stash.author, tooltip: stash.authorEmail }}
-      accessories={[{ date: stash.date }]}
+      accessories={[{ text: stash.date.toRelativeDateString(), tooltip: stash.date.toLocaleString() }]}
       keywords={[
         stash.hash,
         stash.author,
