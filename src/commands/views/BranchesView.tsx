@@ -3,7 +3,18 @@ import { useCachedPromise } from "@raycast/utils";
 import { useGitBranches } from "../../hooks/useGitBranches";
 import { ErrorView } from "../../components/shared/ErrorView";
 import { EmptyView } from "../../components/shared/EmptyView";
-import { BranchActions, CreateBranchAction, FetchAction } from "../../components/actions/BranchActions";
+import {
+  BranchCheckoutAction,
+  BranchDeleteAction,
+  BranchPushAction,
+  BranchMergeAction,
+  BranchRebaseAction,
+  BranchDeleteRemoteAction,
+  BranchCheckoutRemoteAction,
+  CreateBranchAction,
+  FetchAction,
+  PullAction
+} from "../../components/actions/BranchActions";
 import { RepositoryDirectoryActions } from "../../components/actions/RepositoryDirectoryActions";
 import { GitManager } from "../../utils/git-utils";
 import { Branch, DetachedHead } from "../../types";
@@ -227,7 +238,34 @@ function BranchListItem({
       actions={
         <ActionPanel>
           <ActionPanel.Section title="Branch Operations">
-            <BranchActions branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+            {/* Actions for current branch */}
+            {branch.type === "current" && (
+              <>
+                <PullAction gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchPushAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
+              </>
+            )}
+
+            {/* Actions for local branches */}
+            {branch.type === "local" && (
+              <>
+                <BranchCheckoutAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchMergeAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchRebaseAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchPushAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchDeleteAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+              </>
+            )}
+
+            {/* Actions for remote branches */}
+            {branch.type === "remote" && (
+              <>
+                <BranchCheckoutRemoteAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchDeleteRemoteAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+              </>
+            )}
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Branch Management">

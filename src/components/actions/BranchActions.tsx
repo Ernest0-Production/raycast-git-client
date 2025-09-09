@@ -3,16 +3,16 @@ import { useState } from "react";
 import { GitManager } from "../../utils/git-utils";
 import { Branch } from "../../types";
 
-interface BranchActionsProps {
+interface BranchActionProps {
   branch: Branch;
   gitManager: GitManager;
   onRefresh: () => void;
 }
 
 /**
- * Reusable actions for working with branches.
+ * Action for checking out a branch.
  */
-export function BranchActions({ branch, gitManager, onRefresh }: BranchActionsProps) {
+export function BranchCheckoutAction({ branch, gitManager, onRefresh }: BranchActionProps) {
   const handleCheckout = async () => {
     const confirmed = await confirmAlert({
       title: "Checkout branch",
@@ -33,6 +33,13 @@ export function BranchActions({ branch, gitManager, onRefresh }: BranchActionsPr
     }
   };
 
+  return <Action title="Checkout Branch" onAction={handleCheckout} icon={Icon.ArrowRight} />;
+}
+
+/**
+ * Action for deleting a branch.
+ */
+export function BranchDeleteAction({ branch, gitManager, onRefresh }: BranchActionProps) {
   const handleDeleteBranch = async () => {
     const confirmed = await confirmAlert({
       title: "Delete branch",
@@ -53,6 +60,21 @@ export function BranchActions({ branch, gitManager, onRefresh }: BranchActionsPr
     }
   };
 
+  return (
+    <Action
+      title="Delete Branch"
+      onAction={handleDeleteBranch}
+      icon={Icon.Trash}
+      style={Action.Style.Destructive}
+      shortcut={{ modifiers: ["ctrl"], key: "x" }}
+    />
+  );
+}
+
+/**
+ * Action for pushing the current branch.
+ */
+export function BranchPushAction({ branch, gitManager, onRefresh }: BranchActionProps) {
   const handlePush = async () => {
     try {
       await gitManager.push();
@@ -62,6 +84,20 @@ export function BranchActions({ branch, gitManager, onRefresh }: BranchActionsPr
     }
   };
 
+  return (
+    <Action
+      title="Push"
+      onAction={handlePush}
+      icon={Icon.ArrowUp}
+      shortcut={branch.type === "current" ? { modifiers: ["cmd", "shift"], key: "p" } : undefined}
+    />
+  );
+}
+
+/**
+ * Action for merging a branch into the current branch.
+ */
+export function BranchMergeAction({ branch, gitManager, onRefresh }: BranchActionProps) {
   const handleMergeBranch = async () => {
     const confirmed = await confirmAlert({
       title: "Merge branch",
@@ -82,6 +118,20 @@ export function BranchActions({ branch, gitManager, onRefresh }: BranchActionsPr
     }
   };
 
+  return (
+    <Action
+      title="Merge into Current"
+      onAction={handleMergeBranch}
+      icon={Icon.ArrowNe}
+      shortcut={{ modifiers: ["cmd"], key: "m" }}
+    />
+  );
+}
+
+/**
+ * Action for rebasing the current branch onto another branch.
+ */
+export function BranchRebaseAction({ branch, gitManager, onRefresh }: BranchActionProps) {
   const handleRebaseBranch = async () => {
     const confirmed = await confirmAlert({
       title: "Rebase branch",
@@ -102,6 +152,20 @@ export function BranchActions({ branch, gitManager, onRefresh }: BranchActionsPr
     }
   };
 
+  return (
+    <Action
+      title="Rebase Current onto This"
+      onAction={handleRebaseBranch}
+      icon={Icon.ArrowClockwise}
+      shortcut={{ modifiers: ["cmd", "shift"], key: "r" }}
+    />
+  );
+}
+
+/**
+ * Action for deleting a remote branch.
+ */
+export function BranchDeleteRemoteAction({ branch, gitManager, onRefresh }: BranchActionProps) {
   const handleDeleteRemoteBranch = async () => {
     const confirmed = await confirmAlert({
       title: "Delete remote branch",
@@ -130,99 +194,46 @@ export function BranchActions({ branch, gitManager, onRefresh }: BranchActionsPr
     }
   };
 
-  // Actions for the current branch
-  if (branch.type === "current") {
-    return (
-      <>
-        <PullAction gitManager={gitManager} onRefresh={onRefresh} />
-        <Action
-          title="Push"
-          onAction={handlePush}
-          icon={Icon.ArrowUp}
-          shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
-        />
-        <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
-      </>
-    );
-  }
-
-  // Actions for local branches
-  if (branch.type === "local") {
-    return (
-      <>
-        <Action title="Checkout Branch" onAction={handleCheckout} icon={Icon.ArrowRight} />
-        <Action
-          title="Merge into Current"
-          onAction={handleMergeBranch}
-          icon={Icon.ArrowNe}
-          shortcut={{ modifiers: ["cmd"], key: "m" }}
-        />
-        <Action
-          title="Rebase Current onto This"
-          onAction={handleRebaseBranch}
-          icon={Icon.ArrowClockwise}
-          shortcut={{ modifiers: ["cmd", "shift"], key: "r" }}
-        />
-        <Action title="Push Branch" onAction={handlePush} icon={Icon.ArrowUp} />
-        <Action
-          title="Delete Branch"
-          onAction={handleDeleteBranch}
-          icon={Icon.Trash}
-          style={Action.Style.Destructive}
-          shortcut={{ modifiers: ["ctrl"], key: "x" }}
-        />
-      </>
-    );
-  }
-
-  // Actions for remote branches
-  if (branch.type === "remote") {
-    return (
-      <>
-        <Action
-          title="Checkout Remote Branch"
-          onAction={() => handleCheckoutRemote(branch, gitManager, onRefresh)}
-          icon={Icon.ArrowRight}
-        />
-        <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
-        <Action
-          title="Delete Remote Branch"
-          onAction={handleDeleteRemoteBranch}
-          icon={Icon.Trash}
-          style={Action.Style.Destructive}
-          shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
-        />
-      </>
-    );
-  }
-
-  return null;
+  return (
+    <Action
+      title="Delete Remote Branch"
+      onAction={handleDeleteRemoteBranch}
+      icon={Icon.Trash}
+      style={Action.Style.Destructive}
+      shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
+    />
+  );
 }
 
 /**
- * Create a local branch from a remote branch.
+ * Action for checking out a remote branch (creates local branch).
  */
-async function handleCheckoutRemote(branch: Branch, gitManager: GitManager, onRefresh: () => void) {
-  const confirmed = await confirmAlert({
-    title: "Checkout remote branch",
-    message: `Are you sure you want to checkout remote branch "${branch.name}"?`,
-    primaryAction: {
-      title: "Checkout",
-      style: Alert.ActionStyle.Default,
-    },
-  });
+export function BranchCheckoutRemoteAction({ branch, gitManager, onRefresh }: BranchActionProps) {
+  const handleCheckoutRemote = async () => {
+    const confirmed = await confirmAlert({
+      title: "Checkout remote branch",
+      message: `Are you sure you want to checkout remote branch "${branch.name}"?`,
+      primaryAction: {
+        title: "Checkout",
+        style: Alert.ActionStyle.Default,
+      },
+    });
 
-  if (confirmed) {
-    try {
-      // Create a local branch with the same name that tracks the remote branch
-      await gitManager.createBranch(branch.name);
-      await gitManager.checkoutBranch(branch.name);
-      onRefresh();
-    } catch (error) {
-      // Git error is already shown by GitManager
+    if (confirmed) {
+      try {
+        // Create a local branch with the same name that tracks the remote branch
+        await gitManager.createBranch(branch.name);
+        await gitManager.checkoutBranch(branch.name);
+        onRefresh();
+      } catch (error) {
+        // Git error is already shown by GitManager
+      }
     }
-  }
+  };
+
+  return <Action title="Checkout Remote Branch" onAction={handleCheckoutRemote} icon={Icon.ArrowRight} />;
 }
+
 
 /**
  * Global fetch action that can be reused across different views.

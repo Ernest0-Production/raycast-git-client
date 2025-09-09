@@ -2,16 +2,16 @@ import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast } from
 import { GitManager } from "../../utils/git-utils";
 import { Commit } from "../../types";
 
-interface CommitActionsProps {
+interface CommitActionProps {
   commit: Commit;
   gitManager: GitManager;
   onRefresh: () => void;
 }
 
 /**
- * Reusable actions for working with commits.
+ * Action for checking out a commit.
  */
-export function CommitActions({ commit, gitManager, onRefresh }: CommitActionsProps) {
+export function CommitCheckoutAction({ commit, gitManager, onRefresh }: CommitActionProps) {
   const handleCheckoutCommit = async () => {
     const confirmed = await confirmAlert({
       title: "Checkout commit",
@@ -32,6 +32,19 @@ export function CommitActions({ commit, gitManager, onRefresh }: CommitActionsPr
     }
   };
 
+  return (
+    <Action
+      title="Checkout Commit"
+      onAction={handleCheckoutCommit}
+      icon={Icon.Checkmark}
+    />
+  );
+}
+
+/**
+ * Action for cherry-picking a commit.
+ */
+export function CommitCherryPickAction({ commit, gitManager, onRefresh }: CommitActionProps) {
   const handleCherryPick = async () => {
     try {
       await gitManager.cherryPick(commit.hash);
@@ -41,6 +54,20 @@ export function CommitActions({ commit, gitManager, onRefresh }: CommitActionsPr
     }
   };
 
+  return (
+    <Action
+      title="Cherry-Pick Commit"
+      onAction={handleCherryPick}
+      icon={Icon.Download}
+      shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
+    />
+  );
+}
+
+/**
+ * Action for reverting a commit.
+ */
+export function CommitRevertAction({ commit, gitManager, onRefresh }: CommitActionProps) {
   const handleRevert = async () => {
     const confirmed = await confirmAlert({
       title: "Revert commit",
@@ -61,6 +88,20 @@ export function CommitActions({ commit, gitManager, onRefresh }: CommitActionsPr
     }
   };
 
+  return (
+    <Action
+      title="Revert Commit"
+      onAction={handleRevert}
+      icon={Icon.ArrowCounterClockwise}
+      shortcut={{ modifiers: ["cmd", "opt"], key: "r" }}
+    />
+  );
+}
+
+/**
+ * Action submenu for resetting to a commit.
+ */
+export function CommitResetAction({ commit, gitManager, onRefresh }: CommitActionProps) {
   const handleReset = async (mode: string) => {
     const confirmed = await confirmAlert({
       title: "Reset to commit",
@@ -82,86 +123,103 @@ export function CommitActions({ commit, gitManager, onRefresh }: CommitActionsPr
   };
 
   return (
-    <>
+    <ActionPanel.Submenu title="Reset to This Commit" icon={Icon.ArrowClockwise}>
       <Action
-        title="Checkout Commit"
-        onAction={handleCheckoutCommit}
-        icon={Icon.Checkmark}
-      />
-      <Action
-        title="Cherry-Pick Commit"
-        onAction={handleCherryPick}
-        icon={Icon.Download}
-        shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
+        title="Soft Reset (Keep Changes Staged)"
+        onAction={() => handleReset("--soft")}
+        icon={Icon.ArrowClockwise}
       />
       <Action
-        title="Revert Commit"
-        onAction={handleRevert}
-        icon={Icon.ArrowCounterClockwise}
-        shortcut={{ modifiers: ["cmd", "opt"], key: "r" }}
+        title="Mixed Reset (Keep Changes Unstaged)"
+        onAction={() => handleReset("--mixed")}
+        icon={Icon.ArrowClockwise}
       />
-      <ActionPanel.Submenu title="Reset to This Commit" icon={Icon.ArrowClockwise}>
-        <Action
-          title="Soft Reset (Keep Changes Staged)"
-          onAction={() => handleReset("--soft")}
-          icon={Icon.ArrowClockwise}
-        />
-        <Action
-          title="Mixed Reset (Keep Changes Unstaged)"
-          onAction={() => handleReset("--mixed")}
-          icon={Icon.ArrowClockwise}
-        />
-        <Action
-          title="Hard Reset (Discard All Changes)"
-          onAction={() => handleReset("--hard")}
-          icon={Icon.ArrowClockwise}
-          style={Action.Style.Destructive}
-        />
-      </ActionPanel.Submenu>
-      <Action.CopyToClipboard
-        title="Copy Commit Hash"
-        content={commit.hash}
-        shortcut={{ modifiers: ["cmd"], key: "c" }}
+      <Action
+        title="Hard Reset (Discard All Changes)"
+        onAction={() => handleReset("--hard")}
+        icon={Icon.ArrowClockwise}
+        style={Action.Style.Destructive}
       />
-      <Action.CopyToClipboard
-        title="Copy Short Hash"
-        content={commit.shortHash}
-      />
-      <Action.CopyToClipboard
-        title="Copy Author Name"
-        content={commit.author}
-      />
-      <Action.CopyToClipboard
-        title="Copy Author Email"
-        content={commit.authorEmail}
-      />
-    </>
+    </ActionPanel.Submenu>
   );
 }
 
 /**
- * Additional actions for commit history.
+ * Action for copying commit hash to clipboard.
  */
-export function CommitHistoryActions({ onRefresh, currentBranch }: { onRefresh: () => void; currentBranch?: string }) {
+export function CommitCopyHashAction({ commit }: { commit: Commit }) {
+  return (
+    <Action.CopyToClipboard
+      title="Copy Commit Hash"
+      content={commit.hash}
+      shortcut={{ modifiers: ["cmd"], key: "c" }}
+    />
+  );
+}
+
+/**
+ * Action for copying short commit hash to clipboard.
+ */
+export function CommitCopyShortHashAction({ commit }: { commit: Commit }) {
+  return (
+    <Action.CopyToClipboard
+      title="Copy Short Hash"
+      content={commit.shortHash}
+    />
+  );
+}
+
+/**
+ * Action for copying commit author to clipboard.
+ */
+export function CommitCopyAuthorAction({ commit }: { commit: Commit }) {
+  return (
+    <Action.CopyToClipboard
+      title="Copy Author Name"
+      content={commit.author}
+    />
+  );
+}
+
+/**
+ * Action for copying commit author email to clipboard.
+ */
+export function CommitCopyAuthorEmailAction({ commit }: { commit: Commit }) {
+  return (
+    <Action.CopyToClipboard
+      title="Copy Author Email"
+      content={commit.authorEmail}
+    />
+  );
+}
+
+/**
+ * Action for refreshing commit history.
+ */
+export function CommitRefreshHistoryAction({ onRefresh }: { onRefresh: () => void }) {
   const handleRefresh = async () => {
     onRefresh();
   };
 
   return (
-    <>
-      <Action
-        title="Refresh History"
-        onAction={handleRefresh}
-        icon={Icon.ArrowClockwise}
-        shortcut={{ modifiers: ["cmd"], key: "r" }}
-      />
-      {currentBranch && (
-        <Action.CopyToClipboard
-          title="Copy Branch Name"
-          content={currentBranch}
-          shortcut={{ modifiers: ["cmd"], key: "c" }}
-        />
-      )}
-    </>
+    <Action
+      title="Refresh History"
+      onAction={handleRefresh}
+      icon={Icon.ArrowClockwise}
+      shortcut={{ modifiers: ["cmd"], key: "r" }}
+    />
+  );
+}
+
+/**
+ * Action for copying current branch name to clipboard.
+ */
+export function CommitCopyBranchNameAction({ currentBranch }: { currentBranch: string }) {
+  return (
+    <Action.CopyToClipboard
+      title="Copy Branch Name"
+      content={currentBranch}
+      shortcut={{ modifiers: ["cmd"], key: "c" }}
+    />
   );
 }

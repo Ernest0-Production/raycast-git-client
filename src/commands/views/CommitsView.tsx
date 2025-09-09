@@ -5,8 +5,19 @@ import { useGitCommits } from "../../hooks/useGitCommits";
 import { useCommitsBranchFilter, ALL_BRANCHES_FILTER, DETACHED_HEAD_FILTER } from "../../hooks/useCommitsBranchFilter";
 import { ErrorView } from "../../components/shared/ErrorView";
 import { EmptyView } from "../../components/shared/EmptyView";
-import { CommitActions, CommitHistoryActions } from "../../components/actions/CommitActions";
-import { TagActions } from "../../components/actions/TagActions";
+import {
+  CommitCheckoutAction,
+  CommitCherryPickAction,
+  CommitRevertAction,
+  CommitResetAction,
+  CommitCopyHashAction,
+  CommitCopyShortHashAction,
+  CommitCopyAuthorAction,
+  CommitCopyAuthorEmailAction,
+  CommitRefreshHistoryAction,
+  CommitCopyBranchNameAction
+} from "../../components/actions/CommitActions";
+import { TagCreateAction, TagRemoveAction } from "../../components/actions/TagActions";
 import { FetchAction, PullAction } from "../../components/actions/BranchActions";
 import { RepositoryDirectoryActions } from "../../components/actions/RepositoryDirectoryActions";
 import { CommitDiffView } from "./CommitDiffView";
@@ -132,8 +143,14 @@ export function CommitsView({ gitManager, navigationActions }: CommitsViewProps)
         navigationTitle={`Commits - ${gitManager.repoName}`}
         actions={
           <ActionPanel>
-            <CommitHistoryActions onRefresh={revalidate} currentBranch={getActualBranchFilter()} />
-            <FetchAction gitManager={gitManager} onRefresh={revalidate} />
+            <ActionPanel.Section title="History Management">
+              <CommitRefreshHistoryAction onRefresh={revalidate} />
+              {getActualBranchFilter() && (
+                <CommitCopyBranchNameAction currentBranch={getActualBranchFilter()!} />
+              )}
+              <FetchAction gitManager={gitManager} onRefresh={revalidate} />
+            </ActionPanel.Section>
+
             {navigationActions}
           </ActionPanel>
         }
@@ -179,7 +196,10 @@ export function CommitsView({ gitManager, navigationActions }: CommitsViewProps)
           </ActionPanel.Section>
 
           <ActionPanel.Section title="History Management">
-            <CommitHistoryActions onRefresh={revalidate} currentBranch={getActualBranchFilter()} />
+            <CommitRefreshHistoryAction onRefresh={revalidate} />
+            {getActualBranchFilter() && (
+              <CommitCopyBranchNameAction currentBranch={getActualBranchFilter()!} />
+            )}
             {isLocalBranchSelected && <PullAction gitManager={gitManager} onRefresh={revalidate} />}
             <FetchAction gitManager={gitManager} onRefresh={revalidate} />
           </ActionPanel.Section>
@@ -483,11 +503,26 @@ function CommitListItem({
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Commit Operations">
-            <CommitActions commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
+            <CommitCheckoutAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
+            <CommitCherryPickAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
+            <CommitRevertAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
+            <CommitResetAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
+            <CommitCopyHashAction commit={commit} />
+            <CommitCopyShortHashAction commit={commit} />
+            <CommitCopyAuthorAction commit={commit} />
+            <CommitCopyAuthorEmailAction commit={commit} />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Tags">
-            <TagActions commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
+            <TagCreateAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
+            {commit.tags.map((tag) => (
+              <TagRemoveAction
+                key={tag}
+                tagName={tag}
+                gitManager={gitManager}
+                onRefresh={onRefresh}
+              />
+            ))}
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Repository Operations">

@@ -1,7 +1,7 @@
 import { ActionPanel, Action, List, Icon } from "@raycast/api";
 import { useGitStash } from "../../hooks/useGitStash";
 import { EmptyView } from "../../components/shared/EmptyView";
-import { StashActions, CreateStashAction } from "../../components/actions/StashActions";
+import { StashApplyAction, StashDropAction, CreateStashAction } from "../../components/actions/StashActions";
 import { RepositoryDirectoryActions } from "../../components/actions/RepositoryDirectoryActions";
 import { GitManager } from "../../utils/git-utils";
 import { Stash } from "../../types";
@@ -92,12 +92,18 @@ function StashListItem({
       actions={
         <ActionPanel>
           <ActionPanel.Section title="Stash Operations">
-            <StashActions
+            <StashApplyAction
               stash={stash}
               index={index}
               gitManager={gitManager}
               onRefresh={onRefresh}
               onNavigateToStatus={onNavigateToStatus}
+            />
+            <StashDropAction
+              stash={stash}
+              index={index}
+              gitManager={gitManager}
+              onRefresh={onRefresh}
             />
           </ActionPanel.Section>
 

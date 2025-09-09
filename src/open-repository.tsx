@@ -2,11 +2,13 @@ import { Action, Icon } from "@raycast/api";
 import { GitView } from "./types";
 import { useCachedState } from "@raycast/utils";
 import { useGitRepository } from "./hooks/useGitRepository";
+import { useRecentRepositories } from "./hooks/useRecentRepositories";
 import { ErrorView } from "./components/shared/ErrorView";
 import { BranchesView } from "./commands/views/BranchesView";
 import { StatusView } from "./commands/views/StatusView";
 import { CommitsView } from "./commands/views/CommitsView";
 import { StashesView } from "./commands/views/StashesView";
+import { useEffect } from "react";
 
 interface Arguments {
   path: string;
@@ -18,6 +20,16 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
 
   // Hook for working with a Git repository (synchronous validation)
   const { data: gitManager, error: repoError } = useGitRepository(repositoryPath);
+
+  // Hook for managing recent repositories
+  const { addToRecent } = useRecentRepositories();
+
+  // Add repository to recent cache when successfully opened
+  useEffect(() => {
+    if (gitManager && repositoryPath) {
+      addToRecent(repositoryPath);
+    }
+  }, [gitManager, repositoryPath, addToRecent]);
 
   // Validation error state
   if (repoError || !gitManager) {

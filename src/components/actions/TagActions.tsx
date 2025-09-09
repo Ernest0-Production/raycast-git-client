@@ -3,17 +3,44 @@ import { GitManager } from "../../utils/git-utils";
 import { Commit } from "../../types";
 import { CreateTagForm } from "../shared/CreateTagForm";
 
-interface TagActionsProps {
+interface TagActionProps {
     commit: Commit;
     gitManager: GitManager;
     onRefresh: () => void;
 }
 
 /**
- * Reusable actions for working with tags on commits.
+ * Action for creating a tag on a commit.
  */
-export function TagActions({ commit, gitManager, onRefresh }: TagActionsProps) {
-    const handleRemoveTag = async (tagName: string) => {
+export function TagCreateAction({ commit, gitManager, onRefresh }: TagActionProps) {
+    return (
+        <Action.Push
+            title="Create Tag"
+            target={
+                <CreateTagForm
+                    commit={commit}
+                    gitManager={gitManager}
+                    onRefresh={onRefresh} />
+            }
+            icon={Icon.Tag}
+            shortcut={{ modifiers: ["cmd", "opt"], key: "t" }}
+        />
+    );
+}
+
+/**
+ * Action for removing a tag from a commit.
+ */
+export function TagRemoveAction({
+    tagName,
+    gitManager,
+    onRefresh
+}: {
+    tagName: string;
+    gitManager: GitManager;
+    onRefresh: () => void;
+}) {
+    const handleRemoveTag = async () => {
         const confirmed = await confirmAlert({
             title: "Remove tag",
             message: `Are you sure you want to remove tag "${tagName}"?`,
@@ -51,27 +78,11 @@ export function TagActions({ commit, gitManager, onRefresh }: TagActionsProps) {
     };
 
     return (
-        <>
-            <Action.Push
-                title="Create Tag"
-                target={
-                    <CreateTagForm
-                        commit={commit}
-                        gitManager={gitManager}
-                        onRefresh={onRefresh} />
-                }
-                icon={Icon.Tag}
-                shortcut={{ modifiers: ["cmd", "opt"], key: "t" }}
-            />
-            {commit.tags.map((tag) => (
-                <Action
-                    key={tag}
-                    title={`Remove Tag "${tag}"`}
-                    onAction={() => handleRemoveTag(tag)}
-                    icon={Icon.Trash}
-                    style={Action.Style.Destructive}
-                />
-            ))}
-        </>
+        <Action
+            title={`Remove Tag "${tagName}"`}
+            onAction={handleRemoveTag}
+            icon={Icon.Trash}
+            style={Action.Style.Destructive}
+        />
     );
 }

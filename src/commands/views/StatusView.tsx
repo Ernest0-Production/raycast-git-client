@@ -4,8 +4,18 @@ import { useGitDiff } from "../../hooks/useGitDiff";
 import { ErrorView } from "../../components/shared/ErrorView";
 import { EmptyView } from "../../components/shared/EmptyView";
 import {
-  FileActions,
-  CommitActions as FileCommitActions,
+  FileStageAction,
+  FileUnstageAction,
+  FileDiscardAction,
+  FileOpenAction,
+  FileOpenWithAction,
+  FileShowInFinderAction,
+  FileCopyPathAction,
+  FileMoveToTrashAction,
+  FileStageAllAction,
+  FileUnstageAllAction,
+  FileDiscardAllAction,
+  FileCommitAction,
   getFileStatusIcon,
   getFileStatusColor,
 } from "../../components/actions/FileActions";
@@ -87,12 +97,14 @@ export function StatusView({ gitManager, navigationActions, onNavigateToCommits 
           </ActionPanel.Section>
 
           <ActionPanel.Section title="File Operations">
-            <FileCommitActions
+            <FileCommitAction
               gitManager={gitManager}
-              onRefresh={revalidate}
               onCommitSuccess={refreshAndNavigateToCommits}
               hasStagedChanges={stagedFiles.length > 0}
             />
+            <FileStageAllAction gitManager={gitManager} onRefresh={revalidate} />
+            <FileUnstageAllAction gitManager={gitManager} onRefresh={revalidate} />
+            <FileDiscardAllAction gitManager={gitManager} onRefresh={revalidate} />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Stash Operations">
@@ -209,7 +221,31 @@ function FileListItem({
       actions={
         <ActionPanel>
           <ActionPanel.Section title="File Operations">
-            <FileActions file={file} gitManager={gitManager} onRefresh={onRefresh} />
+            {/* Actions for staged files */}
+            {file.status === "staged" && (
+              <>
+                <FileUnstageAction file={file} gitManager={gitManager} onRefresh={onRefresh} />
+                <FileOpenAction file={file} />
+                <FileOpenWithAction file={file} />
+                <FileShowInFinderAction file={file} />
+                <FileCopyPathAction file={file} />
+              </>
+            )}
+
+            {/* Actions for unstaged/untracked files */}
+            {(file.status === "unstaged" || file.status === "untracked") && (
+              <>
+                <FileStageAction file={file} gitManager={gitManager} onRefresh={onRefresh} />
+                <FileMoveToTrashAction file={file} onRefresh={onRefresh} />
+                {file.type !== "conflicted" && file.type !== "added" && (
+                  <FileDiscardAction file={file} gitManager={gitManager} onRefresh={onRefresh} />
+                )}
+                <FileOpenAction file={file} />
+                <FileOpenWithAction file={file} />
+                <FileShowInFinderAction file={file} />
+                <FileCopyPathAction file={file} />
+              </>
+            )}
             <CreateStashAction gitManager={gitManager} onRefresh={onRefresh} filePath={file.relativePath} />
           </ActionPanel.Section>
 
@@ -224,12 +260,14 @@ function FileListItem({
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Commit Operations">
-            <FileCommitActions
+            <FileCommitAction
               gitManager={gitManager}
-              onRefresh={onRefresh}
               onCommitSuccess={onCommitSuccess}
               hasStagedChanges={hasStagedChanges}
             />
+            <FileStageAllAction gitManager={gitManager} onRefresh={onRefresh} />
+            <FileUnstageAllAction gitManager={gitManager} onRefresh={onRefresh} />
+            <FileDiscardAllAction gitManager={gitManager} onRefresh={onRefresh} />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Stash Operations">

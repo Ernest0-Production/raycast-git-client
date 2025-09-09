@@ -472,8 +472,6 @@ export class GitManager {
       return result;
     }
 
-    console.log("refsString", refsString);
-
     const refs = refsString.split(", ").map((ref) => ref.trim());
 
     for (const ref of refs) {

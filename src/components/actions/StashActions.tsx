@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Stash } from "../../types";
 import { GitManager } from "../../utils/git-utils";
 
-interface StashActionsProps {
+interface StashActionProps {
   stash: Stash;
   index: number;
   gitManager: GitManager;
@@ -11,16 +11,10 @@ interface StashActionsProps {
   onNavigateToStatus?: () => void;
 }
 
-async function handleStashAction(action: () => Promise<void>, onRefresh: () => void) {
-  try {
-    await action();
-    onRefresh();
-  } catch (error) {
-    // Git error is already shown by GitManager
-  }
-}
-
-export function StashActions({ stash, index, gitManager, onRefresh, onNavigateToStatus }: StashActionsProps) {
+/**
+ * Action for applying a stash.
+ */
+export function StashApplyAction({ stash, index, gitManager, onRefresh, onNavigateToStatus }: StashActionProps) {
   const handleApply = async () => {
     if (
       await confirmAlert({
@@ -55,6 +49,13 @@ export function StashActions({ stash, index, gitManager, onRefresh, onNavigateTo
     }
   };
 
+  return <Action title="Apply Stash" icon={Icon.Download} onAction={handleApply} />;
+}
+
+/**
+ * Action for dropping a stash.
+ */
+export function StashDropAction({ stash, index, gitManager, onRefresh }: StashActionProps) {
   const handleDrop = async () => {
     if (
       await confirmAlert({
@@ -63,21 +64,23 @@ export function StashActions({ stash, index, gitManager, onRefresh, onNavigateTo
         primaryAction: { title: "Drop", style: Alert.ActionStyle.Destructive },
       })
     ) {
-      await handleStashAction(() => gitManager.dropStash(index), onRefresh);
+      try {
+        await gitManager.dropStash(index);
+        onRefresh();
+      } catch (error) {
+        // Git error is already shown by GitManager
+      }
     }
   };
 
   return (
-    <>
-      <Action title="Apply Stash" icon={Icon.Download} onAction={handleApply} />
-      <Action
-        title="Drop Stash"
-        style={Action.Style.Destructive}
-        icon={Icon.Trash}
-        onAction={handleDrop}
-        shortcut={{ modifiers: ["ctrl"], key: "x" }}
-      />
-    </>
+    <Action
+      title="Drop Stash"
+      style={Action.Style.Destructive}
+      icon={Icon.Trash}
+      onAction={handleDrop}
+      shortcut={{ modifiers: ["ctrl"], key: "x" }}
+    />
   );
 }
 
