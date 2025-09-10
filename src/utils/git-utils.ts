@@ -87,7 +87,7 @@ export class GitManager {
         if (error) {
           hasError = true;
           lastOutput = error;
-          showToast({ style: Toast.Style.Failure, title: `Error running command: ${command_description}`, message: error });
+          // showToast({ style: Toast.Style.Failure, title: `Error running command: ${command_description}`, message: error });
           console.error(`[GIT STDERR] ${error}`);
         }
       });
@@ -102,7 +102,7 @@ export class GitManager {
             showToast({ style: Toast.Style.Success, title: command_description, message: "Command executed successfully" });
           }
         } else {
-          showToast({ style: Toast.Style.Failure, title: `Error running command: ${command_description}`, message: "Command failed" });
+          showToast({ style: Toast.Style.Failure, title: `Error running command: ${command_description}`, message: lastOutput });
         }
       });
     });

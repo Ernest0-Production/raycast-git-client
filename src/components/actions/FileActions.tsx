@@ -267,6 +267,7 @@ export function FileCommitAction({
       title="Commit Changes"
       icon={Icon.Message}
       target={<CommitMessageForm gitManager={gitManager} onFinish={onCommitSuccess} />}
+      shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
     />
   );
 }
