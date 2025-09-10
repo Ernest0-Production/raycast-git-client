@@ -59,7 +59,6 @@ export function CommitCherryPickAction({ commit, gitManager, onRefresh }: Commit
       title="Cherry-Pick Commit"
       onAction={handleCherryPick}
       icon={Icon.Download}
-      shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
     />
   );
 }

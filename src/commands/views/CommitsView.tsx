@@ -16,7 +16,7 @@ import {
   CommitCopyBranchNameAction
 } from "../../components/actions/CommitActions";
 import { TagCreateAction, TagRemoveAction } from "../../components/actions/TagActions";
-import { FetchAction, PullAction } from "../../components/actions/BranchActions";
+import { BranchPushAction, FetchAction, PullAction } from "../../components/actions/BranchActions";
 import { RepositoryDirectoryActions } from "../../components/actions/RepositoryDirectoryActions";
 import { CommitDiffView } from "./CommitDiffView";
 import { ConfigureUrlTrackerForm } from "../../components/shared/ConfigureUrlTrackerForm";
@@ -130,6 +130,9 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
               <CommitCopyBranchNameAction currentBranch={getActualBranchFilter()!} />
             )}
             {isLocalBranchSelected && <PullAction gitManager={gitManager} onRefresh={revalidate} />}
+            {branchesState.currentBranch && branchesState.currentBranch.type === "current" && (
+              <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={revalidate} />
+            )}
             <FetchAction gitManager={gitManager} onRefresh={revalidate} />
           </ActionPanel.Section>
 
@@ -504,6 +507,9 @@ function CommitListItem({
             <Action.Push title="Configure URL Tracker" icon={Icon.Gear} target={<ConfigureUrlTrackerForm />} />
             <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
             {isLocalBranchSelected && <PullAction gitManager={gitManager} onRefresh={onRefresh} />}
+            {currentBranch && currentBranch.type === "current" && (
+              <BranchPushAction branch={currentBranch} gitManager={gitManager} onRefresh={onRefresh} />
+            )}
             <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
           </ActionPanel.Section>
 
