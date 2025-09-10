@@ -91,7 +91,7 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
     <List
       isLoading={isLoading}
       pagination={pagination}
-      navigationTitle={`Commits - ${gitManager.repoName}`}
+      searchBarPlaceholder="Search commits by message, sha, author, tags, files..."
       onSelectionChange={(id) => setSelectedCommitId(id)}
       isShowingDetail={isShowingDetail}
       searchBarAccessory={viewDropdown}

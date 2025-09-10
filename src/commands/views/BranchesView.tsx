@@ -57,7 +57,7 @@ export function BranchesView({ gitManager, navigationActions, viewDropdown }: Br
   return (
     <List
       isLoading={isLoading}
-      navigationTitle={`Branches - ${gitManager.repoName}`}
+      searchBarPlaceholder="Search branches by name..."
       searchBarAccessory={viewDropdown}
       actions={
         <ActionPanel>

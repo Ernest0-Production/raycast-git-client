@@ -22,7 +22,7 @@ export function CommitDiffView({ commit, gitManager, navigationActions }: Commit
 
   return (
     <List
-      navigationTitle={`Files - ${commit.shortHash}`}
+      searchBarPlaceholder="Search files by name, path..."
       onSelectionChange={(id) => setSelectedFilePath(id)}
       filtering={{ keepSectionOrder: true }}
       isShowingDetail={isShowingDetail}

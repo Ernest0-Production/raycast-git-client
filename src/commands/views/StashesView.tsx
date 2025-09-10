@@ -20,7 +20,7 @@ export function StashesView({ gitManager, navigationActions, viewDropdown, onNav
   return (
     <List
       isLoading={isLoading}
-      navigationTitle={`Stash - ${gitManager.repoName}`}
+      searchBarPlaceholder="Search stashes by message, author..."
       searchBarAccessory={viewDropdown}
       actions={
         <ActionPanel>

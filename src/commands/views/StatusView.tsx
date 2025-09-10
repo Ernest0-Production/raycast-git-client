@@ -53,7 +53,7 @@ export function StatusView({ gitManager, navigationActions, viewDropdown, onNavi
   return (
     <List
       isLoading={isLoading}
-      navigationTitle={`Status - ${gitManager.repoName}`}
+      searchBarPlaceholder="Search files by name, path..."
       onSelectionChange={(id) => setSelectedFilePath(id)}
       filtering={{ keepSectionOrder: true }}
       isShowingDetail={isShowingDetail}
