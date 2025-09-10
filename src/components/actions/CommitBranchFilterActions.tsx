@@ -1,4 +1,4 @@
-import { ActionPanel, Action, Icon } from "@raycast/api";
+import { ActionPanel, Action, Icon, Color } from "@raycast/api";
 import { Branch, DetachedHead } from "../../types";
 import { ALL_BRANCHES_FILTER, DETACHED_HEAD_FILTER } from "../../hooks/useCommitsBranchFilter";
 
@@ -37,7 +37,7 @@ export function CommitBranchFilterAction({
             return (
                 <Action
                     title={currentBranch.name}
-                    icon={isSelected ? Icon.Checkmark : Icon.Dot}
+                    icon={{ source: isSelected ? Icon.Checkmark : Icon.Dot, tintColor: Color.Green }}
                     autoFocus={selectedBranch === currentBranch.name}
                     onAction={() => updateSelectedBranch(currentBranch.name)}
                 />
