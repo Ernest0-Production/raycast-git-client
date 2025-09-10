@@ -10,10 +10,6 @@ import { validateGitRepository, resolveTildePath } from "../utils/validation";
 export function useGitRepository(repositoryPath: string): { data: GitManager | undefined; error: Error | undefined } {
   // Synchronous validation and GitManager creation
   const { gitManager, error } = useMemo(() => {
-    if (!repositoryPath) {
-      return { gitManager: undefined, error: new Error("Repository path not specified") };
-    }
-
     const validation = validateGitRepository(repositoryPath);
 
     if (!validation.isValid) {

@@ -3,7 +3,6 @@ import { GitView } from "./types";
 import { useCachedState } from "@raycast/utils";
 import { useGitRepository } from "./hooks/useGitRepository";
 import { useRecentRepositories } from "./hooks/useRecentRepositories";
-import { ErrorView } from "./components/shared/ErrorView";
 import { BranchesView } from "./commands/views/BranchesView";
 import { StatusView } from "./commands/views/StatusView";
 import { CommitsView } from "./commands/views/CommitsView";
@@ -34,12 +33,13 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
   // Validation error state
   if (repoError || !gitManager) {
     return (
-      <ErrorView
-        title="Error opening repository"
-        message={repoError?.message || "Unknown error"}
-        navigationTitle="Git Repository"
-        onRetry={undefined}
-      />
+      <List navigationTitle="Git Repository">
+        <List.EmptyView
+          title="Error opening repository"
+          description={repoError?.message || "Unknown error"}
+          icon={Icon.ExclamationMark}
+        />
+      </List>
     );
   }
 
@@ -137,7 +137,5 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           onNavigateToStatus={() => setCurrentView("status")}
         />
       );
-    default:
-      return <ErrorView title="Unknown state of cache" message="Try invalidating the cache of extension" />;
   }
 }

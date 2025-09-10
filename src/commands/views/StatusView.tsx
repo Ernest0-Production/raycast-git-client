@@ -1,7 +1,6 @@
 import { ActionPanel, Action, List, Icon } from "@raycast/api";
 import { useGitStatus } from "../../hooks/useGitStatus";
 import { useGitDiff } from "../../hooks/useGitDiff";
-import { ErrorView } from "../../components/shared/ErrorView";
 import {
   FileStageAction,
   FileUnstageAction,
@@ -47,16 +46,6 @@ export function StatusView({ gitManager, navigationActions, viewDropdown, onNavi
     setIsShowingDetail(!isShowingDetail);
   };
 
-  if (error) {
-    return (
-      <ErrorView
-        title="Error loading status"
-        message={error.message}
-        navigationTitle={`Status - ${gitManager.repoName}`}
-        onRetry={revalidate}
-      />
-    );
-  }
 
   const stagedFiles = files ? files.filter((f) => f.status === "staged") : [];
   const unstagedFiles = files ? files.filter((f) => f.status === "unstaged" || f.status === "untracked") : [];
@@ -104,7 +93,18 @@ export function StatusView({ gitManager, navigationActions, viewDropdown, onNavi
         </ActionPanel>
       }
     >
-      {!files || files.length === 0 ? (
+      {error ? (
+        <List.EmptyView
+          title="Error loading status"
+          description={error.message}
+          icon={Icon.ExclamationMark}
+          actions={
+            <ActionPanel>
+              <Action title="Retry" onAction={revalidate} icon={Icon.ArrowClockwise} />
+            </ActionPanel>
+          }
+        />
+      ) : !files || files.length === 0 ? (
         <List.EmptyView
           title="No changes"
           description="No changes in the repository. The working directory is clean."

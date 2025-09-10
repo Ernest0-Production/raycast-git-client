@@ -1,7 +1,6 @@
 import { ActionPanel, Action, List, Icon, Color } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useGitBranches } from "../../hooks/useGitBranches";
-import { ErrorView } from "../../components/shared/ErrorView";
 import {
   BranchCheckoutAction,
   BranchDeleteAction,
@@ -43,16 +42,6 @@ export function BranchesView({ gitManager, navigationActions, viewDropdown }: Br
     revalidateConflicts();
   };
 
-  if (error) {
-    return (
-      <ErrorView
-        title="Error loading branches state"
-        message={error.message}
-        navigationTitle={`Branches - ${gitManager.repoName}`}
-        onRetry={revalidateAll}
-      />
-    );
-  }
 
   // Group remote branches by remote (only if we have data)
   const remoteGroups = branchesState ? branchesState.remoteBranches.reduce(
@@ -86,7 +75,18 @@ export function BranchesView({ gitManager, navigationActions, viewDropdown }: Br
         </ActionPanel>
       }
     >
-      {!branchesState ||
+      {error ? (
+        <List.EmptyView
+          title="Error loading branches"
+          description={error.message}
+          icon={Icon.ExclamationMark}
+          actions={
+            <ActionPanel>
+              <Action title="Retry" onAction={revalidateAll} icon={Icon.ArrowClockwise} />
+            </ActionPanel>
+          }
+        />
+      ) : !branchesState ||
         (!branchesState.currentBranch &&
           !branchesState.detachedHead &&
           branchesState.localBranches.length === 0 &&

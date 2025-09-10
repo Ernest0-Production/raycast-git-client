@@ -3,7 +3,6 @@ import { useCachedPromise, useCachedState } from "@raycast/utils";
 import { useGitBranches } from "../../hooks/useGitBranches";
 import { useGitCommits } from "../../hooks/useGitCommits";
 import { useCommitsBranchFilter, ALL_BRANCHES_FILTER, DETACHED_HEAD_FILTER } from "../../hooks/useCommitsBranchFilter";
-import { ErrorView } from "../../components/shared/ErrorView";
 import {
   CommitCheckoutAction,
   CommitCherryPickAction,
@@ -71,16 +70,6 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
     );
   }, [selectedBranch, allBranches]);
 
-  if (error) {
-    return (
-      <ErrorView
-        title="Error loading commits"
-        message={error.message}
-        navigationTitle={`Commits - ${gitManager.repoName}`}
-        onRetry={revalidate}
-      />
-    );
-  }
 
   // Get current filter display name for List.Section title
   const currentFilterDisplayName = getBranchFilterDisplayName(
@@ -153,7 +142,18 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
         </ActionPanel>
       }
     >
-      {!commits || commits.length === 0 ? (
+      {error ? (
+        <List.EmptyView
+          title="Error loading commits"
+          description={error.message}
+          icon={Icon.ExclamationMark}
+          actions={
+            <ActionPanel>
+              <Action title="Retry" onAction={revalidate} icon={Icon.ArrowClockwise} />
+            </ActionPanel>
+          }
+        />
+      ) : !commits || commits.length === 0 ? (
         <List.EmptyView
           title="No commits"
           description="No commits in this branch."

@@ -1,6 +1,5 @@
 import { ActionPanel, Action, List, Icon, getPreferenceValues } from "@raycast/api";
 import { useGitDiff } from "../../hooks/useGitDiff";
-import { ErrorView } from "../../components/shared/ErrorView";
 import { GitManager } from "../../utils/git-utils";
 import { Commit, CommitFileChange, Preferences } from "../../types";
 import { join } from "path";

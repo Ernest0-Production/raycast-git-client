@@ -87,8 +87,8 @@ Raycast расширение для управления локальными Gi
 
 #### Shared Components (Общие UI компоненты)
 - **`ErrorView`** - Отображение ошибок с возможностью повтора
-- **`EmptyView`** - Пустые состояния с описанием и действиями
 - **`LoadingView`** - Индикаторы загрузки
+- Empty states используют нативный `List.EmptyView` внутри каждого `List` компонента
 
 #### Utils (Утилиты)
 - **`GitManager`** - Основной класс для всех Git операций
@@ -140,7 +140,6 @@ git-client/
 │   │   │   └── StashActions.tsx
 │   │   └── shared/                  # Общие UI компоненты
 │   │       ├── ErrorView.tsx
-│   │       ├── EmptyView.tsx
 │   │       └── LoadingView.tsx
 │   ├── hooks/                       # Кастомные React хуки
 │   │   ├── useGitRepository.ts
