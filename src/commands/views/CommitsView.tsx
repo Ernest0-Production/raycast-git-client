@@ -4,7 +4,6 @@ import { useGitBranches } from "../../hooks/useGitBranches";
 import { useGitCommits } from "../../hooks/useGitCommits";
 import { useCommitsBranchFilter, ALL_BRANCHES_FILTER, DETACHED_HEAD_FILTER } from "../../hooks/useCommitsBranchFilter";
 import { ErrorView } from "../../components/shared/ErrorView";
-import { EmptyView } from "../../components/shared/EmptyView";
 import {
   CommitCheckoutAction,
   CommitCherryPickAction,
@@ -99,40 +98,6 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
     setIsShowingMetadata(!isShowingMetadata);
   };
 
-  if (!commits || commits.length === 0) {
-    return (
-      <EmptyView
-        title="No commits"
-        description="No commits in this branch."
-        icon={Icon.List}
-        navigationTitle={`Commits - ${gitManager.repoName}`}
-        actions={
-          <ActionPanel>
-            <ActionPanel.Section title="Filter">
-              <CommitBranchFilterAction
-                selectedBranch={selectedBranch}
-                updateSelectedBranch={updateSelectedBranch}
-                allBranches={allBranches}
-                detachedHead={branchesState?.detachedHead}
-                currentBranch={branchesState?.currentBranch}
-              />
-            </ActionPanel.Section>
-
-            <ActionPanel.Section title="History Management">
-              <CommitRefreshHistoryAction onRefresh={revalidate} />
-              {getActualBranchFilter() && (
-                <CommitCopyBranchNameAction currentBranch={getActualBranchFilter()!} />
-              )}
-              <FetchAction gitManager={gitManager} onRefresh={revalidate} />
-            </ActionPanel.Section>
-
-            {navigationActions}
-          </ActionPanel>
-        }
-      />
-    );
-  }
-
   return (
     <List
       isLoading={isLoading}
@@ -188,30 +153,38 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
         </ActionPanel>
       }
     >
-      <List.Section title={currentFilterDisplayName}>
-        {commits.map((commit) => (
-          <CommitListItem
-            key={commit.hash}
-            commit={commit}
-            gitManager={gitManager}
-            onRefresh={revalidate}
-            navigationActions={navigationActions}
-            isShowingDetail={isShowingDetail}
-            isShowingMetadata={isShowingMetadata}
-            onToggleDetail={toggleDetail}
-            onToggleMetadata={toggleMetadata}
-            urlTrackerConfigs={urlTrackerConfigs}
-            selectedCommitId={selectedCommitId}
-            isLocalBranchSelected={isLocalBranchSelected}
-            isAllBranchesFilter={selectedBranch === ALL_BRANCHES_FILTER}
-            selectedBranch={selectedBranch}
-            updateSelectedBranch={updateSelectedBranch}
-            allBranches={allBranches}
-            detachedHead={branchesState?.detachedHead}
-            currentBranch={branchesState?.currentBranch}
-          />
-        ))}
-      </List.Section>
+      {!commits || commits.length === 0 ? (
+        <List.EmptyView
+          title="No commits"
+          description="No commits in this branch."
+          icon={`git-commit.svg`}
+        />
+      ) : (
+        <List.Section title={currentFilterDisplayName}>
+          {commits.map((commit) => (
+            <CommitListItem
+              key={commit.hash}
+              commit={commit}
+              gitManager={gitManager}
+              onRefresh={revalidate}
+              navigationActions={navigationActions}
+              isShowingDetail={isShowingDetail}
+              isShowingMetadata={isShowingMetadata}
+              onToggleDetail={toggleDetail}
+              onToggleMetadata={toggleMetadata}
+              urlTrackerConfigs={urlTrackerConfigs}
+              selectedCommitId={selectedCommitId}
+              isLocalBranchSelected={isLocalBranchSelected}
+              isAllBranchesFilter={selectedBranch === ALL_BRANCHES_FILTER}
+              selectedBranch={selectedBranch}
+              updateSelectedBranch={updateSelectedBranch}
+              allBranches={allBranches}
+              detachedHead={branchesState?.detachedHead}
+              currentBranch={branchesState?.currentBranch}
+            />
+          ))}
+        </List.Section>
+      )}
     </List>
   );
 }

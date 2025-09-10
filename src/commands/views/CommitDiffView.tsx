@@ -1,7 +1,6 @@
 import { ActionPanel, Action, List, Icon, getPreferenceValues } from "@raycast/api";
 import { useGitDiff } from "../../hooks/useGitDiff";
 import { ErrorView } from "../../components/shared/ErrorView";
-import { EmptyView } from "../../components/shared/EmptyView";
 import { GitManager } from "../../utils/git-utils";
 import { Commit, CommitFileChange, Preferences } from "../../types";
 import { join } from "path";
@@ -21,18 +20,6 @@ export function CommitDiffView({ commit, gitManager, navigationActions }: Commit
   const toggleDetail = () => {
     setIsShowingDetail(!isShowingDetail);
   };
-
-  if (!commit.changedFiles || commit.changedFiles.length === 0) {
-    return (
-      <EmptyView
-        title="No file changes"
-        description="This commit has no file changes."
-        icon={Icon.Document}
-        navigationTitle={`Files - ${commit.shortHash}`}
-        actions={<ActionPanel>{navigationActions}</ActionPanel>}
-      />
-    );
-  }
 
   return (
     <List
@@ -55,18 +42,26 @@ export function CommitDiffView({ commit, gitManager, navigationActions }: Commit
         </ActionPanel>
       }
     >
-      {commit.changedFiles.map((file) => (
-        <FileListItem
-          key={file.path}
-          file={file}
-          commit={commit}
-          gitManager={gitManager}
-          navigationActions={navigationActions}
-          isShowingDetail={isShowingDetail}
-          onToggleDetail={toggleDetail}
-          selectedFilePath={selectedFilePath}
+      {!commit.changedFiles || commit.changedFiles.length === 0 ? (
+        <List.EmptyView
+          title="No file changes"
+          description="This commit has no file changes."
+          icon={Icon.Document}
         />
-      ))}
+      ) : (
+        commit.changedFiles.map((file) => (
+          <FileListItem
+            key={file.path}
+            file={file}
+            commit={commit}
+            gitManager={gitManager}
+            navigationActions={navigationActions}
+            isShowingDetail={isShowingDetail}
+            onToggleDetail={toggleDetail}
+            selectedFilePath={selectedFilePath}
+          />
+        ))
+      )}
     </List>
   );
 }

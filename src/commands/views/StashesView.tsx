@@ -1,6 +1,5 @@
 import { ActionPanel, Action, List, Icon } from "@raycast/api";
 import { useGitStash } from "../../hooks/useGitStash";
-import { EmptyView } from "../../components/shared/EmptyView";
 import { StashApplyAction, StashDropAction, CreateStashAction } from "../../components/actions/StashActions";
 import { RepositoryDirectoryActions } from "../../components/actions/RepositoryDirectoryActions";
 import { GitManager } from "../../utils/git-utils";
@@ -18,24 +17,6 @@ interface StashesViewProps {
 export function StashesView({ gitManager, navigationActions, viewDropdown, onNavigateToStatus }: StashesViewProps) {
   const { stashes, isLoading, revalidate } = useGitStash(gitManager);
 
-  if (!stashes || stashes.length === 0) {
-    return (
-      <EmptyView
-        title="No stashes"
-        description="No saved changes in the stash."
-        icon={Icon.Box}
-        navigationTitle={`Stash - ${gitManager.repoName}`}
-        actions={
-          <ActionPanel>
-            <Action title="Refresh Stash" onAction={revalidate} icon={Icon.ArrowClockwise} />
-            <CreateStashAction gitManager={gitManager} onRefresh={revalidate} />
-            {navigationActions}
-          </ActionPanel>
-        }
-      />
-    );
-  }
-
   return (
     <List
       isLoading={isLoading}
@@ -43,6 +24,11 @@ export function StashesView({ gitManager, navigationActions, viewDropdown, onNav
       searchBarAccessory={viewDropdown}
       actions={
         <ActionPanel>
+          <ActionPanel.Section title="Stash Management">
+            <Action title="Refresh Stash" onAction={revalidate} icon={Icon.ArrowClockwise} />
+            <CreateStashAction gitManager={gitManager} onRefresh={revalidate} />
+          </ActionPanel.Section>
+
           <ActionPanel.Section title="Repository">
             <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
           </ActionPanel.Section>
@@ -51,17 +37,25 @@ export function StashesView({ gitManager, navigationActions, viewDropdown, onNav
         </ActionPanel>
       }
     >
-      {stashes.map((stash, index) => (
-        <StashListItem
-          key={index}
-          stash={stash}
-          index={index}
-          gitManager={gitManager}
-          onRefresh={revalidate}
-          navigationActions={navigationActions}
-          onNavigateToStatus={onNavigateToStatus}
+      {!stashes || stashes.length === 0 ? (
+        <List.EmptyView
+          title="No stashes"
+          description="No saved changes in the stash."
+          icon={Icon.Download}
         />
-      ))}
+      ) : (
+        stashes.map((stash, index) => (
+          <StashListItem
+            key={index}
+            stash={stash}
+            index={index}
+            gitManager={gitManager}
+            onRefresh={revalidate}
+            navigationActions={navigationActions}
+            onNavigateToStatus={onNavigateToStatus}
+          />
+        ))
+      )}
     </List>
   );
 }

@@ -2,7 +2,6 @@ import { ActionPanel, Action, List, Icon } from "@raycast/api";
 import { useGitStatus } from "../../hooks/useGitStatus";
 import { useGitDiff } from "../../hooks/useGitDiff";
 import { ErrorView } from "../../components/shared/ErrorView";
-import { EmptyView } from "../../components/shared/EmptyView";
 import {
   FileStageAction,
   FileUnstageAction,
@@ -59,25 +58,8 @@ export function StatusView({ gitManager, navigationActions, viewDropdown, onNavi
     );
   }
 
-  if (!files || files.length === 0) {
-    return (
-      <EmptyView
-        title="No changes"
-        description="No changes in the repository. The working directory is clean."
-        icon={Icon.CheckCircle}
-        navigationTitle={`Status - ${gitManager.repoName}`}
-        actions={
-          <ActionPanel>
-            <Action title="Refresh Status" onAction={revalidate} icon={Icon.ArrowClockwise} />
-            {navigationActions}
-          </ActionPanel>
-        }
-      />
-    );
-  }
-
-  const stagedFiles = files.filter((f) => f.status === "staged");
-  const unstagedFiles = files.filter((f) => f.status === "unstaged" || f.status === "untracked");
+  const stagedFiles = files ? files.filter((f) => f.status === "staged") : [];
+  const unstagedFiles = files ? files.filter((f) => f.status === "unstaged" || f.status === "untracked") : [];
 
   return (
     <List
@@ -99,6 +81,7 @@ export function StatusView({ gitManager, navigationActions, viewDropdown, onNavi
           </ActionPanel.Section>
 
           <ActionPanel.Section title="File Operations">
+            <Action title="Refresh Status" onAction={revalidate} icon={Icon.ArrowClockwise} />
             <FileCommitAction
               gitManager={gitManager}
               onCommitSuccess={refreshAndNavigateToCommits}
@@ -121,42 +104,52 @@ export function StatusView({ gitManager, navigationActions, viewDropdown, onNavi
         </ActionPanel>
       }
     >
-      {unstagedFiles.length > 0 && (
-        <List.Section title="Unstaged Files" subtitle={`${unstagedFiles.length}`}>
-          {unstagedFiles.map((file) => (
-            <FileListItem
-              key={file.path}
-              file={file}
-              gitManager={gitManager}
-              onRefresh={revalidate}
-              navigationActions={navigationActions}
-              isShowingDetail={isShowingDetail}
-              onToggleDetail={toggleDetail}
-              selectedFilePath={selectedFilePath}
-              hasStagedChanges={stagedFiles.length > 0}
-              onCommitSuccess={refreshAndNavigateToCommits}
-            />
-          ))}
-        </List.Section>
-      )}
+      {!files || files.length === 0 ? (
+        <List.EmptyView
+          title="No changes"
+          description="No changes in the repository. The working directory is clean."
+          icon={Icon.NewDocument}
+        />
+      ) : (
+        <>
+          {unstagedFiles.length > 0 && (
+            <List.Section title="Unstaged Files" subtitle={`${unstagedFiles.length}`}>
+              {unstagedFiles.map((file) => (
+                <FileListItem
+                  key={file.path}
+                  file={file}
+                  gitManager={gitManager}
+                  onRefresh={revalidate}
+                  navigationActions={navigationActions}
+                  isShowingDetail={isShowingDetail}
+                  onToggleDetail={toggleDetail}
+                  selectedFilePath={selectedFilePath}
+                  hasStagedChanges={stagedFiles.length > 0}
+                  onCommitSuccess={refreshAndNavigateToCommits}
+                />
+              ))}
+            </List.Section>
+          )}
 
-      {stagedFiles.length > 0 && (
-        <List.Section title="Staged Files" subtitle={`${stagedFiles.length}`}>
-          {stagedFiles.map((file) => (
-            <FileListItem
-              key={file.path}
-              file={file}
-              gitManager={gitManager}
-              onRefresh={revalidate}
-              navigationActions={navigationActions}
-              isShowingDetail={isShowingDetail}
-              onToggleDetail={toggleDetail}
-              selectedFilePath={selectedFilePath}
-              hasStagedChanges={stagedFiles.length > 0}
-              onCommitSuccess={refreshAndNavigateToCommits}
-            />
-          ))}
-        </List.Section>
+          {stagedFiles.length > 0 && (
+            <List.Section title="Staged Files" subtitle={`${stagedFiles.length}`}>
+              {stagedFiles.map((file) => (
+                <FileListItem
+                  key={file.path}
+                  file={file}
+                  gitManager={gitManager}
+                  onRefresh={revalidate}
+                  navigationActions={navigationActions}
+                  isShowingDetail={isShowingDetail}
+                  onToggleDetail={toggleDetail}
+                  selectedFilePath={selectedFilePath}
+                  hasStagedChanges={stagedFiles.length > 0}
+                  onCommitSuccess={refreshAndNavigateToCommits}
+                />
+              ))}
+            </List.Section>
+          )}
+        </>
       )}
     </List>
   );

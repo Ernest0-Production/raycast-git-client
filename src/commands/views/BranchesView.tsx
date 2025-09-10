@@ -2,7 +2,6 @@ import { ActionPanel, Action, List, Icon, Color } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useGitBranches } from "../../hooks/useGitBranches";
 import { ErrorView } from "../../components/shared/ErrorView";
-import { EmptyView } from "../../components/shared/EmptyView";
 import {
   BranchCheckoutAction,
   BranchDeleteAction,
@@ -55,31 +54,8 @@ export function BranchesView({ gitManager, navigationActions, viewDropdown }: Br
     );
   }
 
-  if (
-    !branchesState ||
-    (!branchesState.currentBranch &&
-      !branchesState.detachedHead &&
-      branchesState.localBranches.length === 0 &&
-      branchesState.remoteBranches.length === 0)
-  ) {
-    return (
-      <EmptyView
-        title="No branches"
-        description="No branches found in the repository. It might be an empty repository or there are access issues."
-        icon={Icon.Terminal}
-        navigationTitle={`Branches - ${gitManager.repoName}`}
-        actions={
-          <ActionPanel>
-            <Action title="Refresh Branch List" onAction={revalidateAll} icon={Icon.ArrowClockwise} />
-            {navigationActions}
-          </ActionPanel>
-        }
-      />
-    );
-  }
-
-  // Group remote branches by remote
-  const remoteGroups = branchesState.remoteBranches.reduce(
+  // Group remote branches by remote (only if we have data)
+  const remoteGroups = branchesState ? branchesState.remoteBranches.reduce(
     (groups, branch) => {
       const remote = branch.remote || "unknown";
       if (!groups[remote]) groups[remote] = [];
@@ -87,7 +63,7 @@ export function BranchesView({ gitManager, navigationActions, viewDropdown }: Br
       return groups;
     },
     {} as Record<string, typeof branchesState.remoteBranches>,
-  );
+  ) : {};
 
   return (
     <List
@@ -97,6 +73,7 @@ export function BranchesView({ gitManager, navigationActions, viewDropdown }: Br
       actions={
         <ActionPanel>
           <ActionPanel.Section title="Branch Management">
+            <Action title="Refresh Branch List" onAction={revalidateAll} icon={Icon.ArrowClockwise} />
             <CreateBranchAction gitManager={gitManager} onRefresh={revalidateAll} />
             <FetchAction gitManager={gitManager} onRefresh={revalidateAll} />
           </ActionPanel.Section>
@@ -109,60 +86,74 @@ export function BranchesView({ gitManager, navigationActions, viewDropdown }: Br
         </ActionPanel>
       }
     >
-      {/* Current Branch Section */}
-      {branchesState.currentBranch && (
-        <List.Section title="Current Branch">
-          <BranchListItem
-            branch={branchesState.currentBranch}
-            gitManager={gitManager}
-            onRefresh={revalidateAll}
-            navigationActions={navigationActions}
-            hasConflicts={hasConflicts}
-          />
-        </List.Section>
-      )}
+      {!branchesState ||
+        (!branchesState.currentBranch &&
+          !branchesState.detachedHead &&
+          branchesState.localBranches.length === 0 &&
+          branchesState.remoteBranches.length === 0) ? (
+        <List.EmptyView
+          title="No branches"
+          description="No branches found in the repository. It might be an empty repository or there are access issues."
+          icon={`git-branch.svg`}
+        />
+      ) : (
+        <>
+          {/* Current Branch Section */}
+          {branchesState.currentBranch && (
+            <List.Section title="Current Branch">
+              <BranchListItem
+                branch={branchesState.currentBranch}
+                gitManager={gitManager}
+                onRefresh={revalidateAll}
+                navigationActions={navigationActions}
+                hasConflicts={hasConflicts}
+              />
+            </List.Section>
+          )}
 
-      {/* Detached HEAD Section */}
-      {branchesState.detachedHead && (
-        <List.Section title="Detached HEAD">
-          <DetachedHeadListItem
-            detachedHead={branchesState.detachedHead}
-            gitManager={gitManager}
-            onRefresh={revalidateAll}
-            navigationActions={navigationActions}
-          />
-        </List.Section>
-      )}
+          {/* Detached HEAD Section */}
+          {branchesState.detachedHead && (
+            <List.Section title="Detached HEAD">
+              <DetachedHeadListItem
+                detachedHead={branchesState.detachedHead}
+                gitManager={gitManager}
+                onRefresh={revalidateAll}
+                navigationActions={navigationActions}
+              />
+            </List.Section>
+          )}
 
-      {/* Local Branches Section */}
-      {branchesState.localBranches.length > 0 && (
-        <List.Section title="Local Branches">
-          {branchesState.localBranches.map((branch) => (
-            <BranchListItem
-              key={branch.name}
-              branch={branch}
-              gitManager={gitManager}
-              onRefresh={revalidateAll}
-              navigationActions={navigationActions}
-            />
+          {/* Local Branches Section */}
+          {branchesState.localBranches.length > 0 && (
+            <List.Section title="Local Branches">
+              {branchesState.localBranches.map((branch) => (
+                <BranchListItem
+                  key={branch.name}
+                  branch={branch}
+                  gitManager={gitManager}
+                  onRefresh={revalidateAll}
+                  navigationActions={navigationActions}
+                />
+              ))}
+            </List.Section>
+          )}
+
+          {/* Remote Branches Sections */}
+          {Object.entries(remoteGroups).map(([remoteName, remoteBranches]) => (
+            <List.Section key={remoteName} title={`Remote: ${remoteName}`}>
+              {remoteBranches.map((branch) => (
+                <BranchListItem
+                  key={`${branch.remote}/${branch.name}`}
+                  branch={branch}
+                  gitManager={gitManager}
+                  onRefresh={revalidateAll}
+                  navigationActions={navigationActions}
+                />
+              ))}
+            </List.Section>
           ))}
-        </List.Section>
+        </>
       )}
-
-      {/* Remote Branches Sections */}
-      {Object.entries(remoteGroups).map(([remoteName, remoteBranches]) => (
-        <List.Section key={remoteName} title={`Remote: ${remoteName}`}>
-          {remoteBranches.map((branch) => (
-            <BranchListItem
-              key={`${branch.remote}/${branch.name}`}
-              branch={branch}
-              gitManager={gitManager}
-              onRefresh={revalidateAll}
-              navigationActions={navigationActions}
-            />
-          ))}
-        </List.Section>
-      ))}
     </List>
   );
 }

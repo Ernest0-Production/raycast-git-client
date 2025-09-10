@@ -49,25 +49,25 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
       <Action
         title="Go to Status"
         onAction={() => setCurrentView("status")}
-        icon={Icon.Document}
+        icon={Icon.NewDocument}
         shortcut={{ modifiers: ["cmd"], key: "1" }}
       />
       <Action
         title="Go to Commits"
         onAction={() => setCurrentView("commits")}
-        icon={Icon.List}
+        icon={`git-commit.svg`}
         shortcut={{ modifiers: ["cmd"], key: "2" }}
       />
       <Action
         title="Go to Branches"
         onAction={() => setCurrentView("branches")}
-        icon={Icon.Terminal}
+        icon={`git-branch.svg`}
         shortcut={{ modifiers: ["cmd"], key: "3" }}
       />
       <Action
         title="Go to Stash"
         onAction={() => setCurrentView("stashes")}
-        icon={Icon.Box}
+        icon={Icon.Download}
         shortcut={{ modifiers: ["cmd"], key: "4" }}
       />
       <Action.ShowInFinder path={repositoryPath} title="Show in Finder" shortcut={{ modifiers: ["cmd"], key: "o" }} />
