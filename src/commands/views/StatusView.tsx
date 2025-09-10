@@ -29,10 +29,11 @@ import { existsSync } from "fs";
 interface StatusViewProps {
   gitManager: GitManager;
   navigationActions: React.ReactNode;
+  viewDropdown: React.ReactElement<any>;
   onNavigateToCommits?: () => void;
 }
 
-export function StatusView({ gitManager, navigationActions, onNavigateToCommits }: StatusViewProps) {
+export function StatusView({ gitManager, navigationActions, viewDropdown, onNavigateToCommits }: StatusViewProps) {
   const { data: files, isLoading, error, revalidate } = useGitStatus(gitManager);
   const [isShowingDetail, setIsShowingDetail] = useState(false);
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
@@ -85,6 +86,7 @@ export function StatusView({ gitManager, navigationActions, onNavigateToCommits 
       onSelectionChange={(id) => setSelectedFilePath(id)}
       filtering={{ keepSectionOrder: true }}
       isShowingDetail={isShowingDetail}
+      searchBarAccessory={viewDropdown}
       actions={
         <ActionPanel>
           <ActionPanel.Section title="View Controls">

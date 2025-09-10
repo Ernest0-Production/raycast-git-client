@@ -11,10 +11,11 @@ import { getAvatarIcon } from "@raycast/utils";
 interface StashesViewProps {
   gitManager: GitManager;
   navigationActions: React.ReactNode;
+  viewDropdown: React.ReactElement<any>;
   onNavigateToStatus?: () => void;
 }
 
-export function StashesView({ gitManager, navigationActions, onNavigateToStatus }: StashesViewProps) {
+export function StashesView({ gitManager, navigationActions, viewDropdown, onNavigateToStatus }: StashesViewProps) {
   const { stashes, isLoading, revalidate } = useGitStash(gitManager);
 
   if (!stashes || stashes.length === 0) {
@@ -39,6 +40,7 @@ export function StashesView({ gitManager, navigationActions, onNavigateToStatus 
     <List
       isLoading={isLoading}
       navigationTitle={`Stash - ${gitManager.repoName}`}
+      searchBarAccessory={viewDropdown}
       actions={
         <ActionPanel>
           <ActionPanel.Section title="Repository">

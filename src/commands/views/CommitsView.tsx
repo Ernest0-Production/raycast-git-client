@@ -32,9 +32,10 @@ import { useMemo, useState, useEffect } from "react";
 interface CommitsViewProps {
   gitManager: GitManager;
   navigationActions: React.ReactNode;
+  viewDropdown: React.ReactElement<any>;
 }
 
-export function CommitsView({ gitManager, navigationActions }: CommitsViewProps) {
+export function CommitsView({ gitManager, navigationActions, viewDropdown }: CommitsViewProps) {
   const { data: branchesState } = useGitBranches(gitManager);
   const [isShowingDetail, setIsShowingDetail] = useState(false);
   const [isShowingMetadata, setIsShowingMetadata] = useCachedState("commits-metadata-visible", true);
@@ -139,6 +140,7 @@ export function CommitsView({ gitManager, navigationActions }: CommitsViewProps)
       navigationTitle={`Commits - ${gitManager.repoName}`}
       onSelectionChange={(id) => setSelectedCommitId(id)}
       isShowingDetail={isShowingDetail}
+      searchBarAccessory={viewDropdown}
       actions={
         <ActionPanel>
           <ActionPanel.Section title="Filter">
@@ -186,7 +188,7 @@ export function CommitsView({ gitManager, navigationActions }: CommitsViewProps)
         </ActionPanel>
       }
     >
-      <List.Section title={`Commits on ${currentFilterDisplayName}`}>
+      <List.Section title={currentFilterDisplayName}>
         {commits.map((commit) => (
           <CommitListItem
             key={commit.hash}

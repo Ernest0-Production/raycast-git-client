@@ -28,6 +28,7 @@ export function CommitBranchFilterAction({
                 <Action
                     title={`HEAD (${detachedHead.shortCommitHash})`}
                     icon={selectedBranch === DETACHED_HEAD_FILTER ? Icon.Checkmark : Icon.Anchor}
+                    autoFocus={selectedBranch === detachedHead?.shortCommitHash}
                     onAction={() => updateSelectedBranch(DETACHED_HEAD_FILTER)}
                 />
             );
@@ -37,6 +38,7 @@ export function CommitBranchFilterAction({
                 <Action
                     title={currentBranch.name}
                     icon={isSelected ? Icon.Checkmark : Icon.Dot}
+                    autoFocus={selectedBranch === currentBranch.name}
                     onAction={() => updateSelectedBranch(currentBranch.name)}
                 />
             );
@@ -65,6 +67,7 @@ export function CommitBranchFilterAction({
                         key={branchValue}
                         title={displayName}
                         icon={icon}
+                        autoFocus={selectedBranch === branchValue}
                         onAction={() => updateSelectedBranch(branchValue)}
                     />
                 );
@@ -84,6 +87,7 @@ export function CommitBranchFilterAction({
                 <Action
                     title="All Branches"
                     icon={selectedBranch === ALL_BRANCHES_FILTER ? Icon.Checkmark : Icon.List}
+                    autoFocus={selectedBranch === ALL_BRANCHES_FILTER}
                     onAction={() => updateSelectedBranch(ALL_BRANCHES_FILTER)}
                 />
             </ActionPanel.Section>
@@ -111,18 +115,18 @@ export function getBranchFilterDisplayName(
     allBranches: Branch[],
     detachedHead?: DetachedHead,
     currentBranch?: Branch,
-): string {
+): string | undefined {
     if (selectedBranch === ALL_BRANCHES_FILTER) {
-        return "All Branches";
+        return undefined;
     }
 
     if (selectedBranch === DETACHED_HEAD_FILTER && detachedHead) {
-        return `HEAD (${detachedHead.shortCommitHash})`;
+        return `Commits on HEAD (${detachedHead.shortCommitHash})`;
     }
 
     // Check if it's current branch
     if (currentBranch && selectedBranch === currentBranch.name) {
-        return currentBranch.name;
+        return `Filtered by '${currentBranch.name}' branch`;
     }
 
     // Find the branch in allBranches
@@ -134,7 +138,7 @@ export function getBranchFilterDisplayName(
     });
 
     if (branch) {
-        return branch.type === "remote" ? `${branch.remote}/${branch.name}` : branch.name;
+        return branch.type === "remote" ? `Filtered by '${branch.remote}/${branch.name}' branch` : `Filtered by '${branch.name}' branch`;
     }
 
     return selectedBranch;

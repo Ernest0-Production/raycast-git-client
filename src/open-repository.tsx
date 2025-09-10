@@ -1,4 +1,4 @@
-import { Action, Icon } from "@raycast/api";
+import { Action, Icon, List } from "@raycast/api";
 import { GitView } from "./types";
 import { useCachedState } from "@raycast/utils";
 import { useGitRepository } from "./hooks/useGitRepository";
@@ -74,23 +74,66 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
     </>
   );
 
+  // View selector dropdown for all views
+  const viewSelectorDropdown = (
+    <List.Dropdown
+      tooltip="Select View"
+      value={currentView}
+      onChange={(newValue) => setCurrentView(newValue as GitView)}
+    >
+      <List.Dropdown.Item
+        title="Status"
+        value="status"
+        keywords={["diff", "changes"]}
+        icon={Icon.NewDocument}
+      />
+      <List.Dropdown.Item
+        title="Commits"
+        value="commits"
+        keywords={["log"]}
+        icon={`git-commit.svg`}
+      />
+      <List.Dropdown.Item
+        title="Branches"
+        value="branches"
+        keywords={["graph"]}
+        icon={`git-branch.svg`}
+      />
+      <List.Dropdown.Item
+        title="Stashes"
+        value="stashes"
+        icon={Icon.Download}
+      />
+    </List.Dropdown>
+  );
+
   // Render the corresponding view
   switch (currentView) {
     case "branches":
-      return <BranchesView gitManager={gitManager} navigationActions={navigationActions} />;
+      return <BranchesView
+        gitManager={gitManager}
+        navigationActions={navigationActions}
+        viewDropdown={viewSelectorDropdown}
+      />;
     case "status":
       return <StatusView
         gitManager={gitManager}
         navigationActions={navigationActions}
+        viewDropdown={viewSelectorDropdown}
         onNavigateToCommits={() => setCurrentView("commits")}
       />;
     case "commits":
-      return <CommitsView gitManager={gitManager} navigationActions={navigationActions} />;
+      return <CommitsView
+        gitManager={gitManager}
+        navigationActions={navigationActions}
+        viewDropdown={viewSelectorDropdown}
+      />;
     case "stashes":
       return (
         <StashesView
           gitManager={gitManager}
           navigationActions={navigationActions}
+          viewDropdown={viewSelectorDropdown}
           onNavigateToStatus={() => setCurrentView("status")}
         />
       );

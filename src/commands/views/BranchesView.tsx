@@ -22,9 +22,10 @@ import { Branch, DetachedHead } from "../../types";
 interface BranchesViewProps {
   gitManager: GitManager;
   navigationActions: React.ReactNode;
+  viewDropdown: React.ReactElement<any>;
 }
 
-export function BranchesView({ gitManager, navigationActions }: BranchesViewProps) {
+export function BranchesView({ gitManager, navigationActions, viewDropdown }: BranchesViewProps) {
   const { data: branchesState, isLoading, error, revalidate } = useGitBranches(gitManager);
 
   // Check for conflicts separately
@@ -92,6 +93,7 @@ export function BranchesView({ gitManager, navigationActions }: BranchesViewProp
     <List
       isLoading={isLoading}
       navigationTitle={`Branches - ${gitManager.repoName}`}
+      searchBarAccessory={viewDropdown}
       actions={
         <ActionPanel>
           <ActionPanel.Section title="Branch Management">
