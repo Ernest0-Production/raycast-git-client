@@ -117,15 +117,17 @@ export class GitManager {
     // Get uncommitted changes status for current branch
     const hasUncommittedChanges = await this.hasUncommittedChanges();
 
-    const parseBranchInfo = (label: string): { ahead: number; behind: number; upstream?: string } => {
+    const parseBranchInfo = (label: string): { ahead: number; behind: number; upstream?: string; isGone?: boolean } => {
       const aheadMatch = label.match(/ahead (\d+)/);
       const behindMatch = label.match(/behind (\d+)/);
       const upstreamMatch = label.match(/\[(.*?)(: ahead \d+| behind \d+)*\]/);
+      const isGone = !!label.match(/: gone/);
 
       return {
         ahead: aheadMatch ? parseInt(aheadMatch[1], 10) : 0,
         behind: behindMatch ? parseInt(behindMatch[1], 10) : 0,
         upstream: upstreamMatch ? upstreamMatch[1] : undefined,
+        isGone,
       };
     };
 
@@ -154,7 +156,7 @@ export class GitManager {
       // Current Branch
       const currentBranchDetails = summary.branches[summary.current];
       if (currentBranchDetails) {
-        const { ahead, behind, upstream } = parseBranchInfo(currentBranchDetails.label);
+        const { ahead, behind, upstream, isGone } = parseBranchInfo(currentBranchDetails.label);
 
         currentBranch = {
           name: currentBranchDetails.name,
@@ -162,6 +164,7 @@ export class GitManager {
           ahead,
           behind,
           upstream,
+          isGone,
           hasUncommittedChanges,
           lastCommitMessage: this.extractCommitMessage(currentBranchDetails.label),
           lastCommitHash: currentBranchDetails.commit,
@@ -172,7 +175,7 @@ export class GitManager {
     // Local Branches
     Object.values(summary.branches).forEach((branch) => {
       if (!branch.name.startsWith("remotes/") && !branch.current) {
-        const { ahead, behind, upstream } = parseBranchInfo(branch.label);
+        const { ahead, behind, upstream, isGone } = parseBranchInfo(branch.label);
 
         localBranches.push({
           name: branch.name,
@@ -180,6 +183,7 @@ export class GitManager {
           ahead,
           behind,
           upstream,
+          isGone,
           lastCommitMessage: this.extractCommitMessage(branch.label),
           lastCommitHash: branch.commit,
         });
@@ -679,7 +683,7 @@ export class GitManager {
     if (name.includes("..") || name.includes(" ")) {
       throw new Error("Branch name contains invalid characters");
     }
-    await this.git.deleteLocalBranch(name.trim(), force);
+    await this.git.deleteLocalBranch(name.trim(), true);
   }
 
   /**

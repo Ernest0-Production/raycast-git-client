@@ -12,6 +12,8 @@ export interface Branch {
   ahead?: number;
   /** The number of commits behind upstream. */
   behind?: number;
+  /** Whether this branch is gone from remote. */
+  isGone?: boolean;
   /** The name of the remote (for remote branches). */
   remote?: string;
   /** The message of the last commit on this branch (first line only). */

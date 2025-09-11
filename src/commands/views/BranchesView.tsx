@@ -207,6 +207,14 @@ function BranchListItem({
     });
   }
 
+  if (branch.isGone) {
+    accessories.push({
+      tag: { value: "Removed", color: Color.Yellow },
+      icon: Icon.ExclamationMark,
+      tooltip: "Tracked branch was removed from remote",
+    });
+  }
+
   // Determine icon based on branch type
   const getIcon = () => {
     if (branch.type === "current") {
