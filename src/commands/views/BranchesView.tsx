@@ -220,6 +220,7 @@ function BranchListItem({
 
   return (
     <List.Item
+      key={branch.name}
       title={branch.name}
       subtitle={branch.lastCommitMessage || "No commit message"}
       icon={getIcon()}
@@ -236,7 +237,6 @@ function BranchListItem({
               <>
                 <PullAction gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchPushAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
-                <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
               </>
             )}
 
@@ -255,7 +255,6 @@ function BranchListItem({
             {branch.type === "remote" && (
               <>
                 <BranchCheckoutRemoteAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
-                <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchDeleteRemoteAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
               </>
             )}
@@ -300,6 +299,7 @@ function DetachedHeadListItem({
 
   return (
     <List.Item
+      key={detachedHead.shortCommitHash}
       title={`HEAD (${detachedHead.shortCommitHash})`}
       subtitle={detachedHead.commitMessage}
       icon={{ source: Icon.Anchor }}

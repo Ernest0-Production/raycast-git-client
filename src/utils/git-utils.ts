@@ -87,8 +87,8 @@ export class GitManager {
         if (error) {
           hasError = true;
           lastOutput = error;
-          // showToast({ style: Toast.Style.Failure, title: `Error running command: ${command_description}`, message: error });
-          console.error(`[GIT STDERR] ${error}`);
+          showToast({ style: Toast.Style.Animated, title: error });
+          console.warn(`[GIT STDERR] ${error}`);
         }
       });
 
@@ -777,8 +777,17 @@ export class GitManager {
   /**
    * Pushes changes.
    */
-  async push(force = false): Promise<void> {
-    const options = force ? ["--force-with-lease"] : [];
+  async push(force = false, upstream?: { remote: string, branch: string }): Promise<void> {
+    const options = []
+
+    if (force) {
+      options.push("--force-with-lease");
+    }
+
+    if (upstream) {
+      options.push("--set-upstream", upstream.remote, upstream.branch);
+    }
+
     await this.git.push(undefined, undefined, options);
   }
 

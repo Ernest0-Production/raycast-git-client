@@ -46,31 +46,38 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
   // Navigation actions for all views
   const navigationActions = (
     <>
-      <Action
-        title="Go to Status"
-        onAction={() => setCurrentView("status")}
-        icon={Icon.NewDocument}
-        shortcut={{ modifiers: ["cmd"], key: "1" }}
-      />
-      <Action
+      {currentView !== "status" &&
+        <Action
+          title="Go to Status"
+          onAction={() => setCurrentView("status")}
+          icon={Icon.NewDocument}
+          shortcut={{ modifiers: ["cmd"], key: "1" }}
+        />
+      }
+      {currentView !== "commits" && <Action
         title="Go to Commits"
         onAction={() => setCurrentView("commits")}
         icon={`git-commit.svg`}
         shortcut={{ modifiers: ["cmd"], key: "2" }}
       />
-      <Action
-        title="Go to Branches"
-        onAction={() => setCurrentView("branches")}
-        icon={`git-branch.svg`}
-        shortcut={{ modifiers: ["cmd"], key: "3" }}
-      />
-      <Action
-        title="Go to Stash"
-        onAction={() => setCurrentView("stashes")}
-        icon={Icon.Download}
-        shortcut={{ modifiers: ["cmd"], key: "4" }}
-      />
-      <Action.ShowInFinder path={repositoryPath} title="Show in Finder" shortcut={{ modifiers: ["cmd"], key: "o" }} />
+      }
+      {currentView !== "branches" &&
+        <Action
+          title="Go to Branches"
+          onAction={() => setCurrentView("branches")}
+          icon={`git-branch.svg`}
+          shortcut={{ modifiers: ["cmd"], key: "3" }}
+        />
+      }
+      {currentView !== "stashes" &&
+        <Action
+          title="Go to Stash"
+          onAction={() => setCurrentView("stashes")}
+          icon={Icon.Download}
+          shortcut={{ modifiers: ["cmd"], key: "4" }}
+        />
+      }
+      <Action.ShowInFinder path={repositoryPath} shortcut={{ modifiers: ["cmd"], key: "o" }} />
     </>
   );
 

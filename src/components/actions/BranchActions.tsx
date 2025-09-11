@@ -1,7 +1,8 @@
-import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast, Form } from "@raycast/api";
+import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast, Form, useNavigation } from "@raycast/api";
 import { useState } from "react";
 import { GitManager } from "../../utils/git-utils";
 import { Branch } from "../../types";
+import { usePromise } from "@raycast/utils";
 
 interface BranchActionProps {
   branch: Branch;
@@ -77,8 +78,51 @@ export function BranchDeleteAction({ branch, gitManager, onRefresh }: BranchActi
 export function BranchPushAction({ branch, gitManager, onRefresh }: BranchActionProps) {
   const handlePush = async () => {
     try {
-      await gitManager.push();
-      onRefresh();
+      // Check if upstream exists
+      if (!branch.upstream) {
+        // No upstream exists, get the default remote to show in the alert
+        const defaultRemote = await gitManager.getDefaultRemote();
+        const upstream = `${defaultRemote}/${branch.name}`;
+
+        const confirmed = await confirmAlert({
+          title: "No upstream branch found",
+          message: `Do you want to set upstream to "${upstream}" and push?`,
+          primaryAction: {
+            title: "Set Upstream & Push",
+            style: Alert.ActionStyle.Default,
+          },
+        });
+
+        if (confirmed) {
+          // Push with set-upstream using the default remote
+          await gitManager.push(false, { remote: defaultRemote, branch: branch.name });
+          onRefresh();
+        }
+      } else {
+        // Upstream exists, do regular push
+        try {
+          await gitManager.push();
+          onRefresh();
+        } catch (pushError) {
+          // Push failed, offer force push for branches with upstream
+          const errorMessage = pushError instanceof Error ? pushError.message : 'Unknown error';
+
+          const forceConfirmed = await confirmAlert({
+            title: "Push rejected",
+            message: `Reason: ${errorMessage}`,
+            primaryAction: {
+              title: "Force Push",
+              style: Alert.ActionStyle.Destructive,
+            },
+          });
+
+          if (forceConfirmed) {
+            // Execute force push
+            await gitManager.push(true);
+            onRefresh();
+          }
+        }
+      }
     } catch (error) {
       // Git error is already shown by GitManager
     }
@@ -290,14 +334,22 @@ export function CreateBranchAction({ gitManager, onRefresh }: { gitManager: GitM
       title="Create Branch"
       target={<CreateBranchForm gitManager={gitManager} onRefresh={onRefresh} />}
       icon={Icon.Plus}
+      shortcut={{ modifiers: ["cmd"], key: "n" }}
     />
   );
 }
 
 function CreateBranchForm({ gitManager, onRefresh }: { gitManager: GitManager; onRefresh: () => void }) {
+  const { pop } = useNavigation();
   const [branchName, setBranchName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { data: currentBranch } = usePromise(
+    async () => await gitManager.getCurrentBranch(),
+    []
+  );
 
   const handleSubmit = async (values: { branchName: string }) => {
+    setIsLoading(true);
     if (!values.branchName.trim()) {
       await showToast({
         style: Toast.Style.Failure,
@@ -309,13 +361,16 @@ function CreateBranchForm({ gitManager, onRefresh }: { gitManager: GitManager; o
     try {
       await gitManager.createBranch(values.branchName);
       onRefresh();
+      pop();
     } catch (error) {
       // Git error is already shown by GitManager
     }
+    setIsLoading(false);
   };
 
   return (
     <Form
+      isLoading={isLoading}
       actions={
         <ActionPanel>
           <Action.SubmitForm title="Create Branch" onSubmit={handleSubmit} />
@@ -329,6 +384,7 @@ function CreateBranchForm({ gitManager, onRefresh }: { gitManager: GitManager; o
         value={branchName}
         onChange={setBranchName}
       />
+      {currentBranch && <Form.Description text={`From branch '${currentBranch}'`} />}
     </Form>
   );
 }
