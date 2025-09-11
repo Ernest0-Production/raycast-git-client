@@ -38,6 +38,14 @@
       "description": "The default editor to open files with (e.g. 'Visual Studio Code')"
     },
     {
+      "name": "defaultTerminal",
+      "required": true,
+      "type": "appPicker",
+      "title": "Default Terminal",
+      "default": "com.apple.Terminal",
+      "description": "The default terminal app to open repository directory in (e.g. 'Terminal')"
+    },
+    {
       "name": "maxFilesToShow",
       "required": false,
       "type": "textfield",
@@ -71,8 +79,8 @@
     }
   ],
   "dependencies": {
-    "@raycast/api": "^1.100.3",
-    "@raycast/utils": "^1.17.0",
+    "@raycast/api": "^1.102.7",
+    "@raycast/utils": "^2.2.1",
     "simple-git": "^3.27.0"
   },
   "devDependencies": {

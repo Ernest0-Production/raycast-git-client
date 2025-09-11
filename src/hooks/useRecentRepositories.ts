@@ -40,6 +40,18 @@ export function useRecentRepositories() {
   );
 
   /**
+   * Removes a specific repository from the recent list.
+   */
+  const removeFromRecent = useCallback(
+    (repositoryPath: string) => {
+      const resolvedPath = resolveTildePath(repositoryPath).replace(/\/+$/, "");
+
+      setRepositories((currentRepositories) => currentRepositories.filter((repo) => repo.path !== resolvedPath));
+    },
+    [setRepositories],
+  );
+
+  /**
    * Clears all recent repositories.
    */
   const clearRecentRepositories = useCallback(() => {
@@ -49,6 +61,7 @@ export function useRecentRepositories() {
   return {
     repositories,
     addToRecent,
+    removeFromRecent,
     clearRecentRepositories,
   };
 }

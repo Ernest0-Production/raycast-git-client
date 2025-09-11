@@ -32,13 +32,7 @@ export function CommitCheckoutAction({ commit, gitManager, onRefresh }: CommitAc
     }
   };
 
-  return (
-    <Action
-      title="Checkout Commit"
-      onAction={handleCheckoutCommit}
-      icon={Icon.Checkmark}
-    />
-  );
+  return <Action title="Checkout Commit" onAction={handleCheckoutCommit} icon={Icon.Checkmark} />;
 }
 
 /**
@@ -54,13 +48,7 @@ export function CommitCherryPickAction({ commit, gitManager, onRefresh }: Commit
     }
   };
 
-  return (
-    <Action
-      title="Cherry-Pick Commit"
-      onAction={handleCherryPick}
-      icon={Icon.Download}
-    />
-  );
+  return <Action title="Cherry-Pick Commit" onAction={handleCherryPick} icon={Icon.Download} />;
 }
 
 /**
@@ -160,36 +148,21 @@ export function CommitCopyHashAction({ commit }: { commit: Commit }) {
  * Action for copying short commit hash to clipboard.
  */
 export function CommitCopyShortHashAction({ commit }: { commit: Commit }) {
-  return (
-    <Action.CopyToClipboard
-      title="Copy Short Hash"
-      content={commit.shortHash}
-    />
-  );
+  return <Action.CopyToClipboard title="Copy Short Hash" content={commit.shortHash} />;
 }
 
 /**
  * Action for copying commit author to clipboard.
  */
 export function CommitCopyAuthorAction({ commit }: { commit: Commit }) {
-  return (
-    <Action.CopyToClipboard
-      title="Copy Author Name"
-      content={commit.author}
-    />
-  );
+  return <Action.CopyToClipboard title="Copy Author Name" content={commit.author} />;
 }
 
 /**
  * Action for copying commit author email to clipboard.
  */
 export function CommitCopyAuthorEmailAction({ commit }: { commit: Commit }) {
-  return (
-    <Action.CopyToClipboard
-      title="Copy Author Email"
-      content={commit.authorEmail}
-    />
-  );
+  return <Action.CopyToClipboard title="Copy Author Email" content={commit.authorEmail} />;
 }
 
 /**

@@ -99,10 +99,18 @@ export class GitManager {
           if (lastOutput) {
             showToast({ style: Toast.Style.Success, title: command_description, message: lastOutput });
           } else {
-            showToast({ style: Toast.Style.Success, title: command_description, message: "Command executed successfully" });
+            showToast({
+              style: Toast.Style.Success,
+              title: command_description,
+              message: "Command executed successfully",
+            });
           }
         } else {
-          showToast({ style: Toast.Style.Failure, title: `Error running command: ${command_description}`, message: lastOutput });
+          showToast({
+            style: Toast.Style.Failure,
+            title: `Error running command: ${command_description}`,
+            message: lastOutput,
+          });
         }
       });
     });
@@ -516,10 +524,7 @@ export class GitManager {
    */
   async getLastCommit(): Promise<Commit | null> {
     try {
-      const log = await this.git.log([
-        "--max-count=1",
-        "--name-status",
-      ]);
+      const log = await this.git.log(["--max-count=1", "--name-status"]);
 
       if (!log.latest) {
         return null;
@@ -781,8 +786,8 @@ export class GitManager {
   /**
    * Pushes changes.
    */
-  async push(force = false, upstream?: { remote: string, branch: string }): Promise<void> {
-    const options = []
+  async push(force = false, upstream?: { remote: string; branch: string }): Promise<void> {
+    const options = [];
 
     if (force) {
       options.push("--force-with-lease");
@@ -911,7 +916,7 @@ export class GitManager {
 
     if (options.status === "untracked") {
       const filePath = this.getAbsolutePath(options.file);
-      return readFileSync(filePath, 'utf-8').replace(/^/gm, '+');
+      return readFileSync(filePath, "utf-8").replace(/^/gm, "+");
     }
 
     const diffOptions: string[] = [];
@@ -924,14 +929,14 @@ export class GitManager {
     diffOptions.push("--", options.file);
 
     const cleanGitDiff = (diff: string): string => {
-      const lines = diff.split('\n');
+      const lines = diff.split("\n");
 
       // Найти первую строку с @@ (начало хунка изменений)
-      const firstChunkIndex = lines.findIndex(line => line.startsWith('@@'));
+      const firstChunkIndex = lines.findIndex((line) => line.startsWith("@@"));
 
       if (firstChunkIndex === -1) {
         // Если нет @@, значит нет изменений контента
-        return '';
+        return "";
       }
 
       // Взять всё начиная с первой @@
@@ -1055,8 +1060,8 @@ export class GitManager {
   }
 
   /**
- * Pushes tags to remote with optional delete flag.
- */
+   * Pushes tags to remote with optional delete flag.
+   */
   async pushTag(tagName: string, remoteName?: string, deleteTag: boolean = false): Promise<void> {
     if (!tagName || typeof tagName !== "string" || tagName.trim().length === 0) {
       throw new Error("Invalid tag name");
@@ -1067,7 +1072,7 @@ export class GitManager {
 
     if (deleteTag) {
       // Delete tag from remote using --delete flag
-      await this.git.push(targetRemote, tagName, ['--delete']);
+      await this.git.push(targetRemote, tagName, ["--delete"]);
     } else {
       // Push specific tag to remote
       await this.git.push(targetRemote, tagName);

@@ -105,7 +105,7 @@ export function BranchPushAction({ branch, gitManager, onRefresh }: BranchAction
           onRefresh();
         } catch (pushError) {
           // Push failed, offer force push for branches with upstream
-          const errorMessage = pushError instanceof Error ? pushError.message : 'Unknown error';
+          const errorMessage = pushError instanceof Error ? pushError.message : "Unknown error";
 
           const forceConfirmed = await confirmAlert({
             title: "Push rejected",
@@ -278,7 +278,6 @@ export function BranchCheckoutRemoteAction({ branch, gitManager, onRefresh }: Br
   return <Action title="Checkout Remote Branch" onAction={handleCheckoutRemote} icon={Icon.ArrowRight} />;
 }
 
-
 /**
  * Global fetch action that can be reused across different views.
  */
@@ -343,10 +342,7 @@ function CreateBranchForm({ gitManager, onRefresh }: { gitManager: GitManager; o
   const { pop } = useNavigation();
   const [branchName, setBranchName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { data: currentBranch } = usePromise(
-    async () => await gitManager.getCurrentBranch(),
-    []
-  );
+  const { data: currentBranch } = usePromise(async () => await gitManager.getCurrentBranch(), []);
 
   const handleSubmit = async (values: { branchName: string }) => {
     setIsLoading(true);

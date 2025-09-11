@@ -4,7 +4,7 @@ import { RepositoryDirectoryActions } from "./components/actions/RepositoryDirec
 import OpenRepository from "./open-repository";
 
 export default function RecentRepositories() {
-  const { repositories, addToRecent, clearRecentRepositories } = useRecentRepositories();
+  const { repositories, addToRecent, removeFromRecent, clearRecentRepositories } = useRecentRepositories();
 
   const handleClearRepositories = async () => {
     const confirmed = await confirmAlert({
@@ -33,8 +33,28 @@ export default function RecentRepositories() {
     }
   };
 
+  const handleRemoveRepository = async (repoName: string, repoPath: string) => {
+    const confirmed = await confirmAlert({
+      title: "Remove from recent?",
+      message: `Are you sure you want to remove "${repoName}" from the recent repositories list?`,
+      primaryAction: {
+        title: "Remove",
+        style: Alert.ActionStyle.Destructive,
+      },
+    });
+
+    if (confirmed) {
+      await removeFromRecent(repoPath);
+      await showToast({
+        style: Toast.Style.Success,
+        title: "Repository removed",
+        message: `"${repoName}" removed from recent list`,
+      });
+    }
+  };
+
   return (
-    <List navigationTitle="Recent Git Repositories">
+    <List navigationTitle="Recent Git Repositories" searchBarPlaceholder="Search by name, path">
       {repositories.length === 0 ? (
         <List.EmptyView
           title="No recent repositories"
@@ -60,12 +80,7 @@ export default function RecentRepositories() {
                   />
                 </ActionPanel.Section>
 
-                <ActionPanel.Section title="File System">
-                  <RepositoryDirectoryActions
-                    repositoryPath={repo.path}
-                    onOpen={() => addToRecent(repo.path)}
-                  />
-                </ActionPanel.Section>
+                <RepositoryDirectoryActions repositoryPath={repo.path} onOpen={() => addToRecent(repo.path)} />
 
                 <ActionPanel.Section title="Raycast">
                   <Action.CreateQuicklink
@@ -77,8 +92,15 @@ export default function RecentRepositories() {
                   />
                 </ActionPanel.Section>
 
-                {repositories.length > 1 && (
-                  <ActionPanel.Section>
+                <ActionPanel.Section>
+                  <Action
+                    title="Remove from Recent"
+                    onAction={() => handleRemoveRepository(repo.name, repo.path)}
+                    icon={Icon.Trash}
+                    style={Action.Style.Destructive}
+                    shortcut={{ modifiers: ["ctrl"], key: "x" }}
+                  />
+                  {repositories.length > 1 && (
                     <Action
                       title="Clear List"
                       onAction={handleClearRepositories}
@@ -86,8 +108,8 @@ export default function RecentRepositories() {
                       style={Action.Style.Destructive}
                       shortcut={{ modifiers: ["cmd", "ctrl"], key: "x" }}
                     />
-                  </ActionPanel.Section>
-                )}
+                  )}
+                </ActionPanel.Section>
               </ActionPanel>
             }
           />

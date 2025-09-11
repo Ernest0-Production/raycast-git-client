@@ -13,16 +13,22 @@ import {
   CommitCopyAuthorAction,
   CommitCopyAuthorEmailAction,
   CommitRefreshHistoryAction,
-  CommitCopyBranchNameAction
+  CommitCopyBranchNameAction,
 } from "../../components/actions/CommitActions";
 import { TagCreateAction, TagRemoveAction } from "../../components/actions/TagActions";
 import { BranchPushAction, FetchAction, PullAction } from "../../components/actions/BranchActions";
-import { RepositoryDirectoryActions } from "../../components/actions/RepositoryDirectoryActions";
 import { CommitDiffView } from "./CommitDiffView";
 import { ConfigureUrlTrackerForm } from "../../components/shared/ConfigureUrlTrackerForm";
-import { CommitBranchFilterAction, getBranchFilterDisplayName } from "../../components/actions/CommitBranchFilterActions";
+import {
+  CommitBranchFilterAction,
+  getBranchFilterDisplayName,
+} from "../../components/actions/CommitBranchFilterActions";
 import { GitManager } from "../../utils/git-utils";
-import { loadUrlTrackerConfigs, extractUrlsFromCommitWithConfigs, replaceUrlPatternsWithLinks } from "../../utils/url-tracker-cache";
+import {
+  loadUrlTrackerConfigs,
+  extractUrlsFromCommitWithConfigs,
+  replaceUrlPatternsWithLinks,
+} from "../../utils/url-tracker-cache";
 import "../../utils/date-utils";
 import { Branch, Commit, UrlTrackerConfig, DetachedHead } from "../../types";
 import { useMemo, useState, useEffect } from "react";
@@ -56,7 +62,13 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
     allBranches,
     branchesState?.detachedHead,
   );
-  const { isLoading, data: commits, error, revalidate, pagination } = useGitCommits(gitManager, getActualBranchFilter());
+  const {
+    isLoading,
+    data: commits,
+    error,
+    revalidate,
+    pagination,
+  } = useGitCommits(gitManager, getActualBranchFilter());
 
   // Check if the selected branch is a local branch (current or local)
   const isLocalBranchSelected = useMemo(() => {
@@ -65,11 +77,10 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
     }
 
     // Check if it's a local branch (current or local type)
-    return allBranches.some(branch =>
-      (branch.type === "current" || branch.type === "local") && branch.name === selectedBranch
+    return allBranches.some(
+      (branch) => (branch.type === "current" || branch.type === "local") && branch.name === selectedBranch,
     );
   }, [selectedBranch, allBranches]);
-
 
   // Get current filter display name for List.Section title
   const currentFilterDisplayName = getBranchFilterDisplayName(
@@ -91,6 +102,7 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
     <List
       isLoading={isLoading}
       pagination={pagination}
+      navigationTitle="Repository Commits"
       searchBarPlaceholder="Search commits by message, sha, author, tags, files..."
       onSelectionChange={(id) => setSelectedCommitId(id)}
       isShowingDetail={isShowingDetail}
@@ -122,13 +134,12 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
                 shortcut={{ modifiers: ["shift", "cmd"], key: "i" }}
               />
             )}
+            <Action.Push title="Configure URL Tracker" icon={Icon.Gear} target={<ConfigureUrlTrackerForm />} />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="History Management">
             <CommitRefreshHistoryAction onRefresh={revalidate} />
-            {getActualBranchFilter() && (
-              <CommitCopyBranchNameAction currentBranch={getActualBranchFilter()!} />
-            )}
+            {getActualBranchFilter() && <CommitCopyBranchNameAction currentBranch={getActualBranchFilter()!} />}
             {isLocalBranchSelected && <PullAction gitManager={gitManager} onRefresh={revalidate} />}
             {branchesState.currentBranch && branchesState.currentBranch.type === "current" && (
               <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={revalidate} />
@@ -136,12 +147,7 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
             <FetchAction gitManager={gitManager} onRefresh={revalidate} />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="Repository">
-            <Action.Push title="Configure URL Tracker" icon={Icon.Gear} target={<ConfigureUrlTrackerForm />} />
-            <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
-          </ActionPanel.Section>
-
-          <ActionPanel.Section>{navigationActions}</ActionPanel.Section>
+          {navigationActions}
         </ActionPanel>
       }
     >
@@ -157,11 +163,7 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
           }
         />
       ) : !commits || commits.length === 0 ? (
-        <List.EmptyView
-          title="No commits"
-          description="No commits in this branch."
-          icon={`git-commit.svg`}
-        />
+        <List.EmptyView title="No commits" description="No commits in this branch." icon={`git-commit.svg`} />
       ) : (
         <List.Section title={currentFilterDisplayName}>
           {commits.map((commit) => (
@@ -304,13 +306,13 @@ function CommitListItem({
       // Add remaining tags to remainingRefs
       if (commit.tags.length > 1) {
         title += ` (+${commit.tags.length - 1})`;
-        tooltip = commit.tags.slice(1).join('\n');
+        tooltip = commit.tags.slice(1).join("\n");
       }
 
       accessoryItems.push({
         tag: { value: title, color: Color.Blue },
         tooltip: tooltip,
-        icon: Icon.Tag
+        icon: Icon.Tag,
       });
     }
 
@@ -328,14 +330,14 @@ function CommitListItem({
         color = Color.Green;
         if (allCommitBranches.length > 0) {
           title += ` (+${allCommitBranches.length})`;
-          tooltip = allCommitBranches.join('\n');
+          tooltip = allCommitBranches.join("\n");
         }
       } else if (allCommitBranches.length > 0) {
         const firstBranch = allCommitBranches[0];
         title = firstBranch;
         if (allCommitBranches.length > 1) {
           title += ` (+${allCommitBranches.length - 1})`;
-          tooltip = allCommitBranches.slice(1).join('\n');
+          tooltip = allCommitBranches.slice(1).join("\n");
         }
 
         if (commit.localBranches.length > 0) {
@@ -349,23 +351,30 @@ function CommitListItem({
         accessoryItems.push({
           tag: { value: title, color: color },
           tooltip: tooltip,
-          icon: icon
+          icon: icon,
         });
       }
     }
 
     accessoryItems.push({
       text: { value: commit.author, color: Color.SecondaryText },
-      tooltip: commit.authorEmail
+      tooltip: commit.authorEmail,
     });
 
     accessoryItems.push({
       text: commit.date.toRelativeDateString(),
-      tooltip: commit.date.toLocaleString()
+      tooltip: commit.date.toLocaleString(),
     });
 
     return accessoryItems;
-  }, [isShowingDetail, isAllBranchesFilter, commit.tags, commit.localBranches, commit.remoteBranches, commit.currentBranchName]);
+  }, [
+    isShowingDetail,
+    isAllBranchesFilter,
+    commit.tags,
+    commit.localBranches,
+    commit.remoteBranches,
+    commit.currentBranchName,
+  ]);
 
   return (
     <List.Item
@@ -379,7 +388,7 @@ function CommitListItem({
         ...commit.author.split(" "),
         commit.authorEmail,
         ...commit.tags,
-        ...(commit.changedFiles?.map(f => f.path.split("/").pop()) || [])
+        ...(commit.changedFiles?.map((f) => f.path.split("/").pop()) || []),
       ].filter((keyword): keyword is string => Boolean(keyword))}
       detail={
         isShowingDetail ? (
@@ -494,18 +503,12 @@ function CommitListItem({
           <ActionPanel.Section title="Tags">
             <TagCreateAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
             {commit.tags.map((tag) => (
-              <TagRemoveAction
-                key={tag}
-                tagName={tag}
-                gitManager={gitManager}
-                onRefresh={onRefresh}
-              />
+              <TagRemoveAction key={tag} tagName={tag} gitManager={gitManager} onRefresh={onRefresh} />
             ))}
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Repository Operations">
             <Action.Push title="Configure URL Tracker" icon={Icon.Gear} target={<ConfigureUrlTrackerForm />} />
-            <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
             {isLocalBranchSelected && <PullAction gitManager={gitManager} onRefresh={onRefresh} />}
             {currentBranch && currentBranch.type === "current" && (
               <BranchPushAction branch={currentBranch} gitManager={gitManager} onRefresh={onRefresh} />
@@ -513,7 +516,7 @@ function CommitListItem({
             <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
           </ActionPanel.Section>
 
-          <ActionPanel.Section>{navigationActions}</ActionPanel.Section>
+          {navigationActions}
         </ActionPanel>
       }
     />

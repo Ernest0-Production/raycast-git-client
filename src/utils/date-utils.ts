@@ -16,52 +16,51 @@
  * @returns Formatted date string
  */
 function formatRelativeDate(date: Date): string {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-    // Today (0 days difference)
-    if (targetDate.getTime() === today.getTime()) {
-        // Today: display only time (HH:MM)
-        return date.toLocaleTimeString(undefined, {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        });
-    }
+  // Today (0 days difference)
+  if (targetDate.getTime() === today.getTime()) {
+    // Today: display only time (HH:MM)
+    return date.toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  }
 
-    // Within ~30 days (approximately a month)
-    if (date.getFullYear() === now.getFullYear()) {
-        // Recent: display time day month
-        const time = date.toLocaleTimeString(undefined, {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        });
-        const day = date.toLocaleDateString(undefined, { day: 'numeric' });
-        const month = date.toLocaleDateString(undefined, { month: 'short' });
-        return `${time} ${day} ${month}`;
-    }
+  // Within ~30 days (approximately a month)
+  if (date.getFullYear() === now.getFullYear()) {
+    // Recent: display time day month
+    const time = date.toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    const day = date.toLocaleDateString(undefined, { day: "numeric" });
+    const month = date.toLocaleDateString(undefined, { month: "short" });
+    return `${time} ${day} ${month}`;
+  }
 
-    // More than a year ago or in the future
-    const day = date.toLocaleDateString(undefined, { day: 'numeric' });
-    const month = date.toLocaleDateString(undefined, { month: 'short' });
-    const year = date.toLocaleDateString(undefined, { year: 'numeric' });
-    return `${day} ${month} ${year}`;
+  // More than a year ago or in the future
+  const day = date.toLocaleDateString(undefined, { day: "numeric" });
+  const month = date.toLocaleDateString(undefined, { month: "short" });
+  const year = date.toLocaleDateString(undefined, { year: "numeric" });
+  return `${day} ${month} ${year}`;
 }
 
-export { };
+export {};
 /**
  * Extend Date prototype with toRelativeDateString method
  */
 declare global {
-    interface Date {
-        toRelativeDateString(): string;
-    }
+  interface Date {
+    toRelativeDateString(): string;
+  }
 }
 
 // Add the method to Date prototype
 Date.prototype.toRelativeDateString = function (): string {
-    return formatRelativeDate(this);
+  return formatRelativeDate(this);
 };
-

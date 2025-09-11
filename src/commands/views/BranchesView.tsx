@@ -11,9 +11,8 @@ import {
   BranchCheckoutRemoteAction,
   CreateBranchAction,
   FetchAction,
-  PullAction
+  PullAction,
 } from "../../components/actions/BranchActions";
-import { RepositoryDirectoryActions } from "../../components/actions/RepositoryDirectoryActions";
 import { GitManager } from "../../utils/git-utils";
 import { Branch, DetachedHead } from "../../types";
 
@@ -42,21 +41,23 @@ export function BranchesView({ gitManager, navigationActions, viewDropdown }: Br
     revalidateConflicts();
   };
 
-
   // Group remote branches by remote (only if we have data)
-  const remoteGroups = branchesState ? branchesState.remoteBranches.reduce(
-    (groups, branch) => {
-      const remote = branch.remote || "unknown";
-      if (!groups[remote]) groups[remote] = [];
-      groups[remote].push(branch);
-      return groups;
-    },
-    {} as Record<string, typeof branchesState.remoteBranches>,
-  ) : {};
+  const remoteGroups = branchesState
+    ? branchesState.remoteBranches.reduce(
+        (groups, branch) => {
+          const remote = branch.remote || "unknown";
+          if (!groups[remote]) groups[remote] = [];
+          groups[remote].push(branch);
+          return groups;
+        },
+        {} as Record<string, typeof branchesState.remoteBranches>,
+      )
+    : {};
 
   return (
     <List
       isLoading={isLoading}
+      navigationTitle="Repository Branches"
       searchBarPlaceholder="Search branches by name..."
       searchBarAccessory={viewDropdown}
       actions={
@@ -67,11 +68,7 @@ export function BranchesView({ gitManager, navigationActions, viewDropdown }: Br
             <FetchAction gitManager={gitManager} onRefresh={revalidateAll} />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="Repository">
-            <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
-          </ActionPanel.Section>
-
-          <ActionPanel.Section>{navigationActions}</ActionPanel.Section>
+          {navigationActions}
         </ActionPanel>
       }
     >
@@ -233,10 +230,7 @@ function BranchListItem({
       subtitle={branch.lastCommitMessage || "No commit message"}
       icon={getIcon()}
       accessories={accessories}
-      keywords={[
-        branch.upstream,
-        branch.remote
-      ].filter((keyword): keyword is string => Boolean(keyword))}
+      keywords={[branch.upstream, branch.remote].filter((keyword): keyword is string => Boolean(keyword))}
       actions={
         <ActionPanel>
           <ActionPanel.Section title="Branch Operations">
@@ -273,11 +267,7 @@ function BranchListItem({
             <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="Repository">
-            <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
-          </ActionPanel.Section>
-
-          <ActionPanel.Section>{navigationActions}</ActionPanel.Section>
+          {navigationActions}
         </ActionPanel>
       }
     />
@@ -312,9 +302,7 @@ function DetachedHeadListItem({
       subtitle={detachedHead.commitMessage}
       icon={{ source: Icon.Anchor }}
       accessories={accessories}
-      keywords={[
-        detachedHead.commitHash,
-      ]}
+      keywords={[detachedHead.commitHash]}
       actions={
         <ActionPanel>
           <ActionPanel.Section title="Branch Management">
@@ -322,11 +310,7 @@ function DetachedHeadListItem({
             <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="Repository">
-            <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
-          </ActionPanel.Section>
-
-          <ActionPanel.Section>{navigationActions}</ActionPanel.Section>
+          {navigationActions}
         </ActionPanel>
       }
     />

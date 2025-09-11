@@ -28,14 +28,12 @@ export function useGitDiff({ gitManager, options, execute = true }: UseGitDiffPr
       if (rawDiff) {
         const lines = rawDiff.split("\n");
         if (lines.length > 200) {
-          return (
-            [
-              "```text",
-              "⚠️ Diff is too large to display (more than 200 lines).",
-              "Open this file in external editor to view the full diff.",
-              "```",
-            ].join("\n")
-          );
+          return [
+            "```text",
+            "⚠️ Diff is too large to display (more than 200 lines).",
+            "Open this file in external editor to view the full diff.",
+            "```",
+          ].join("\n");
         }
         return `\`\`\`diff\n${rawDiff}\n\`\`\``;
       }

@@ -114,8 +114,10 @@ export function replaceUrlPatternsWithLinks(text: string, configs: UrlTrackerCon
         const afterMatch = string.substring(offset + match.length);
 
         // Simple check for existing markdown link format [text](url)
-        const isInsideLink = beforeMatch.includes('[') && afterMatch.includes('](') &&
-          beforeMatch.lastIndexOf('[') > beforeMatch.lastIndexOf(']');
+        const isInsideLink =
+          beforeMatch.includes("[") &&
+          afterMatch.includes("](") &&
+          beforeMatch.lastIndexOf("[") > beforeMatch.lastIndexOf("]");
 
         if (isInsideLink) {
           return match; // Don't replace if already inside a link

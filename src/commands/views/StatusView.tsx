@@ -17,7 +17,6 @@ import {
   getFileStatusIcon,
   getFileStatusColor,
 } from "../../components/actions/FileActions";
-import { RepositoryDirectoryActions } from "../../components/actions/RepositoryDirectoryActions";
 import { CreateStashAction } from "../../components/actions/StashActions";
 import { GitManager } from "../../utils/git-utils";
 import { FileStatus } from "../../types";
@@ -46,13 +45,13 @@ export function StatusView({ gitManager, navigationActions, viewDropdown, onNavi
     setIsShowingDetail(!isShowingDetail);
   };
 
-
   const stagedFiles = files ? files.filter((f) => f.status === "staged") : [];
   const unstagedFiles = files ? files.filter((f) => f.status === "unstaged" || f.status === "untracked") : [];
 
   return (
     <List
       isLoading={isLoading}
+      navigationTitle="Repository Status"
       searchBarPlaceholder="Search files by name, path..."
       onSelectionChange={(id) => setSelectedFilePath(id)}
       filtering={{ keepSectionOrder: true }}
@@ -85,11 +84,7 @@ export function StatusView({ gitManager, navigationActions, viewDropdown, onNavi
             <CreateStashAction gitManager={gitManager} onRefresh={revalidate} />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="Repository">
-            <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
-          </ActionPanel.Section>
-
-          <ActionPanel.Section>{navigationActions}</ActionPanel.Section>
+          {navigationActions}
         </ActionPanel>
       }
     >
@@ -193,23 +188,16 @@ function FileListItem({
   return (
     <List.Item
       id={fileId}
-      title={file.path.split('/').pop() || file.path}
+      title={file.path.split("/").pop() || file.path}
       subtitle={isShowingDetail ? undefined : file.relativePath}
       icon={{
         value: { source: getFileStatusIcon(file), tintColor: getFileStatusColor(file) },
         tooltip: file.type.charAt(0).toUpperCase() + file.type.slice(1),
       }}
-      keywords={[
-        file.path,
-        file.oldPath
-      ].filter((keyword): keyword is string => Boolean(keyword))}
+      keywords={[file.path, file.oldPath].filter((keyword): keyword is string => Boolean(keyword))}
       detail={
         isShowingDetail ? (
-          <List.Item.Detail
-            isLoading={isLoading}
-            markdown={`${file.relativePath}:\n\n${diff ?? ""}`}
-            metadata
-          />
+          <List.Item.Detail isLoading={isLoading} markdown={`${file.relativePath}:\n\n${diff ?? ""}`} metadata />
         ) : undefined
       }
       quickLook={existsSync(file.path) ? { path: file.path, name: file.relativePath } : undefined}
@@ -222,7 +210,6 @@ function FileListItem({
                 <FileUnstageAction file={file} gitManager={gitManager} onRefresh={onRefresh} />
                 <FileOpenAction file={file} />
                 <FileOpenWithAction file={file} />
-                <FileShowInFinderAction file={file} />
                 <FileCopyPathAction file={file} />
               </>
             )}
@@ -237,7 +224,6 @@ function FileListItem({
                 )}
                 <FileOpenAction file={file} />
                 <FileOpenWithAction file={file} />
-                <FileShowInFinderAction file={file} />
                 <FileCopyPathAction file={file} />
               </>
             )}
@@ -269,11 +255,7 @@ function FileListItem({
             <CreateStashAction gitManager={gitManager} onRefresh={onRefresh} />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="Repository">
-            <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
-          </ActionPanel.Section>
-
-          <ActionPanel.Section>{navigationActions}</ActionPanel.Section>
+          {navigationActions}
         </ActionPanel>
       }
     />

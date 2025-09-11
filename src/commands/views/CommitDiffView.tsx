@@ -37,16 +37,12 @@ export function CommitDiffView({ commit, gitManager, navigationActions }: Commit
             />
           </ActionPanel.Section>
 
-          <ActionPanel.Section>{navigationActions}</ActionPanel.Section>
+          {navigationActions}
         </ActionPanel>
       }
     >
       {!commit.changedFiles || commit.changedFiles.length === 0 ? (
-        <List.EmptyView
-          title="No file changes"
-          description="This commit has no file changes."
-          icon={Icon.Document}
-        />
+        <List.EmptyView title="No file changes" description="This commit has no file changes." icon={Icon.Document} />
       ) : (
         commit.changedFiles.map((file) => (
           <FileListItem
@@ -159,22 +155,19 @@ function FileListItem({
   return (
     <List.Item
       id={fileId}
-      title={file.path.split('/').pop() || file.path}
+      title={file.path.split("/").pop() || file.path}
       subtitle={isShowingDetail ? undefined : file.path}
       icon={{
         source: getFileIcon(file.status),
         tintColor: getFileColor(file.status),
         tooltip: getFileStatusText(file.status),
       }}
-      keywords={[
-        file.path,
-        file.oldPath
-      ].filter((keyword): keyword is string => Boolean(keyword))}
+      keywords={[file.path, file.oldPath].filter((keyword): keyword is string => Boolean(keyword))}
       detail={
         isShowingDetail ? (
           <List.Item.Detail
             isLoading={isLoading}
-            markdown={`${file.path}:\n\n${error ? `Error loading diff: ${error.message}` : diff ?? ""}`}
+            markdown={`${file.path}:\n\n${error ? `Error loading diff: ${error.message}` : (diff ?? "")}`}
           />
         ) : undefined
       }
@@ -191,7 +184,7 @@ function FileListItem({
             />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="File Access">
+          <ActionPanel.Section title="File System">
             {fileExists && (
               <>
                 <Action.Open
@@ -220,7 +213,7 @@ function FileListItem({
             />
           </ActionPanel.Section>
 
-          <ActionPanel.Section>{navigationActions}</ActionPanel.Section>
+          {navigationActions}
         </ActionPanel>
       }
     />

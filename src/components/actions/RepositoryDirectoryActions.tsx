@@ -1,11 +1,9 @@
-import { Action, Icon, getPreferenceValues } from "@raycast/api";
+import { Action, ActionPanel, Icon, getPreferenceValues } from "@raycast/api";
 import { Preferences } from "../../types";
 
 interface RepositoryDirectoryActionsProps {
   /** Path to the repository directory */
   repositoryPath: string;
-  /** Whether repository actions have secondary priority (removes shortcuts) */
-  secondary?: boolean;
   /** Callback called when repository is opened via any "Open" action */
   onOpen?: () => void;
 }
@@ -13,45 +11,30 @@ interface RepositoryDirectoryActionsProps {
 /**
  * Reusable actions for working with repository as a directory.
  * Includes file system operations and opening in various applications.
- * When secondary=true, removes shortcuts to avoid conflicts with primary file actions.
  */
-export function RepositoryDirectoryActions({ repositoryPath, secondary = false, onOpen }: RepositoryDirectoryActionsProps) {
+export function RepositoryDirectoryActions({ repositoryPath, onOpen }: RepositoryDirectoryActionsProps) {
   const preferences = getPreferenceValues<Preferences>();
 
   return (
-    <>
+    <ActionPanel.Section title="Repository">
       <Action.Open
-        title={secondary ? "Open Repository in Default Editor" : "Open in Default Editor"}
+        title={`Open Repository in ${preferences.defaultEditor.name}`}
         target={repositoryPath}
         application={preferences.defaultEditor}
-        icon={Icon.Folder}
-        shortcut={secondary ? undefined : { modifiers: ["cmd"], key: "o" }}
+        icon={{ fileIcon: preferences.defaultEditor.path }}
+        shortcut={{ modifiers: ["cmd", "shift"], key: "o" }}
         onOpen={() => onOpen?.()}
       />
-      <Action.ShowInFinder
-        path={repositoryPath}
-        title={secondary ? "Show Repository in Finder" : "Show in Finder"}
-        shortcut={secondary ? undefined : { modifiers: ["cmd", "shift"], key: "o" }}
-      />
       <Action.Open
-        title={secondary ? "Open Repository in Terminal" : "Open in Terminal"}
+        title={`Open Repository in ${preferences.defaultTerminal.name}`}
         target={repositoryPath}
-        application="Terminal"
-        icon={Icon.Terminal}
+        application={preferences.defaultTerminal}
+        icon={{ fileIcon: preferences.defaultTerminal.path }}
         shortcut={{ modifiers: ["cmd", "shift"], key: "t" }}
         onOpen={() => onOpen?.()}
       />
-      <Action.OpenWith
-        path={repositoryPath}
-        title={secondary ? "Open Repository with…" : undefined}
-        shortcut={secondary ? undefined : { modifiers: ["cmd", "opt"], key: "o" }}
-        onOpen={() => onOpen?.()}
-      />
-      <Action.CopyToClipboard
-        title={secondary ? "Copy Repository Path" : "Copy Directory Path"}
-        content={repositoryPath}
-        shortcut={secondary ? undefined : { modifiers: ["cmd", "shift"], key: "," }}
-      />
-    </>
+      <Action.OpenWith path={repositoryPath} title="Open Repository with…" onOpen={() => onOpen?.()} />
+      <Action.CopyToClipboard title="Copy Repository Path" content={repositoryPath} />
+    </ActionPanel.Section>
   );
 }

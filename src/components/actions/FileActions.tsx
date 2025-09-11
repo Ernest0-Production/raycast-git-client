@@ -95,10 +95,10 @@ export function FileOpenAction({ file }: { file: FileStatus }) {
 
   return (
     <Action.Open
-      title="Open File"
+      title={`Open File in ${preferences.defaultEditor.name}`}
       target={file.path}
       application={preferences.defaultEditor}
-      icon={Icon.BlankDocument}
+      icon={{ fileIcon: preferences.defaultEditor.path }}
       shortcut={{ modifiers: ["cmd"], key: "o" }}
     />
   );
@@ -112,30 +112,11 @@ export function FileOpenWithAction({ file }: { file: FileStatus }) {
 
   if (!fileExistsOnDisk) return null;
 
-  return (
-    <Action.OpenWith
-      title="Open with…"
-      path={file.path}
-      shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
-    />
-  );
-}
-
-/**
- * Action for showing a file in Finder.
- */
-export function FileShowInFinderAction({ file }: { file: FileStatus }) {
-  const fileExistsOnDisk = existsSync(file.path);
-
-  if (!fileExistsOnDisk) return null;
-
-  return (
-    <Action.ShowInFinder
-      path={file.path}
-      title="Show in Finder"
-      shortcut={{ modifiers: ["cmd", "shift"], key: "o" }}
-    />
-  );
+  return <Action.OpenWith
+    title="Open File with…"
+    path={file.path}
+    shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
+  />;
 }
 
 /**
@@ -144,7 +125,7 @@ export function FileShowInFinderAction({ file }: { file: FileStatus }) {
 export function FileCopyPathAction({ file }: { file: FileStatus }) {
   return (
     <Action.CopyToClipboard
-      title="Copy Path"
+      title="Copy File Path"
       content={file.relativePath}
       shortcut={{ modifiers: ["cmd", "shift"], key: "," }}
     />
@@ -159,7 +140,7 @@ export function FileMoveToTrashAction({ file, onRefresh }: { file: FileStatus; o
 
   return (
     <Action.Trash
-      title="Move to Trash"
+      title="Move File to Trash"
       shortcut={{ modifiers: ["ctrl"], key: "x" }}
       paths={[file.path]}
       onTrash={onRefresh}
@@ -254,7 +235,7 @@ export function FileDiscardAllAction({ gitManager, onRefresh }: { gitManager: Gi
 export function FileCommitAction({
   gitManager,
   onCommitSuccess,
-  hasStagedChanges
+  hasStagedChanges,
 }: {
   gitManager: GitManager;
   onCommitSuccess: () => void;
@@ -271,8 +252,6 @@ export function FileCommitAction({
     />
   );
 }
-
-
 
 /**
  * Icons for different types of changes

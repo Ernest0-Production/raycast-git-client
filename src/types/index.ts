@@ -1,3 +1,5 @@
+import { Application } from "@raycast/api";
+
 // Export all types from modules
 export * from "./repository";
 export * from "./git";
@@ -8,7 +10,9 @@ export * from "./ui";
  */
 export interface Preferences {
   /** Default editor for opening files. */
-  defaultEditor: string;
+  defaultEditor: Application;
+  /** Default terminal for opening repository directory. */
+  defaultTerminal: Application;
   /** Maximum number of files to display in status view. */
   maxFilesToShow: string;
   /** Maximum number of branches to display. */

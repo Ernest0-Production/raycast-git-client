@@ -1,7 +1,6 @@
 import { ActionPanel, Action, List, Icon } from "@raycast/api";
 import { useGitStash } from "../../hooks/useGitStash";
 import { StashApplyAction, StashDropAction, CreateStashAction } from "../../components/actions/StashActions";
-import { RepositoryDirectoryActions } from "../../components/actions/RepositoryDirectoryActions";
 import { GitManager } from "../../utils/git-utils";
 import "../../utils/date-utils";
 import { Stash } from "../../types";
@@ -20,6 +19,7 @@ export function StashesView({ gitManager, navigationActions, viewDropdown, onNav
   return (
     <List
       isLoading={isLoading}
+      navigationTitle="Repository Stashes"
       searchBarPlaceholder="Search stashes by message, author..."
       searchBarAccessory={viewDropdown}
       actions={
@@ -29,20 +29,12 @@ export function StashesView({ gitManager, navigationActions, viewDropdown, onNav
             <CreateStashAction gitManager={gitManager} onRefresh={revalidate} />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="Repository">
-            <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
-          </ActionPanel.Section>
-
-          <ActionPanel.Section>{navigationActions}</ActionPanel.Section>
+          {navigationActions}
         </ActionPanel>
       }
     >
       {!stashes || stashes.length === 0 ? (
-        <List.EmptyView
-          title="No stashes"
-          description="No saved changes in the stash."
-          icon={Icon.Download}
-        />
+        <List.EmptyView title="No stashes" description="No saved changes in the stash." icon={Icon.Download} />
       ) : (
         stashes.map((stash, index) => (
           <StashListItem
@@ -81,11 +73,7 @@ function StashListItem({
       icon={{ source: getAvatarIcon(stash.author), tooltip: stash.author }}
       subtitle={{ value: stash.author, tooltip: stash.authorEmail }}
       accessories={[{ text: stash.date.toRelativeDateString(), tooltip: stash.date.toLocaleString() }]}
-      keywords={[
-        stash.hash,
-        stash.author,
-        stash.authorEmail
-      ].filter(Boolean)}
+      keywords={[stash.hash, stash.author, stash.authorEmail].filter(Boolean)}
       actions={
         <ActionPanel>
           <ActionPanel.Section title="Stash Operations">
@@ -96,19 +84,10 @@ function StashListItem({
               onRefresh={onRefresh}
               onNavigateToStatus={onNavigateToStatus}
             />
-            <StashDropAction
-              stash={stash}
-              index={index}
-              gitManager={gitManager}
-              onRefresh={onRefresh}
-            />
+            <StashDropAction stash={stash} index={index} gitManager={gitManager} onRefresh={onRefresh} />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="Repository">
-            <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} secondary />
-          </ActionPanel.Section>
-
-          <ActionPanel.Section>{navigationActions}</ActionPanel.Section>
+          {navigationActions}
         </ActionPanel>
       }
     />

@@ -1,4 +1,4 @@
-import { Action, Icon, List } from "@raycast/api";
+import { Action, ActionPanel, Icon, List } from "@raycast/api";
 import { GitView } from "./types";
 import { useCachedState } from "@raycast/utils";
 import { useGitRepository } from "./hooks/useGitRepository";
@@ -8,6 +8,7 @@ import { StatusView } from "./commands/views/StatusView";
 import { CommitsView } from "./commands/views/CommitsView";
 import { StashesView } from "./commands/views/StashesView";
 import { useEffect } from "react";
+import { RepositoryDirectoryActions } from "./components/actions/RepositoryDirectoryActions";
 
 interface Arguments {
   path: string;
@@ -46,38 +47,33 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
   // Navigation actions for all views
   const navigationActions = (
     <>
-      {currentView !== "status" &&
+      <ActionPanel.Section title="Navigation">
         <Action
           title="Go to Status"
           onAction={() => setCurrentView("status")}
           icon={Icon.NewDocument}
           shortcut={{ modifiers: ["cmd"], key: "1" }}
         />
-      }
-      {currentView !== "commits" && <Action
-        title="Go to Commits"
-        onAction={() => setCurrentView("commits")}
-        icon={`git-commit.svg`}
-        shortcut={{ modifiers: ["cmd"], key: "2" }}
-      />
-      }
-      {currentView !== "branches" &&
+        <Action
+          title="Go to Commits"
+          onAction={() => setCurrentView("commits")}
+          icon={`git-commit.svg`}
+          shortcut={{ modifiers: ["cmd"], key: "2" }}
+        />
         <Action
           title="Go to Branches"
           onAction={() => setCurrentView("branches")}
           icon={`git-branch.svg`}
           shortcut={{ modifiers: ["cmd"], key: "3" }}
         />
-      }
-      {currentView !== "stashes" &&
         <Action
           title="Go to Stash"
           onAction={() => setCurrentView("stashes")}
           icon={Icon.Download}
           shortcut={{ modifiers: ["cmd"], key: "4" }}
         />
-      }
-      <Action.ShowInFinder path={repositoryPath} shortcut={{ modifiers: ["cmd"], key: "o" }} />
+      </ActionPanel.Section>
+      <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} />
     </>
   );
 
@@ -88,53 +84,40 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
       value={currentView}
       onChange={(newValue) => setCurrentView(newValue as GitView)}
     >
-      <List.Dropdown.Item
-        title="Status"
-        value="status"
-        keywords={["diff", "changes"]}
-        icon={Icon.NewDocument}
-      />
-      <List.Dropdown.Item
-        title="Commits"
-        value="commits"
-        keywords={["log"]}
-        icon={`git-commit.svg`}
-      />
-      <List.Dropdown.Item
-        title="Branches"
-        value="branches"
-        keywords={["graph"]}
-        icon={`git-branch.svg`}
-      />
-      <List.Dropdown.Item
-        title="Stashes"
-        value="stashes"
-        icon={Icon.Download}
-      />
+      <List.Dropdown.Item title="Status" value="status" keywords={["diff", "changes"]} icon={Icon.NewDocument} />
+      <List.Dropdown.Item title="Commits" value="commits" keywords={["log"]} icon={`git-commit.svg`} />
+      <List.Dropdown.Item title="Branches" value="branches" keywords={["graph"]} icon={`git-branch.svg`} />
+      <List.Dropdown.Item title="Stashes" value="stashes" icon={Icon.Download} />
     </List.Dropdown>
   );
 
   // Render the corresponding view
   switch (currentView) {
-    case "branches":
-      return <BranchesView
-        gitManager={gitManager}
-        navigationActions={navigationActions}
-        viewDropdown={viewSelectorDropdown}
-      />;
     case "status":
-      return <StatusView
-        gitManager={gitManager}
-        navigationActions={navigationActions}
-        viewDropdown={viewSelectorDropdown}
-        onNavigateToCommits={() => setCurrentView("commits")}
-      />;
+      return (
+        <StatusView
+          gitManager={gitManager}
+          navigationActions={navigationActions}
+          viewDropdown={viewSelectorDropdown}
+          onNavigateToCommits={() => setCurrentView("commits")}
+        />
+      );
     case "commits":
-      return <CommitsView
-        gitManager={gitManager}
-        navigationActions={navigationActions}
-        viewDropdown={viewSelectorDropdown}
-      />;
+      return (
+        <CommitsView
+          gitManager={gitManager}
+          navigationActions={navigationActions}
+          viewDropdown={viewSelectorDropdown}
+        />
+      );
+    case "branches":
+      return (
+        <BranchesView
+          gitManager={gitManager}
+          navigationActions={navigationActions}
+          viewDropdown={viewSelectorDropdown}
+        />
+      );
     case "stashes":
       return (
         <StashesView
