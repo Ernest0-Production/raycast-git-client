@@ -98,6 +98,11 @@ export function CreateStashAction({ gitManager, onRefresh, filePath }: CreateSta
       title={actionTitle}
       icon={Icon.Bookmark}
       target={<CreateStashForm gitManager={gitManager} onRefresh={onRefresh} filePath={filePath} />}
+      shortcut={filePath ? {
+        modifiers: ["cmd"], key: "s"
+      } : {
+        modifiers: ["cmd", "shift"], key: "s"
+      }}
     />
   );
 }
@@ -143,7 +148,7 @@ function CreateStashForm({
   };
 
   const formTitle = filePath ? "Stash File" : "Stash Changes";
-  const placeholder = filePath ? `Describe changes for ${filePath}` : "Describe the changes being stashed";
+  const placeholder = "Describe the changes being stashed";
 
   return (
     <Form

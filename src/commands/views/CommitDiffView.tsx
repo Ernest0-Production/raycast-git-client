@@ -1,10 +1,19 @@
-import { ActionPanel, Action, List, Icon, getPreferenceValues } from "@raycast/api";
+import { ActionPanel, Action, List, Icon } from "@raycast/api";
 import { useGitDiff } from "../../hooks/useGitDiff";
 import { GitManager } from "../../utils/git-utils";
-import { Commit, CommitFileChange, Preferences } from "../../types";
-import { join } from "path";
+import { Commit, CommitFileChange } from "../../types";
+import {
+  FileOpenAction,
+  FileOpenWithAction,
+  FileCopyPathAction,
+  getCommitFileIcon,
+  getCommitFileColor,
+  getCommitFileStatusText,
+  FileQuickLookAction,
+} from "../../components/actions/FileActions";
 import { useState } from "react";
 import { existsSync } from "fs";
+import { join } from "path";
 
 interface CommitDiffViewProps {
   commit: Commit;
@@ -80,8 +89,6 @@ function FileListItem({
   onToggleDetail,
   selectedFilePath,
 }: FileListItemProps) {
-  const preferences = getPreferenceValues<Preferences>();
-
   // Create a unique identifier for each file item
   const fileId = `${file.path}-${commit.hash}`;
 
@@ -94,62 +101,7 @@ function FileListItem({
     execute: shouldLoadDiff,
   });
 
-  const getAbsolutePath = (relativePath: string): string => {
-    return join(gitManager.repoPath, relativePath);
-  };
-
-  const getFileIcon = (status: CommitFileChange["status"]) => {
-    switch (status) {
-      case "added":
-        return Icon.Plus;
-      case "modified":
-        return Icon.Pencil;
-      case "deleted":
-        return Icon.Trash;
-      case "renamed":
-        return Icon.ArrowsContract;
-      case "copied":
-        return Icon.Duplicate;
-      case "changed":
-        return Icon.Pencil;
-    }
-  };
-
-  const getFileColor = (status: CommitFileChange["status"]) => {
-    switch (status) {
-      case "added":
-        return "#22c55e"; // green
-      case "modified":
-        return "#f59e0b"; // amber
-      case "deleted":
-        return "#ef4444"; // red
-      case "renamed":
-        return "#3b82f6"; // blue
-      case "copied":
-        return "#8b5cf6"; // purple
-      case "changed":
-        return "#f59e0b"; // amber
-    }
-  };
-
-  const getFileStatusText = (status: CommitFileChange["status"]) => {
-    switch (status) {
-      case "added":
-        return "Added";
-      case "modified":
-        return "Modified";
-      case "deleted":
-        return "Deleted";
-      case "renamed":
-        return "Renamed";
-      case "copied":
-        return "Copied";
-      case "changed":
-        return "Changed";
-    }
-  };
-
-  const absolutePath = getAbsolutePath(file.path);
+  const absolutePath = join(gitManager.repoPath, file.path);
   const fileExists = existsSync(absolutePath);
 
   return (
@@ -158,9 +110,9 @@ function FileListItem({
       title={file.path.split("/").pop() || file.path}
       subtitle={isShowingDetail ? undefined : file.path}
       icon={{
-        source: getFileIcon(file.status),
-        tintColor: getFileColor(file.status),
-        tooltip: getFileStatusText(file.status),
+        source: getCommitFileIcon(file.status),
+        tintColor: getCommitFileColor(file.status),
+        tooltip: getCommitFileStatusText(file.status),
       }}
       keywords={[file.path, file.oldPath].filter((keyword): keyword is string => Boolean(keyword))}
       detail={
@@ -174,42 +126,19 @@ function FileListItem({
       quickLook={fileExists ? { path: absolutePath, name: file.path } : undefined}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title="View Controls">
-            {fileExists && <Action.ToggleQuickLook shortcut={{ modifiers: ["cmd"], key: "y" }} />}
+          <ActionPanel.Section title={file.path.split("/").pop()}>
+            <FileOpenAction filePath={absolutePath} />
+            <FileOpenWithAction filePath={absolutePath} shortcut={{ modifiers: ["cmd"], key: "o" }} />
+            <FileCopyPathAction filePath={absolutePath} />
+            <FileQuickLookAction filePath={absolutePath} />
+          </ActionPanel.Section>
+
+          <ActionPanel.Section title="Details">
             <Action
               title={isShowingDetail ? "Hide Detail" : "Show Detail"}
               icon={Icon.AppWindowSidebarLeft}
               onAction={onToggleDetail}
               shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
-            />
-          </ActionPanel.Section>
-
-          <ActionPanel.Section title="File System">
-            {fileExists && (
-              <>
-                <Action.Open
-                  title="Open File"
-                  target={absolutePath}
-                  application={preferences.defaultEditor}
-                  icon={Icon.BlankDocument}
-                  shortcut={{ modifiers: ["cmd"], key: "o" }}
-                />
-                <Action.OpenWith
-                  title="Open with…"
-                  path={absolutePath}
-                  shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
-                />
-                <Action.ShowInFinder
-                  path={absolutePath}
-                  title="Show in Finder"
-                  shortcut={{ modifiers: ["cmd", "shift"], key: "o" }}
-                />
-              </>
-            )}
-            <Action.CopyToClipboard
-              title="Copy File Path"
-              content={file.path}
-              shortcut={{ modifiers: ["cmd", "shift"], key: "," }}
             />
           </ActionPanel.Section>
 

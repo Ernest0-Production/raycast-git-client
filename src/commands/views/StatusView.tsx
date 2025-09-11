@@ -7,21 +7,21 @@ import {
   FileDiscardAction,
   FileOpenAction,
   FileOpenWithAction,
-  FileShowInFinderAction,
   FileCopyPathAction,
   FileMoveToTrashAction,
   FileStageAllAction,
   FileUnstageAllAction,
   FileDiscardAllAction,
-  FileCommitAction,
   getFileStatusIcon,
   getFileStatusColor,
+  FileQuickLookAction,
 } from "../../components/actions/FileActions";
 import { CreateStashAction } from "../../components/actions/StashActions";
 import { GitManager } from "../../utils/git-utils";
 import { FileStatus } from "../../types";
 import { useState } from "react";
 import { existsSync } from "fs";
+import { CommitMessageForm } from "./CommitMessageView";
 
 interface StatusViewProps {
   gitManager: GitManager;
@@ -59,7 +59,7 @@ export function StatusView({ gitManager, navigationActions, viewDropdown, onNavi
       searchBarAccessory={viewDropdown}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title="View Controls">
+          <ActionPanel.Section title="Details">
             <Action
               title={isShowingDetail ? "Hide Diff" : "Show Diff"}
               icon={Icon.CodeBlock}
@@ -68,20 +68,8 @@ export function StatusView({ gitManager, navigationActions, viewDropdown, onNavi
             />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="File Operations">
+          <ActionPanel.Section>
             <Action title="Refresh Status" onAction={revalidate} icon={Icon.ArrowClockwise} />
-            <FileCommitAction
-              gitManager={gitManager}
-              onCommitSuccess={refreshAndNavigateToCommits}
-              hasStagedChanges={stagedFiles.length > 0}
-            />
-            <FileStageAllAction gitManager={gitManager} onRefresh={revalidate} />
-            <FileUnstageAllAction gitManager={gitManager} onRefresh={revalidate} />
-            <FileDiscardAllAction gitManager={gitManager} onRefresh={revalidate} />
-          </ActionPanel.Section>
-
-          <ActionPanel.Section title="Stash Operations">
-            <CreateStashAction gitManager={gitManager} onRefresh={revalidate} />
           </ActionPanel.Section>
 
           {navigationActions}
@@ -203,14 +191,14 @@ function FileListItem({
       quickLook={existsSync(file.path) ? { path: file.path, name: file.relativePath } : undefined}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title="File Operations">
+          <ActionPanel.Section title={file.path.split("/").pop()}>
             {/* Actions for staged files */}
             {file.status === "staged" && (
               <>
                 <FileUnstageAction file={file} gitManager={gitManager} onRefresh={onRefresh} />
-                <FileOpenAction file={file} />
-                <FileOpenWithAction file={file} />
-                <FileCopyPathAction file={file} />
+                <FileOpenAction filePath={file.path} />
+                <FileOpenWithAction filePath={file.path} shortcut={{ modifiers: ["cmd"], key: "o" }} />
+                <FileCopyPathAction filePath={file.path} />
               </>
             )}
 
@@ -218,20 +206,24 @@ function FileListItem({
             {(file.status === "unstaged" || file.status === "untracked") && (
               <>
                 <FileStageAction file={file} gitManager={gitManager} onRefresh={onRefresh} />
-                <FileMoveToTrashAction file={file} onRefresh={onRefresh} />
+                <FileOpenAction filePath={file.path} />
+                <FileOpenWithAction filePath={file.path} shortcut={{ modifiers: ["cmd"], key: "o" }} />
+                <FileCopyPathAction filePath={file.path} />
+                <FileMoveToTrashAction
+                  filePath={file.path}
+                  isAddedFile={file.type === "added"}
+                  onRefresh={onRefresh}
+                />
                 {file.type !== "conflicted" && file.type !== "added" && (
                   <FileDiscardAction file={file} gitManager={gitManager} onRefresh={onRefresh} />
                 )}
-                <FileOpenAction file={file} />
-                <FileOpenWithAction file={file} />
-                <FileCopyPathAction file={file} />
               </>
             )}
             <CreateStashAction gitManager={gitManager} onRefresh={onRefresh} filePath={file.relativePath} />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="View Controls">
-            {existsSync(file.path) && <Action.ToggleQuickLook shortcut={{ modifiers: ["cmd"], key: "y" }} />}
+          <ActionPanel.Section title="Details">
+            <FileQuickLookAction filePath={file.path} />
             <Action
               title={isShowingDetail ? "Hide Detail" : "Show Detail"}
               icon={Icon.AppWindowSidebarLeft}
@@ -240,18 +232,21 @@ function FileListItem({
             />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="Commit Operations">
-            <FileCommitAction
-              gitManager={gitManager}
-              onCommitSuccess={onCommitSuccess}
-              hasStagedChanges={hasStagedChanges}
-            />
+          <ActionPanel.Section>
+            {hasStagedChanges && (
+              <Action.Push
+                title="Commit Changes"
+                icon={Icon.Message}
+                target={<CommitMessageForm gitManager={gitManager} onFinish={onCommitSuccess} />}
+                shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
+              />
+            )}
             <FileStageAllAction gitManager={gitManager} onRefresh={onRefresh} />
             <FileUnstageAllAction gitManager={gitManager} onRefresh={onRefresh} />
             <FileDiscardAllAction gitManager={gitManager} onRefresh={onRefresh} />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="Stash Operations">
+          <ActionPanel.Section title="Workspace">
             <CreateStashAction gitManager={gitManager} onRefresh={onRefresh} />
           </ActionPanel.Section>
 

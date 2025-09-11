@@ -1,9 +1,8 @@
-import { Action, Icon, Color, confirmAlert, Alert } from "@raycast/api";
+import { Action, Icon, Color, confirmAlert, Alert, Keyboard } from "@raycast/api";
 import { getPreferenceValues } from "@raycast/api";
 import { GitManager } from "../../utils/git-utils";
 import { FileStatus, Preferences } from "../../types";
 import { existsSync } from "fs";
-import { CommitMessageForm } from "../../commands/views/CommitMessageView";
 
 interface FileActionProps {
   file: FileStatus;
@@ -53,6 +52,8 @@ export function FileUnstageAction({ file, gitManager, onRefresh }: FileActionPro
  * Action for discarding changes to a file.
  */
 export function FileDiscardAction({ file, gitManager, onRefresh }: FileActionProps) {
+  if (!existsSync(file.path)) return null;
+
   const handleDiscardChanges = async () => {
     const confirmed = await confirmAlert({
       title: "Discard changes",
@@ -85,48 +86,57 @@ export function FileDiscardAction({ file, gitManager, onRefresh }: FileActionPro
 }
 
 /**
- * Action for opening a file in default editor.
+ * Action for opening a file in default editor by absolute path.
  */
-export function FileOpenAction({ file }: { file: FileStatus }) {
+export function FileOpenAction({ filePath, shortcut }: { filePath: string, shortcut?: Keyboard.Shortcut }) {
   const preferences = getPreferenceValues<Preferences>();
-  const fileExistsOnDisk = existsSync(file.path);
 
-  if (!fileExistsOnDisk) return null;
+  if (!existsSync(filePath)) return null;
 
   return (
     <Action.Open
       title={`Open File in ${preferences.defaultEditor.name}`}
-      target={file.path}
+      target={filePath}
       application={preferences.defaultEditor}
       icon={{ fileIcon: preferences.defaultEditor.path }}
-      shortcut={{ modifiers: ["cmd"], key: "o" }}
+      shortcut={shortcut}
     />
   );
 }
 
 /**
- * Action for opening a file with a custom application.
+ * Action for opening a file with a custom application by absolute path.
  */
-export function FileOpenWithAction({ file }: { file: FileStatus }) {
-  const fileExistsOnDisk = existsSync(file.path);
+export function FileOpenWithAction({ filePath, shortcut }: { filePath: string, shortcut?: Keyboard.Shortcut }) {
+  if (!existsSync(filePath)) return null;
 
-  if (!fileExistsOnDisk) return null;
+  return (
+    <Action.OpenWith
+      title="Open File with…"
+      path={filePath}
+      shortcut={shortcut}
+    />
+  );
+}
 
-  return <Action.OpenWith
-    title="Open File with…"
-    path={file.path}
-    shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
-  />;
+export function FileQuickLookAction({ filePath }: { filePath: string }) {
+  if (!existsSync(filePath)) return null;
+
+  return (
+    <Action.ToggleQuickLook
+      shortcut={{ modifiers: ["cmd"], key: "y" }}
+    />
+  );
 }
 
 /**
  * Action for copying file path to clipboard.
  */
-export function FileCopyPathAction({ file }: { file: FileStatus }) {
+export function FileCopyPathAction({ filePath }: { filePath: string }) {
   return (
     <Action.CopyToClipboard
       title="Copy File Path"
-      content={file.relativePath}
+      content={filePath}
       shortcut={{ modifiers: ["cmd", "shift"], key: "," }}
     />
   );
@@ -135,18 +145,27 @@ export function FileCopyPathAction({ file }: { file: FileStatus }) {
 /**
  * Action for moving a file to trash.
  */
-export function FileMoveToTrashAction({ file, onRefresh }: { file: FileStatus; onRefresh: () => void }) {
-  if (file.type !== "added") return null;
+export function FileMoveToTrashAction({
+  filePath,
+  isAddedFile,
+  onRefresh
+}: {
+  filePath: string;
+  isAddedFile: boolean;
+  onRefresh: () => void;
+}) {
+  if (!isAddedFile || !existsSync(filePath)) return null;
 
   return (
     <Action.Trash
-      title="Move File to Trash"
       shortcut={{ modifiers: ["ctrl"], key: "x" }}
-      paths={[file.path]}
+      paths={[filePath]}
       onTrash={onRefresh}
     />
   );
 }
+
+// === Bulk actions ===
 
 /**
  * Action for staging all files.
@@ -229,29 +248,7 @@ export function FileDiscardAllAction({ gitManager, onRefresh }: { gitManager: Gi
   );
 }
 
-/**
- * Action for committing staged changes.
- */
-export function FileCommitAction({
-  gitManager,
-  onCommitSuccess,
-  hasStagedChanges,
-}: {
-  gitManager: GitManager;
-  onCommitSuccess: () => void;
-  hasStagedChanges: boolean;
-}) {
-  if (!hasStagedChanges) return null;
-
-  return (
-    <Action.Push
-      title="Commit Changes"
-      icon={Icon.Message}
-      target={<CommitMessageForm gitManager={gitManager} onFinish={onCommitSuccess} />}
-      shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
-    />
-  );
-}
+// === Utility functions ===
 
 /**
  * Icons for different types of changes
@@ -294,5 +291,69 @@ export const getFileStatusColor = (file: FileStatus) => {
       return Color.Red;
     default:
       return Color.SecondaryText;
+  }
+};
+
+/**
+ * Icons for commit file changes
+ */
+export const getCommitFileIcon = (status: string) => {
+  switch (status) {
+    case "added":
+      return Icon.Plus;
+    case "modified":
+    case "changed":
+      return Icon.Pencil;
+    case "deleted":
+      return Icon.Trash;
+    case "renamed":
+      return Icon.ArrowsContract;
+    case "copied":
+      return Icon.Duplicate;
+    default:
+      return Icon.Document;
+  }
+};
+
+/**
+ * Colors for commit file changes
+ */
+export const getCommitFileColor = (status: string) => {
+  switch (status) {
+    case "added":
+      return "#22c55e"; // green
+    case "modified":
+    case "changed":
+      return "#f59e0b"; // amber
+    case "deleted":
+      return "#ef4444"; // red
+    case "renamed":
+      return "#3b82f6"; // blue
+    case "copied":
+      return "#8b5cf6"; // purple
+    default:
+      return "#6b7280"; // gray
+  }
+};
+
+/**
+ * Status text for commit file changes
+ */
+export const getCommitFileStatusText = (status: string) => {
+  switch (status) {
+    case "added":
+      return "Added";
+    case "modified":
+      return "Modified";
+    case "changed":
+      return "Changed";
+    case "deleted":
+      return "Deleted";
+    case "renamed":
+      return "Renamed";
+    case "copied":
+      return "Copied";
+    default:
+      return "Unknown";
   }
 };
