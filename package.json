@@ -43,7 +43,14 @@
       "type": "appPicker",
       "title": "Default Terminal",
       "default": "com.apple.Terminal",
-      "description": "The default terminal app to open repository directory in (e.g. 'Terminal')"
+      "description": "The default terminal app to open repository directory in (e.g. 'Terminal', 'Warp')"
+    },
+    {
+      "name": "externalGitClient",
+      "required": false,
+      "type": "appPicker",
+      "title": "External Git Client",
+      "description": "The external git client to use for git commands (e.g. 'GitKraken')"
     },
     {
       "name": "maxBranchesToShow",

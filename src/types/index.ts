@@ -13,6 +13,8 @@ export interface Preferences {
   defaultEditor: Application;
   /** Default terminal for opening repository directory. */
   defaultTerminal: Application;
+  /** External git client for git commands. */
+  externalGitClient?: Application;
   /** Maximum number of branches to display. */
   maxBranchesToShow: string;
   /** Number of commits to load per pagination page. */

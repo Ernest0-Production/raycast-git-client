@@ -1,7 +1,6 @@
-import { Action, Icon, Color, confirmAlert, Alert, Keyboard } from "@raycast/api";
-import { getPreferenceValues } from "@raycast/api";
+import { Action, Icon, Color, confirmAlert, Alert, Keyboard, getDefaultApplication } from "@raycast/api";
 import { GitManager } from "../../utils/git-utils";
-import { FileStatus, Preferences } from "../../types";
+import { FileStatus } from "../../types";
 import { existsSync } from "fs";
 
 interface FileActionProps {
@@ -89,16 +88,12 @@ export function FileDiscardAction({ file, gitManager, onRefresh }: FileActionPro
  * Action for opening a file in default editor by absolute path.
  */
 export function FileOpenAction({ filePath, shortcut }: { filePath: string, shortcut?: Keyboard.Shortcut }) {
-  const preferences = getPreferenceValues<Preferences>();
-
   if (!existsSync(filePath)) return null;
 
   return (
     <Action.Open
-      title={`Open File in ${preferences.defaultEditor.name}`}
+      title={`Open File`}
       target={filePath}
-      application={preferences.defaultEditor}
-      icon={{ fileIcon: preferences.defaultEditor.path }}
       shortcut={shortcut}
     />
   );

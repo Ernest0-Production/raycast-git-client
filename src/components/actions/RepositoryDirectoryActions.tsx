@@ -33,6 +33,16 @@ export function RepositoryDirectoryActions({ repositoryPath, onOpen }: Repositor
         shortcut={{ modifiers: ["cmd", "shift"], key: "t" }}
         onOpen={() => onOpen?.()}
       />
+      {preferences.externalGitClient && (
+        <Action.Open
+          title={`Open Repository in ${preferences.externalGitClient.name}`}
+          target={repositoryPath}
+          application={preferences.externalGitClient}
+          icon={{ fileIcon: preferences.externalGitClient.path }}
+          shortcut={{ modifiers: ["cmd", "shift", "opt"], key: "o" }}
+          onOpen={() => onOpen?.()}
+        />
+      )}
       <Action.OpenWith path={repositoryPath} title="Open Repository with…" onOpen={() => onOpen?.()} />
       <Action.CopyToClipboard title="Copy Repository Path" content={repositoryPath} />
     </ActionPanel.Section>
