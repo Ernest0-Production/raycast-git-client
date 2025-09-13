@@ -141,7 +141,7 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
             <CommitRefreshHistoryAction onRefresh={revalidate} />
             {getActualBranchFilter() && <CommitCopyBranchNameAction currentBranch={getActualBranchFilter()!} />}
             {isLocalBranchSelected && <PullAction gitManager={gitManager} onRefresh={revalidate} />}
-            {branchesState.currentBranch && branchesState.currentBranch.type === "current" && (
+            {branchesState?.currentBranch && branchesState.currentBranch.type === "current" && (
               <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={revalidate} />
             )}
             <FetchAction gitManager={gitManager} onRefresh={revalidate} />
