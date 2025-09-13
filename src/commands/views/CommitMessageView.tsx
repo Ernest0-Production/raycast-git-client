@@ -129,20 +129,21 @@ export function CommitMessageForm({ gitManager, onFinish }: { gitManager: GitMan
     try {
       // Commit changes
       await gitManager.commit(draftMessage.trim(), amend);
-      pop();
-
-      // Clear draft after successful commit
-      clearDraft();
-
-      // Push if requested
-      if (push) {
-        await gitManager.push(forcePush);
-      }
-
-      onFinish();
     } catch (error) {
       // Git error is already shown by GitManager
+      return
     }
+
+    // Push if requested
+    if (push) {
+      try { await gitManager.push(forcePush); }
+      // Git error is already shown by GitManager
+      catch (error) { }
+    }
+    // Clear draft after successful commit
+    clearDraft();
+    pop();
+    onFinish();
   };
 
   const handleSubmit = async (values: { message: string; amend: boolean }) => {
