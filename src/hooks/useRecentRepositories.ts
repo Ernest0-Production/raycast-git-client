@@ -2,6 +2,7 @@ import { useCachedState } from "@raycast/utils";
 import { useCallback } from "react";
 import { Repository } from "../types";
 import { resolveTildePath } from "../utils/validation";
+import { GitManager } from "../utils/git-utils";
 
 /**
  * Hook for managing the list of recent repositories.
