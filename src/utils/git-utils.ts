@@ -39,18 +39,6 @@ export class GitManager {
   }
 
   /**
-   * Gets user preferences with parsed numeric values.
-   */
-  private getPreferences() {
-    const preferences = getPreferenceValues<Preferences>();
-    return {
-      maxFilesToShow: parseInt(preferences.maxFilesToShow, 10) || 500,
-      maxBranchesToShow: parseInt(preferences.maxBranchesToShow, 10) || 200,
-      commitsPerPage: parseInt(preferences.commitsPerPage, 10) || 20,
-    };
-  }
-
-  /**
    * Gets the repository name from the path.
    */
   get repoName(): string {
@@ -209,7 +197,7 @@ export class GitManager {
         remoteBranches.push({
           name: branchName,
           type: "remote",
-          remote: remote,
+          remote,
           upstream: branch.name, // The full remote name is the upstream ref
           lastCommitMessage: this.extractCommitMessage(branch.label),
           lastCommitHash: branch.commit,
@@ -218,7 +206,9 @@ export class GitManager {
     });
 
     // Apply performance limits
-    const { maxBranchesToShow } = this.getPreferences();
+    const maxBranchesToShow = parseInt(
+      getPreferenceValues<Preferences>().maxBranchesToShow
+    );
     const totalBranches = localBranches.length + remoteBranches.length + (currentBranch ? 1 : 0);
     if (totalBranches > maxBranchesToShow) {
       const limitPerType = Math.floor(maxBranchesToShow / 2);
@@ -249,17 +239,6 @@ export class GitManager {
     for (const fileStatus of status.files) {
       const fileEntries = this.parseFileStatus(fileStatus);
       files.push(...fileEntries);
-    }
-
-    // Limit the number of files for performance
-    const { maxFilesToShow } = this.getPreferences();
-    if (files.length > maxFilesToShow) {
-      await showToast({
-        style: Toast.Style.Animated,
-        title: "Performance Optimization",
-        message: `Showing ${maxFilesToShow} of ${files.length} files for better performance`,
-      });
-      return files.slice(0, maxFilesToShow);
     }
 
     return files;
@@ -557,7 +536,9 @@ export class GitManager {
    * @param page Page number for pagination (optional, default 0)
    */
   async getCommits(branch?: string, page: number = 0): Promise<Commit[]> {
-    const { commitsPerPage } = this.getPreferences();
+    const commitsPerPage = parseInt(
+      getPreferenceValues<Preferences>().commitsPerPage
+    );
     const log = await this.git.log([
       `--max-count=${commitsPerPage}`,
       `--skip=${page * commitsPerPage}`,

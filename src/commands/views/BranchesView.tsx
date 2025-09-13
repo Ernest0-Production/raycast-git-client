@@ -43,17 +43,15 @@ export function BranchesView({ gitManager, navigationActions, viewDropdown }: Br
   };
 
   // Group remote branches by remote (only if we have data)
-  const remoteGroups = branchesState
-    ? branchesState.remoteBranches.reduce(
-      (groups, branch) => {
-        const remote = branch.remote || "unknown";
-        if (!groups[remote]) groups[remote] = [];
-        groups[remote].push(branch);
-        return groups;
-      },
-      {} as Record<string, typeof branchesState.remoteBranches>,
-    )
-    : {};
+  const remoteGroups = branchesState?.remoteBranches.reduce(
+    (groups, branch) => {
+      const remote = branch.remote || "unknown";
+      if (!groups[remote]) groups[remote] = [];
+      groups[remote].push(branch);
+      return groups;
+    },
+    {} as Record<string, typeof branchesState.remoteBranches>,
+  ) ?? {};
 
   return (
     <List

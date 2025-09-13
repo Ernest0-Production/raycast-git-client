@@ -46,14 +46,6 @@
       "description": "The default terminal app to open repository directory in (e.g. 'Terminal')"
     },
     {
-      "name": "maxFilesToShow",
-      "required": false,
-      "type": "textfield",
-      "title": "Max Files to Show",
-      "default": "500",
-      "description": "Maximum number of files to display in the status view for performance optimization"
-    },
-    {
       "name": "maxBranchesToShow",
       "required": false,
       "type": "textfield",

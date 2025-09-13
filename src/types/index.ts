@@ -13,8 +13,6 @@ export interface Preferences {
   defaultEditor: Application;
   /** Default terminal for opening repository directory. */
   defaultTerminal: Application;
-  /** Maximum number of files to display in status view. */
-  maxFilesToShow: string;
   /** Maximum number of branches to display. */
   maxBranchesToShow: string;
   /** Number of commits to load per pagination page. */
