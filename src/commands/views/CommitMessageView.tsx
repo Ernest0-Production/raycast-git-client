@@ -127,6 +127,7 @@ export function CommitMessageForm({ gitManager, onFinish }: { gitManager: GitMan
     }
 
     try {
+      pop();
       // Commit changes
       await gitManager.commit(draftMessage.trim(), amend);
 
@@ -138,7 +139,6 @@ export function CommitMessageForm({ gitManager, onFinish }: { gitManager: GitMan
         await gitManager.push(forcePush);
       }
 
-      pop();
       onFinish();
     } catch (error) {
       // Git error is already shown by GitManager
