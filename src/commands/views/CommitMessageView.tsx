@@ -127,9 +127,9 @@ export function CommitMessageForm({ gitManager, onFinish }: { gitManager: GitMan
     }
 
     try {
-      pop();
       // Commit changes
       await gitManager.commit(draftMessage.trim(), amend);
+      pop();
 
       // Clear draft after successful commit
       clearDraft();
