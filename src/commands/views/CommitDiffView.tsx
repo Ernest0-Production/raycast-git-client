@@ -133,7 +133,7 @@ function FileListItem({
             <FileQuickLookAction filePath={absolutePath} />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="Details">
+          <ActionPanel.Section>
             <Action
               title={isShowingDetail ? "Hide Detail" : "Show Detail"}
               icon={Icon.AppWindowSidebarLeft}

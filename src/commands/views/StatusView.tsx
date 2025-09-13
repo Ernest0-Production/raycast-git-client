@@ -15,6 +15,7 @@ import {
   getFileStatusIcon,
   getFileStatusColor,
   FileQuickLookAction,
+  FileRefreshStatusAction,
 } from "../../components/actions/FileActions";
 import { CreateStashAction } from "../../components/actions/StashActions";
 import { GitManager } from "../../utils/git-utils";
@@ -59,7 +60,7 @@ export function StatusView({ gitManager, navigationActions, viewDropdown, onNavi
       searchBarAccessory={viewDropdown}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title="Details">
+          <ActionPanel.Section>
             <Action
               title={isShowingDetail ? "Hide Diff" : "Show Diff"}
               icon={Icon.CodeBlock}
@@ -69,7 +70,7 @@ export function StatusView({ gitManager, navigationActions, viewDropdown, onNavi
           </ActionPanel.Section>
 
           <ActionPanel.Section>
-            <Action title="Refresh Status" onAction={revalidate} icon={Icon.ArrowClockwise} />
+            <FileRefreshStatusAction onRefresh={revalidate} />
           </ActionPanel.Section>
 
           {navigationActions}
@@ -208,6 +209,7 @@ function FileListItem({
                 <FileStageAction file={file} gitManager={gitManager} onRefresh={onRefresh} />
                 <FileOpenAction filePath={file.path} />
                 <FileOpenWithAction filePath={file.path} shortcut={{ modifiers: ["cmd"], key: "o" }} />
+                <FileQuickLookAction filePath={file.path} />
                 <FileCopyPathAction filePath={file.path} />
                 <FileMoveToTrashAction
                   filePath={file.path}
@@ -222,8 +224,8 @@ function FileListItem({
             <CreateStashAction gitManager={gitManager} onRefresh={onRefresh} filePath={file.relativePath} />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="Details">
-            <FileQuickLookAction filePath={file.path} />
+          <ActionPanel.Section>
+            <FileRefreshStatusAction onRefresh={onRefresh} />
             <Action
               title={isShowingDetail ? "Hide Detail" : "Show Detail"}
               icon={Icon.AppWindowSidebarLeft}

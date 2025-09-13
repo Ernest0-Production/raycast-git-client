@@ -248,6 +248,20 @@ export function FileDiscardAllAction({ gitManager, onRefresh }: { gitManager: Gi
   );
 }
 
+/**
+ * Action for refreshing repository status.
+ */
+export function FileRefreshStatusAction({ onRefresh }: { onRefresh: () => void }) {
+  return (
+    <Action
+      title="Refresh Status"
+      onAction={onRefresh}
+      icon={Icon.ArrowClockwise}
+      shortcut={{ modifiers: ["cmd"], key: "r" }}
+    />
+  );
+}
+
 // === Utility functions ===
 
 /**
