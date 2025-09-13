@@ -148,30 +148,41 @@ function AddRepositoryForm() {
   const { pop } = useNavigation();
   const [repositoryPaths, setRepositoryPaths] = useState<string[]>([]);
 
-  // Compute derived values
-  const folderPath = repositoryPaths.length > 0 ? repositoryPaths[0] : "";
+  // Compute validation errors for multiple repositories
+  const validateMultipleRepositories = (paths: string[]): string | undefined => {
+    if (paths.length === 0) {
+      return "Required";
+    }
+
+    const invalidRepos: string[] = [];
+    paths.forEach((path) => {
+      const validation = validateGitRepository(path);
+      if (!validation.isValid) {
+        const repoName = path.split("/").pop() || path;
+        invalidRepos.push(repoName);
+      }
+    });
+
+    return invalidRepos.length > 0 ? `Invalid repositories: ${invalidRepos.join(", ")}` : undefined;
+  };
 
   const handleSubmit = async (values: { repositoryPath: string[] }) => {
-    try {
-      const folderPath = values.repositoryPath[0];
-      addToRecent(folderPath);
-      const repoName = folderPath.split("/").pop() || folderPath;
+    for (const repoPath of values.repositoryPath) {
+      const repoName = repoPath.split("/").pop() || repoPath;
+
+      addToRecent(repoPath);
 
       await showToast({
-        style: Toast.Style.Success,
-        title: "Repository added",
-        message: `"${repoName}" added to recent repositories`,
-      });
-
-      // Return to the parent view
-      pop();
-    } catch (error) {
-      await showToast({
-        style: Toast.Style.Failure,
-        title: "Failed to add repository",
-        message: error instanceof Error ? error.message : "Unknown error",
+        style: Toast.Style.Animated,
+        title: `${repoName} added to recent list`
       });
     }
+
+    await showToast({
+      style: Toast.Style.Success,
+      title: repositoryPaths.length > 1 ? "All repositories added" : "Repository added"
+    });
+    pop();
   };
 
   return (
@@ -180,7 +191,8 @@ function AddRepositoryForm() {
       actions={
         <ActionPanel>
           <Action.SubmitForm
-            title="Add Repository"
+            title={repositoryPaths.length > 1 ? "Add Repositories" : "Add Repository"}
+            icon={Icon.Plus}
             onSubmit={handleSubmit}
           />
         </ActionPanel>
@@ -190,9 +202,9 @@ function AddRepositoryForm() {
         id="repositoryPath"
         title="Select Git Repository"
         value={repositoryPaths}
-        error={folderPath.length === 0 ? "Required" : validateGitRepository(folderPath).error}
+        error={validateMultipleRepositories(repositoryPaths)}
         onChange={setRepositoryPaths}
-        allowMultipleSelection={false}
+        allowMultipleSelection={true}
         canChooseDirectories
         canChooseFiles={false}
       />
