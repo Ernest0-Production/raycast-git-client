@@ -9,6 +9,7 @@ import {
   BranchRebaseAction,
   BranchDeleteRemoteAction,
   BranchCheckoutRemoteAction,
+  BranchRenameAction,
   CreateBranchAction,
   FetchAction,
   PullAction,
@@ -44,14 +45,14 @@ export function BranchesView({ gitManager, navigationActions, viewDropdown }: Br
   // Group remote branches by remote (only if we have data)
   const remoteGroups = branchesState
     ? branchesState.remoteBranches.reduce(
-        (groups, branch) => {
-          const remote = branch.remote || "unknown";
-          if (!groups[remote]) groups[remote] = [];
-          groups[remote].push(branch);
-          return groups;
-        },
-        {} as Record<string, typeof branchesState.remoteBranches>,
-      )
+      (groups, branch) => {
+        const remote = branch.remote || "unknown";
+        if (!groups[remote]) groups[remote] = [];
+        groups[remote].push(branch);
+        return groups;
+      },
+      {} as Record<string, typeof branchesState.remoteBranches>,
+    )
     : {};
 
   return (
@@ -239,6 +240,7 @@ function BranchListItem({
               <>
                 <PullAction gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchPushAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchRenameAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
               </>
             )}
 
@@ -249,6 +251,7 @@ function BranchListItem({
                 <BranchMergeAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchRebaseAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchPushAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchRenameAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchDeleteAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
               </>
             )}

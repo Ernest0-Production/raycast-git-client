@@ -786,7 +786,7 @@ export class GitManager {
   /**
    * Pushes changes.
    */
-  async push(force = false, upstream?: { remote: string; branch: string }): Promise<void> {
+  async push(force = false, upstream?: { remoteBranch: string; localBranch: string }): Promise<void> {
     const options = [];
 
     if (force) {
@@ -794,7 +794,7 @@ export class GitManager {
     }
 
     if (upstream) {
-      options.push("--set-upstream", upstream.remote, upstream.branch);
+      options.push(`--set-upstream-to=${upstream.remoteBranch}/${upstream.localBranch}`);
     }
 
     await this.git.push(undefined, undefined, options);
@@ -1104,6 +1104,37 @@ export class GitManager {
       return status.current || null;
     } catch {
       return null;
+    }
+  }
+
+  /**
+   * Renames a local branch. If oldName is not provided, renames the current branch.
+   */
+  async renameBranch(newName: string, oldName: string, upstream?: string): Promise<void> {
+    if (!newName || typeof newName !== "string" || newName.trim().length === 0) {
+      throw new Error("Invalid new branch name");
+    }
+    if (newName.includes("..") || newName.includes(" ") || newName.startsWith("-")) {
+      throw new Error("New branch name contains invalid characters");
+    }
+
+    await this.git.raw(["branch", "-m", oldName.trim(), newName.trim()]);
+
+    if (upstream) {
+      let remote = upstream.split("/")[0];
+      let oldRemoteBranchName = upstream.split("/")[1];
+
+      await this.git.push(
+        remote,
+        undefined,
+        [`${newName}`, `:${oldRemoteBranchName}`]
+      );
+
+      await this.git.branch([
+        '--set-upstream-to',
+        `${remote}/${newName}`,
+        newName
+      ]);
     }
   }
 

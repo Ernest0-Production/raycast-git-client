@@ -95,7 +95,7 @@ export function BranchPushAction({ branch, gitManager, onRefresh }: BranchAction
 
         if (confirmed) {
           // Push with set-upstream using the default remote
-          await gitManager.push(false, { remote: defaultRemote, branch: branch.name });
+          await gitManager.push(false, { remoteBranch: upstream, localBranch: branch.name });
           onRefresh();
         }
       } else {
@@ -338,6 +338,20 @@ export function CreateBranchAction({ gitManager, onRefresh }: { gitManager: GitM
   );
 }
 
+/**
+ * Action for renaming a branch.
+ */
+export function BranchRenameAction({ branch, gitManager, onRefresh }: BranchActionProps) {
+  return (
+    <Action.Push
+      title="Rename Branch"
+      target={<RenameBranchForm branch={branch} gitManager={gitManager} onRefresh={onRefresh} />}
+      icon={Icon.Pencil}
+      shortcut={{ modifiers: ["cmd"], key: "e" }}
+    />
+  );
+}
+
 function CreateBranchForm({ gitManager, onRefresh }: { gitManager: GitManager; onRefresh: () => void }) {
   const { pop } = useNavigation();
   const [branchName, setBranchName] = useState("");
@@ -384,3 +398,72 @@ function CreateBranchForm({ gitManager, onRefresh }: { gitManager: GitManager; o
     </Form>
   );
 }
+
+function RenameBranchForm({ branch, gitManager, onRefresh }: { branch: Branch; gitManager: GitManager; onRefresh: () => void }) {
+  const { pop } = useNavigation();
+  const [newBranchName, setNewBranchName] = useState(branch.name);
+  const [renameRemote, setRenameRemote] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Enhanced validation
+  const getValidationError = (): string | undefined => {
+    if (newBranchName.length === 0) {
+      return "Required";
+    }
+    // Git branch name validation
+    if (newBranchName.includes("..") || newBranchName.includes(" ") || newBranchName.startsWith("-")) {
+      return "Invalid characters";
+    }
+    return undefined;
+  };
+
+  const handleSubmit = async (values: { newBranchName: string; renameRemote?: boolean }) => {
+    setIsLoading(true);
+
+    try {
+      await gitManager.renameBranch(values.newBranchName, branch.name, renameRemote ? branch.upstream : undefined);
+
+      await showToast({
+        style: Toast.Style.Success,
+        title: "Branch renamed successfully"
+      });
+
+      onRefresh();
+      pop();
+    } catch (error) {
+      // Git error is already shown by GitManager
+    }
+    setIsLoading(false);
+  };
+
+  return (
+    <Form
+      isLoading={isLoading}
+      actions={
+        <ActionPanel>
+          <Action.SubmitForm title="Rename Branch" onSubmit={handleSubmit} />
+        </ActionPanel>
+      }
+    >
+      <Form.TextField
+        id="newBranchName"
+        title="Branch Name"
+        placeholder="New branch name"
+        value={newBranchName}
+        onChange={setNewBranchName}
+        error={getValidationError()}
+      />
+
+      {branch.upstream && (
+        <Form.Checkbox
+          id="renameRemote"
+          label={`Rename remote branch '${branch.upstream}'`}
+          value={renameRemote}
+          onChange={setRenameRemote}
+          info="This will delete the old remote branch and push the new one"
+        />
+      )}
+    </Form>
+  );
+}
+
