@@ -335,18 +335,18 @@ export const getCommitFileIcon = (status: string) => {
 export const getCommitFileColor = (status: string) => {
   switch (status) {
     case "added":
-      return "#22c55e"; // green
+      return Color.Green;
     case "modified":
     case "changed":
-      return "#f59e0b"; // amber
+      return Color.Yellow;
     case "deleted":
-      return "#ef4444"; // red
+      return Color.Red;
     case "renamed":
-      return "#3b82f6"; // blue
+      return Color.Blue;
     case "copied":
-      return "#8b5cf6"; // purple
+      return Color.Purple;
     default:
-      return "#6b7280"; // gray
+      return Color.SecondaryText;
   }
 };
 
