@@ -13,7 +13,6 @@ export function CommitMessageForm({ gitManager, onFinish }: { gitManager: GitMan
   const preferences = getPreferenceValues<Preferences>();
   const [draftMessage, setDraftMessage] = useCachedState(`commit-draft-${gitManager.repoPath}`, "");
   const [amend, setAmend] = useCachedState(`commit-amend-${gitManager.repoPath}`, false);
-  const [aiMessage, setAiMessage] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const { pop } = useNavigation();
 
@@ -88,12 +87,7 @@ export function CommitMessageForm({ gitManager, onFinish }: { gitManager: GitMan
         title: "Generating commit message...",
         message: "AI is generating commit message. This may take a few seconds.",
       });
-      setAiMessage("");
-      aiResponse.on("data", (chunk) => {
-        setAiMessage((prev) => prev + chunk);
-      });
       setDraftMessage(await aiResponse);
-      setAiMessage("");
 
       await showToast({
         style: Toast.Style.Success,
@@ -194,7 +188,7 @@ export function CommitMessageForm({ gitManager, onFinish }: { gitManager: GitMan
         id="message"
         title="Commit message"
         placeholder="Enter commit message or use AI generation..."
-        value={aiMessage.length > 0 ? aiMessage : draftMessage}
+        value={draftMessage}
         error={draftMessage.length > 0 ? undefined : "Required"}
         onChange={setDraftMessage}
         info="Draft is automatically saved and will be cleared after successful commit"

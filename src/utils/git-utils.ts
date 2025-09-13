@@ -77,7 +77,6 @@ export class GitManager {
         const output = data.toString().trim();
         if (output) {
           lastOutput = output;
-          // console.log(`[GIT STDOUT] ${output}`);
         }
       });
 
@@ -95,7 +94,6 @@ export class GitManager {
       // Show the final result on completion
       stdout.on("end", () => {
         if (!hasError) {
-          showToast({ style: Toast.Style.Success, title: command_description, message: lastOutput });
           if (lastOutput) {
             showToast({ style: Toast.Style.Success, title: command_description, message: lastOutput });
           } else {
