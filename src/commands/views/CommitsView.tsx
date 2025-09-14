@@ -2,7 +2,7 @@ import { ActionPanel, List, Icon, Action, useNavigation, Color } from "@raycast/
 import { useCachedPromise, useCachedState } from "@raycast/utils";
 import { useGitBranches } from "../../hooks/useGitBranches";
 import { useGitCommits } from "../../hooks/useGitCommits";
-import { useCommitsBranchFilter, ALL_BRANCHES_FILTER, DETACHED_HEAD_FILTER } from "../../hooks/useCommitsBranchFilter";
+import { useCommitsBranchFilter, ALL_BRANCHES_FILTER, DETACHED_HEAD_FILTER, CURRENT_BRANCH_FILTER } from "../../hooks/useCommitsBranchFilter";
 import {
   CommitCheckoutAction,
   CommitCherryPickAction,
@@ -85,7 +85,6 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
   // Get current filter display name for List.Section title
   const currentFilterDisplayName = getBranchFilterDisplayName(
     selectedBranch,
-    allBranches,
     branchesState?.detachedHead,
     branchesState?.currentBranch,
   );
@@ -139,7 +138,6 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
 
           <ActionPanel.Section title="History Management">
             <CommitRefreshHistoryAction onRefresh={revalidate} />
-            {getActualBranchFilter() && <CommitCopyBranchNameAction currentBranch={getActualBranchFilter()!} />}
             {isLocalBranchSelected && <PullAction gitManager={gitManager} onRefresh={revalidate} />}
             {branchesState?.currentBranch && branchesState.currentBranch.type === "current" && (
               <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={revalidate} />
@@ -470,9 +468,10 @@ function CommitListItem({
               detachedHead={detachedHead}
               currentBranch={currentBranch}
             />
+            {selectedBranch && <CommitCopyBranchNameAction currentBranch={selectedBranch} />}
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="View Controls">
+          <ActionPanel.Section>
             <Action
               title={isShowingDetail ? "Hide Detail" : "Show Detail"}
               icon={Icon.AppWindowSidebarLeft}

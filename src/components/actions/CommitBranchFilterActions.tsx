@@ -1,6 +1,6 @@
 import { ActionPanel, Action, Icon, Color } from "@raycast/api";
 import { Branch, DetachedHead } from "../../types";
-import { ALL_BRANCHES_FILTER, DETACHED_HEAD_FILTER } from "../../hooks/useCommitsBranchFilter";
+import { ALL_BRANCHES_FILTER, CURRENT_BRANCH_FILTER, DETACHED_HEAD_FILTER } from "../../hooks/useCommitsBranchFilter";
 
 interface CommitBranchFilterActionProps {
   selectedBranch: string;
@@ -21,7 +21,6 @@ export function CommitBranchFilterAction({
   detachedHead,
   currentBranch,
 }: CommitBranchFilterActionProps) {
-  // Build branch options similar to the original dropdown logic
   const currentBranchOption = () => {
     if (detachedHead) {
       return (
@@ -33,13 +32,12 @@ export function CommitBranchFilterAction({
         />
       );
     } else if (currentBranch) {
-      const isSelected = selectedBranch === currentBranch.name;
       return (
         <Action
-          title={currentBranch.name}
-          icon={{ source: isSelected ? Icon.Checkmark : Icon.Dot, tintColor: Color.Green }}
-          autoFocus={selectedBranch === currentBranch.name}
-          onAction={() => updateSelectedBranch(currentBranch.name)}
+          title="Current Branch"
+          icon={selectedBranch === CURRENT_BRANCH_FILTER ? Icon.Checkmark : { source: Icon.Dot, tintColor: Color.Green }}
+          autoFocus={selectedBranch === CURRENT_BRANCH_FILTER}
+          onAction={() => updateSelectedBranch(CURRENT_BRANCH_FILTER)}
         />
       );
     }
@@ -91,9 +89,8 @@ export function CommitBranchFilterAction({
           autoFocus={selectedBranch === ALL_BRANCHES_FILTER}
           onAction={() => updateSelectedBranch(ALL_BRANCHES_FILTER)}
         />
+        {currentBranchAction}
       </ActionPanel.Section>
-
-      {currentBranchAction && <ActionPanel.Section title="Current Branch">{currentBranchAction}</ActionPanel.Section>}
 
       {otherBranchActions.length > 0 && <ActionPanel.Section>{otherBranchActions}</ActionPanel.Section>}
     </ActionPanel.Submenu>
@@ -105,7 +102,6 @@ export function CommitBranchFilterAction({
  */
 export function getBranchFilterDisplayName(
   selectedBranch: string,
-  allBranches: Branch[],
   detachedHead?: DetachedHead,
   currentBranch?: Branch,
 ): string | undefined {
@@ -117,24 +113,14 @@ export function getBranchFilterDisplayName(
     return `Commits on HEAD (${detachedHead.shortCommitHash})`;
   }
 
+  if (selectedBranch === CURRENT_BRANCH_FILTER && currentBranch) {
+    return `Filtered by '${currentBranch.name}' branch`;
+  }
+
   // Check if it's current branch
   if (currentBranch && selectedBranch === currentBranch.name) {
     return `Filtered by '${currentBranch.name}' branch`;
   }
 
-  // Find the branch in allBranches
-  const branch = allBranches.find((branch) => {
-    if (branch.type === "remote") {
-      return `${branch.remote}/${branch.name}` === selectedBranch;
-    }
-    return branch.name === selectedBranch;
-  });
-
-  if (branch) {
-    return branch.type === "remote"
-      ? `Filtered by '${branch.remote}/${branch.name}' branch`
-      : `Filtered by '${branch.name}' branch`;
-  }
-
-  return selectedBranch;
+  return `Filtered by '${selectedBranch}' branch`;
 }

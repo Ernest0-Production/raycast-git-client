@@ -8,6 +8,11 @@ import { Branch, DetachedHead } from "../types";
 export const ALL_BRANCHES_FILTER = "ALL_BRANCHES";
 
 /**
+ * Special constant for the "Current Branch" filter
+ */
+export const CURRENT_BRANCH_FILTER = "CURRENT_BRANCH";
+
+/**
  * Special constant for the "Detached HEAD" filter
  */
 export const DETACHED_HEAD_FILTER = "DETACHED_HEAD";
@@ -23,7 +28,7 @@ export function useCommitsBranchFilter(repositoryPath: string, branches: Branch[
 
   // Validate cached branch when branches change
   useEffect(() => {
-    if ((branches.length > 0 || detachedHead) && selectedBranch !== ALL_BRANCHES_FILTER) {
+    if ((branches.length > 0 || detachedHead) && selectedBranch !== ALL_BRANCHES_FILTER && selectedBranch !== CURRENT_BRANCH_FILTER) {
       // Check if selected branch is valid
       const isValidBranch = branches.some((branch) => {
         // For remote branches, check against the full name (remote/name)
@@ -54,6 +59,9 @@ export function useCommitsBranchFilter(repositoryPath: string, branches: Branch[
     }
     if (selectedBranch === DETACHED_HEAD_FILTER && detachedHead) {
       return "HEAD"; // HEAD means detached HEAD state
+    }
+    if (selectedBranch === CURRENT_BRANCH_FILTER) {
+      return branches.find((branch) => branch.type === "current")?.name;
     }
     return selectedBranch;
   };
