@@ -13,9 +13,11 @@ interface CommitActionProps {
  */
 export function CommitCheckoutAction({ commit, gitManager, onRefresh }: CommitActionProps) {
   const handleCheckoutCommit = async () => {
+    const targetName = commit.localBranches.length > 0 ? commit.localBranches[0] : commit.shortHash;
+
     const confirmed = await confirmAlert({
       title: "Checkout commit",
-      message: `Are you sure you want to checkout commit "${commit.shortHash}"? This will put you in a detached HEAD state.`,
+      message: `Are you sure you want to checkout commit '${targetName}'? This will put you in a detached HEAD state.`,
       primaryAction: {
         title: "Checkout",
         style: Alert.ActionStyle.Default,
@@ -24,7 +26,7 @@ export function CommitCheckoutAction({ commit, gitManager, onRefresh }: CommitAc
 
     if (confirmed) {
       try {
-        await gitManager.checkoutCommit(commit.hash);
+        await gitManager.checkoutCommit(targetName);
         onRefresh();
       } catch (error) {
         // Git error is already shown by GitManager

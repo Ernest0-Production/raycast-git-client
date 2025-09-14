@@ -13,11 +13,6 @@ export const ALL_BRANCHES_FILTER = "ALL_BRANCHES";
 export const CURRENT_BRANCH_FILTER = "CURRENT_BRANCH";
 
 /**
- * Special constant for the "Detached HEAD" filter
- */
-export const DETACHED_HEAD_FILTER = "DETACHED_HEAD";
-
-/**
  * Hook for caching the selected branch for the commits filter.
  * The cache is specific to a repository using useCachedState.
  */
@@ -38,9 +33,8 @@ export function useCommitsBranchFilter(repositoryPath: string, branches: Branch[
         // For local and current branches, check against just the name
         return branch.name === selectedBranch;
       });
-      const isDetachedHead = selectedBranch === DETACHED_HEAD_FILTER && detachedHead;
 
-      if (!isValidBranch && !isDetachedHead) {
+      if (!isValidBranch && !detachedHead) {
         // If the cached branch doesn't exist, reset to ALL_BRANCHES
         setSelectedBranch(ALL_BRANCHES_FILTER);
       }
@@ -57,11 +51,12 @@ export function useCommitsBranchFilter(repositoryPath: string, branches: Branch[
     if (selectedBranch === ALL_BRANCHES_FILTER) {
       return undefined; // undefined means all branches
     }
-    if (selectedBranch === DETACHED_HEAD_FILTER && detachedHead) {
-      return "HEAD"; // HEAD means detached HEAD state
-    }
     if (selectedBranch === CURRENT_BRANCH_FILTER) {
-      return branches.find((branch) => branch.type === "current")?.name;
+      if (detachedHead) {
+        return detachedHead.commitHash;
+      } else {
+        return branches.find((branch) => branch.type === "current")?.name;
+      }
     }
     return selectedBranch;
   };

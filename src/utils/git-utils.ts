@@ -472,23 +472,19 @@ export class GitManager {
         }
       } else if (ref.includes("HEAD ->")) {
         // Current branch: "HEAD -> main" or "origin/HEAD -> origin/main"
-        const match = ref.match(/HEAD\s*->\s*(.+)/);
+        const match = ref.match(/HEAD\s*->\s*refs\/heads\/(.+)/);
         if (!match) continue;
 
         const branchName = match[1].trim();
         result.currentBranchName = branchName;
-      } else if (ref.includes("/") && !ref.startsWith("HEAD")) {
-        // Remote branch: "origin/main", "upstream/feature"
-        const parts = ref.split("/");
-        if (parts.length >= 2) {
-          if (!result.remoteBranches.includes(ref)) {
-            result.remoteBranches.push(ref);
-          }
-        }
-      } else if (ref && !ref.includes("HEAD")) {
-        // Local branch
-        if (!result.localBranches.includes(ref)) {
-          result.localBranches.push(ref);
+      } else if (!ref.startsWith("HEAD")) {
+        if (ref.startsWith("refs/remotes/")) {
+          // Extract subpath from ref without "refs/remotes/"
+          const remoteBranch = ref.replace(/^refs\/remotes\//, "");
+          result.remoteBranches.push(remoteBranch);
+        } else if (ref.startsWith("refs/heads/")) {
+          const localBranch = ref.replace(/^refs\/heads\//, "");
+          result.localBranches.push(localBranch);
         }
       }
     }
@@ -501,7 +497,7 @@ export class GitManager {
    */
   async getLastCommit(): Promise<Commit | null> {
     try {
-      const log = await this.git.log(["--max-count=1", "--name-status"]);
+      const log = await this.git.log(["--max-count=1", "--name-status", "--decorate=full"]);
 
       if (!log.latest) {
         return null;
@@ -543,7 +539,8 @@ export class GitManager {
       `--max-count=${commitsPerPage}`,
       `--skip=${page * commitsPerPage}`,
       "--name-status",
-      ...(branch ? [branch] : []),
+      ...(branch ? [branch] : ["--all"]),
+      '--decorate=full',
     ]);
 
     return log.all.map(

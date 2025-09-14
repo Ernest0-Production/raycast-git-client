@@ -2,7 +2,7 @@ import { ActionPanel, List, Icon, Action, useNavigation, Color } from "@raycast/
 import { getFavicon, useCachedPromise, useCachedState } from "@raycast/utils";
 import { useGitBranches } from "../../hooks/useGitBranches";
 import { useGitCommits } from "../../hooks/useGitCommits";
-import { useCommitsBranchFilter, ALL_BRANCHES_FILTER, DETACHED_HEAD_FILTER, CURRENT_BRANCH_FILTER } from "../../hooks/useCommitsBranchFilter";
+import { useCommitsBranchFilter, ALL_BRANCHES_FILTER, CURRENT_BRANCH_FILTER } from "../../hooks/useCommitsBranchFilter";
 import {
   CommitCheckoutAction,
   CommitCherryPickAction,
@@ -68,18 +68,6 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
     pagination,
   } = useGitCommits(gitManager, getActualBranchFilter());
 
-  // Check if the selected branch is a local branch (current or local)
-  const isLocalBranchSelected = useMemo(() => {
-    if (selectedBranch === ALL_BRANCHES_FILTER || selectedBranch === DETACHED_HEAD_FILTER) {
-      return false;
-    }
-
-    // Check if it's a local branch (current or local type)
-    return allBranches.some(
-      (branch) => (branch.type === "current" || branch.type === "local") && branch.name === selectedBranch,
-    );
-  }, [selectedBranch, allBranches]);
-
   // Get current filter display name for List.Section title
   const currentFilterDisplayName = getBranchFilterDisplayName(
     selectedBranch,
@@ -108,7 +96,7 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
         <ActionPanel>
           <ActionPanel.Section title="Branch">
             <CommitRefreshHistoryAction onRefresh={revalidate} />
-            {isLocalBranchSelected && <PullAction gitManager={gitManager} onRefresh={revalidate} />}
+            <PullAction gitManager={gitManager} onRefresh={revalidate} />
             {branchesState?.currentBranch && branchesState.currentBranch.type === "current" && (
               <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={revalidate} />
             )}
@@ -179,7 +167,6 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
               onToggleMetadata={toggleMetadata}
               urlTrackerConfigs={urlTrackerConfigs}
               selectedCommitId={selectedCommitId}
-              isLocalBranchSelected={isLocalBranchSelected}
               isAllBranchesFilter={selectedBranch === ALL_BRANCHES_FILTER}
               selectedBranch={selectedBranch}
               updateSelectedBranch={updateSelectedBranch}
@@ -205,7 +192,6 @@ interface CommitListItemProps {
   onToggleMetadata: () => void;
   urlTrackerConfigs: UrlTrackerConfig[];
   selectedCommitId: string | null;
-  isLocalBranchSelected: boolean;
   isAllBranchesFilter: boolean;
   selectedBranch: string;
   updateSelectedBranch: (branchName: string) => void;
@@ -225,7 +211,6 @@ function CommitListItem({
   onToggleMetadata,
   urlTrackerConfigs,
   selectedCommitId,
-  isLocalBranchSelected,
   isAllBranchesFilter,
   selectedBranch,
   updateSelectedBranch,
@@ -478,7 +463,7 @@ function CommitListItem({
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Branch">
-            {isLocalBranchSelected && <PullAction gitManager={gitManager} onRefresh={onRefresh} />}
+            <PullAction gitManager={gitManager} onRefresh={onRefresh} />
             {currentBranch && currentBranch.type === "current" && (
               <BranchPushAction branch={currentBranch} gitManager={gitManager} onRefresh={onRefresh} />
             )}

@@ -1,6 +1,6 @@
 import { ActionPanel, Action, Icon, Color } from "@raycast/api";
 import { Branch, DetachedHead } from "../../types";
-import { ALL_BRANCHES_FILTER, CURRENT_BRANCH_FILTER, DETACHED_HEAD_FILTER } from "../../hooks/useCommitsBranchFilter";
+import { ALL_BRANCHES_FILTER, CURRENT_BRANCH_FILTER } from "../../hooks/useCommitsBranchFilter";
 
 interface CommitBranchFilterActionProps {
   selectedBranch: string;
@@ -26,9 +26,9 @@ export function CommitBranchFilterAction({
       return (
         <Action
           title={`HEAD (${detachedHead.shortCommitHash})`}
-          icon={selectedBranch === DETACHED_HEAD_FILTER ? Icon.Checkmark : Icon.Anchor}
+          icon={selectedBranch === CURRENT_BRANCH_FILTER ? Icon.Checkmark : Icon.Anchor}
           autoFocus={selectedBranch === detachedHead?.shortCommitHash}
-          onAction={() => updateSelectedBranch(DETACHED_HEAD_FILTER)}
+          onAction={() => updateSelectedBranch(CURRENT_BRANCH_FILTER)}
         />
       );
     } else if (currentBranch) {
@@ -109,17 +109,14 @@ export function getBranchFilterDisplayName(
     return undefined;
   }
 
-  if (selectedBranch === DETACHED_HEAD_FILTER && detachedHead) {
-    return `Commits on HEAD (${detachedHead.shortCommitHash})`;
-  }
-
-  if (selectedBranch === CURRENT_BRANCH_FILTER && currentBranch) {
-    return `Filtered by '${currentBranch.name}' branch`;
-  }
-
-  // Check if it's current branch
-  if (currentBranch && selectedBranch === currentBranch.name) {
-    return `Filtered by '${currentBranch.name}' branch`;
+  if (selectedBranch === CURRENT_BRANCH_FILTER) {
+    if (detachedHead) {
+      return `Commits on HEAD '${detachedHead.shortCommitHash}'`;
+    }
+    if (currentBranch) {
+      return `Commits on '${currentBranch.name}' branch`;
+    }
+    return undefined;
   }
 
   return `Filtered by '${selectedBranch}' branch`;
