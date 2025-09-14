@@ -210,7 +210,7 @@ export function ConfigureUrlTrackerForm({ onConfigurationSaved }: ConfigureUrlTr
             <Form.TextField
               id={`${config.id}-title`}
               title="Title"
-              placeholder="e.g., Jira Ticket, GitHub Issue, Pull Request"
+              placeholder="Jira Ticket, GitHub Issue, Pull Request"
               value={config.title}
               error={errors[`${config.id}-title`]}
               onChange={(value) => updateConfig(config.id, "title", value)}
@@ -219,7 +219,7 @@ export function ConfigureUrlTrackerForm({ onConfigurationSaved }: ConfigureUrlTr
             <Form.TextField
               id={`${config.id}-regex`}
               title="Regex Pattern"
-              placeholder="e.g., ([A-Z]+-\\d+) for JIRA-123"
+              placeholder="([A-Z]+-\\d+) for JIRA-123"
               value={config.regex}
               error={errors[`${config.id}-regex`]}
               onChange={(value) => updateConfig(config.id, "regex", value)}
@@ -228,7 +228,7 @@ export function ConfigureUrlTrackerForm({ onConfigurationSaved }: ConfigureUrlTr
             <Form.TextField
               id={`${config.id}-url_placeholder`}
               title="URL Template"
-              placeholder="e.g., https://company.atlassian.net/browse/@key"
+              placeholder="https://company.atlassian.net/browse/@key"
               info="Use @key placeholder where the regex match should be inserted"
               value={config.url_placeholder}
               error={errors[`${config.id}-url_placeholder`]}

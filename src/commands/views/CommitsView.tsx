@@ -1,5 +1,5 @@
 import { ActionPanel, List, Icon, Action, useNavigation, Color } from "@raycast/api";
-import { useCachedPromise, useCachedState } from "@raycast/utils";
+import { getFavicon, useCachedPromise, useCachedState } from "@raycast/utils";
 import { useGitBranches } from "../../hooks/useGitBranches";
 import { useGitCommits } from "../../hooks/useGitCommits";
 import { useCommitsBranchFilter, ALL_BRANCHES_FILTER, DETACHED_HEAD_FILTER, CURRENT_BRANCH_FILTER } from "../../hooks/useCommitsBranchFilter";
@@ -108,7 +108,16 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
       searchBarAccessory={viewDropdown}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title="Filter">
+          <ActionPanel.Section title="Branch">
+            <CommitRefreshHistoryAction onRefresh={revalidate} />
+            {isLocalBranchSelected && <PullAction gitManager={gitManager} onRefresh={revalidate} />}
+            {branchesState?.currentBranch && branchesState.currentBranch.type === "current" && (
+              <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={revalidate} />
+            )}
+            <FetchAction gitManager={gitManager} onRefresh={revalidate} />
+          </ActionPanel.Section>
+
+          <ActionPanel.Section title="History">
             <CommitBranchFilterAction
               selectedBranch={selectedBranch}
               updateSelectedBranch={updateSelectedBranch}
@@ -116,9 +125,14 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
               detachedHead={branchesState?.detachedHead}
               currentBranch={branchesState?.currentBranch}
             />
+            <Action.Push
+              title="Configure URL Tracker"
+              icon={Icon.Gear}
+              target={<ConfigureUrlTrackerForm onConfigurationSaved={revalidate} />}
+            />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="View Controls">
+          <ActionPanel.Section>
             <Action
               title={isShowingDetail ? "Hide Detail" : "Show Detail"}
               icon={Icon.AppWindowSidebarLeft}
@@ -133,16 +147,6 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
                 shortcut={{ modifiers: ["shift", "cmd"], key: "i" }}
               />
             )}
-            <Action.Push title="Configure URL Tracker" icon={Icon.Gear} target={<ConfigureUrlTrackerForm />} />
-          </ActionPanel.Section>
-
-          <ActionPanel.Section title="History Management">
-            <CommitRefreshHistoryAction onRefresh={revalidate} />
-            {isLocalBranchSelected && <PullAction gitManager={gitManager} onRefresh={revalidate} />}
-            {branchesState?.currentBranch && branchesState.currentBranch.type === "current" && (
-              <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={revalidate} />
-            )}
-            <FetchAction gitManager={gitManager} onRefresh={revalidate} />
           </ActionPanel.Section>
 
           {navigationActions}
@@ -441,7 +445,7 @@ function CommitListItem({
       }
       actions={
         <ActionPanel>
-          <ActionPanel.Section title="View Commit Files">
+          <ActionPanel.Section title="Commit">
             <Action
               title="View Commit Files"
               icon={Icon.Document}
@@ -449,18 +453,42 @@ function CommitListItem({
                 push(<CommitDiffView commit={commit} gitManager={gitManager} navigationActions={navigationActions} />)
               }
             />
+            <CommitCheckoutAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
+            <CommitCherryPickAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
+            <CommitRevertAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
+            <CommitResetAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
             {commitUrls.map((urlInfo: { title: string; url: string }, index: number) => (
               <Action.OpenInBrowser
                 key={`${urlInfo.url}-${index}`}
                 title={`Open ${urlInfo.title}`}
                 url={urlInfo.url}
-                icon={Icon.Globe}
+                icon={getFavicon(urlInfo.url, { fallback: Icon.Globe })}
                 shortcut={index === 0 ? { modifiers: ["cmd"], key: "l" } : undefined}
               />
             ))}
+            <CommitCopyHashAction commit={commit} />
+            <CommitCopyShortHashAction commit={commit} />
+            <CommitCopyAuthorAction commit={commit} />
+            <CommitCopyAuthorEmailAction commit={commit} />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="Filter">
+          <ActionPanel.Section title="Tags">
+            <TagCreateAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
+            {commit.tags.map((tag) => (
+              <TagRemoveAction key={tag} tagName={tag} gitManager={gitManager} onRefresh={onRefresh} />
+            ))}
+          </ActionPanel.Section>
+
+          <ActionPanel.Section title="Branch">
+            {isLocalBranchSelected && <PullAction gitManager={gitManager} onRefresh={onRefresh} />}
+            {currentBranch && currentBranch.type === "current" && (
+              <BranchPushAction branch={currentBranch} gitManager={gitManager} onRefresh={onRefresh} />
+            )}
+            <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
+            {selectedBranch && <CommitCopyBranchNameAction currentBranch={selectedBranch} />}
+          </ActionPanel.Section>
+
+          <ActionPanel.Section title="History">
             <CommitBranchFilterAction
               selectedBranch={selectedBranch}
               updateSelectedBranch={updateSelectedBranch}
@@ -468,7 +496,11 @@ function CommitListItem({
               detachedHead={detachedHead}
               currentBranch={currentBranch}
             />
-            {selectedBranch && <CommitCopyBranchNameAction currentBranch={selectedBranch} />}
+            <Action.Push
+              title="Configure URL Tracker"
+              icon={Icon.Gear}
+              target={<ConfigureUrlTrackerForm onConfigurationSaved={onRefresh} />}
+            />
           </ActionPanel.Section>
 
           <ActionPanel.Section>
@@ -486,33 +518,6 @@ function CommitListItem({
                 shortcut={{ modifiers: ["shift", "cmd"], key: "i" }}
               />
             )}
-          </ActionPanel.Section>
-
-          <ActionPanel.Section title="Commit Operations">
-            <CommitCheckoutAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
-            <CommitCherryPickAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
-            <CommitRevertAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
-            <CommitResetAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
-            <CommitCopyHashAction commit={commit} />
-            <CommitCopyShortHashAction commit={commit} />
-            <CommitCopyAuthorAction commit={commit} />
-            <CommitCopyAuthorEmailAction commit={commit} />
-          </ActionPanel.Section>
-
-          <ActionPanel.Section title="Tags">
-            <TagCreateAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
-            {commit.tags.map((tag) => (
-              <TagRemoveAction key={tag} tagName={tag} gitManager={gitManager} onRefresh={onRefresh} />
-            ))}
-          </ActionPanel.Section>
-
-          <ActionPanel.Section title="Repository Operations">
-            <Action.Push title="Configure URL Tracker" icon={Icon.Gear} target={<ConfigureUrlTrackerForm />} />
-            {isLocalBranchSelected && <PullAction gitManager={gitManager} onRefresh={onRefresh} />}
-            {currentBranch && currentBranch.type === "current" && (
-              <BranchPushAction branch={currentBranch} gitManager={gitManager} onRefresh={onRefresh} />
-            )}
-            <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
           </ActionPanel.Section>
 
           {navigationActions}
