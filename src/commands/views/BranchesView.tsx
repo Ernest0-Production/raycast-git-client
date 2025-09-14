@@ -7,7 +7,6 @@ import {
   BranchPushAction,
   BranchMergeAction,
   BranchRebaseAction,
-  BranchDeleteRemoteAction,
   BranchCheckoutRemoteAction,
   BranchRenameAction,
   CreateBranchAction,
@@ -61,7 +60,7 @@ export function BranchesView({ gitManager, navigationActions, viewDropdown }: Br
       searchBarAccessory={viewDropdown}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title="Branch Management">
+          <ActionPanel.Section title="Branches">
             <Action title="Refresh Branch List" onAction={revalidateAll} icon={Icon.ArrowClockwise} />
             <CreateBranchAction gitManager={gitManager} onRefresh={revalidateAll} />
             <FetchAction gitManager={gitManager} onRefresh={revalidateAll} />
@@ -232,7 +231,7 @@ function BranchListItem({
       keywords={[branch.upstream, branch.remote].filter((keyword): keyword is string => Boolean(keyword))}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title="Branch Operations">
+          <ActionPanel.Section title={branch.name}>
             {/* Actions for current branch */}
             {branch.type === "current" && (
               <>
@@ -258,12 +257,12 @@ function BranchListItem({
             {branch.type === "remote" && (
               <>
                 <BranchCheckoutRemoteAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
-                <BranchDeleteRemoteAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchDeleteAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
               </>
             )}
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="Branch Management">
+          <ActionPanel.Section title="Branches">
             <CreateBranchAction gitManager={gitManager} onRefresh={onRefresh} />
             <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
           </ActionPanel.Section>
@@ -306,7 +305,7 @@ function DetachedHeadListItem({
       keywords={[detachedHead.commitHash]}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title="Branch Management">
+          <ActionPanel.Section title="Branches">
             <CreateBranchAction gitManager={gitManager} onRefresh={onRefresh} />
             <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
           </ActionPanel.Section>

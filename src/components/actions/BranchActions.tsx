@@ -34,7 +34,7 @@ export function BranchCheckoutAction({ branch, gitManager, onRefresh }: BranchAc
     }
   };
 
-  return <Action title="Checkout Branch" onAction={handleCheckout} icon={Icon.ArrowRight} />;
+  return <Action title="Checkout" onAction={handleCheckout} icon={Icon.ArrowRight} />;
 }
 
 /**
@@ -43,7 +43,7 @@ export function BranchCheckoutAction({ branch, gitManager, onRefresh }: BranchAc
 export function BranchDeleteAction({ branch, gitManager, onRefresh }: BranchActionProps) {
   const handleDeleteBranch = async () => {
     const confirmed = await confirmAlert({
-      title: "Delete branch",
+      title: "Delete",
       message: `Are you sure you want to delete branch "${branch.name}"?`,
       primaryAction: {
         title: "Delete",
@@ -53,7 +53,26 @@ export function BranchDeleteAction({ branch, gitManager, onRefresh }: BranchActi
 
     if (confirmed) {
       try {
-        await gitManager.deleteBranch(branch.name);
+        if (branch.type === "local") {
+          await gitManager.deleteBranch(branch.name);
+
+          if (branch.upstream) {
+            const confirmed = await confirmAlert({
+              title: "Delete remote branch",
+              message: `Also delete remote branch "${branch.upstream}"?`,
+              primaryAction: {
+                title: "Delete",
+                style: Alert.ActionStyle.Destructive,
+              },
+            });
+            if (confirmed) {
+              await gitManager.deleteRemoteBranch(branch.upstream.split("/")[0], branch.upstream.split("/")[1]);
+            }
+          }
+        } else if (branch.remote) {
+          await gitManager.deleteRemoteBranch(branch.remote, branch.name);
+        }
+
         onRefresh();
       } catch (error) {
         // Git error is already shown by GitManager
@@ -78,49 +97,28 @@ export function BranchDeleteAction({ branch, gitManager, onRefresh }: BranchActi
 export function BranchPushAction({ branch, gitManager, onRefresh }: BranchActionProps) {
   const handlePush = async () => {
     try {
-      // Check if upstream exists
-      if (!branch.upstream) {
-        // No upstream exists, get the default remote to show in the alert
-        const defaultRemote = await gitManager.getDefaultRemote();
-        const upstream = `${defaultRemote}/${branch.name}`;
 
-        const confirmed = await confirmAlert({
-          title: "No upstream branch found",
-          message: `Do you want to set upstream to "${upstream}" and push?`,
+      // Upstream exists, do regular push
+      try {
+        await gitManager.push(false, branch);
+        onRefresh();
+      } catch (pushError) {
+        // Push failed, offer force push for branches with upstream
+        const errorMessage = pushError instanceof Error ? pushError.message : "Unknown error";
+
+        const forceConfirmed = await confirmAlert({
+          title: "Push rejected",
+          message: `Reason: ${errorMessage}`,
           primaryAction: {
-            title: "Set Upstream & Push",
-            style: Alert.ActionStyle.Default,
+            title: "Force Push",
+            style: Alert.ActionStyle.Destructive,
           },
         });
 
-        if (confirmed) {
-          // Push with set-upstream using the default remote
-          await gitManager.push(false, { remoteBranch: upstream, localBranch: branch.name });
+        if (forceConfirmed) {
+          // Execute force push
+          await gitManager.push(true, branch);
           onRefresh();
-        }
-      } else {
-        // Upstream exists, do regular push
-        try {
-          await gitManager.push();
-          onRefresh();
-        } catch (pushError) {
-          // Push failed, offer force push for branches with upstream
-          const errorMessage = pushError instanceof Error ? pushError.message : "Unknown error";
-
-          const forceConfirmed = await confirmAlert({
-            title: "Push rejected",
-            message: `Reason: ${errorMessage}`,
-            primaryAction: {
-              title: "Force Push",
-              style: Alert.ActionStyle.Destructive,
-            },
-          });
-
-          if (forceConfirmed) {
-            // Execute force push
-            await gitManager.push(true);
-            onRefresh();
-          }
         }
       }
     } catch (error) {
@@ -133,7 +131,7 @@ export function BranchPushAction({ branch, gitManager, onRefresh }: BranchAction
       title="Push"
       onAction={handlePush}
       icon={Icon.ArrowUp}
-      shortcut={branch.type === "current" ? { modifiers: ["cmd", "shift"], key: "p" } : undefined}
+      shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
     />
   );
 }
@@ -202,49 +200,6 @@ export function BranchRebaseAction({ branch, gitManager, onRefresh }: BranchActi
       onAction={handleRebaseBranch}
       icon={Icon.ArrowClockwise}
       shortcut={{ modifiers: ["cmd", "shift"], key: "r" }}
-    />
-  );
-}
-
-/**
- * Action for deleting a remote branch.
- */
-export function BranchDeleteRemoteAction({ branch, gitManager, onRefresh }: BranchActionProps) {
-  const handleDeleteRemoteBranch = async () => {
-    const confirmed = await confirmAlert({
-      title: "Delete remote branch",
-      message: `Are you sure you want to delete remote branch "${branch.name}"? This action cannot be undone.`,
-      primaryAction: {
-        title: "Delete",
-        style: Alert.ActionStyle.Destructive,
-      },
-    });
-
-    if (confirmed) {
-      try {
-        if (!branch.remote) {
-          await showToast({
-            style: Toast.Style.Failure,
-            title: "Failed to delete remote branch",
-            message: "Remote not found for this branch",
-          });
-          return;
-        }
-        await gitManager.deleteRemoteBranch(branch.remote, branch.name);
-        onRefresh();
-      } catch (error) {
-        // Git error is already shown by GitManager
-      }
-    }
-  };
-
-  return (
-    <Action
-      title="Delete Remote Branch"
-      onAction={handleDeleteRemoteBranch}
-      icon={Icon.Trash}
-      style={Action.Style.Destructive}
-      shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
     />
   );
 }
@@ -344,7 +299,7 @@ export function CreateBranchAction({ gitManager, onRefresh }: { gitManager: GitM
 export function BranchRenameAction({ branch, gitManager, onRefresh }: BranchActionProps) {
   return (
     <Action.Push
-      title="Rename Branch"
+      title="Rename"
       target={<RenameBranchForm branch={branch} gitManager={gitManager} onRefresh={onRefresh} />}
       icon={Icon.Pencil}
       shortcut={{ modifiers: ["cmd"], key: "e" }}

@@ -8,7 +8,7 @@ import {
   simpleGit,
   SimpleGit,
 } from "simple-git";
-import { showToast, Toast, getPreferenceValues } from "@raycast/api";
+import { showToast, Toast, getPreferenceValues, Alert, confirmAlert } from "@raycast/api";
 import { join } from "path";
 import { readFileSync } from "fs";
 import {
@@ -762,18 +762,21 @@ export class GitManager {
   /**
    * Pushes changes.
    */
-  async push(force = false, upstream?: { remoteBranch: string; localBranch: string }): Promise<void> {
+  async push(force = false, branch: { name: string, upstream?: string, isGone?: boolean }): Promise<void> {
+    const remote = await this.getDefaultRemote();
     const options = [];
 
     if (force) {
       options.push("--force-with-lease");
     }
 
-    if (upstream) {
-      options.push(`--set-upstream-to=${upstream.remoteBranch}/${upstream.localBranch}`);
-    }
+    await this.git.push(remote, branch?.name, options);
 
-    await this.git.push(undefined, undefined, options);
+    if (!branch.upstream || branch.isGone) {
+      const upstream = `${remote}/${branch.name}`;
+
+      await this.git.branch(['--set-upstream-to', upstream, branch.name]);
+    }
   }
 
   /**
