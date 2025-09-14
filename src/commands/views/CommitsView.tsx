@@ -66,7 +66,7 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
     error,
     revalidate,
     pagination,
-  } = useGitCommits(gitManager, getActualBranchFilter());
+  } = useGitCommits(gitManager, getActualBranchFilter(), branchesState !== undefined);
 
   // Get current filter display name for List.Section title
   const currentFilterDisplayName = getBranchFilterDisplayName(

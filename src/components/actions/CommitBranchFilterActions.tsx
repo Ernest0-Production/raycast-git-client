@@ -114,7 +114,7 @@ export function getBranchFilterDisplayName(
       return `Commits on HEAD '${detachedHead.shortCommitHash}'`;
     }
     if (currentBranch) {
-      return `Commits on '${currentBranch.name}' branch`;
+      return `Filtered by '${currentBranch.name}' branch`;
     }
     return undefined;
   }
