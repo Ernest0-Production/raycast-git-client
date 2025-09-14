@@ -230,8 +230,6 @@ function CommitListItem({
     if (selectedCommitId === commit.hash) {
       const urls = extractUrlsFromCommitWithConfigs(commit.message, urlTrackerConfigs);
       setCommitUrls(urls);
-    } else {
-      setCommitUrls([]);
     }
   }, [selectedCommitId, commit.hash, commit.message, urlTrackerConfigs]);
 
@@ -486,7 +484,7 @@ function CommitListItem({
             />
             <Action.Push
               title="Configure URL Tracker"
-              icon={Icon.Gear}
+              icon={Icon.Link}
               target={<ConfigureUrlTrackerForm repositoryPath={gitManager.repoPath} onConfigurationSaved={onRefresh} />}
             />
           </ActionPanel.Section>
