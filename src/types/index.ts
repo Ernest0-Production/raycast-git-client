@@ -27,10 +27,12 @@ export interface Preferences {
  * Configuration for URL tracking feature.
  */
 export interface UrlTrackerConfig {
+  /** Unique identifier for the configuration. */
+  id: string;
   /** Title of the URL tracker (e.g., "Jira Ticket", "GitHub Issue"). */
   title: string;
   /** Regular expression pattern to extract components from commit messages. */
   regex: string;
   /** URL template where @key will be replaced with the regex match. */
-  url_placeholder: string;
+  urlPlaceholder: string;
 }

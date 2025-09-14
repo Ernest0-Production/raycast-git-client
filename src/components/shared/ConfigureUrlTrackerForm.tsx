@@ -1,163 +1,71 @@
 import { ActionPanel, Action, Form, Icon, showToast, Toast, useNavigation } from "@raycast/api";
 import React, { useState, useEffect } from "react";
 import { UrlTrackerConfig } from "../../types";
-import { loadUrlTrackerConfigs, saveUrlTrackerConfigs, validateUrlTrackerConfig } from "../../utils/url-tracker-cache";
+import { useUrlTracker, validateUrlTrackerConfig } from "../../hooks/useUrlTracker";
+import { nanoid } from "nanoid";
 
 interface ConfigureUrlTrackerFormProps {
+  repositoryPath: string;
   onConfigurationSaved?: () => void;
 }
 
-interface FormConfigState extends UrlTrackerConfig {
-  id: string;
-}
-
-export function ConfigureUrlTrackerForm({ onConfigurationSaved }: ConfigureUrlTrackerFormProps) {
+export function ConfigureUrlTrackerForm({ repositoryPath, onConfigurationSaved }: ConfigureUrlTrackerFormProps) {
   const { pop } = useNavigation();
-  const [configs, setConfigs] = useState<FormConfigState[]>([]);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const { configs: initialConfigs, setConfigs: saveConfigs } = useUrlTracker(repositoryPath);
+  const [draftConfigs, setDraftConfigs] = useState<UrlTrackerConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Load existing configurations on mount
   useEffect(() => {
-    loadExistingConfigs();
-  }, []);
-
-  const loadExistingConfigs = async () => {
-    try {
-      const existingConfigs = await loadUrlTrackerConfigs();
-      const formConfigs = existingConfigs.map((config, index) => ({
-        ...config,
-        id: `config-${index}`,
-      }));
-
-      // Add empty config if no existing configurations
-      if (formConfigs.length === 0) {
-        formConfigs.push(createEmptyConfig());
-      }
-
-      setConfigs(formConfigs);
-    } catch (error) {
-      await showToast({
-        style: Toast.Style.Failure,
-        title: "Failed to load configurations",
-        message: error instanceof Error ? error.message : "Unknown error",
-      });
-    } finally {
-      setIsLoading(false);
+    const formConfigs = [...initialConfigs];
+    // Add empty config if no existing configurations
+    if (formConfigs.length === 0) {
+      formConfigs.push(createEmptyConfig());
     }
-  };
 
-  const createEmptyConfig = (): FormConfigState => ({
-    id: `config-${Date.now()}`,
+    setDraftConfigs(formConfigs);
+    setIsLoading(false);
+  }, [initialConfigs]);
+
+  const createEmptyConfig = (): UrlTrackerConfig => ({
+    id: nanoid(),
     title: "",
     regex: "",
-    url_placeholder: "",
+    urlPlaceholder: "",
   });
 
   const addNewConfig = () => {
-    setConfigs([...configs, createEmptyConfig()]);
+    setDraftConfigs([...draftConfigs, createEmptyConfig()]);
   };
 
   const removeConfig = (configId: string) => {
-    if (configs.length <= 1) {
+    if (draftConfigs.length <= 1) {
       // Keep at least one config
-      setConfigs([createEmptyConfig()]);
+      setDraftConfigs([createEmptyConfig()]);
     } else {
-      setConfigs(configs.filter((config) => config.id !== configId));
+      setDraftConfigs(draftConfigs.filter((config) => config.id !== configId));
     }
-
-    // Clear errors for removed config
-    const newErrors = { ...errors };
-    Object.keys(newErrors).forEach((key) => {
-      if (key.startsWith(configId)) {
-        delete newErrors[key];
-      }
-    });
-    setErrors(newErrors);
   };
 
   const updateConfig = (configId: string, field: keyof UrlTrackerConfig, value: string) => {
-    setConfigs(configs.map((config) => (config.id === configId ? { ...config, [field]: value } : config)));
-
-    // Clear field error when user starts typing
-    const errorKey = `${configId}-${field}`;
-    if (errors[errorKey]) {
-      const newErrors = { ...errors };
-      delete newErrors[errorKey];
-      setErrors(newErrors);
-    }
-  };
-
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-    let isValid = true;
-
-    // Check for at least one non-empty configuration
-    const hasValidConfig = configs.some(
-      (config) => config.title.trim() !== "" || config.regex.trim() !== "" || config.url_placeholder.trim() !== "",
-    );
-
-    if (!hasValidConfig) {
-      newErrors.form = "At least one configuration is required";
-      isValid = false;
-    }
-
-    configs.forEach((config) => {
-      // Skip validation for completely empty configs (they will be filtered out)
-      const isEmpty = config.title.trim() === "" && config.regex.trim() === "" && config.url_placeholder.trim() === "";
-      if (isEmpty) return;
-
-      const validationError = validateUrlTrackerConfig(config);
-      if (validationError) {
-        // Determine which field has the error
-        if (validationError.includes("Title")) {
-          newErrors[`${config.id}-title`] = validationError;
-        } else if (validationError.includes("Regex") || validationError.includes("regex")) {
-          newErrors[`${config.id}-regex`] = validationError;
-        } else if (validationError.includes("URL") || validationError.includes("@key")) {
-          newErrors[`${config.id}-url_placeholder`] = validationError;
-        }
-        isValid = false;
-      }
-
-      // Check for duplicate titles
-      const duplicateTitle = configs.find(
-        (c) => c.id !== config.id && c.title.trim() !== "" && c.title.trim() === config.title.trim(),
-      );
-      if (duplicateTitle) {
-        newErrors[`${config.id}-title`] = "Title must be unique";
-        isValid = false;
-      }
-    });
-
-    setErrors(newErrors);
-    return isValid;
+    setDraftConfigs(draftConfigs.map((config) => (config.id === configId ? { ...config, [field]: value } : config)));
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
     try {
-      // Filter out empty configurations and convert to UrlTrackerConfig[]
-      const validConfigs: UrlTrackerConfig[] = configs
-        .filter(
-          (config) => config.title.trim() !== "" || config.regex.trim() !== "" || config.url_placeholder.trim() !== "",
-        )
-        .map(({ id, ...config }) => config);
+      // Filter out empty configurations
+      const validConfigs: UrlTrackerConfig[] = draftConfigs.filter(
+        (config) => config.title.trim() !== "" || config.regex.trim() !== "" || config.urlPlaceholder.trim() !== "",
+      );
 
-      await saveUrlTrackerConfigs(validConfigs);
+      saveConfigs(validConfigs);
 
       await showToast({
         style: Toast.Style.Success,
-        title: "Configuration saved",
-        message: `${validConfigs.length} URL tracker${validConfigs.length === 1 ? "" : "s"} configured`,
+        title: "Configuration saved"
       });
 
-      if (onConfigurationSaved) {
-        onConfigurationSaved();
-      }
+      onConfigurationSaved?.();
 
       pop();
     } catch (error) {
@@ -182,9 +90,9 @@ export function ConfigureUrlTrackerForm({ onConfigurationSaved }: ConfigureUrlTr
             icon={Icon.Plus}
             shortcut={{ modifiers: ["cmd"], key: "n" }}
           />
-          {configs.length > 1 && (
+          {draftConfigs.length > 1 && (
             <ActionPanel.Section title="Remove Configurations">
-              {configs.map((config, _index) => (
+              {draftConfigs.map((config, _index) => (
                 <Action
                   key={config.id}
                   title={`Remove "${config.title || `Configuration ${_index + 1}`}"`}
@@ -198,9 +106,8 @@ export function ConfigureUrlTrackerForm({ onConfigurationSaved }: ConfigureUrlTr
         </ActionPanel>
       }
     >
-      {errors.form && <Form.Description text={`❌ ${errors.form}`} />}
 
-      {configs.map((config, index) => {
+      {draftConfigs.map((config, index) => {
         const isFirst = index === 0;
 
         return (
@@ -212,7 +119,7 @@ export function ConfigureUrlTrackerForm({ onConfigurationSaved }: ConfigureUrlTr
               title="Title"
               placeholder="Jira Ticket, GitHub Issue, Pull Request"
               value={config.title}
-              error={errors[`${config.id}-title`]}
+              error={config.title.trim() === "" ? "Required" : undefined}
               onChange={(value) => updateConfig(config.id, "title", value)}
             />
 
@@ -221,7 +128,7 @@ export function ConfigureUrlTrackerForm({ onConfigurationSaved }: ConfigureUrlTr
               title="Regex Pattern"
               placeholder="([A-Z]+-\\d+) for JIRA-123"
               value={config.regex}
-              error={errors[`${config.id}-regex`]}
+              error={config.regex.trim() === "" ? "Required" : undefined}
               onChange={(value) => updateConfig(config.id, "regex", value)}
             />
 
@@ -230,13 +137,19 @@ export function ConfigureUrlTrackerForm({ onConfigurationSaved }: ConfigureUrlTr
               title="URL Template"
               placeholder="https://company.atlassian.net/browse/@key"
               info="Use @key placeholder where the regex match should be inserted"
-              value={config.url_placeholder}
-              error={errors[`${config.id}-url_placeholder`]}
-              onChange={(value) => updateConfig(config.id, "url_placeholder", value)}
+              value={config.urlPlaceholder}
+              error={config.urlPlaceholder.trim() === "" ? "Required" : undefined}
+              onChange={(value) => updateConfig(config.id, "urlPlaceholder", value)}
             />
+
+            {(() => {
+              const validationMessage = validateUrlTrackerConfig(config);
+              return validationMessage ? <Form.Description text={validationMessage} /> : null;
+            })()}
           </React.Fragment>
         );
       })}
+
     </Form>
   );
 }

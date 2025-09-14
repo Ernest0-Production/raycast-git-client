@@ -25,10 +25,10 @@ import {
 } from "../../components/actions/CommitBranchFilterActions";
 import { GitManager } from "../../utils/git-utils";
 import {
-  loadUrlTrackerConfigs,
+  useUrlTracker,
   extractUrlsFromCommitWithConfigs,
   replaceUrlPatternsWithLinks,
-} from "../../utils/url-tracker-cache";
+} from "../../hooks/useUrlTracker";
 import "../../utils/date-utils";
 import { Branch, Commit, UrlTrackerConfig, DetachedHead } from "../../types";
 import { useMemo, useState, useEffect } from "react";
@@ -46,9 +46,7 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
   const [selectedCommitId, setSelectedCommitId] = useState<string | null>(null);
 
   // Load URL tracker configurations once for the entire view
-  const { data: urlTrackerConfigs = [] } = useCachedPromise(() => loadUrlTrackerConfigs(), [], {
-    keepPreviousData: true,
-  });
+  const { configs: urlTrackerConfigs } = useUrlTracker(gitManager.repoPath);
 
   // Combine all branches from the state
   const allBranches: Branch[] = [
@@ -128,7 +126,7 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
             <Action.Push
               title="Configure URL Tracker"
               icon={Icon.Gear}
-              target={<ConfigureUrlTrackerForm onConfigurationSaved={revalidate} />}
+              target={<ConfigureUrlTrackerForm repositoryPath={gitManager.repoPath} onConfigurationSaved={revalidate} />}
             />
           </ActionPanel.Section>
 
@@ -499,7 +497,7 @@ function CommitListItem({
             <Action.Push
               title="Configure URL Tracker"
               icon={Icon.Gear}
-              target={<ConfigureUrlTrackerForm onConfigurationSaved={onRefresh} />}
+              target={<ConfigureUrlTrackerForm repositoryPath={gitManager.repoPath} onConfigurationSaved={onRefresh} />}
             />
           </ActionPanel.Section>
 
