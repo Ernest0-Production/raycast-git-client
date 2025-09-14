@@ -361,7 +361,7 @@ function CommitListItem({
 
     accessoryItems.push({
       text: commit.date.toRelativeDateString(),
-      tooltip: commit.date.toLocaleString(),
+      tooltip: Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(commit.date),
     });
 
     return accessoryItems;
