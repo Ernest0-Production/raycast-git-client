@@ -19,7 +19,7 @@ export const CURRENT_BRANCH_FILTER = "CURRENT_BRANCH";
 export function useCommitsBranchFilter(repositoryPath: string, branches: Branch[] = [], detachedHead?: DetachedHead) {
   const cacheKey = `commits-branch-filter-${Buffer.from(repositoryPath).toString("base64")}`;
 
-  const [selectedBranch, setSelectedBranch] = useCachedState<string>(cacheKey, ALL_BRANCHES_FILTER);
+  const [branchFilter, setBranchFilter] = useCachedState<string>(cacheKey, ALL_BRANCHES_FILTER);
 
   // Validate cached branch when branches change
   useEffect(() => {
@@ -36,34 +36,33 @@ export function useCommitsBranchFilter(repositoryPath: string, branches: Branch[
 
       if (!isValidBranch && !detachedHead) {
         // If the cached branch doesn't exist, reset to ALL_BRANCHES
-        setSelectedBranch(ALL_BRANCHES_FILTER);
+        setBranchFilter(ALL_BRANCHES_FILTER);
       }
     }
-  }, [branches, detachedHead, selectedBranch, setSelectedBranch]);
-
-  // Update the selected branch
-  const updateSelectedBranch = (branchName: string) => {
-    setSelectedBranch(branchName);
-  };
+  }, [branches, detachedHead, branchFilter, setBranchFilter]);
 
   // Get the actual filter to pass to the commits hook
-  const getActualBranchFilter = (): string | undefined => {
-    if (selectedBranch === ALL_BRANCHES_FILTER) {
-      return undefined; // undefined means all branches
+  /**
+   * Вычисляет актуальный фильтр для коммитов на основе выбранной ветки.
+   * Мемоизация через useMemo для предотвращения лишних вычислений.
+   */
+  const selectedBranch: string | undefined = (() => {
+    if (branchFilter === ALL_BRANCHES_FILTER) {
+      return undefined; // undefined означает все ветки
     }
-    if (selectedBranch === CURRENT_BRANCH_FILTER) {
+    if (branchFilter === CURRENT_BRANCH_FILTER) {
       if (detachedHead) {
         return detachedHead.commitHash;
       } else {
         return branches.find((branch) => branch.type === "current")?.name;
       }
     }
-    return selectedBranch;
-  };
+    return branchFilter;
+  })();
 
   return {
+    branchFilter,
     selectedBranch,
-    updateSelectedBranch,
-    getActualBranchFilter,
+    setBranchFilter,
   };
 }

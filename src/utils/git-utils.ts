@@ -161,9 +161,15 @@ export class GitManager {
       }
     }
 
+    const maxBranchesToLoad = parseInt(
+      getPreferenceValues<Preferences>().maxBranchesToLoad
+    );
+
     // Local Branches
     Object.values(summary.branches).forEach((branch) => {
       if (!branch.name.startsWith("remotes/") && !branch.current) {
+        if (localBranches.length >= maxBranchesToLoad) return;
+
         const { ahead, behind, upstream, isGone } = parseBranchInfo(branch.label);
 
         localBranches.push({
@@ -193,6 +199,9 @@ export class GitManager {
         if (!remoteBranches[remote]) {
           remoteBranches[remote] = [];
         }
+
+        if (remoteBranches[remote].length >= maxBranchesToLoad) return;
+
         remoteBranches[remote].push({
           name: branchName,
           type: "remote",

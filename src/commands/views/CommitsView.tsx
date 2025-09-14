@@ -2,7 +2,7 @@ import { ActionPanel, List, Icon, Action, useNavigation, Color } from "@raycast/
 import { getFavicon, useCachedState } from "@raycast/utils";
 import { useGitBranches } from "../../hooks/useGitBranches";
 import { useGitCommits } from "../../hooks/useGitCommits";
-import { useCommitsBranchFilter, ALL_BRANCHES_FILTER, CURRENT_BRANCH_FILTER } from "../../hooks/useCommitsBranchFilter";
+import { useCommitsBranchFilter } from "../../hooks/useCommitsBranchFilter";
 import {
   CommitCheckoutAction,
   CommitCherryPickAction,
@@ -59,7 +59,7 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
     ),
   ];
 
-  const { selectedBranch, updateSelectedBranch, getActualBranchFilter } = useCommitsBranchFilter(
+  const { selectedBranch, branchFilter, setBranchFilter } = useCommitsBranchFilter(
     gitManager.repoPath,
     allBranches,
     branchesState?.detachedHead,
@@ -70,11 +70,11 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
     error,
     revalidate,
     pagination,
-  } = useGitCommits(gitManager, getActualBranchFilter(), branchesState !== undefined);
+  } = useGitCommits(gitManager, selectedBranch, branchesState !== undefined);
 
   // Get current filter display name for List.Section title
   const currentFilterDisplayName = getBranchFilterDisplayName(
-    selectedBranch,
+    branchFilter,
     branchesState?.detachedHead,
     branchesState?.currentBranch,
   );
@@ -108,13 +108,15 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
           </ActionPanel.Section>
 
           <ActionPanel.Section title="History">
-            <CommitBranchFilterAction
-              selectedBranch={selectedBranch}
-              updateSelectedBranch={updateSelectedBranch}
-              allBranches={allBranches}
-              detachedHead={branchesState?.detachedHead}
-              currentBranch={branchesState?.currentBranch}
-            />
+            {branchFilter &&
+              <CommitBranchFilterAction
+                branchFilter={branchFilter}
+                updateSelectedBranch={setBranchFilter}
+                allBranches={allBranches}
+                detachedHead={branchesState?.detachedHead}
+                currentBranch={branchesState?.currentBranch}
+              />
+            }
             <Action.Push
               title="Configure URL Tracker"
               icon={Icon.Gear}
@@ -171,9 +173,10 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
               onToggleMetadata={toggleMetadata}
               urlTrackerConfigs={urlTrackerConfigs}
               selectedCommitId={selectedCommitId}
-              isAllBranchesFilter={selectedBranch === ALL_BRANCHES_FILTER}
+              isAllBranchesFilter={selectedBranch === undefined}
               selectedBranch={selectedBranch}
-              updateSelectedBranch={updateSelectedBranch}
+              branchFilter={branchFilter}
+              updateSelectedBranch={setBranchFilter}
               allBranches={allBranches}
               detachedHead={branchesState?.detachedHead}
               currentBranch={branchesState?.currentBranch}
@@ -197,7 +200,8 @@ interface CommitListItemProps {
   urlTrackerConfigs: UrlTrackerConfig[];
   selectedCommitId: string | null;
   isAllBranchesFilter: boolean;
-  selectedBranch: string;
+  selectedBranch?: string;
+  branchFilter: string;
   updateSelectedBranch: (branchName: string) => void;
   allBranches: Branch[];
   detachedHead?: DetachedHead;
@@ -217,6 +221,7 @@ function CommitListItem({
   selectedCommitId,
   isAllBranchesFilter,
   selectedBranch,
+  branchFilter,
   updateSelectedBranch,
   allBranches,
   detachedHead,
@@ -476,7 +481,7 @@ function CommitListItem({
 
           <ActionPanel.Section title="History">
             <CommitBranchFilterAction
-              selectedBranch={selectedBranch}
+              branchFilter={branchFilter}
               updateSelectedBranch={updateSelectedBranch}
               allBranches={allBranches}
               detachedHead={detachedHead}

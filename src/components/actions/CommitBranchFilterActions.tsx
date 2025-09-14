@@ -3,7 +3,7 @@ import { Branch, DetachedHead } from "../../types";
 import { ALL_BRANCHES_FILTER, CURRENT_BRANCH_FILTER } from "../../hooks/useCommitsBranchFilter";
 
 interface CommitBranchFilterActionProps {
-  selectedBranch: string;
+  branchFilter: string;
   updateSelectedBranch: (branchName: string) => void;
   allBranches: Branch[];
   detachedHead?: DetachedHead;
@@ -15,7 +15,7 @@ interface CommitBranchFilterActionProps {
  * Shows same structure as dropdown but in ActionPanel.Submenu format.
  */
 export function CommitBranchFilterAction({
-  selectedBranch,
+  branchFilter,
   updateSelectedBranch,
   allBranches,
   detachedHead,
@@ -26,8 +26,8 @@ export function CommitBranchFilterAction({
       return (
         <Action
           title={`HEAD (${detachedHead.shortCommitHash})`}
-          icon={selectedBranch === CURRENT_BRANCH_FILTER ? Icon.Checkmark : Icon.Anchor}
-          autoFocus={selectedBranch === detachedHead?.shortCommitHash}
+          icon={branchFilter === CURRENT_BRANCH_FILTER ? Icon.Checkmark : Icon.Anchor}
+          autoFocus={branchFilter === detachedHead?.shortCommitHash}
           onAction={() => updateSelectedBranch(CURRENT_BRANCH_FILTER)}
         />
       );
@@ -35,8 +35,8 @@ export function CommitBranchFilterAction({
       return (
         <Action
           title="Current Branch"
-          icon={selectedBranch === CURRENT_BRANCH_FILTER ? Icon.Checkmark : { source: Icon.Dot, tintColor: Color.Green }}
-          autoFocus={selectedBranch === CURRENT_BRANCH_FILTER}
+          icon={branchFilter === CURRENT_BRANCH_FILTER ? Icon.Checkmark : { source: Icon.Dot, tintColor: Color.Green }}
+          autoFocus={branchFilter === CURRENT_BRANCH_FILTER}
           onAction={() => updateSelectedBranch(CURRENT_BRANCH_FILTER)}
         />
       );
@@ -61,7 +61,7 @@ export function CommitBranchFilterAction({
       .map((branch) => {
         const branchValue = branch.type === "remote" ? `${branch.remote}/${branch.name}` : branch.name;
         const displayName = branch.type === "remote" ? `${branch.remote}/${branch.name}` : branch.name;
-        const isSelected = selectedBranch === branchValue;
+        const isSelected = branchFilter === branchValue;
         const baseIcon = branch.type === "remote" ? Icon.Globe : Icon.Dot;
         const icon = isSelected ? Icon.Checkmark : baseIcon;
 
@@ -70,7 +70,7 @@ export function CommitBranchFilterAction({
             key={branchValue}
             title={displayName}
             icon={icon}
-            autoFocus={selectedBranch === branchValue}
+            autoFocus={branchFilter === branchValue}
             onAction={() => updateSelectedBranch(branchValue)}
           />
         );
@@ -85,8 +85,8 @@ export function CommitBranchFilterAction({
       <ActionPanel.Section>
         <Action
           title="All Branches"
-          icon={selectedBranch === ALL_BRANCHES_FILTER ? Icon.Checkmark : Icon.List}
-          autoFocus={selectedBranch === ALL_BRANCHES_FILTER}
+          icon={branchFilter === ALL_BRANCHES_FILTER ? Icon.Checkmark : Icon.List}
+          autoFocus={branchFilter === ALL_BRANCHES_FILTER}
           onAction={() => updateSelectedBranch(ALL_BRANCHES_FILTER)}
         />
         {currentBranchAction}

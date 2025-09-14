@@ -17,6 +17,8 @@ export interface Preferences {
   externalGitClient?: Application;
   /** Number of commits to load per pagination page. */
   commitsPerPage: string;
+  /** Maximum number of branches to load per pagination page. */
+  maxBranchesToLoad: string;
   /** System prompt for AI-generated commit messages. */
   aiCommitPrompt: string;
 }

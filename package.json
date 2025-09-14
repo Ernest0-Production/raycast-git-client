@@ -69,6 +69,14 @@
       "description": "Number of commits to load per pagination page. Small values cause frequent lags during scrolling. Large values cause slow initial list loading."
     },
     {
+      "name": "maxBranchesToLoad",
+      "required": false,
+      "type": "textfield",
+      "title": "Max Branches to Load",
+      "default": "20",
+      "description": "Maximum number of branches to load in local and remote branches sections"
+    },
+    {
       "name": "aiCommitPrompt",
       "required": false,
       "type": "textfield",
