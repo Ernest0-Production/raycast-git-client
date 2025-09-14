@@ -108,9 +108,6 @@ export class GitManager {
   async getBranches(): Promise<BranchesState> {
     const summary = await this.git.branch(["--all", "-vv", "--sort=-committerdate"]);
 
-    // Get uncommitted changes status for current branch
-    const hasUncommittedChanges = await this.hasUncommittedChanges();
-
     const parseBranchInfo = (label: string): { ahead: number; behind: number; upstream?: string; isGone?: boolean } => {
       const aheadMatch = label.match(/ahead (\d+)/);
       const behindMatch = label.match(/behind (\d+)/);
@@ -128,7 +125,7 @@ export class GitManager {
     let currentBranch: Branch | undefined;
     let detachedHead: DetachedHead | undefined;
     const localBranches: Branch[] = [];
-    const remoteBranches: Branch[] = [];
+    const remoteBranches: Record<string, Branch[]> = {};
 
     // Handle detached HEAD state
     if (summary.detached === true) {
@@ -143,8 +140,7 @@ export class GitManager {
         commitHash,
         shortCommitHash: commitHash,
         commitMessage: message?.trim() || "No commit message",
-        commitDate: dateStr ? new Date(dateStr) : new Date(),
-        hasUncommittedChanges,
+        commitDate: dateStr ? new Date(dateStr) : new Date()
       };
     } else if (summary.current) {
       // Current Branch
@@ -159,7 +155,6 @@ export class GitManager {
           behind,
           upstream,
           isGone,
-          hasUncommittedChanges,
           lastCommitMessage: this.extractCommitMessage(currentBranchDetails.label),
           lastCommitHash: currentBranchDetails.commit,
         };
@@ -189,12 +184,16 @@ export class GitManager {
       if (branch.name.startsWith("remotes/")) {
         const remoteNameParts = branch.name.replace("remotes/", "").split("/");
         const remote = remoteNameParts.shift();
-        const branchName = remoteNameParts.join("/");
+        if (!remote) return;
 
+        const branchName = remoteNameParts.join("/");
         // Avoid adding remote HEAD pointers
         if (branchName === "HEAD" || !branchName) return;
 
-        remoteBranches.push({
+        if (!remoteBranches[remote]) {
+          remoteBranches[remote] = [];
+        }
+        remoteBranches[remote].push({
           name: branchName,
           type: "remote",
           remote,
@@ -204,21 +203,6 @@ export class GitManager {
         });
       }
     });
-
-    // Apply performance limits
-    const maxBranchesToShow = parseInt(
-      getPreferenceValues<Preferences>().maxBranchesToShow
-    );
-    const totalBranches = localBranches.length + remoteBranches.length + (currentBranch ? 1 : 0);
-    if (totalBranches > maxBranchesToShow) {
-      const limitPerType = Math.floor(maxBranchesToShow / 2);
-      return {
-        currentBranch,
-        detachedHead,
-        localBranches: localBranches.slice(0, limitPerType),
-        remoteBranches: remoteBranches.slice(0, limitPerType),
-      };
-    }
 
     return {
       currentBranch,
@@ -231,7 +215,7 @@ export class GitManager {
   /**
    * Gets the status of files in the repository using detailed FileStatusResult.
    */
-  async getStatus(): Promise<FileStatus[]> {
+  async getStatus(): Promise<{ branch: string | null, files: FileStatus[] }> {
     const status = await this.git.status();
     const files: FileStatus[] = [];
 
@@ -241,7 +225,7 @@ export class GitManager {
       files.push(...fileEntries);
     }
 
-    return files;
+    return { branch: status.current, files };
   }
 
   /**
@@ -466,7 +450,7 @@ export class GitManager {
     for (const ref of refs) {
       if (ref.startsWith("tag:")) {
         // Extract tag name: "tag: v1.0.0" -> "v1.0.0"
-        const tagName = ref.replace(/^tag:\s*/, "").trim();
+        const tagName = ref.replace(/^tag:\s*refs\/tags\//, "").trim();
         if (tagName) {
           result.tags.push(tagName);
         }
@@ -620,14 +604,12 @@ export class GitManager {
   /**
    * Checks out the specified branch.
    */
-  async checkoutBranch(branchName: string): Promise<void> {
-    if (!branchName || typeof branchName !== "string" || branchName.trim().length === 0) {
-      throw new Error("Invalid branch name");
-    }
-    if (branchName.includes("..") || branchName.includes(" ")) {
-      throw new Error("Branch name contains invalid characters");
-    }
-    await this.git.checkout(branchName.trim());
+  async checkoutLocalBranch(branchName: string): Promise<void> {
+    await this.git.checkout(branchName);
+  }
+
+  async checkoutRemoteBranch(branchName: string): Promise<void> {
+    await this.git.checkout(["--track", "-B", branchName]);
   }
 
   /**
@@ -645,12 +627,6 @@ export class GitManager {
    * Creates a new branch.
    */
   async createBranch(name: string): Promise<void> {
-    if (!name || typeof name !== "string" || name.trim().length === 0) {
-      throw new Error("Invalid branch name");
-    }
-    if (name.includes("..") || name.includes(" ") || name.startsWith("-")) {
-      throw new Error("Branch name contains invalid characters");
-    }
     await this.git.checkoutLocalBranch(name.trim());
   }
 
@@ -762,7 +738,7 @@ export class GitManager {
   /**
    * Pushes changes.
    */
-  async push(force = false, branch: { name: string, upstream?: string, isGone?: boolean }): Promise<void> {
+  async push(force = false, branch?: { name: string, upstream?: string, isGone?: boolean }): Promise<void> {
     const remote = await this.getDefaultRemote();
     const options = [];
 
@@ -772,7 +748,7 @@ export class GitManager {
 
     await this.git.push(remote, branch?.name, options);
 
-    if (!branch.upstream || branch.isGone) {
+    if (branch && (!branch.upstream || branch.isGone)) {
       const upstream = `${remote}/${branch.name}`;
 
       await this.git.branch(['--set-upstream-to', upstream, branch.name]);

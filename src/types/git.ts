@@ -20,8 +20,6 @@ export interface Branch {
   lastCommitMessage?: string;
   /** The short hash of the last commit on this branch. */
   lastCommitHash?: string;
-  /** Whether this branch has uncommitted changes (only for current branch). */
-  hasUncommittedChanges?: boolean;
 }
 
 /**
@@ -36,8 +34,6 @@ export interface DetachedHead {
   commitMessage: string;
   /** The date of the commit. */
   commitDate: Date;
-  /** Whether there are uncommitted changes. */
-  hasUncommittedChanges: boolean;
 }
 
 /**
@@ -50,8 +46,8 @@ export interface BranchesState {
   detachedHead?: DetachedHead;
   /** All local branches. */
   localBranches: Branch[];
-  /** All remote branches. */
-  remoteBranches: Branch[];
+  /** All remote branches grouped by remote name. */
+  remoteBranches: Record<string, Branch[]>;
 }
 
 /**
@@ -150,71 +146,4 @@ export interface Tag {
   commitHash: string;
   /** The date the tag was created. */
   date?: Date;
-}
-
-/**
- * Git operation result types for better error handling.
- */
-export type GitOperationResult<T = void> = Promise<T>;
-
-/**
- * Git reset modes.
- */
-export type GitResetMode = "--soft" | "--mixed" | "--hard";
-
-/**
- * Git merge strategies.
- */
-export type GitMergeStrategy = "resolve" | "recursive" | "octopus" | "ours" | "subtree";
-
-/**
- * Configuration for Git diff operations.
- */
-export interface GitDiffOptions {
-  /** Path to specific file to diff. */
-  file?: string;
-  /** Commit hash to diff. */
-  commitHash?: string;
-  /** Whether to show staged changes. */
-  staged?: boolean;
-  /** Number of context lines. */
-  context?: number;
-}
-
-/**
- * Configuration for Git log operations.
- */
-export interface GitLogOptions {
-  /** Maximum number of commits to retrieve. */
-  maxCount?: number;
-  /** Starting commit hash or branch. */
-  from?: string;
-  /** Ending commit hash or branch. */
-  to?: string;
-  /** Include only commits from specific author. */
-  author?: string;
-  /** Include only commits with messages containing this text. */
-  grep?: string;
-}
-
-/**
- * Git repository status information.
- */
-export interface GitRepositoryStatus {
-  /** Current branch name. */
-  currentBranch: string | null;
-  /** Whether the repository is in a clean state. */
-  isClean: boolean;
-  /** Whether there are uncommitted changes. */
-  hasUncommittedChanges: boolean;
-  /** Whether there are untracked files. */
-  hasUntrackedFiles: boolean;
-  /** Whether the repository is ahead of remote. */
-  isAhead: boolean;
-  /** Whether the repository is behind remote. */
-  isBehind: boolean;
-  /** Number of commits ahead of remote. */
-  aheadCount: number;
-  /** Number of commits behind remote. */
-  behindCount: number;
 }

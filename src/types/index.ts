@@ -15,8 +15,6 @@ export interface Preferences {
   defaultTerminal: Application;
   /** External git client for git commands. */
   externalGitClient?: Application;
-  /** Maximum number of branches to display. */
-  maxBranchesToShow: string;
   /** Number of commits to load per pagination page. */
   commitsPerPage: string;
   /** System prompt for AI-generated commit messages. */

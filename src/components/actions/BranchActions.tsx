@@ -26,7 +26,7 @@ export function BranchCheckoutAction({ branch, gitManager, onRefresh }: BranchAc
 
     if (confirmed) {
       try {
-        await gitManager.checkoutBranch(branch.name);
+        await gitManager.checkoutLocalBranch(branch.name);
         onRefresh();
       } catch (error) {
         // Git error is already shown by GitManager
@@ -87,6 +87,19 @@ export function BranchDeleteAction({ branch, gitManager, onRefresh }: BranchActi
       icon={Icon.Trash}
       style={Action.Style.Destructive}
       shortcut={{ modifiers: ["ctrl"], key: "x" }}
+    />
+  );
+}
+
+/**
+ * Action for copying current branch name to clipboard.
+ */
+export function BranchCopyNameAction({ branch }: { branch: string }) {
+  return (
+    <Action.CopyToClipboard
+      title="Copy Branch Name"
+      content={branch}
+      shortcut={{ modifiers: ["cmd"], key: "c" }}
     />
   );
 }
@@ -220,9 +233,7 @@ export function BranchCheckoutRemoteAction({ branch, gitManager, onRefresh }: Br
 
     if (confirmed) {
       try {
-        // Create a local branch with the same name that tracks the remote branch
-        await gitManager.createBranch(branch.name);
-        await gitManager.checkoutBranch(branch.name);
+        await gitManager.checkoutRemoteBranch(branch.name);
         onRefresh();
       } catch (error) {
         // Git error is already shown by GitManager

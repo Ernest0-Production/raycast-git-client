@@ -32,7 +32,7 @@ interface StatusViewProps {
 }
 
 export function StatusView({ gitManager, navigationActions, viewDropdown, onNavigateToCommits }: StatusViewProps) {
-  const { data: files, isLoading, error, revalidate } = useGitStatus(gitManager);
+  const { data: status, isLoading, error, revalidate } = useGitStatus(gitManager);
   const [isShowingDetail, setIsShowingDetail] = useState(false);
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
 
@@ -46,8 +46,8 @@ export function StatusView({ gitManager, navigationActions, viewDropdown, onNavi
     setIsShowingDetail(!isShowingDetail);
   };
 
-  const stagedFiles = files ? files.filter((f) => f.status === "staged") : [];
-  const unstagedFiles = files ? files.filter((f) => f.status === "unstaged" || f.status === "untracked") : [];
+  const stagedFiles = status?.files ? status.files.filter((f) => f.status === "staged") : [];
+  const unstagedFiles = status?.files ? status.files.filter((f) => f.status === "unstaged" || f.status === "untracked") : [];
 
   return (
     <List
@@ -88,7 +88,7 @@ export function StatusView({ gitManager, navigationActions, viewDropdown, onNavi
             </ActionPanel>
           }
         />
-      ) : !files || files.length === 0 ? (
+      ) : !status?.files || status.files.length === 0 ? (
         <List.EmptyView
           title="No changes"
           description="No changes in the repository. The working directory is clean."
@@ -102,6 +102,7 @@ export function StatusView({ gitManager, navigationActions, viewDropdown, onNavi
                 <FileListItem
                   key={file.path}
                   file={file}
+                  currentBranch={status?.branch}
                   gitManager={gitManager}
                   onRefresh={revalidate}
                   navigationActions={navigationActions}
@@ -121,6 +122,7 @@ export function StatusView({ gitManager, navigationActions, viewDropdown, onNavi
                 <FileListItem
                   key={file.path}
                   file={file}
+                  currentBranch={status?.branch}
                   gitManager={gitManager}
                   onRefresh={revalidate}
                   navigationActions={navigationActions}
@@ -141,6 +143,7 @@ export function StatusView({ gitManager, navigationActions, viewDropdown, onNavi
 
 interface FileListItemProps {
   file: FileStatus;
+  currentBranch: string | null;
   gitManager: GitManager;
   onRefresh: () => void;
   navigationActions: React.ReactNode;
@@ -153,6 +156,7 @@ interface FileListItemProps {
 
 function FileListItem({
   file,
+  currentBranch,
   gitManager,
   onRefresh,
   navigationActions,
@@ -235,7 +239,7 @@ function FileListItem({
           </ActionPanel.Section>
 
           <ActionPanel.Section>
-            {hasStagedChanges && (
+            {hasStagedChanges && currentBranch && (
               <Action.Push
                 title="Commit Changes"
                 icon={Icon.Message}

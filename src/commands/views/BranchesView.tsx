@@ -1,5 +1,5 @@
 import { ActionPanel, Action, List, Icon, Color } from "@raycast/api";
-import { useCachedPromise } from "@raycast/utils";
+import { usePromise } from "@raycast/utils";
 import { useGitBranches } from "../../hooks/useGitBranches";
 import {
   BranchCheckoutAction,
@@ -12,6 +12,7 @@ import {
   CreateBranchAction,
   FetchAction,
   PullAction,
+  BranchCopyNameAction,
 } from "../../components/actions/BranchActions";
 import { GitManager } from "../../utils/git-utils";
 import { Branch, DetachedHead } from "../../types";
@@ -23,34 +24,23 @@ interface BranchesViewProps {
 }
 
 export function BranchesView({ gitManager, navigationActions, viewDropdown }: BranchesViewProps) {
-  const { data: branchesState, isLoading, error, revalidate } = useGitBranches(gitManager);
+  const { data: branchesState, isLoading, error, revalidate: revalidateBranches } = useGitBranches(gitManager);
 
   // Check for conflicts separately
-  const { data: hasConflicts, revalidate: revalidateConflicts } = useCachedPromise(
+  const { data, revalidate: revalidateStatus } = usePromise(
     async (repoPath: string) => {
-      return await gitManager.hasConflicts();
+      return {
+        hasConflicts: await gitManager.hasConflicts(),
+        hasUncommittedChanges: await gitManager.hasUncommittedChanges()
+      };
     },
-    [gitManager.repoPath],
-    {
-      initialData: false,
-    },
+    [gitManager.repoPath]
   );
 
   const revalidateAll = () => {
-    revalidate();
-    revalidateConflicts();
+    revalidateBranches();
+    revalidateStatus();
   };
-
-  // Group remote branches by remote (only if we have data)
-  const remoteGroups = branchesState?.remoteBranches.reduce(
-    (groups, branch) => {
-      const remote = branch.remote || "unknown";
-      if (!groups[remote]) groups[remote] = [];
-      groups[remote].push(branch);
-      return groups;
-    },
-    {} as Record<string, typeof branchesState.remoteBranches>,
-  ) ?? {};
 
   return (
     <List
@@ -82,10 +72,7 @@ export function BranchesView({ gitManager, navigationActions, viewDropdown }: Br
           }
         />
       ) : !branchesState ||
-        (!branchesState.currentBranch &&
-          !branchesState.detachedHead &&
-          branchesState.localBranches.length === 0 &&
-          branchesState.remoteBranches.length === 0) ? (
+        (!branchesState.currentBranch && !branchesState.detachedHead) ? (
         <List.EmptyView
           title="No branches"
           description="No branches found in the repository. It might be an empty repository or there are access issues."
@@ -101,7 +88,8 @@ export function BranchesView({ gitManager, navigationActions, viewDropdown }: Br
                 gitManager={gitManager}
                 onRefresh={revalidateAll}
                 navigationActions={navigationActions}
-                hasConflicts={hasConflicts}
+                hasConflicts={data?.hasConflicts}
+                hasUncommittedChanges={data?.hasUncommittedChanges}
               />
             </List.Section>
           )}
@@ -114,6 +102,7 @@ export function BranchesView({ gitManager, navigationActions, viewDropdown }: Br
                 gitManager={gitManager}
                 onRefresh={revalidateAll}
                 navigationActions={navigationActions}
+                hasUncommittedChanges={data?.hasUncommittedChanges}
               />
             </List.Section>
           )}
@@ -128,13 +117,14 @@ export function BranchesView({ gitManager, navigationActions, viewDropdown }: Br
                   gitManager={gitManager}
                   onRefresh={revalidateAll}
                   navigationActions={navigationActions}
+                  hasUncommittedChanges={data?.hasUncommittedChanges}
                 />
               ))}
             </List.Section>
           )}
 
           {/* Remote Branches Sections */}
-          {Object.entries(remoteGroups).map(([remoteName, remoteBranches]) => (
+          {Object.entries(branchesState.remoteBranches).map(([remoteName, remoteBranches]) => (
             <List.Section key={remoteName} title={`Remote: ${remoteName}`}>
               {remoteBranches.map((branch) => (
                 <BranchListItem
@@ -143,6 +133,7 @@ export function BranchesView({ gitManager, navigationActions, viewDropdown }: Br
                   gitManager={gitManager}
                   onRefresh={revalidateAll}
                   navigationActions={navigationActions}
+                  hasUncommittedChanges={data?.hasUncommittedChanges}
                 />
               ))}
             </List.Section>
@@ -159,12 +150,14 @@ function BranchListItem({
   onRefresh,
   navigationActions,
   hasConflicts,
+  hasUncommittedChanges,
 }: {
   branch: Branch;
   gitManager: GitManager;
   onRefresh: () => void;
   navigationActions: React.ReactNode;
   hasConflicts?: boolean;
+  hasUncommittedChanges?: boolean;
 }) {
   const accessories = [];
 
@@ -178,7 +171,7 @@ function BranchListItem({
   }
 
   // Add uncommitted changes indicator for current branch
-  if (branch.type === "current" && branch.hasUncommittedChanges) {
+  if (branch.type === "current" && hasUncommittedChanges) {
     accessories.push({
       tag: { value: "Uncommitted", color: Color.Orange },
       icon: Icon.Document,
@@ -260,6 +253,8 @@ function BranchListItem({
                 <BranchDeleteAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
               </>
             )}
+
+            <BranchCopyNameAction branch={branch.name} />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Branches">
@@ -279,16 +274,18 @@ function DetachedHeadListItem({
   gitManager,
   onRefresh,
   navigationActions,
+  hasUncommittedChanges,
 }: {
   detachedHead: DetachedHead;
   gitManager: GitManager;
   onRefresh: () => void;
   navigationActions: React.ReactNode;
+  hasUncommittedChanges?: boolean;
 }) {
   const accessories = [];
 
   // Add uncommitted changes indicator
-  if (detachedHead.hasUncommittedChanges) {
+  if (hasUncommittedChanges) {
     accessories.push({
       icon: { source: Icon.Dot, tintColor: Color.Orange },
       tooltip: "Uncommitted changes",

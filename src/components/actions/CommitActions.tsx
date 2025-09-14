@@ -146,6 +146,13 @@ export function CommitCopyHashAction({ commit }: { commit: Commit }) {
   );
 }
 
+export function CommitCopyMessageAction({ commit }: { commit: Commit }) {
+  return <Action.CopyToClipboard
+    title="Copy Commit Message"
+    content={commit.message}
+  />;
+}
+
 /**
  * Action for copying short commit hash to clipboard.
  */
@@ -181,19 +188,6 @@ export function CommitRefreshHistoryAction({ onRefresh }: { onRefresh: () => voi
       onAction={handleRefresh}
       icon={Icon.ArrowClockwise}
       shortcut={{ modifiers: ["cmd"], key: "r" }}
-    />
-  );
-}
-
-/**
- * Action for copying current branch name to clipboard.
- */
-export function CommitCopyBranchNameAction({ currentBranch }: { currentBranch: string }) {
-  return (
-    <Action.CopyToClipboard
-      title="Copy Branch Name"
-      content={currentBranch}
-      shortcut={{ modifiers: ["cmd"], key: "c" }}
     />
   );
 }

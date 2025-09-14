@@ -1,6 +1,5 @@
-import { useCachedPromise } from "@raycast/utils";
+import { usePromise } from "@raycast/utils";
 import { GitManager } from "../utils/git-utils";
-import { Stash } from "../types";
 
 /**
  * Hook for fetching the list of stashes in a repository.
@@ -14,16 +13,12 @@ export function useGitStash(gitManager: GitManager) {
     data: stashes,
     isLoading,
     revalidate,
-  } = useCachedPromise(
+  } = usePromise(
     async (repoPath: string) => {
       const stashList = await gitManager.getStashes();
       return stashList;
     },
     [gitManager.repoPath], // Include repository path for separate cache per repository
-    {
-      initialData: [] as Stash[],
-      keepPreviousData: true,
-    },
   );
 
   return {

@@ -1,4 +1,4 @@
-import { useCachedPromise, usePromise } from "@raycast/utils";
+import { usePromise } from "@raycast/utils";
 import { GitManager } from "../utils/git-utils";
 import { FileStatus } from "../types";
 

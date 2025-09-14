@@ -1,5 +1,5 @@
 import { ActionPanel, List, Icon, Action, useNavigation, Color } from "@raycast/api";
-import { getFavicon, useCachedPromise, useCachedState } from "@raycast/utils";
+import { getFavicon, useCachedState } from "@raycast/utils";
 import { useGitBranches } from "../../hooks/useGitBranches";
 import { useGitCommits } from "../../hooks/useGitCommits";
 import { useCommitsBranchFilter, ALL_BRANCHES_FILTER, CURRENT_BRANCH_FILTER } from "../../hooks/useCommitsBranchFilter";
@@ -13,10 +13,10 @@ import {
   CommitCopyAuthorAction,
   CommitCopyAuthorEmailAction,
   CommitRefreshHistoryAction,
-  CommitCopyBranchNameAction,
+  CommitCopyMessageAction,
 } from "../../components/actions/CommitActions";
 import { TagCreateAction, TagRemoveAction } from "../../components/actions/TagActions";
-import { BranchPushAction, FetchAction, PullAction } from "../../components/actions/BranchActions";
+import { BranchCopyNameAction, BranchPushAction, FetchAction, PullAction } from "../../components/actions/BranchActions";
 import { CommitDiffView } from "./CommitDiffView";
 import { ConfigureUrlTrackerForm } from "../../components/shared/ConfigureUrlTrackerForm";
 import {
@@ -52,7 +52,11 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
   const allBranches: Branch[] = [
     ...(branchesState?.currentBranch ? [branchesState.currentBranch] : []),
     ...(branchesState?.localBranches || []),
-    ...(branchesState?.remoteBranches || []),
+    ...(
+      branchesState?.remoteBranches
+        ? Object.values(branchesState.remoteBranches).flat()
+        : []
+    ),
   ];
 
   const { selectedBranch, updateSelectedBranch, getActualBranchFilter } = useCommitsBranchFilter(
@@ -450,6 +454,7 @@ function CommitListItem({
               />
             ))}
             <CommitCopyHashAction commit={commit} />
+            <CommitCopyMessageAction commit={commit} />
             <CommitCopyShortHashAction commit={commit} />
             <CommitCopyAuthorAction commit={commit} />
             <CommitCopyAuthorEmailAction commit={commit} />
@@ -468,7 +473,7 @@ function CommitListItem({
               <BranchPushAction branch={currentBranch} gitManager={gitManager} onRefresh={onRefresh} />
             )}
             <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
-            {selectedBranch && <CommitCopyBranchNameAction currentBranch={selectedBranch} />}
+            {selectedBranch && <BranchCopyNameAction branch={selectedBranch} />}
           </ActionPanel.Section>
 
           <ActionPanel.Section title="History">

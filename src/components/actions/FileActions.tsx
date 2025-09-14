@@ -92,7 +92,7 @@ export function FileOpenAction({ filePath, shortcut }: { filePath: string, short
 
   return (
     <Action.Open
-      title={`Open File`}
+      title="Open"
       target={filePath}
       shortcut={shortcut}
     />
@@ -107,7 +107,6 @@ export function FileOpenWithAction({ filePath, shortcut }: { filePath: string, s
 
   return (
     <Action.OpenWith
-      title="Open File with…"
       path={filePath}
       shortcut={shortcut}
     />
