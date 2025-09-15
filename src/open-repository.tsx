@@ -7,8 +7,14 @@ import { BranchesView } from "./commands/views/BranchesView";
 import { StatusView } from "./commands/views/StatusView";
 import { CommitsView } from "./commands/views/CommitsView";
 import { StashesView } from "./commands/views/StashesView";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { RepositoryDirectoryActions } from "./components/actions/RepositoryDirectoryActions";
+import { useGitBranches } from "./hooks/useGitBranches";
+import { useCommitsBranchFilter } from "./hooks/useCommitsBranchFilter";
+import { useGitCommits } from "./hooks/useGitCommits";
+import { useGitStash } from "./hooks/useGitStash";
+import { useGitStatus } from "./hooks/useGitStatus";
+import { Branch } from "./types";
 
 interface Arguments {
   path: string;
@@ -43,6 +49,49 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
       </List>
     );
   }
+
+  // Shared data hooks lifted to the top-level to persist across view switches
+  const {
+    data: branchesState,
+    isLoading: branchesIsLoading,
+    error: branchesError,
+    revalidate: revalidateBranches,
+  } = useGitBranches(gitManager);
+
+  const allBranches: Branch[] = useMemo(() => {
+    return [
+      ...(branchesState?.currentBranch ? [branchesState.currentBranch] : []),
+      ...(branchesState?.localBranches || []),
+      ...(
+        branchesState?.remoteBranches
+          ? Object.values(branchesState.remoteBranches).flat()
+          : []
+      ),
+    ];
+  }, [branchesState]);
+
+  const {
+    branchFilter,
+    selectedBranch,
+    setBranchFilter,
+  } = useCommitsBranchFilter(gitManager.repoPath, allBranches, branchesState?.detachedHead);
+
+  const {
+    isLoading: commitsIsLoading,
+    data: commits,
+    error: commitsError,
+    revalidate: revalidateCommits,
+    pagination,
+  } = useGitCommits(gitManager, selectedBranch, branchesState !== undefined);
+
+  const { stashes, isLoading: stashesIsLoading, revalidate: revalidateStashes } = useGitStash(gitManager);
+
+  const {
+    data: status,
+    isLoading: statusIsLoading,
+    error: statusError,
+    revalidate: revalidateStatus,
+  } = useGitStatus(gitManager);
 
   // Navigation actions for all views
   const navigationActions = (
@@ -100,6 +149,10 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           navigationActions={navigationActions}
           viewDropdown={viewSelectorDropdown}
           onNavigateToCommits={() => setCurrentView("commits")}
+          status={status}
+          isLoading={statusIsLoading}
+          error={statusError}
+          revalidate={revalidateStatus}
         />
       );
     case "commits":
@@ -108,6 +161,20 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           gitManager={gitManager}
           navigationActions={navigationActions}
           viewDropdown={viewSelectorDropdown}
+          // Branch context
+          allBranches={allBranches}
+          currentBranch={branchesState?.currentBranch}
+          detachedHead={branchesState?.detachedHead}
+          // Filter state
+          branchFilter={branchFilter}
+          selectedBranch={selectedBranch}
+          setBranchFilter={setBranchFilter}
+          // Commits data
+          isLoading={commitsIsLoading}
+          commits={commits}
+          error={commitsError}
+          revalidate={revalidateCommits}
+          pagination={pagination}
         />
       );
     case "branches":
@@ -116,6 +183,13 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           gitManager={gitManager}
           navigationActions={navigationActions}
           viewDropdown={viewSelectorDropdown}
+          branchesState={branchesState}
+          isLoading={branchesIsLoading}
+          error={branchesError}
+          revalidateBranches={revalidateBranches}
+          hasConflicts={status?.files?.some(file => file.type === "conflicted")}
+          hasUncommittedChanges={status?.files?.length !== 0}
+          revalidateStatus={revalidateStatus}
         />
       );
     case "stashes":
@@ -125,6 +199,9 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           navigationActions={navigationActions}
           viewDropdown={viewSelectorDropdown}
           onNavigateToStatus={() => setCurrentView("status")}
+          stashes={stashes}
+          isLoading={stashesIsLoading}
+          revalidate={revalidateStashes}
         />
       );
   }

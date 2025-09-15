@@ -109,33 +109,33 @@ export function BranchCopyNameAction({ branch }: { branch: string }) {
  */
 export function BranchPushAction({ branch, gitManager, onRefresh }: BranchActionProps) {
   const handlePush = async () => {
+
     try {
+      await gitManager.push(false, branch);
+      onRefresh();
+    } catch (pushError) {
+      // Push failed, offer force push for branches with upstream
+      const errorMessage = pushError instanceof Error ? pushError.message : "Unknown error";
 
-      // Upstream exists, do regular push
-      try {
-        await gitManager.push(false, branch);
-        onRefresh();
-      } catch (pushError) {
-        // Push failed, offer force push for branches with upstream
-        const errorMessage = pushError instanceof Error ? pushError.message : "Unknown error";
+      const forceConfirmed = await confirmAlert({
+        title: "Push rejected",
+        message: `Reason: ${errorMessage}`,
+        primaryAction: {
+          title: "Force Push",
+          style: Alert.ActionStyle.Destructive,
+        },
+      });
 
-        const forceConfirmed = await confirmAlert({
-          title: "Push rejected",
-          message: `Reason: ${errorMessage}`,
-          primaryAction: {
-            title: "Force Push",
-            style: Alert.ActionStyle.Destructive,
-          },
-        });
-
-        if (forceConfirmed) {
-          // Execute force push
+      if (forceConfirmed) {
+        // Execute force push
+        try {
           await gitManager.push(true, branch);
           onRefresh();
         }
+        catch (error) {
+          // Git error is already shown by GitManager
+        }
       }
-    } catch (error) {
-      // Git error is already shown by GitManager
     }
   };
 

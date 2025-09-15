@@ -1,8 +1,5 @@
-import { ActionPanel, List, Icon, Action, useNavigation, Color } from "@raycast/api";
+import { ActionPanel, List, Icon, Action, useNavigation, Color, PaginationInterface } from "@raycast/api";
 import { getFavicon, useCachedState } from "@raycast/utils";
-import { useGitBranches } from "../../hooks/useGitBranches";
-import { useGitCommits } from "../../hooks/useGitCommits";
-import { useCommitsBranchFilter } from "../../hooks/useCommitsBranchFilter";
 import {
   CommitCheckoutAction,
   CommitCherryPickAction,
@@ -37,10 +34,38 @@ interface CommitsViewProps {
   gitManager: GitManager;
   navigationActions: React.ReactNode;
   viewDropdown: React.ReactElement<any>;
+  // Branch context
+  allBranches: Branch[];
+  currentBranch?: Branch;
+  detachedHead?: DetachedHead;
+  // Filter state
+  branchFilter: string;
+  selectedBranch?: string;
+  setBranchFilter: (branchName: string) => void;
+  // Commits data
+  isLoading: boolean;
+  commits?: Commit[];
+  error?: Error;
+  revalidate: () => void | Promise<unknown>;
+  pagination?: PaginationInterface["pagination"];
 }
 
-export function CommitsView({ gitManager, navigationActions, viewDropdown }: CommitsViewProps) {
-  const { data: branchesState } = useGitBranches(gitManager);
+export function CommitsView({
+  gitManager,
+  navigationActions,
+  viewDropdown,
+  allBranches,
+  currentBranch,
+  detachedHead,
+  branchFilter,
+  selectedBranch,
+  setBranchFilter,
+  isLoading,
+  commits,
+  error,
+  revalidate,
+  pagination,
+}: CommitsViewProps) {
   const [isShowingDetail, setIsShowingDetail] = useState(false);
   const [isShowingMetadata, setIsShowingMetadata] = useCachedState("commits-metadata-visible", true);
   const [selectedCommitId, setSelectedCommitId] = useState<string | null>(null);
@@ -48,36 +73,8 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
   // Load URL tracker configurations once for the entire view
   const { configs: urlTrackerConfigs } = useUrlTracker(gitManager.repoPath);
 
-  // Combine all branches from the state
-  const allBranches: Branch[] = [
-    ...(branchesState?.currentBranch ? [branchesState.currentBranch] : []),
-    ...(branchesState?.localBranches || []),
-    ...(
-      branchesState?.remoteBranches
-        ? Object.values(branchesState.remoteBranches).flat()
-        : []
-    ),
-  ];
-
-  const { selectedBranch, branchFilter, setBranchFilter } = useCommitsBranchFilter(
-    gitManager.repoPath,
-    allBranches,
-    branchesState?.detachedHead,
-  );
-  const {
-    isLoading,
-    data: commits,
-    error,
-    revalidate,
-    pagination,
-  } = useGitCommits(gitManager, selectedBranch, branchesState !== undefined);
-
   // Get current filter display name for List.Section title
-  const currentFilterDisplayName = getBranchFilterDisplayName(
-    branchFilter,
-    branchesState?.detachedHead,
-    branchesState?.currentBranch,
-  );
+  const currentFilterDisplayName = getBranchFilterDisplayName(branchFilter, detachedHead, currentBranch);
 
   const toggleDetail = () => {
     setIsShowingDetail(!isShowingDetail);
@@ -101,8 +98,8 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
           <ActionPanel.Section title="Branch">
             <CommitRefreshHistoryAction onRefresh={revalidate} />
             <PullAction gitManager={gitManager} onRefresh={revalidate} />
-            {branchesState?.currentBranch && branchesState.currentBranch.type === "current" && (
-              <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={revalidate} />
+            {currentBranch && currentBranch.type === "current" && (
+              <BranchPushAction branch={currentBranch} gitManager={gitManager} onRefresh={revalidate} />
             )}
             <FetchAction gitManager={gitManager} onRefresh={revalidate} />
           </ActionPanel.Section>
@@ -113,8 +110,8 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
                 branchFilter={branchFilter}
                 updateSelectedBranch={setBranchFilter}
                 allBranches={allBranches}
-                detachedHead={branchesState?.detachedHead}
-                currentBranch={branchesState?.currentBranch}
+                detachedHead={detachedHead}
+                currentBranch={currentBranch}
               />
             }
             <Action.Push
@@ -178,8 +175,8 @@ export function CommitsView({ gitManager, navigationActions, viewDropdown }: Com
               branchFilter={branchFilter}
               updateSelectedBranch={setBranchFilter}
               allBranches={allBranches}
-              detachedHead={branchesState?.detachedHead}
-              currentBranch={branchesState?.currentBranch}
+              detachedHead={detachedHead}
+              currentBranch={currentBranch}
             />
           ))}
         </List.Section>

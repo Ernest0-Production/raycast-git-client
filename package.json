@@ -47,18 +47,10 @@
     },
     {
       "name": "externalGitClient",
-      "required": false,
+      "required": true,
       "type": "appPicker",
       "title": "External Git Client",
       "description": "The external git client to use for git commands (e.g. 'GitKraken')"
-    },
-    {
-      "name": "maxBranchesToShow",
-      "required": false,
-      "type": "textfield",
-      "title": "Max Branches to Show",
-      "default": "200",
-      "description": "Maximum number of branches to display for performance optimization"
     },
     {
       "name": "commitsPerPage",

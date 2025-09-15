@@ -1044,22 +1044,6 @@ export class GitManager {
   }
 
   /**
-   * Checks if the repository has any uncommitted changes.
-   */
-  async hasUncommittedChanges(): Promise<boolean> {
-    const status = await this.git.status();
-    return status.files.length > 0;
-  }
-
-  /**
-   * Checks if the repository has any unresolved conflicts.
-   */
-  async hasConflicts(): Promise<boolean> {
-    const status = await this.git.status();
-    return status.conflicted.length > 0;
-  }
-
-  /**
    * Gets the current branch name.
    */
   async getCurrentBranch(): Promise<string | null> {

@@ -1,5 +1,4 @@
 import { ActionPanel, Action, List, Icon } from "@raycast/api";
-import { useGitStash } from "../../hooks/useGitStash";
 import { StashApplyAction, StashDropAction, CreateStashAction } from "../../components/actions/StashActions";
 import { GitManager } from "../../utils/git-utils";
 import "../../utils/date-utils";
@@ -11,10 +10,20 @@ interface StashesViewProps {
   navigationActions: React.ReactNode;
   viewDropdown: React.ReactElement<any>;
   onNavigateToStatus?: () => void;
+  stashes?: Stash[];
+  isLoading: boolean;
+  revalidate: () => void | Promise<unknown>;
 }
 
-export function StashesView({ gitManager, navigationActions, viewDropdown, onNavigateToStatus }: StashesViewProps) {
-  const { stashes, isLoading, revalidate } = useGitStash(gitManager);
+export function StashesView({
+  gitManager,
+  navigationActions,
+  viewDropdown,
+  onNavigateToStatus,
+  stashes,
+  isLoading,
+  revalidate
+}: StashesViewProps) {
 
   return (
     <List

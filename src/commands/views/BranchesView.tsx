@@ -1,6 +1,5 @@
 import { ActionPanel, Action, List, Icon, Color } from "@raycast/api";
 import { usePromise } from "@raycast/utils";
-import { useGitBranches } from "../../hooks/useGitBranches";
 import {
   BranchCheckoutAction,
   BranchDeleteAction,
@@ -15,27 +14,33 @@ import {
   BranchCopyNameAction,
 } from "../../components/actions/BranchActions";
 import { GitManager } from "../../utils/git-utils";
-import { Branch, DetachedHead } from "../../types";
+import { Branch, DetachedHead, BranchesState } from "../../types";
 
 interface BranchesViewProps {
   gitManager: GitManager;
   navigationActions: React.ReactNode;
   viewDropdown: React.ReactElement<any>;
+  branchesState?: BranchesState;
+  isLoading: boolean;
+  error?: Error;
+  revalidateBranches: () => void | Promise<unknown>;
+  hasConflicts?: boolean;
+  hasUncommittedChanges?: boolean;
+  revalidateStatus: () => void | Promise<unknown>;
 }
 
-export function BranchesView({ gitManager, navigationActions, viewDropdown }: BranchesViewProps) {
-  const { data: branchesState, isLoading, error, revalidate: revalidateBranches } = useGitBranches(gitManager);
-
-  // Check for conflicts separately
-  const { data, revalidate: revalidateStatus } = usePromise(
-    async (repoPath: string) => {
-      return {
-        hasConflicts: await gitManager.hasConflicts(),
-        hasUncommittedChanges: await gitManager.hasUncommittedChanges()
-      };
-    },
-    [gitManager.repoPath]
-  );
+export function BranchesView({
+  gitManager,
+  navigationActions,
+  viewDropdown,
+  branchesState,
+  isLoading,
+  error,
+  revalidateBranches,
+  hasConflicts,
+  hasUncommittedChanges,
+  revalidateStatus
+}: BranchesViewProps) {
 
   const revalidateAll = () => {
     revalidateBranches();
@@ -88,8 +93,8 @@ export function BranchesView({ gitManager, navigationActions, viewDropdown }: Br
                 gitManager={gitManager}
                 onRefresh={revalidateAll}
                 navigationActions={navigationActions}
-                hasConflicts={data?.hasConflicts}
-                hasUncommittedChanges={data?.hasUncommittedChanges}
+                hasConflicts={hasConflicts}
+                hasUncommittedChanges={hasUncommittedChanges}
               />
             </List.Section>
           )}
@@ -102,7 +107,7 @@ export function BranchesView({ gitManager, navigationActions, viewDropdown }: Br
                 gitManager={gitManager}
                 onRefresh={revalidateAll}
                 navigationActions={navigationActions}
-                hasUncommittedChanges={data?.hasUncommittedChanges}
+                hasUncommittedChanges={hasUncommittedChanges}
               />
             </List.Section>
           )}
@@ -117,7 +122,7 @@ export function BranchesView({ gitManager, navigationActions, viewDropdown }: Br
                   gitManager={gitManager}
                   onRefresh={revalidateAll}
                   navigationActions={navigationActions}
-                  hasUncommittedChanges={data?.hasUncommittedChanges}
+                  hasUncommittedChanges={hasUncommittedChanges}
                 />
               ))}
             </List.Section>
@@ -133,7 +138,7 @@ export function BranchesView({ gitManager, navigationActions, viewDropdown }: Br
                   gitManager={gitManager}
                   onRefresh={revalidateAll}
                   navigationActions={navigationActions}
-                  hasUncommittedChanges={data?.hasUncommittedChanges}
+                  hasUncommittedChanges={hasUncommittedChanges}
                 />
               ))}
             </List.Section>

@@ -1,5 +1,4 @@
 import { ActionPanel, Action, List, Icon } from "@raycast/api";
-import { useGitStatus } from "../../hooks/useGitStatus";
 import { useGitDiff } from "../../hooks/useGitDiff";
 import {
   FileStageAction,
@@ -29,10 +28,21 @@ interface StatusViewProps {
   navigationActions: React.ReactNode;
   viewDropdown: React.ReactElement<any>;
   onNavigateToCommits?: () => void;
+  status?: { branch: string | null, files: FileStatus[] };
+  isLoading: boolean;
+  error?: Error;
+  revalidate: () => void | Promise<unknown>;
 }
 
-export function StatusView({ gitManager, navigationActions, viewDropdown, onNavigateToCommits }: StatusViewProps) {
-  const { data: status, isLoading, error, revalidate } = useGitStatus(gitManager);
+export function StatusView({
+  gitManager,
+  navigationActions,
+  viewDropdown,
+  onNavigateToCommits,
+  status, isLoading,
+  error,
+  revalidate
+}: StatusViewProps) {
   const [isShowingDetail, setIsShowingDetail] = useState(false);
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
 
