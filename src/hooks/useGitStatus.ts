@@ -1,5 +1,5 @@
 import { showToast, Toast } from "@raycast/api";
-import { usePromise } from "@raycast/utils";
+import { useCachedPromise } from "@raycast/utils";
 import { GitManager } from "../utils/git-utils";
 
 /**
@@ -7,7 +7,7 @@ import { GitManager } from "../utils/git-utils";
  * Repository path is included in cache dependencies to ensure separate cache per repository.
  */
 export function useGitStatus(gitManager: GitManager) {
-  return usePromise(
+  return useCachedPromise(
     async (repoPath: string) => {
       const status = await gitManager.getStatus();
       return status;

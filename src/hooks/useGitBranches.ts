@@ -1,4 +1,4 @@
-import { usePromise } from "@raycast/utils";
+import { useCachedPromise } from "@raycast/utils";
 import { GitManager } from "../utils/git-utils";
 
 /**
@@ -6,10 +6,9 @@ import { GitManager } from "../utils/git-utils";
  * Repository path is included in cache dependencies to ensure separate cache per repository.
  */
 export function useGitBranches(gitManager: GitManager) {
-  return usePromise(
+  return useCachedPromise(
     async (repoPath: string) => {
-      const branchesState = await gitManager.getBranches();
-      return branchesState;
+      return await gitManager.getBranches();
     },
     [gitManager.repoPath], // Include repository path for separate cache per repository
     {
