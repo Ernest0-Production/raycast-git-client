@@ -57,7 +57,7 @@
       "required": false,
       "type": "textfield",
       "title": "Max Commits to Load",
-      "default": "100",
+      "default": "30",
       "description": "Number of commits to load per pagination page. Small values cause frequent lags during scrolling. Large values cause slow initial list loading."
     },
     {
