@@ -29,6 +29,7 @@ import {
 import "../../utils/date-utils";
 import { Branch, Commit, UrlTrackerConfig, DetachedHead } from "../../types";
 import { useMemo, useState, useEffect } from "react";
+import { CommitMessageForm } from "./CommitMessageView";
 
 interface CommitsViewProps {
   gitManager: GitManager;
@@ -458,6 +459,14 @@ function CommitListItem({
             <CommitCopyShortHashAction commit={commit} />
             <CommitCopyAuthorAction commit={commit} />
             <CommitCopyAuthorEmailAction commit={commit} />
+            {commit.currentBranchName &&
+              <Action.Push
+                title="Amend Commit"
+                icon={Icon.Message}
+                target={<CommitMessageForm amendOnly={true} gitManager={gitManager} onFinish={onRefresh} />}
+                shortcut={{ modifiers: ["cmd", "shift"], key: "a" }}
+              />
+            }
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Tags">

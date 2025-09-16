@@ -1,4 +1,4 @@
-import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast } from "@raycast/api";
+import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast, clearSearchBar } from "@raycast/api";
 import { GitManager } from "../../utils/git-utils";
 import { Commit } from "../../types";
 
@@ -28,6 +28,7 @@ export function CommitCheckoutAction({ commit, gitManager, onRefresh }: CommitAc
       try {
         await gitManager.checkoutCommit(targetName);
         onRefresh();
+        clearSearchBar();
       } catch (error) {
         // Git error is already shown by GitManager
       }

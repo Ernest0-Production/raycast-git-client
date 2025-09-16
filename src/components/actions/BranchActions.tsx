@@ -1,4 +1,4 @@
-import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast, Form, useNavigation } from "@raycast/api";
+import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast, Form, useNavigation, clearSearchBar } from "@raycast/api";
 import { useState } from "react";
 import { GitManager } from "../../utils/git-utils";
 import { Branch } from "../../types";
@@ -34,6 +34,7 @@ export function BranchCkeckoutAction({ branch, gitManager, onRefresh }: BranchAc
           await gitManager.checkoutLocalBranch(branch.name);
         }
         onRefresh();
+        clearSearchBar();
       } catch (error) {
         // Git error is already shown by GitManager
       }
@@ -275,7 +276,7 @@ export function PullAction({ gitManager, onRefresh }: { gitManager: GitManager; 
   };
 
   return (
-    <ActionPanel.Submenu title="Pull" icon={Icon.ArrowDown} shortcut={{ modifiers: ["cmd", "shift"], key: "l" }}>
+    <ActionPanel.Submenu title="Pull Strategy" icon={Icon.ArrowDown} shortcut={{ modifiers: ["cmd", "shift"], key: "l" }}>
       <Action title="Rebase" icon={Icon.ArrowClockwise} onAction={handlePullRebase} />
       <Action title="Merge" icon={`git-merge.svg`} onAction={handlePullMerge} />
     </ActionPanel.Submenu>

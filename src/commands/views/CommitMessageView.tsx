@@ -1,7 +1,7 @@
 import { GitManager } from "../../utils/git-utils";
 import { Preferences } from "../../types";
 import { useCachedState, usePromise } from "@raycast/utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { showToast, Toast, getPreferenceValues, confirmAlert, environment, useNavigation } from "@raycast/api";
 import { AI } from "@raycast/api";
 import { Action, ActionPanel, Form, Icon, Alert } from "@raycast/api";
@@ -9,26 +9,24 @@ import { Action, ActionPanel, Form, Icon, Alert } from "@raycast/api";
 /**
  * Form for creating a commit with AI generation support.
  */
-export function CommitMessageForm({ gitManager, onFinish }: { gitManager: GitManager; onFinish: () => void }) {
+export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: { amendOnly?: boolean; gitManager: GitManager; onFinish: () => void }) {
   const preferences = getPreferenceValues<Preferences>();
   const [draftMessage, setDraftMessage] = useCachedState(`commit-draft-${gitManager.repoPath}`, "");
-  const [amend, setAmend] = useCachedState(`commit-amend-${gitManager.repoPath}`, false);
+  // Используем useState для режима только amend, иначе useCachedState
+  const [amend, setAmend] = amendOnly
+    ? useState(true)
+    : useCachedState(`commit-amend-${gitManager.repoPath}`, false);
   const [isGenerating, setIsGenerating] = useState(false);
   const { pop } = useNavigation();
 
-  // Load the last commit for amend functionality
-  const { data: lastCommit } = usePromise(
-    async (repoPath: string) => await gitManager.getLastCommit(),
-    [gitManager.repoPath],
-  );
-
   // Handle amend checkbox changes
-  const handleAmendChange = (newAmendValue: boolean) => {
-    setAmend(newAmendValue);
-
-    if (newAmendValue === amend) {
-      return;
+  const handleAmendChange = async (newAmendValue: boolean) => {
+    let lastCommit = null;
+    if (newAmendValue) {
+      lastCommit = await gitManager.getLastCommit()
     }
+
+    setAmend(newAmendValue);
 
     if (newAmendValue && lastCommit) {
       // If amend is enabled, populate with last commit message (trimmed)
@@ -50,6 +48,10 @@ export function CommitMessageForm({ gitManager, onFinish }: { gitManager: GitMan
 
       // Get staged changes diff
       const diff = await gitManager.getDiff();
+      let lastCommit = null;
+      if (amend) {
+        lastCommit = await gitManager.getLastCommit()
+      }
 
       // Form a more structured and readable prompt for AI generation of commit message
       const promptParts = [preferences.aiCommitPrompt!.trim(), ""];
