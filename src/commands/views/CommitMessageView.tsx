@@ -31,8 +31,8 @@ export function CommitMessageForm({ gitManager, onFinish }: { gitManager: GitMan
     }
 
     if (newAmendValue && lastCommit) {
-      // If amend is enabled, populate with last commit message
-      setDraftMessage(lastCommit.message + "\n\n" + lastCommit.body);
+      // If amend is enabled, populate with last commit message (trimmed)
+      setDraftMessage((lastCommit.message + "\n\n" + lastCommit.body).trim());
     } else if (!newAmendValue) {
       // If amend is disabled, clear draft message
       setDraftMessage("");
@@ -182,6 +182,15 @@ export function CommitMessageForm({ gitManager, onFinish }: { gitManager: GitMan
               />
             </ActionPanel.Section>
           )}
+
+          <ActionPanel.Section>
+            <Action
+              title="Toggle Amend"
+              onAction={() => handleAmendChange(!amend)}
+              icon={Icon.Switch}
+              shortcut={{ modifiers: ["cmd", "shift"], key: "a" }}
+            />
+          </ActionPanel.Section>
         </ActionPanel>
       }
     >
