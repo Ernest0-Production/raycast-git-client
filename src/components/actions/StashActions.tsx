@@ -49,7 +49,7 @@ export function StashApplyAction({ stash, index, gitManager, onRefresh, onNaviga
     }
   };
 
-  return <Action title="Apply Stash" icon={Icon.Download} onAction={handleApply} />;
+  return <Action title="Apply Stash" icon={Icon.Bookmark} onAction={handleApply} />;
 }
 
 /**

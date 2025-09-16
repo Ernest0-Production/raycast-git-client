@@ -43,7 +43,7 @@ export function StashesView({
       }
     >
       {!stashes || stashes.length === 0 ? (
-        <List.EmptyView title="No stashes" description="No saved changes in the stash." icon={Icon.Download} />
+        <List.EmptyView title="No stashes" description="No saved changes in the stash." icon={Icon.Bookmark} />
       ) : (
         stashes.map((stash, index) => (
           <StashListItem

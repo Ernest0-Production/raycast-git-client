@@ -31,7 +31,7 @@
   "preferences": [
     {
       "name": "defaultEditor",
-      "required": false,
+      "required": true,
       "type": "appPicker",
       "title": "Default Editor",
       "default": "com.apple.finder",
@@ -39,7 +39,7 @@
     },
     {
       "name": "defaultTerminal",
-      "required": false,
+      "required": true,
       "type": "appPicker",
       "title": "Default Terminal",
       "default": "com.apple.Terminal",
@@ -47,7 +47,7 @@
     },
     {
       "name": "externalGitClient",
-      "required": false,
+      "required": true,
       "type": "appPicker",
       "title": "External Git Client",
       "description": "The external git client to use for git commands (e.g. 'GitKraken')"

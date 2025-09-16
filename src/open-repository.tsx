@@ -118,7 +118,7 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
         <Action
           title="Go to Stash"
           onAction={() => setCurrentView("stashes")}
-          icon={Icon.Download}
+          icon={Icon.Bookmark}
           shortcut={{ modifiers: ["cmd"], key: "4" }}
         />
       </ActionPanel.Section>
@@ -136,7 +136,7 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
       <List.Dropdown.Item title="Status" value="status" keywords={["diff", "changes"]} icon={Icon.NewDocument} />
       <List.Dropdown.Item title="Commits" value="commits" keywords={["log"]} icon={`git-commit.svg`} />
       <List.Dropdown.Item title="Branches" value="branches" keywords={["graph"]} icon={`git-branch.svg`} />
-      <List.Dropdown.Item title="Stashes" value="stashes" icon={Icon.Download} />
+      <List.Dropdown.Item title="Stashes" value="stashes" icon={Icon.Bookmark} />
     </List.Dropdown>
   );
 
