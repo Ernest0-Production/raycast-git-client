@@ -53,7 +53,6 @@ export function StatusView({
     revalidateStatus();
     revalidateHistory();
     onNavigateToCommits?.();
-    clearSearchBar({ forceScrollToTop: true });
   };
 
   const toggleDetail = () => {
