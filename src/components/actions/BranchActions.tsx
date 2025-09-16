@@ -377,7 +377,7 @@ function RenameBranchForm({ branch, gitManager, onRefresh }: { branch: Branch; g
       return "Required";
     }
     // Git branch name validation
-    if (newBranchName.includes("..") || newBranchName.includes(" ") || newBranchName.startsWith("-")) {
+    if (newBranchName.includes("..") || newBranchName.startsWith("-")) {
       return "Invalid characters";
     }
     return undefined;
@@ -416,7 +416,7 @@ function RenameBranchForm({ branch, gitManager, onRefresh }: { branch: Branch; g
         title="Branch Name"
         placeholder="New branch name"
         value={newBranchName}
-        onChange={setNewBranchName}
+        onChange={(value) => setNewBranchName(value.replace(/ /g, "-"))}
         error={getValidationError()}
       />
 
