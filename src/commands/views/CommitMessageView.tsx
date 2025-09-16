@@ -85,14 +85,14 @@ export function CommitMessageForm({ gitManager, onFinish }: { gitManager: GitMan
       await showToast({
         style: Toast.Style.Animated,
         title: "Generating commit message...",
-        message: "AI is generating commit message. This may take a few seconds.",
+        message: "This may take a few seconds.",
       });
       setDraftMessage(await aiResponse);
 
       await showToast({
         style: Toast.Style.Success,
         title: "Commit message generated",
-        message: "AI generated commit message. Review and edit as needed.",
+        message: "Review and edit as needed.",
       });
     } catch (error) {
       await showToast({

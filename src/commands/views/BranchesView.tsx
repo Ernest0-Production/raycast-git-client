@@ -1,12 +1,11 @@
 import { ActionPanel, Action, List, Icon, Color } from "@raycast/api";
 import { usePromise } from "@raycast/utils";
 import {
-  BranchCheckoutAction,
+  BranchCkeckoutAction,
   BranchDeleteAction,
   BranchPushAction,
   BranchMergeAction,
   BranchRebaseAction,
-  BranchCheckoutRemoteAction,
   BranchRenameAction,
   CreateBranchAction,
   FetchAction,
@@ -242,7 +241,7 @@ function BranchListItem({
             {/* Actions for local branches */}
             {branch.type === "local" && (
               <>
-                <BranchCheckoutAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchCkeckoutAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchMergeAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchRebaseAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchPushAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
@@ -254,7 +253,7 @@ function BranchListItem({
             {/* Actions for remote branches */}
             {branch.type === "remote" && (
               <>
-                <BranchCheckoutRemoteAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchCkeckoutAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchDeleteAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
               </>
             )}

@@ -11,13 +11,15 @@ interface BranchActionProps {
 }
 
 /**
- * Action for checking out a branch.
+ * Unified action for checking out a branch (local or remote).
  */
-export function BranchCheckoutAction({ branch, gitManager, onRefresh }: BranchActionProps) {
+export function BranchCkeckoutAction({ branch, gitManager, onRefresh }: BranchActionProps) {
   const handleCheckout = async () => {
+    const isRemote = branch.type === "remote";
+
     const confirmed = await confirmAlert({
       title: "Checkout branch",
-      message: `Are you sure you want to checkout branch "${branch.name}"?`,
+      message: `Are you sure you want to checkout ${isRemote ? "remote " : ""}branch "${branch.name}"?`,
       primaryAction: {
         title: "Checkout",
         style: Alert.ActionStyle.Default,
@@ -26,7 +28,11 @@ export function BranchCheckoutAction({ branch, gitManager, onRefresh }: BranchAc
 
     if (confirmed) {
       try {
-        await gitManager.checkoutLocalBranch(branch.name);
+        if (isRemote) {
+          await gitManager.checkoutRemoteBranch(branch.name);
+        } else {
+          await gitManager.checkoutLocalBranch(branch.name);
+        }
         onRefresh();
       } catch (error) {
         // Git error is already shown by GitManager
@@ -34,7 +40,13 @@ export function BranchCheckoutAction({ branch, gitManager, onRefresh }: BranchAc
     }
   };
 
-  return <Action title="Checkout" onAction={handleCheckout} icon={Icon.ArrowRight} />;
+  return (
+    <Action
+      title="Checkout"
+      onAction={handleCheckout}
+      icon={Icon.ArrowRight}
+    />
+  );
 }
 
 /**
@@ -215,33 +227,6 @@ export function BranchRebaseAction({ branch, gitManager, onRefresh }: BranchActi
       shortcut={{ modifiers: ["cmd", "shift"], key: "r" }}
     />
   );
-}
-
-/**
- * Action for checking out a remote branch (creates local branch).
- */
-export function BranchCheckoutRemoteAction({ branch, gitManager, onRefresh }: BranchActionProps) {
-  const handleCheckoutRemote = async () => {
-    const confirmed = await confirmAlert({
-      title: "Checkout remote branch",
-      message: `Are you sure you want to checkout remote branch "${branch.name}"?`,
-      primaryAction: {
-        title: "Checkout",
-        style: Alert.ActionStyle.Default,
-      },
-    });
-
-    if (confirmed) {
-      try {
-        await gitManager.checkoutRemoteBranch(branch.name);
-        onRefresh();
-      } catch (error) {
-        // Git error is already shown by GitManager
-      }
-    }
-  };
-
-  return <Action title="Checkout Remote Branch" onAction={handleCheckoutRemote} icon={Icon.ArrowRight} />;
 }
 
 /**
