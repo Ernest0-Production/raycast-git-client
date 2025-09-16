@@ -177,7 +177,7 @@ export function BranchMergeAction({ branch, gitManager, onRefresh }: BranchActio
     <Action
       title="Merge into Current"
       onAction={handleMergeBranch}
-      icon={Icon.ArrowNe}
+      icon={Icon.ArrowClockwise}
       shortcut={{ modifiers: ["cmd"], key: "m" }}
     />
   );
@@ -209,7 +209,7 @@ export function BranchRebaseAction({ branch, gitManager, onRefresh }: BranchActi
 
   return (
     <Action
-      title="Rebase Current onto This"
+      title="Rebase to Here"
       onAction={handleRebaseBranch}
       icon={Icon.ArrowClockwise}
       shortcut={{ modifiers: ["cmd", "shift"], key: "r" }}
@@ -271,9 +271,18 @@ export function FetchAction({ gitManager, onRefresh }: { gitManager: GitManager;
  * Global pull action that can be reused across different views.
  */
 export function PullAction({ gitManager, onRefresh }: { gitManager: GitManager; onRefresh: () => void }) {
-  const handlePull = async () => {
+  const handlePullRebase = async () => {
     try {
-      await gitManager.pull();
+      await gitManager.pull(true);
+      onRefresh();
+    } catch (error) {
+      // Git error is already shown by GitManager
+    }
+  };
+
+  const handlePullMerge = async () => {
+    try {
+      await gitManager.pull(false);
       onRefresh();
     } catch (error) {
       // Git error is already shown by GitManager
@@ -281,12 +290,10 @@ export function PullAction({ gitManager, onRefresh }: { gitManager: GitManager; 
   };
 
   return (
-    <Action
-      title="Pull"
-      onAction={handlePull}
-      icon={Icon.ArrowDown}
-      shortcut={{ modifiers: ["cmd", "shift"], key: "l" }}
-    />
+    <ActionPanel.Submenu title="Pull" icon={Icon.ArrowDown} shortcut={{ modifiers: ["cmd", "shift"], key: "l" }}>
+      <Action title="Rebase" icon={Icon.ArrowClockwise} onAction={handlePullRebase} />
+      <Action title="Merge" icon={`git-merge.svg`} onAction={handlePullMerge} />
+    </ActionPanel.Submenu>
   );
 }
 
