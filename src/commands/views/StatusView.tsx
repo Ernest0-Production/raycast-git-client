@@ -1,4 +1,4 @@
-import { ActionPanel, Action, List, Icon } from "@raycast/api";
+import { ActionPanel, Action, List, Icon, clearSearchBar } from "@raycast/api";
 import { useGitDiff } from "../../hooks/useGitDiff";
 import {
   FileStageAction,
@@ -53,6 +53,7 @@ export function StatusView({
     revalidateStatus();
     revalidateHistory();
     onNavigateToCommits?.();
+    clearSearchBar({ forceScrollToTop: true });
   };
 
   const toggleDetail = () => {
