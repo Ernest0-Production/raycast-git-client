@@ -31,7 +31,8 @@ interface StatusViewProps {
   status?: { branch: string | null, files: FileStatus[] };
   isLoading: boolean;
   error?: Error;
-  revalidate: () => void | Promise<unknown>;
+  revalidateStatus: () => void | Promise<unknown>;
+  revalidateHistory: () => void | Promise<unknown>;
 }
 
 export function StatusView({
@@ -41,14 +42,16 @@ export function StatusView({
   onNavigateToCommits,
   status, isLoading,
   error,
-  revalidate
+  revalidateStatus,
+  revalidateHistory
 }: StatusViewProps) {
   const [isShowingDetail, setIsShowingDetail] = useState(false);
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
 
   // Combined callback for commit actions: refresh data and navigate
   const refreshAndNavigateToCommits = () => {
-    revalidate();
+    revalidateStatus();
+    revalidateHistory();
     onNavigateToCommits?.();
   };
 
@@ -80,7 +83,7 @@ export function StatusView({
           </ActionPanel.Section>
 
           <ActionPanel.Section>
-            <FileRefreshStatusAction onRefresh={revalidate} />
+            <FileRefreshStatusAction onRefresh={revalidateStatus} />
           </ActionPanel.Section>
 
           {navigationActions}
@@ -94,7 +97,7 @@ export function StatusView({
           icon={Icon.ExclamationMark}
           actions={
             <ActionPanel>
-              <Action title="Retry" onAction={revalidate} icon={Icon.ArrowClockwise} />
+              <Action title="Retry" onAction={revalidateStatus} icon={Icon.ArrowClockwise} />
             </ActionPanel>
           }
         />
@@ -114,7 +117,7 @@ export function StatusView({
                   file={file}
                   currentBranch={status?.branch}
                   gitManager={gitManager}
-                  onRefresh={revalidate}
+                  onRefresh={revalidateStatus}
                   navigationActions={navigationActions}
                   isShowingDetail={isShowingDetail}
                   onToggleDetail={toggleDetail}
@@ -134,7 +137,7 @@ export function StatusView({
                   file={file}
                   currentBranch={status?.branch}
                   gitManager={gitManager}
-                  onRefresh={revalidate}
+                  onRefresh={revalidateStatus}
                   navigationActions={navigationActions}
                   isShowingDetail={isShowingDetail}
                   onToggleDetail={toggleDetail}

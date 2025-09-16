@@ -152,7 +152,8 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           status={status}
           isLoading={statusIsLoading}
           error={statusError}
-          revalidate={revalidateStatus}
+          revalidateStatus={revalidateStatus}
+          revalidateHistory={revalidateCommits}
         />
       );
     case "commits":
