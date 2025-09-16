@@ -32,7 +32,21 @@ export class GitManager {
 
   constructor(repoPath: string) {
     this.repoPath = repoPath;
-    this.git = simpleGit(repoPath);
+    this.git = simpleGit(
+      repoPath,
+      {
+        errors: (error, _result) => {
+          if (error) {
+            showToast({
+              style: Toast.Style.Failure,
+              title: `Error running command`,
+              message: error.toString(),
+            });
+          }
+          return error;
+        }
+      }
+    );
 
     // Global logging of all git commands for debugging
     this.setupGlobalLogging();
@@ -58,7 +72,7 @@ export class GitManager {
       showToast({ style: Toast.Style.Animated, title: command_description, message: "Running..." });
 
       let lastOutput = "";
-      let hasError = false;
+
 
       // Process stdout (standard output)
       stdout.on("data", (data: Buffer) => {
@@ -72,7 +86,6 @@ export class GitManager {
       stderr.on("data", (data: Buffer) => {
         const error = data.toString().trim();
         if (error) {
-          hasError = true;
           lastOutput = error;
           showToast({ style: Toast.Style.Animated, title: error });
           console.warn(`[GIT STDERR] ${error}`);
@@ -81,22 +94,8 @@ export class GitManager {
 
       // Show the final result on completion
       stdout.on("end", () => {
-        if (!hasError) {
-          if (lastOutput) {
-            showToast({ style: Toast.Style.Success, title: command_description, message: lastOutput });
-          } else {
-            showToast({
-              style: Toast.Style.Success,
-              title: command_description,
-              message: "Command executed successfully",
-            });
-          }
-        } else {
-          showToast({
-            style: Toast.Style.Failure,
-            title: `Error running command: ${command_description}`,
-            message: lastOutput,
-          });
+        if (lastOutput) {
+          showToast({ style: Toast.Style.Success, title: command_description, message: lastOutput });
         }
       });
     });
