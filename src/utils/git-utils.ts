@@ -111,7 +111,7 @@ export class GitManager {
     const parseBranchInfo = (label: string): { ahead: number; behind: number; upstream?: string; isGone?: boolean } => {
       const aheadMatch = label.match(/ahead (\d+)/);
       const behindMatch = label.match(/behind (\d+)/);
-      const upstreamMatch = label.match(/\[(.*?)(: ahead \d+| behind \d+)*\]/);
+      const upstreamMatch = label.match(/^\[(.*?)(: ahead \d+| behind \d+)*\]/);
       const isGone = !!label.match(/: gone/);
 
       return {
