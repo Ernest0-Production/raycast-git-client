@@ -1,4 +1,4 @@
-import { ActionPanel, List, Icon, Action, useNavigation, Color, PaginationInterface } from "@raycast/api";
+import { ActionPanel, List, Icon, Action, useNavigation, Color } from "@raycast/api";
 import { getFavicon, useCachedState } from "@raycast/utils";
 import {
   CommitCheckoutAction,
@@ -11,6 +11,7 @@ import {
   CommitCopyAuthorEmailAction,
   CommitRefreshHistoryAction,
   CommitCopyMessageAction,
+  CommitInteractiveRebaseAction,
 } from "../../components/actions/CommitActions";
 import { TagCreateAction, TagRemoveAction } from "../../components/actions/TagActions";
 import { BranchCopyNameAction, BranchPushAction, FetchAction, PullAction } from "../../components/actions/BranchActions";
@@ -31,6 +32,12 @@ import { Branch, Commit, UrlTrackerConfig, DetachedHead } from "../../types";
 import { useMemo, useState } from "react";
 import { CommitMessageForm } from "./CommitMessageView";
 
+type ListPagination = {
+  pageSize: number;
+  hasMore: boolean;
+  onLoadMore: () => void;
+};
+
 interface CommitsViewProps {
   gitManager: GitManager;
   navigationActions: React.ReactNode;
@@ -48,7 +55,7 @@ interface CommitsViewProps {
   commits?: Commit[];
   error?: Error;
   revalidate: () => void | Promise<unknown>;
-  pagination?: PaginationInterface["pagination"];
+  pagination?: ListPagination;
 }
 
 export function CommitsView({
@@ -342,7 +349,7 @@ function CommitListItem({
     }
 
     accessoryItems.push({
-      text: { value: commit.author, color: Color.SecondaryText },
+      text: { value: commit.author },
       tooltip: commit.authorEmail,
     });
 
@@ -440,6 +447,7 @@ function CommitListItem({
             <CommitCherryPickAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
             <CommitRevertAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
             <CommitResetAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
+            <CommitInteractiveRebaseAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
             {commitUrls.map((urlInfo: { title: string; url: string }, index: number) => (
               <Action.OpenInBrowser
                 key={`${urlInfo.url}-${index}`}

@@ -10,7 +10,8 @@ import {
 } from "simple-git";
 import { showToast, Toast, getPreferenceValues, Alert, confirmAlert } from "@raycast/api";
 import { join } from "path";
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync, mkdtempSync, chmodSync, rmSync } from "fs";
+import { tmpdir } from "os";
 import {
   Branch,
   FileStatus,
@@ -20,6 +21,7 @@ import {
   DetachedHead,
   CommitFileChange,
   Preferences,
+  RebasePlanItem,
 } from "../types";
 
 /**
@@ -568,6 +570,146 @@ export class GitManager {
   }
 
   /**
+   * Returns the first parent hash of a given commit or null if none (root commit).
+   */
+  async getFirstParentOfCommit(commitHash: string): Promise<string | null> {
+    const output = await this.git.raw(["rev-list", "--parents", "-n", "1", commitHash.trim()]);
+    const parts = output.trim().split(/\s+/);
+    // Format: <child> <parent1> [parent2 ...]
+    if (parts.length >= 2) {
+      return parts[1];
+    }
+    return null;
+  }
+
+  /**
+   * Gets commits in chronological order from the specified start commit (inclusive) up to HEAD.
+   */
+  async getCommitsSince(startHash: string): Promise<Commit[]> {
+    const parent = await this.getFirstParentOfCommit(startHash);
+
+    const options = [
+      "--reverse",
+      "--name-status",
+      "--decorate=full",
+    ];
+
+    if (parent) {
+      options.push(`${parent}..HEAD`);
+    } else {
+      // Root commit selected: include full history to HEAD
+      options.push("--all");
+    }
+
+    const log = await this.git.log(options);
+
+    return log.all.map(
+      (commit: {
+        hash: string;
+        message: string;
+        body: string;
+        author_name: string;
+        author_email: string;
+        date: string;
+        refs?: string;
+        diff?: DiffResult;
+      }) => {
+        const changedFiles = this.parseCommitChangedFiles(commit.diff!);
+        const parsedRefs = this.parseCommitRefs(commit.refs);
+
+        return {
+          hash: commit.hash,
+          shortHash: commit.hash.substring(0, 7),
+          message: commit.message,
+          body: commit.body,
+          author: commit.author_name,
+          authorEmail: commit.author_email,
+          date: new Date(commit.date),
+          localBranches: parsedRefs.localBranches,
+          remoteBranches: parsedRefs.remoteBranches,
+          tags: parsedRefs.tags,
+          currentBranchName: parsedRefs.currentBranchName,
+          changedFiles,
+        } as Commit;
+      },
+    );
+  }
+
+  /**
+   * Performs an interactive rebase with a prepared plan. The plan order defines the new history order.
+   * For reword, the new message will be applied using an exec amend step.
+   */
+  async interactiveRebase(startHash: string, plan: RebasePlanItem[]): Promise<void> {
+    // Build rebase todo content based on plan
+    const todoLines: string[] = [];
+
+    for (const item of plan) {
+      const action = item.action;
+      const hash = item.hash.trim();
+
+      switch (action) {
+        case "pick":
+          todoLines.push(`pick ${hash}`);
+          break;
+        case "drop":
+          todoLines.push(`drop ${hash}`);
+          break;
+        case "edit":
+          todoLines.push(`edit ${hash}`);
+          break;
+        case "squash":
+          todoLines.push(`squash ${hash}`);
+          break;
+        case "fixup":
+          todoLines.push(`fixup ${hash}`);
+          break;
+        case "reword":
+          // Use pick + exec amend to set message non-interactively
+          todoLines.push(`pick ${hash}`);
+          if (item.newMessage) {
+            // Escape double quotes and backslashes for safe shell embedding
+            const escaped = item.newMessage.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+            todoLines.push(`exec git commit --amend -m "${escaped}"`);
+          } else {
+            throw new Error("No new message provided for reword action in interactive rebase plan");
+          }
+          break;
+      }
+    }
+
+    // Create temporary sequence editor script that writes our todo
+    const tempDirectory = mkdtempSync(join(tmpdir(), "raycast-git-"));
+    const editorPath = join(tempDirectory, "sequence-editor.sh");
+    // Используем многострочный шаблонный литерал для генерации shell-скрипта sequence editor
+    const script = `#!/bin/sh
+TODO_FILE="$1"
+cat > "$TODO_FILE" <<'__REBASE_TODO__'
+${todoLines.join("\n")}
+__REBASE_TODO__
+`;
+    writeFileSync(editorPath, script, { encoding: "utf-8" });
+    // Set executable permissions for the script: 0o755 means rwxr-xr-x (owner can read/write/execute, group and others can read/execute)
+    chmodSync(editorPath, 0o755);
+
+    try {
+      const parentCommit = await this.getFirstParentOfCommit(startHash);
+      const options = [
+        "-c", `sequence.editor=${editorPath}`,
+        "rebase", "--interactive"
+      ];
+      if (parentCommit) {
+        options.push(parentCommit);
+      } else {
+        options.push("--root");
+      }
+      await this.git.raw(options);
+    } finally {
+      try { rmSync(tempDirectory, { recursive: true, force: true }); }
+      catch (error) { /* ignore */ }
+    }
+  }
+
+  /**
    * Parses the changed files from git log --name-status diff output.
    */
   private parseCommitChangedFiles(diff: DiffResult): CommitFileChange[] {
@@ -925,12 +1067,8 @@ export class GitManager {
   /**
    * Rebases the current branch onto the specified branch.
    */
-  async rebase(targetBranch: string, interactive = false): Promise<void> {
-    if (!targetBranch || typeof targetBranch !== "string" || targetBranch.trim().length === 0) {
-      throw new Error("Invalid target branch name");
-    }
-    const options = interactive ? ["--interactive"] : [];
-    await this.git.rebase([targetBranch.trim(), ...options]);
+  async rebase(targetBranch: string): Promise<void> {
+    await this.git.rebase([targetBranch.trim()]);
   }
 
   /**

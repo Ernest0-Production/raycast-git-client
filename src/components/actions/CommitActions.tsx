@@ -1,6 +1,7 @@
-import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast, clearSearchBar } from "@raycast/api";
+import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast, clearSearchBar, useNavigation } from "@raycast/api";
 import { GitManager } from "../../utils/git-utils";
 import { Commit } from "../../types";
+import InteractiveRebaseEditorView from "../../commands/views/InteractiveRebaseEditorView";
 
 interface CommitActionProps {
   commit: Commit;
@@ -131,6 +132,26 @@ export function CommitResetAction({ commit, gitManager, onRefresh }: CommitActio
         style={Action.Style.Destructive}
       />
     </ActionPanel.Submenu>
+  );
+}
+
+/**
+ * Action to open Interactive Rebase Editor starting from selected commit.
+ */
+export function CommitInteractiveRebaseAction({ commit, gitManager, onRefresh }: CommitActionProps) {
+  return (
+    <Action.Push
+      title="Interactive Rebase to Here"
+      icon={Icon.ArrowClockwise}
+      target={
+        <InteractiveRebaseEditorView
+          gitManager={gitManager}
+          startFromCommit={commit}
+          onFinish={onRefresh}
+        />
+      }
+      shortcut={{ modifiers: ["cmd"], key: "e" }}
+    />
   );
 }
 

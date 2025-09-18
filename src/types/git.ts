@@ -109,6 +109,23 @@ export interface Commit {
 }
 
 /**
+ * Action for a single commit in interactive rebase plan.
+ */
+export type RebaseAction = "pick" | "reword" | "edit" | "drop" | "squash" | "fixup";
+
+/**
+ * Describes plan item for interactive rebase execution.
+ */
+export interface RebasePlanItem {
+  /** Commit full hash. */
+  hash: string;
+  /** Selected action. */
+  action: RebaseAction;
+  /** Optional new message for reword action (single line). */
+  newMessage?: string;
+}
+
+/**
  * Represents an entry in the stash (staged changes).
  */
 export interface Stash {
