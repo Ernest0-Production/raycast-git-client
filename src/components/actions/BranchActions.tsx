@@ -67,9 +67,7 @@ export function BranchDeleteAction({ branch, gitManager, onRefresh }: BranchActi
     if (confirmed) {
       try {
         if (branch.type === "local") {
-          await gitManager.deleteBranch(branch.name);
-
-          if (branch.upstream) {
+          if (branch.upstream && !branch.isGone) {
             const confirmed = await confirmAlert({
               title: "Delete remote branch",
               message: `Also delete remote branch "${branch.upstream}"?`,
@@ -79,9 +77,10 @@ export function BranchDeleteAction({ branch, gitManager, onRefresh }: BranchActi
               },
             });
             if (confirmed) {
-              await gitManager.deleteRemoteBranch(branch.upstream.split("/")[0], branch.upstream.split("/")[1]);
+              await gitManager.deleteUpstreamBranch(branch.upstream);
             }
           }
+          await gitManager.deleteBranch(branch.name);
         } else if (branch.remote) {
           await gitManager.deleteRemoteBranch(branch.remote, branch.name);
         }

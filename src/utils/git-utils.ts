@@ -110,7 +110,7 @@ export class GitManager {
     const parseBranchInfo = (label: string): { ahead: number; behind: number; upstream?: string; isGone?: boolean } => {
       const aheadMatch = label.match(/ahead (\d+)/);
       const behindMatch = label.match(/behind (\d+)/);
-      const upstreamMatch = label.match(/^\[(.*?)(: ahead \d+| behind \d+)*\]/);
+      const upstreamMatch = label.match(/^\[(.*?)(: ahead \d+| behind \d+|: gone)*\]/);
       const isGone = !!label.match(/: gone/);
 
       return {
@@ -655,10 +655,11 @@ export class GitManager {
    * Deletes a remote branch.
    */
   async deleteRemoteBranch(remote: string, branchName: string): Promise<void> {
-    if (!remote || !branchName) {
-      throw new Error("Invalid remote or branch name");
-    }
     await this.git.push(remote, branchName, ["--delete"]);
+  }
+
+  async deleteUpstreamBranch(upstream: string): Promise<void> {
+    await this.deleteRemoteBranch(upstream.split("/")[0], upstream.split("/")[1]);
   }
 
   /**
