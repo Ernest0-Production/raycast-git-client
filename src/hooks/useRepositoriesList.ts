@@ -2,14 +2,13 @@ import { useCachedState } from "@raycast/utils";
 import { useCallback } from "react";
 import { Repository } from "../types";
 import { resolveTildePath } from "../utils/validation";
-import { GitManager } from "../utils/git-utils";
 
 /**
- * Hook for managing the list of recent repositories.
+ * Hook for managing the list of repositories.
  * Repositories are sorted by last visit - most recent first.
  * Supports tilde (~) paths.
  */
-export function useRecentRepositories() {
+export function useRepositoriesList() {
   // Cache the list of repositories between sessions
   const [repositories, setRepositories] = useCachedState<Repository[]>("recent-repositories-list", []);
 
@@ -55,7 +54,7 @@ export function useRecentRepositories() {
   /**
    * Clears all recent repositories.
    */
-  const clearRecentRepositories = useCallback(() => {
+  const clearRepositoriesList = useCallback(() => {
     setRepositories([]);
   }, [setRepositories]);
 
@@ -63,6 +62,6 @@ export function useRecentRepositories() {
     repositories,
     addToRecent,
     removeFromRecent,
-    clearRecentRepositories,
+    clearRepositoriesList,
   };
 }

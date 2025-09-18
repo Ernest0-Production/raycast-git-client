@@ -1,12 +1,12 @@
 import { ActionPanel, Action, Icon, List, confirmAlert, Alert, showToast, Toast, LaunchType, Form, useNavigation } from "@raycast/api";
 import { useState } from "react";
-import { useRecentRepositories } from "./hooks/useRecentRepositories";
+import { useRepositoriesList } from "./hooks/useRepositoriesList";
 import { RepositoryDirectoryActions } from "./components/actions/RepositoryDirectoryActions";
 import { validateGitRepository } from "./utils/validation";
 import OpenRepository from "./open-repository";
 
-export default function RecentRepositories() {
-  const { repositories, addToRecent, removeFromRecent, clearRecentRepositories } = useRecentRepositories();
+export default function ManageRepositories() {
+  const { repositories, addToRecent, removeFromRecent, clearRepositoriesList } = useRepositoriesList();
 
   const handleClearRepositories = async () => {
     const confirmed = await confirmAlert({
@@ -20,7 +20,7 @@ export default function RecentRepositories() {
 
     if (confirmed) {
       try {
-        await clearRecentRepositories();
+        await clearRepositoriesList();
         await showToast({
           style: Toast.Style.Success,
           title: "List cleared",
@@ -104,27 +104,30 @@ export default function RecentRepositories() {
                     }}
                     shortcut={{ modifiers: ["shift", "cmd"], key: "l" }}
                   />
+                  <Action
+                    title="Remove"
+                    onAction={() => handleRemoveRepository(repo.name, repo.path)}
+                    icon={Icon.Trash}
+                    style={Action.Style.Destructive}
+                    shortcut={{ modifiers: ["ctrl"], key: "x" }}
+                  />
+                </ActionPanel.Section>
+
+                <RepositoryDirectoryActions
+                  repositoryPath={repo.path}
+                  onOpen={() => addToRecent(repo.path)}
+                />
+
+                <ActionPanel.Section title="Global">
                   <Action.Push
                     title="Add Repository"
                     target={<AddRepositoryForm />}
                     icon={Icon.Plus}
                     shortcut={{ modifiers: ["cmd"], key: "n" }}
                   />
-                </ActionPanel.Section>
-
-                <RepositoryDirectoryActions repositoryPath={repo.path} onOpen={() => addToRecent(repo.path)} />
-
-                <ActionPanel.Section>
-                  <Action
-                    title="Remove from Recent"
-                    onAction={() => handleRemoveRepository(repo.name, repo.path)}
-                    icon={Icon.Trash}
-                    style={Action.Style.Destructive}
-                    shortcut={{ modifiers: ["ctrl"], key: "x" }}
-                  />
                   {repositories.length > 1 && (
                     <Action
-                      title="Clear all Recent"
+                      title="Remove All"
                       onAction={handleClearRepositories}
                       icon={Icon.Trash}
                       style={Action.Style.Destructive}
@@ -142,7 +145,7 @@ export default function RecentRepositories() {
 }
 
 function AddRepositoryForm() {
-  const { addToRecent } = useRecentRepositories();
+  const { addToRecent } = useRepositoriesList();
   const { pop } = useNavigation();
   const [repositoryPaths, setRepositoryPaths] = useState<string[]>([]);
 

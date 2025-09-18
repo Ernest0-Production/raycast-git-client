@@ -2,7 +2,7 @@ import { Action, ActionPanel, Icon, List } from "@raycast/api";
 import { GitView } from "./types";
 import { useCachedState } from "@raycast/utils";
 import { useGitRepository } from "./hooks/useGitRepository";
-import { useRecentRepositories } from "./hooks/useRecentRepositories";
+import { useRepositoriesList } from "./hooks/useRepositoriesList";
 import { BranchesView } from "./commands/views/BranchesView";
 import { StatusView } from "./commands/views/StatusView";
 import { CommitsView } from "./commands/views/CommitsView";
@@ -28,7 +28,7 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
   const { data: gitManager, error: repoError } = useGitRepository(repositoryPath);
 
   // Hook for managing recent repositories
-  const { addToRecent } = useRecentRepositories();
+  const { addToRecent } = useRepositoriesList();
 
   // Add repository to recent cache when successfully opened
   useEffect(() => {

@@ -8,7 +8,7 @@
   "license": "MIT",
   "commands": [
     {
-      "name": "recent-repositories",
+      "name": "manage-repositories",
       "title": "Manage Git Repositories",
       "description": "List of Git repositories",
       "mode": "view"

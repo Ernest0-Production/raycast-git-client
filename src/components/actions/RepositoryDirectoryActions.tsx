@@ -16,7 +16,7 @@ export function RepositoryDirectoryActions({ repositoryPath, onOpen }: Repositor
   const preferences = getPreferenceValues<Preferences>();
 
   return (
-    <ActionPanel.Section title="Repository">
+    <ActionPanel.Section title={repositoryPath.split("/").pop() || repositoryPath}>
       <Action.Open
         title={`Open Repository in ${preferences.defaultEditor.name}`}
         target={repositoryPath}
