@@ -18,7 +18,6 @@
       "title": "Open Git Repository",
       "description": "Open a Git repository management interface",
       "mode": "view",
-      "disabledByDefault": true,
       "arguments": [
         {
           "name": "path",
