@@ -100,7 +100,7 @@ export default function RecentRepositories() {
                     title="Create Quicklink"
                     quicklink={{
                       link: `raycast://extensions/ernest0n/git-client/open-repository?arguments=${encodeURIComponent(JSON.stringify({ path: repo.path }))}`,
-                      name: `Show ${repo.name} repository`,
+                      name: `Show ${repo.name} in Git`,
                     }}
                     shortcut={{ modifiers: ["shift", "cmd"], key: "l" }}
                   />
