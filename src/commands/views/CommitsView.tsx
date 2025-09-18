@@ -28,7 +28,7 @@ import {
 } from "../../hooks/useUrlTracker";
 import "../../utils/date-utils";
 import { Branch, Commit, UrlTrackerConfig, DetachedHead } from "../../types";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { CommitMessageForm } from "./CommitMessageView";
 
 interface CommitsViewProps {
@@ -226,14 +226,9 @@ function CommitListItem({
   currentBranch,
 }: CommitListItemProps) {
   const { push } = useNavigation();
-  const [commitUrls, setCommitUrls] = useState<Array<{ title: string; url: string }>>([]);
-
-  // Extract URLs only for the selected commit to improve performance
-  useEffect(() => {
-    if (selectedCommitId === commit.hash) {
-      const urls = extractUrlsFromCommitWithConfigs(commit.message, urlTrackerConfigs);
-      setCommitUrls(urls);
-    }
+  const commitUrls = useMemo(() => {
+    if (selectedCommitId !== commit.hash) return [];
+    return extractUrlsFromCommitWithConfigs(commit.message, urlTrackerConfigs);
   }, [selectedCommitId, commit.hash, commit.message, urlTrackerConfigs]);
 
   const formatCommitDetail = (commit: Commit, urlTrackerConfigs: UrlTrackerConfig[]): string => {
@@ -450,7 +445,7 @@ function CommitListItem({
                 key={`${urlInfo.url}-${index}`}
                 title={`Open ${urlInfo.title}`}
                 url={urlInfo.url}
-                icon={getFavicon(urlInfo.url, { fallback: Icon.Globe })}
+                icon={getFavicon(urlInfo.url, { fallback: Icon.Link })}
                 shortcut={index === 0 ? { modifiers: ["cmd"], key: "l" } : undefined}
               />
             ))}
