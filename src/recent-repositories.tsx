@@ -91,9 +91,9 @@ export default function RecentRepositories() {
               <ActionPanel>
                 <ActionPanel.Section title="Repository Actions">
                   <Action.Push
-                    title="Open Repository"
+                    title="Show Repository"
                     target={<OpenRepository arguments={{ path: repo.path }} />}
-                    icon={Icon.ArrowRight}
+                    icon={Icon.Book}
                     onPush={() => addToRecent(repo.path)}
                   />
                   <Action.Push

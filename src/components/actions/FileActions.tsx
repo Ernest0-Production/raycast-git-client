@@ -94,6 +94,7 @@ export function FileOpenAction({ filePath, shortcut }: { filePath: string, short
     <Action.Open
       title="Open"
       target={filePath}
+      icon={Icon.Document}
       shortcut={shortcut}
     />
   );
@@ -237,7 +238,7 @@ export function FileDiscardAllAction({ gitManager, onRefresh }: { gitManager: Gi
       onAction={handleDiscardAll}
       icon={Icon.ArrowCounterClockwise}
       style={Action.Style.Destructive}
-      shortcut={{ modifiers: ["cmd", "shift"], key: "x" }}
+      shortcut={{ modifiers: ["ctrl", "cmd"], key: "x" }}
     />
   );
 }
