@@ -69,17 +69,27 @@ export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: {
         );
       }
 
-      promptParts.push(
-        "--------------------",
-        "GIT DIFF:",
-        "--------------------",
-        diff.trim(),
-        "",
-        "--------------------",
-        amend && lastCommit
-          ? "Please provide an summarized commit message based on the previous commit message and the new changes. Only return the commit message, no explanations."
-          : "Please provide only the commit message, no explanations.",
-      );
+      if (!amendOnly) {
+        promptParts.push(
+          "--------------------",
+          "GIT DIFF:",
+          "--------------------",
+          diff.trim(),
+          "",
+          "--------------------",
+        );
+      }
+
+      if (amend && lastCommit) {
+        promptParts.push(
+          "Please provide an summarized commit message based on the previous commit message and the new changes.",
+          "Only return the commit message, no explanations."
+        );
+      } else {
+        promptParts.push(
+          "Please provide only the commit message, no explanations."
+        );
+      }
 
       const prompt = promptParts.join("\n");
 
@@ -112,8 +122,7 @@ export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: {
     if (push && forcePush) {
       const confirmed = await confirmAlert({
         title: "Force Push Confirmation",
-        message:
-          "Force push will rewrite Git history on the remote repository. This can cause problems for other collaborators. Are you sure you want to continue?",
+        message: "Force push will rewrite Git history on the remote repository. This can cause problems for other collaborators. Are you sure you want to continue?",
         primaryAction: {
           title: "Force Push",
           style: Alert.ActionStyle.Destructive,
