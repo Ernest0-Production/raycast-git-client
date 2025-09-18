@@ -89,12 +89,20 @@ export default function RecentRepositories() {
             keywords={[repo.path]}
             actions={
               <ActionPanel>
-                <ActionPanel.Section title="Repository Actions">
+                <ActionPanel.Section>
                   <Action.Push
                     title="Show Repository"
                     target={<OpenRepository arguments={{ path: repo.path }} />}
                     icon={Icon.Book}
                     onPush={() => addToRecent(repo.path)}
+                  />
+                  <Action.CreateQuicklink
+                    title="Create Quicklink"
+                    quicklink={{
+                      link: `raycast://extensions/ernest0n/git-client/open-repository?arguments=${encodeURIComponent(JSON.stringify({ path: repo.path }))}`,
+                      name: `Show ${repo.name} repository`,
+                    }}
+                    shortcut={{ modifiers: ["shift", "cmd"], key: "l" }}
                   />
                   <Action.Push
                     title="Add Repository"
@@ -106,16 +114,6 @@ export default function RecentRepositories() {
 
                 <RepositoryDirectoryActions repositoryPath={repo.path} onOpen={() => addToRecent(repo.path)} />
 
-                <ActionPanel.Section title="Raycast">
-                  <Action.CreateQuicklink
-                    quicklink={{
-                      link: `raycast://extensions/ernest0n/git-client/open-repository?arguments=${encodeURIComponent(JSON.stringify({ path: repo.path }))}`,
-                      name: `Show ${repo.name} repository`,
-                    }}
-                    title="Create Quicklink"
-                  />
-                </ActionPanel.Section>
-
                 <ActionPanel.Section>
                   <Action
                     title="Remove from Recent"
@@ -126,7 +124,7 @@ export default function RecentRepositories() {
                   />
                   {repositories.length > 1 && (
                     <Action
-                      title="Clear List"
+                      title="Clear all Recent"
                       onAction={handleClearRepositories}
                       icon={Icon.Trash}
                       style={Action.Style.Destructive}
