@@ -127,21 +127,17 @@ function FileListItem({
       actions={
         <ActionPanel>
           <ActionPanel.Section title={file.path.split("/").pop()}>
+            <Action
+              title={isShowingDetail ? "Hide Diff" : "Show Diff"}
+              icon={Icon.AppWindowSidebarLeft}
+              onAction={onToggleDetail}
+              shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
+            />
             <FileOpenAction filePath={absolutePath} />
             <FileOpenWithAction filePath={absolutePath} shortcut={{ modifiers: ["cmd"], key: "o" }} />
             <FileCopyPathAction filePath={absolutePath} />
             <FileQuickLookAction filePath={absolutePath} />
           </ActionPanel.Section>
-
-          <ActionPanel.Section>
-            <Action
-              title={isShowingDetail ? "Hide Detail" : "Show Detail"}
-              icon={Icon.AppWindowSidebarLeft}
-              onAction={onToggleDetail}
-              shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
-            />
-          </ActionPanel.Section>
-
           {navigationActions}
         </ActionPanel>
       }
