@@ -464,7 +464,7 @@ function CommitListItem({
             <CommitCopyAuthorEmailAction commit={commit} />
             {commit.currentBranchName &&
               <Action.Push
-                title="Amend Commit"
+                title="Reword Commit Message"
                 icon={Icon.Message}
                 target={<CommitMessageForm amendOnly={true} gitManager={gitManager} onFinish={onRefresh} />}
                 shortcut={{ modifiers: ["cmd", "shift"], key: "a" }}

@@ -338,6 +338,7 @@ function CreateBranchForm({ gitManager, onRefresh }: { gitManager: GitManager; o
 
   return (
     <Form
+      navigationTitle="Create Branch"
       isLoading={isLoading}
       actions={
         <ActionPanel>
@@ -396,6 +397,7 @@ function RenameBranchForm({ branch, gitManager, onRefresh }: { branch: Branch; g
 
   return (
     <Form
+      navigationTitle="Rename Branch"
       isLoading={isLoading}
       actions={
         <ActionPanel>

@@ -164,10 +164,11 @@ export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: {
 
   return (
     <Form
+      navigationTitle={"Commit Message"}
       isLoading={isGenerating}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title="Commit Actions">
+          <ActionPanel.Section>
             <Action.SubmitForm title={amend ? "Amend" : "Commit"} onSubmit={handleSubmit} icon={Icon.CheckCircle} />
             <Action
               title={amend ? "Amend and Push" : "Commit and Push"}
@@ -198,7 +199,7 @@ export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: {
             <Action
               title="Toggle Amend"
               onAction={() => handleAmendChange(!amend)}
-              icon={Icon.Switch}
+              icon={Icon.ArrowCounterClockwise}
               shortcut={{ modifiers: ["cmd", "shift"], key: "a" }}
             />
           </ActionPanel.Section>
@@ -207,7 +208,7 @@ export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: {
     >
       <Form.TextArea
         id="message"
-        title="Commit message"
+        title="Message"
         placeholder="Enter commit message or use AI generation..."
         value={draftMessage}
         error={draftMessage.length > 0 ? undefined : "Required"}
@@ -216,7 +217,7 @@ export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: {
       />
       <Form.Checkbox
         id="amend"
-        label="Amend last commit"
+        label="Amend"
         value={amend}
         onChange={handleAmendChange}
         info="Modify the last commit instead of creating a new one"

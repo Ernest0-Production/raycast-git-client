@@ -31,40 +31,45 @@ export function CommitDiffView({ commit, gitManager, navigationActions }: Commit
 
   return (
     <List
+      navigationTitle="Commit Changes"
       searchBarPlaceholder="Search files by name, path..."
       onSelectionChange={(id) => setSelectedFilePath(id)}
       filtering={{ keepSectionOrder: true }}
       isShowingDetail={isShowingDetail}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title="View Controls">
-            <Action
-              title={isShowingDetail ? "Hide Detail" : "Show Detail"}
-              icon={Icon.AppWindowSidebarLeft}
-              onAction={toggleDetail}
-              shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
-            />
-          </ActionPanel.Section>
+          <Action
+            title={isShowingDetail ? "Hide Diff" : "Show Diff"}
+            icon={Icon.AppWindowSidebarLeft}
+            onAction={toggleDetail}
+            shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
+          />
 
           {navigationActions}
         </ActionPanel>
       }
     >
       {!commit.changedFiles || commit.changedFiles.length === 0 ? (
-        <List.EmptyView title="No file changes" description="This commit has no file changes." icon={Icon.Document} />
+        <List.EmptyView
+          title="No file changes"
+          description="This commit has no file changes."
+          icon={Icon.Document}
+        />
       ) : (
-        commit.changedFiles.map((file) => (
-          <FileListItem
-            key={file.path}
-            file={file}
-            commit={commit}
-            gitManager={gitManager}
-            navigationActions={navigationActions}
-            isShowingDetail={isShowingDetail}
-            onToggleDetail={toggleDetail}
-            selectedFilePath={selectedFilePath}
-          />
-        ))
+        <List.Section title={commit.message}>
+          {commit.changedFiles.map((file) => (
+            <FileListItem
+              key={file.path}
+              file={file}
+              commit={commit}
+              gitManager={gitManager}
+              navigationActions={navigationActions}
+              isShowingDetail={isShowingDetail}
+              onToggleDetail={toggleDetail}
+              selectedFilePath={selectedFilePath}
+            />
+          ))}
+        </List.Section>
       )}
     </List>
   );
