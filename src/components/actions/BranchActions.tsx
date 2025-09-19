@@ -350,7 +350,7 @@ function CreateBranchForm({ gitManager, onRefresh }: { gitManager: GitManager; o
         title="Branch Name"
         placeholder="Enter branch name"
         value={branchName}
-        onChange={setBranchName}
+        onChange={(value) => setBranchName(value.replace(/ /g, "-"))}
       />
       {currentBranch && <Form.Description text={`From branch '${currentBranch}'`} />}
     </Form>
