@@ -126,16 +126,19 @@ export class GitManager {
     const summary = await this.git.branch(["--all", "-vv", "--sort=-committerdate"]);
 
     const parseBranchInfo = (label: string): { ahead: number; behind: number; upstream?: string; isGone?: boolean } => {
-      const aheadMatch = label.match(/ahead (\d+)/);
-      const behindMatch = label.match(/behind (\d+)/);
-      const upstreamMatch = label.match(/^\[(.*?)(: ahead \d+| behind \d+|: gone)*\]/);
-      const isGone = !!label.match(/: gone/);
+      // Single regex to parse all possible branch info patterns with named groups
+      // Handles: no upstream, [upstream], [upstream: ahead X], [upstream: behind Y], [upstream: ahead X, behind Y], [upstream: gone]
+      const match = label.match(/(?:\[(?<upstream>.*?)(?:: (?:ahead (?<ahead>\d+))?(?:, )?(?:behind (?<behind>\d+))?(?<gone>gone)?)?\])?/);
+
+      if (!match?.groups) {
+        return { ahead: 0, behind: 0 };
+      }
 
       return {
-        ahead: aheadMatch ? parseInt(aheadMatch[1], 10) : 0,
-        behind: behindMatch ? parseInt(behindMatch[1], 10) : 0,
-        upstream: upstreamMatch ? upstreamMatch[1] : undefined,
-        isGone,
+        ahead: match.groups.ahead ? parseInt(match.groups.ahead, 10) : 0,
+        behind: match.groups.behind ? parseInt(match.groups.behind, 10) : 0,
+        upstream: match.groups.upstream,
+        isGone: !!match.groups.gone,
       };
     };
 

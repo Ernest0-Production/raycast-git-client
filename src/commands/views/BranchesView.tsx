@@ -14,6 +14,7 @@ import {
 } from "../../components/actions/BranchActions";
 import { GitManager } from "../../utils/git-utils";
 import { Branch, DetachedHead, BranchesState } from "../../types";
+import { useMemo } from "react";
 
 interface BranchesViewProps {
   gitManager: GitManager;
@@ -163,66 +164,74 @@ function BranchListItem({
   hasConflicts?: boolean;
   hasUncommittedChanges?: boolean;
 }) {
-  const accessories = [];
+  const accessories = useMemo(() => {
+    const result = [];
 
-  // Add conflict warning indicator for current branch
-  if (branch.type === "current" && hasConflicts) {
-    accessories.push({
-      tag: { value: "Conflicts", color: Color.Red },
-      icon: Icon.ExclamationMark,
-      tooltip: "There are unresolved merge conflicts",
-    });
-  }
+    // Add conflict warning indicator for current branch
+    if (branch.type === "current" && hasConflicts) {
+      result.push({
+        tag: { value: "Conflicts", color: Color.Red },
+        icon: Icon.ExclamationMark,
+        tooltip: "There are unresolved merge conflicts",
+      });
+    }
 
-  // Add uncommitted changes indicator for current branch
-  if (branch.type === "current" && hasUncommittedChanges) {
-    accessories.push({
-      tag: { value: "Uncommitted", color: Color.Orange },
-      icon: Icon.Document,
-      tooltip: "There are uncommitted changes",
-    });
-  }
+    // Add uncommitted changes indicator for current branch
+    if (branch.type === "current" && hasUncommittedChanges) {
+      result.push({
+        tag: { value: "Uncommitted", color: Color.Orange },
+        icon: Icon.Document,
+        tooltip: "There are uncommitted changes",
+      });
+    }
 
-  // Add ahead/behind indicators
-  if (branch.ahead || branch.behind) {
-    const parts = [];
-    if (branch.ahead) parts.push(`${branch.ahead} ↑`);
-    if (branch.behind) parts.push(`${branch.behind} ↓`);
-    accessories.push({
-      text: parts.join(" "),
-      tooltip: [
-        branch.ahead ? `↑ ahead by ${branch.ahead} commits` : null,
-        branch.behind ? `↓ behind by ${branch.behind} commits` : null,
-      ]
-        .filter(Boolean)
-        .join("\n"),
-    });
-  }
+    // Add ahead/behind indicators
+    if (branch.ahead || branch.behind) {
+      const parts = [];
+      if (branch.ahead) parts.push(`${branch.ahead} ↑`);
+      if (branch.behind) parts.push(`${branch.behind} ↓`);
+      result.push({
+        text: parts.join(" "),
+        tooltip: [
+          branch.ahead ? `↑ ahead by ${branch.ahead} commits` : null,
+          branch.behind ? `↓ behind by ${branch.behind} commits` : null,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      });
+    }
 
-  if (branch.isGone) {
-    accessories.push({
-      tag: { value: "Removed", color: Color.Yellow },
-      icon: Icon.ExclamationMark,
-      tooltip: "Tracked branch was removed from remote",
-    });
-  }
+    if ((branch.type === "local" || branch.type === "current") && branch.upstream) {
+      result.push({
+        tag: {
+          value: branch.upstream,
+          color: branch.isGone ? Color.Yellow : Color.SecondaryText
+        },
+        tooltip: branch.isGone ? "Upstream was removed from remote" : undefined,
+        icon: branch.isGone ? Icon.ExclamationMark : Icon.Globe
+      });
+    }
+
+    return result;
+  }, [branch, hasConflicts, hasUncommittedChanges]);
 
   // Determine icon based on branch type
-  const getIcon = () => {
-    if (branch.type === "current") {
-      return { source: Icon.Dot, tintColor: Color.Green };
-    } else if (branch.type === "remote") {
-      return { source: Icon.Globe, tintColor: Color.SecondaryText };
-    } else {
-      return { source: Icon.Dot, tintColor: Color.SecondaryText };
-    }
-  };
+  const getIcon = useMemo(() => {
+    return () => {
+      if (branch.type === "current") {
+        return { source: Icon.Dot, tintColor: Color.Green };
+      } else if (branch.type === "remote") {
+        return { source: Icon.Globe, tintColor: Color.SecondaryText };
+      } else {
+        return { source: Icon.Dot, tintColor: Color.SecondaryText };
+      }
+    };
+  }, [branch.type]);
 
   return (
     <List.Item
       key={branch.name}
       title={branch.name}
-      subtitle={branch.lastCommitMessage || "No commit message"}
       icon={getIcon()}
       accessories={accessories}
       keywords={[branch.upstream, branch.remote].filter((keyword): keyword is string => Boolean(keyword))}
