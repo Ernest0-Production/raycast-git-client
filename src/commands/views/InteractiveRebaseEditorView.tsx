@@ -70,14 +70,17 @@ export default function InteractiveRebaseEditorView({ gitManager, startFromCommi
         if (!confirmed) return;
 
         try {
+            setIsLoading(true);
             await showToast({ style: Toast.Style.Animated, title: "Rebasing..." });
             const planList: RebasePlanItem[] = commits.map((c) => plan[c.hash]);
             await gitManager.interactiveRebase(startFromCommit.hash, planList);
             await showToast({ style: Toast.Style.Success, title: "Rebase completed" });
-            pop();
-            onFinish();
         } catch (error) {
             // GitManager will show the error toast
+        } finally {
+            setIsLoading(false);
+            pop();
+            onFinish();
         }
     };
 

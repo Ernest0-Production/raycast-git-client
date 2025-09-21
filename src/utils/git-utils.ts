@@ -55,9 +55,10 @@ export class GitManager {
 
     const preferences = getPreferenceValues<Preferences>();
     if (preferences.environmentPath === "homebrew") {
-      this.git = this.git.env({
-        "PATH": `/opt/homebrew/bin:/opt/homebrew/sbin:${process.env.PATH || "/usr/bin"}`,
-      });
+      this.git = this.git.env(
+        "PATH",
+        `/opt/homebrew/bin:/opt/homebrew/sbin:${process.env.PATH || "/usr/bin"}`,
+      );
     }
 
     // Global logging of all git commands for debugging
