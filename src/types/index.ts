@@ -15,6 +15,8 @@ export interface Preferences {
   defaultTerminal: Application;
   /** External git client for git commands. */
   externalGitClient?: Application;
+  /** Specifies the PATH environment variable for Git operations. */
+  environmentPath: "parent" | "homebrew";
   /** Number of commits to load per pagination page. */
   commitsPerPage: string;
   /** Maximum number of branches to load per pagination page. */

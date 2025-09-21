@@ -125,29 +125,8 @@ export function BranchPushAction({ branch, gitManager, onRefresh }: BranchAction
     try {
       await gitManager.push(false, branch);
       onRefresh();
-    } catch (pushError) {
-      // Push failed, offer force push for branches with upstream
-      const errorMessage = pushError instanceof Error ? pushError.message : "Unknown error";
-
-      const forceConfirmed = await confirmAlert({
-        title: "Push rejected",
-        message: `Reason: ${errorMessage}`,
-        primaryAction: {
-          title: "Force Push",
-          style: Alert.ActionStyle.Destructive,
-        },
-      });
-
-      if (forceConfirmed) {
-        // Execute force push
-        try {
-          await gitManager.push(true, branch);
-          onRefresh();
-        }
-        catch (error) {
-          // Git error is already shown by GitManager
-        }
-      }
+    } catch {
+      // Git error is already shown by GitManager
     }
   };
 
@@ -275,7 +254,7 @@ export function PullAction({ gitManager, onRefresh }: { gitManager: GitManager; 
   };
 
   return (
-    <ActionPanel.Submenu title="Pull Strategy" icon={Icon.ArrowDown} shortcut={{ modifiers: ["cmd", "shift"], key: "l" }}>
+    <ActionPanel.Submenu title="Pull" icon={Icon.ArrowDown} shortcut={{ modifiers: ["cmd", "shift"], key: "l" }}>
       <Action title="Rebase" icon={Icon.ArrowClockwise} onAction={handlePullRebase} />
       <Action title="Merge" icon={`git-merge.svg`} onAction={handlePullMerge} />
     </ActionPanel.Submenu>

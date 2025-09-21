@@ -1,17 +1,19 @@
 import {
+  CleanOptions,
   DiffNameStatus,
   DiffResult,
   DiffResultBinaryFile,
   DiffResultNameStatusFile,
   DiffResultTextFile,
   FileStatusResult,
+  ResetMode,
   simpleGit,
   SimpleGit,
 } from "simple-git";
 import { showToast, Toast, getPreferenceValues, Alert, confirmAlert } from "@raycast/api";
 import { join } from "path";
 import { readFileSync, writeFileSync, mkdtempSync, chmodSync, rmSync } from "fs";
-import { tmpdir } from "os";
+import { tmpdir, homedir } from "os";
 import {
   Branch,
   FileStatus,
@@ -50,6 +52,13 @@ export class GitManager {
         }
       }
     );
+
+    const preferences = getPreferenceValues<Preferences>();
+    if (preferences.environmentPath === "homebrew") {
+      this.git = this.git.env({
+        "PATH": `/opt/homebrew/bin:/opt/homebrew/sbin:${process.env.PATH || "/usr/bin"}`,
+      });
+    }
 
     // Global logging of all git commands for debugging
     this.setupGlobalLogging();
@@ -868,7 +877,10 @@ __REBASE_TODO__
    * Discards all unstaged changes in the repository.
    */
   async discardAllChanges(): Promise<void> {
-    await this.git.checkout(["--", "."]);
+    // Discard all changes in tracked files
+    await this.git.reset(ResetMode.HARD);
+    // Remove all untracked files and directories
+    await this.git.clean(CleanOptions.FORCE, ["-d"]);
   }
 
   /**
@@ -927,7 +939,26 @@ __REBASE_TODO__
       options.push("--force-with-lease");
     }
 
-    await this.git.push(remote, branch?.name, options);
+    try {
+      await this.git.push(remote, branch?.name, options);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (!force) {
+        const confirmed = await confirmAlert({
+          title: "Push rejected",
+          message: "Reason: " + errorMessage,
+          primaryAction: {
+            title: "Force Push",
+            style: Alert.ActionStyle.Destructive,
+          },
+        });
+        if (confirmed) {
+          await this.push(true, branch);
+        }
+      } else {
+        throw error;
+      }
+    }
 
     if (branch && (!branch.upstream || branch.isGone)) {
       const upstream = `${remote}/${branch.name}`;
