@@ -93,6 +93,14 @@
       "title": "AI Commit Message System Prompt",
       "default": "You are a helpful assistant that generates concise, clear Git commit messages. Analyze the provided git diff and generate a conventional commit message that accurately describes the changes. Use conventional commit format: <short title>\n<listed changes>. Focus on what changed and why.",
       "description": "System prompt used when generating commit messages with Raycast AI"
+    },
+    {
+      "name": "autoGenerateCommitMessage",
+      "required": false,
+      "type": "checkbox",
+      "label": "Auto Generate Commit Message",
+      "default": false,
+      "description": "Automatically generate a commit message using AI when opening the commit message view."
     }
   ],
   "dependencies": {

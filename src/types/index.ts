@@ -23,6 +23,8 @@ export interface Preferences {
   maxBranchesToLoad: string;
   /** System prompt for AI-generated commit messages. */
   aiCommitPrompt: string;
+  /** Automatically generate a commit message using AI when opening the commit view. */
+  autoGenerateCommitMessage: boolean;
 }
 
 /**

@@ -1,7 +1,7 @@
 import { GitManager } from "../../utils/git-utils";
 import { Preferences } from "../../types";
 import { useCachedState } from "@raycast/utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { showToast, Toast, getPreferenceValues, confirmAlert, environment, useNavigation } from "@raycast/api";
 import { AI } from "@raycast/api";
 import { Action, ActionPanel, Form, Icon, Alert } from "@raycast/api";
@@ -18,6 +18,12 @@ export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: {
     : useCachedState(`commit-amend-${gitManager.repoPath}`, false);
   const [isGenerating, setIsGenerating] = useState(false);
   const { pop } = useNavigation();
+
+  useEffect(() => {
+    if (preferences.autoGenerateCommitMessage && !amendOnly) {
+      generateCommitMessage();
+    }
+  }, []);
 
   // Handle amend checkbox changes
   const handleAmendChange = async (newAmendValue: boolean) => {
