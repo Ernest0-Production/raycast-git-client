@@ -28,7 +28,7 @@ import {
   replaceUrlPatternsWithLinks,
 } from "../../hooks/useUrlTracker";
 import "../../utils/date-utils";
-import { Branch, Commit, UrlTrackerConfig, DetachedHead } from "../../types";
+import { Commit, UrlTrackerConfig, BranchesState } from "../../types";
 import { useMemo, useState } from "react";
 import { CommitMessageForm } from "./CommitMessageView";
 
@@ -43,9 +43,7 @@ interface CommitsViewProps {
   navigationActions: React.ReactNode;
   viewDropdown: React.ReactElement<any>;
   // Branch context
-  allBranches: Branch[];
-  currentBranch?: Branch;
-  detachedHead?: DetachedHead;
+  branchesState?: BranchesState;
   // Filter state
   branchFilter: string;
   selectedBranch?: string;
@@ -62,9 +60,7 @@ export function CommitsView({
   gitManager,
   navigationActions,
   viewDropdown,
-  allBranches,
-  currentBranch,
-  detachedHead,
+  branchesState,
   branchFilter,
   selectedBranch,
   setBranchFilter,
@@ -82,7 +78,7 @@ export function CommitsView({
   const { configs: urlTrackerConfigs } = useUrlTracker(gitManager.repoPath);
 
   // Get current filter display name for List.Section title
-  const currentFilterDisplayName = getBranchFilterDisplayName(branchFilter, detachedHead, currentBranch);
+  const currentFilterDisplayName = getBranchFilterDisplayName(branchFilter, branchesState);
 
   const toggleDetail = () => {
     setIsShowingDetail(!isShowingDetail);
@@ -106,22 +102,20 @@ export function CommitsView({
           <ActionPanel.Section title="Branch">
             <CommitRefreshHistoryAction onRefresh={revalidate} />
             <PullAction gitManager={gitManager} onRefresh={revalidate} />
-            {currentBranch && currentBranch.type === "current" && (
-              <BranchPushAction branch={currentBranch} gitManager={gitManager} onRefresh={revalidate} />
+            {branchesState?.currentBranch && branchesState.currentBranch.type === "current" && (
+              <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={revalidate} />
             )}
             <FetchAction gitManager={gitManager} onRefresh={revalidate} />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="History">
-            {branchFilter &&
+            {branchFilter && branchesState && (
               <CommitBranchFilterAction
                 branchFilter={branchFilter}
                 updateSelectedBranch={setBranchFilter}
-                allBranches={allBranches}
-                detachedHead={detachedHead}
-                currentBranch={currentBranch}
+                branchesState={branchesState}
               />
-            }
+            )}
             <Action.Push
               title="Configure URL Tracker"
               icon={Icon.Gear}
@@ -182,9 +176,7 @@ export function CommitsView({
               selectedBranch={selectedBranch}
               branchFilter={branchFilter}
               updateSelectedBranch={setBranchFilter}
-              allBranches={allBranches}
-              detachedHead={detachedHead}
-              currentBranch={currentBranch}
+              branchesState={branchesState}
             />
           ))}
         </List.Section>
@@ -208,9 +200,7 @@ interface CommitListItemProps {
   selectedBranch?: string;
   branchFilter: string;
   updateSelectedBranch: (branchName: string) => void;
-  allBranches: Branch[];
-  detachedHead?: DetachedHead;
-  currentBranch?: Branch;
+  branchesState?: BranchesState;
 }
 
 function CommitListItem({
@@ -228,9 +218,7 @@ function CommitListItem({
   selectedBranch,
   branchFilter,
   updateSelectedBranch,
-  allBranches,
-  detachedHead,
-  currentBranch,
+  branchesState,
 }: CommitListItemProps) {
   const { push } = useNavigation();
   const commitUrls = useMemo(() => {
@@ -481,21 +469,21 @@ function CommitListItem({
 
           <ActionPanel.Section title="Branch">
             <PullAction gitManager={gitManager} onRefresh={onRefresh} />
-            {currentBranch && currentBranch.type === "current" && (
-              <BranchPushAction branch={currentBranch} gitManager={gitManager} onRefresh={onRefresh} />
+            {branchesState?.currentBranch && branchesState.currentBranch.type === "current" && (
+              <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={onRefresh} />
             )}
             <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
             {selectedBranch && <BranchCopyNameAction branch={selectedBranch} />}
           </ActionPanel.Section>
 
           <ActionPanel.Section title="History">
-            <CommitBranchFilterAction
-              branchFilter={branchFilter}
-              updateSelectedBranch={updateSelectedBranch}
-              allBranches={allBranches}
-              detachedHead={detachedHead}
-              currentBranch={currentBranch}
-            />
+            {branchesState && (
+              <CommitBranchFilterAction
+                branchFilter={branchFilter}
+                updateSelectedBranch={updateSelectedBranch}
+                branchesState={branchesState}
+              />
+            )}
             <Action.Push
               title="Configure URL Tracker"
               icon={Icon.Link}

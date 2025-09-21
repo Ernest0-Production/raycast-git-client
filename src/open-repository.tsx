@@ -7,14 +7,13 @@ import { BranchesView } from "./commands/views/BranchesView";
 import { StatusView } from "./commands/views/StatusView";
 import { CommitsView } from "./commands/views/CommitsView";
 import { StashesView } from "./commands/views/StashesView";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { RepositoryDirectoryActions } from "./components/actions/RepositoryDirectoryActions";
 import { useGitBranches } from "./hooks/useGitBranches";
 import { useCommitsBranchFilter } from "./hooks/useCommitsBranchFilter";
 import { useGitCommits } from "./hooks/useGitCommits";
 import { useGitStash } from "./hooks/useGitStash";
 import { useGitStatus } from "./hooks/useGitStatus";
-import { Branch } from "./types";
 
 interface Arguments {
   path: string;
@@ -58,23 +57,11 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
     revalidate: revalidateBranches,
   } = useGitBranches(gitManager);
 
-  const allBranches: Branch[] = useMemo(() => {
-    return [
-      ...(branchesState?.currentBranch ? [branchesState.currentBranch] : []),
-      ...(branchesState?.localBranches || []),
-      ...(
-        branchesState?.remoteBranches
-          ? Object.values(branchesState.remoteBranches).flat()
-          : []
-      ),
-    ];
-  }, [branchesState]);
-
   const {
     branchFilter,
     selectedBranch,
     setBranchFilter,
-  } = useCommitsBranchFilter(gitManager.repoPath, allBranches, branchesState?.detachedHead);
+  } = useCommitsBranchFilter(gitManager.repoPath, branchesState);
 
   const {
     isLoading: commitsIsLoading,
@@ -166,9 +153,7 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           navigationActions={navigationActions}
           viewDropdown={viewSelectorDropdown}
           // Branch context
-          allBranches={allBranches}
-          currentBranch={branchesState?.currentBranch}
-          detachedHead={branchesState?.detachedHead}
+          branchesState={branchesState}
           // Filter state
           branchFilter={branchFilter}
           selectedBranch={selectedBranch}

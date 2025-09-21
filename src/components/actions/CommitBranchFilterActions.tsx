@@ -1,13 +1,11 @@
 import { ActionPanel, Action, Icon, Color } from "@raycast/api";
-import { Branch, DetachedHead } from "../../types";
+import { BranchesState, DetachedHead, Branch } from "../../types";
 import { ALL_BRANCHES_FILTER, CURRENT_BRANCH_FILTER } from "../../hooks/useCommitsBranchFilter";
 
 interface CommitBranchFilterActionProps {
   branchFilter: string;
   updateSelectedBranch: (branchName: string) => void;
-  allBranches: Branch[];
-  detachedHead?: DetachedHead;
-  currentBranch?: Branch;
+  branchesState: BranchesState;
 }
 
 /**
@@ -17,69 +15,8 @@ interface CommitBranchFilterActionProps {
 export function CommitBranchFilterAction({
   branchFilter,
   updateSelectedBranch,
-  allBranches,
-  detachedHead,
-  currentBranch,
+  branchesState,
 }: CommitBranchFilterActionProps) {
-  const currentBranchOption = () => {
-    if (detachedHead) {
-      return (
-        <Action
-          title={`HEAD (${detachedHead.shortCommitHash})`}
-          icon={branchFilter === CURRENT_BRANCH_FILTER ? Icon.Checkmark : Icon.Anchor}
-          autoFocus={branchFilter === detachedHead?.shortCommitHash}
-          onAction={() => updateSelectedBranch(CURRENT_BRANCH_FILTER)}
-        />
-      );
-    } else if (currentBranch) {
-      return (
-        <Action
-          title="Current Branch"
-          icon={branchFilter === CURRENT_BRANCH_FILTER ? Icon.Checkmark : { source: Icon.Dot, tintColor: Color.Green }}
-          autoFocus={branchFilter === CURRENT_BRANCH_FILTER}
-          onAction={() => updateSelectedBranch(CURRENT_BRANCH_FILTER)}
-        />
-      );
-    }
-    return null;
-  };
-
-  const otherBranchOptions = () => {
-    return allBranches
-      .filter((branch) => {
-        // Skip current branch if we're not in detached HEAD (it's already in currentBranchOption)
-        if (
-          !detachedHead &&
-          currentBranch &&
-          branch.name === currentBranch.name &&
-          branch.type === currentBranch.type
-        ) {
-          return false;
-        }
-        return true;
-      })
-      .map((branch) => {
-        const branchValue = branch.type === "remote" ? `${branch.remote}/${branch.name}` : branch.name;
-        const displayName = branch.type === "remote" ? `${branch.remote}/${branch.name}` : branch.name;
-        const isSelected = branchFilter === branchValue;
-        const baseIcon = branch.type === "remote" ? Icon.Globe : Icon.Dot;
-        const icon = isSelected ? Icon.Checkmark : baseIcon;
-
-        return (
-          <Action
-            key={branchValue}
-            title={displayName}
-            icon={icon}
-            autoFocus={branchFilter === branchValue}
-            onAction={() => updateSelectedBranch(branchValue)}
-          />
-        );
-      });
-  };
-
-  const currentBranchAction = currentBranchOption();
-  const otherBranchActions = otherBranchOptions();
-
   return (
     <ActionPanel.Submenu title="Filter by Branch" icon={Icon.Filter} shortcut={{ modifiers: ["cmd"], key: "f" }}>
       <ActionPanel.Section>
@@ -89,11 +26,81 @@ export function CommitBranchFilterAction({
           autoFocus={branchFilter === ALL_BRANCHES_FILTER}
           onAction={() => updateSelectedBranch(ALL_BRANCHES_FILTER)}
         />
-        {currentBranchAction}
       </ActionPanel.Section>
 
-      {otherBranchActions.length > 0 && <ActionPanel.Section>{otherBranchActions}</ActionPanel.Section>}
+      {/* Current Branch / Detached HEAD Section */}
+      <ActionPanel.Section title={branchesState.detachedHead ? "Detached HEAD" : "Current Branch"}>
+        {branchesState.detachedHead && (
+          <Action
+            title={`HEAD (${branchesState.detachedHead.shortCommitHash})`}
+            icon={branchFilter === CURRENT_BRANCH_FILTER ? Icon.Checkmark : Icon.Anchor}
+            autoFocus={branchFilter === CURRENT_BRANCH_FILTER}
+            onAction={() => updateSelectedBranch(CURRENT_BRANCH_FILTER)}
+          />
+        )}
+        {branchesState.currentBranch && (
+          <Action
+            title={branchesState.currentBranch.name}
+            icon={branchFilter === CURRENT_BRANCH_FILTER ? Icon.Checkmark : { source: Icon.Dot, tintColor: Color.Green }}
+            autoFocus={branchFilter === CURRENT_BRANCH_FILTER}
+            onAction={() => updateSelectedBranch(CURRENT_BRANCH_FILTER)}
+          />
+        )}
+      </ActionPanel.Section>
+
+      {/* Local Branches Section */}
+      {branchesState.localBranches.length > 0 && (
+        <ActionPanel.Section title="Local Branches">
+          {branchesState.localBranches.map((branch) => (
+            <BranchFilterAction
+              key={branch.name}
+              branch={branch}
+              branchFilter={branchFilter}
+              updateSelectedBranch={updateSelectedBranch}
+            />
+          ))}
+        </ActionPanel.Section>
+      )}
+
+      {/* Remote Branches Sections */}
+      {Object.entries(branchesState.remoteBranches).map(([remoteName, branches]) => (
+        <ActionPanel.Section key={remoteName} title={`Remote: ${remoteName}`}>
+          {branches.map((branch) => (
+            <BranchFilterAction
+              key={`${branch.remote}/${branch.name}`}
+              branch={branch}
+              branchFilter={branchFilter}
+              updateSelectedBranch={updateSelectedBranch}
+            />
+          ))}
+        </ActionPanel.Section>
+      ))}
     </ActionPanel.Submenu>
+  );
+}
+
+function BranchFilterAction({
+  branch,
+  branchFilter,
+  updateSelectedBranch,
+}: {
+  branch: Branch;
+  branchFilter: string;
+  updateSelectedBranch: (name: string) => void;
+}) {
+  const branchValue = branch.type === "remote" ? `${branch.remote}/${branch.name}` : branch.name;
+  const isSelected = branchFilter === branchValue;
+  const baseIcon = branch.type === "remote" ? Icon.Globe : Icon.Dot;
+  const icon = isSelected ? Icon.Checkmark : baseIcon;
+
+  return (
+    <Action
+      key={branchValue}
+      title={branchValue}
+      icon={icon}
+      autoFocus={isSelected}
+      onAction={() => updateSelectedBranch(branchValue)}
+    />
   );
 }
 
@@ -102,19 +109,18 @@ export function CommitBranchFilterAction({
  */
 export function getBranchFilterDisplayName(
   selectedBranch: string,
-  detachedHead?: DetachedHead,
-  currentBranch?: Branch,
+  branchesState?: BranchesState
 ): string | undefined {
   if (selectedBranch === ALL_BRANCHES_FILTER) {
     return undefined;
   }
 
   if (selectedBranch === CURRENT_BRANCH_FILTER) {
-    if (detachedHead) {
-      return `Commits on HEAD '${detachedHead.shortCommitHash}'`;
+    if (branchesState?.detachedHead) {
+      return `Commits on HEAD '${branchesState.detachedHead.shortCommitHash}'`;
     }
-    if (currentBranch) {
-      return `Filtered by '${currentBranch.name}' branch`;
+    if (branchesState?.currentBranch) {
+      return `Filtered by '${branchesState.currentBranch.name}' branch`;
     }
     return undefined;
   }
