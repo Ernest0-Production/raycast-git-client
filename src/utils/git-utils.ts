@@ -22,6 +22,7 @@ import {
   CommitFileChange,
   Preferences,
   RebasePlanItem,
+  FileChangeStats,
 } from "../types";
 
 /**
@@ -90,7 +91,7 @@ export class GitManager {
         if (error) {
           lastOutput = error;
           showToast({ style: Toast.Style.Animated, title: error });
-          console.warn(`[GIT STDERR] ${error}`);
+          console.warn(`[GIT STDERR] ${error}.\nCommand: ${command_description}`);
         }
       });
 
@@ -146,6 +147,7 @@ export class GitManager {
     } else if (summary.current) {
       // Current Branch
       const currentBranchDetails = summary.branches[summary.current];
+      console.log(`[GIT] Current branch: ${currentBranchDetails.label}`);
       if (currentBranchDetails) {
         const { ahead, behind, upstream, isGone } = parseBranchInfo(currentBranchDetails.label);
 
@@ -749,6 +751,34 @@ __REBASE_TODO__
 
       throw new Error("Failed to parse commit changed files: unknown diff format");
     });
+  }
+
+  /**
+   * Returns per-file change statistics (insertions & deletions) for the specified commit.
+   */
+  async getCommitFileStats(commitHash: string): Promise<Record<string, FileChangeStats>> {
+    const summary = await this.git.diffSummary([`${commitHash}^`, commitHash]);
+
+    const stats: Record<string, FileChangeStats> = {};
+
+    for (const file of summary.files) {
+      // Skip binary files as they don't have insertions/deletions counts
+      if ("binary" in file && file.binary === true) {
+        continue;
+      }
+
+      const filePath = (file as DiffResultTextFile).file;
+      const insertions = (file as DiffResultTextFile).insertions || 0;
+      const deletions = (file as DiffResultTextFile).deletions || 0;
+
+      if (insertions === 0 && deletions === 0) {
+        continue;
+      }
+
+      stats[filePath] = { insertions, deletions };
+    }
+
+    return stats;
   }
 
   /**

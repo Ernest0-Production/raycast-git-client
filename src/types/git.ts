@@ -164,3 +164,13 @@ export interface Tag {
   /** The date the tag was created. */
   date?: Date;
 }
+
+/**
+ * Represents per-file change statistics (insertions/deletions).
+ */
+export interface FileChangeStats {
+  /** Number of inserted lines in the file. */
+  insertions: number;
+  /** Number of deleted lines in the file. */
+  deletions: number;
+}

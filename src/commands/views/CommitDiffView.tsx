@@ -1,4 +1,4 @@
-import { ActionPanel, Action, List, Icon } from "@raycast/api";
+import { ActionPanel, Action, List, Icon, Color } from "@raycast/api";
 import { useGitDiff } from "../../hooks/useGitDiff";
 import { GitManager } from "../../utils/git-utils";
 import { Commit, CommitFileChange } from "../../types";
@@ -11,7 +11,8 @@ import {
   getCommitFileStatusText,
   FileQuickLookAction,
 } from "../../components/actions/FileActions";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { usePromise } from "@raycast/utils";
 import { existsSync } from "fs";
 import { join } from "path";
 
@@ -24,6 +25,12 @@ interface CommitDiffViewProps {
 export function CommitDiffView({ commit, gitManager, navigationActions }: CommitDiffViewProps) {
   const [isShowingDetail, setIsShowingDetail] = useState(false);
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
+  const { data: statsMap, isLoading } = usePromise(
+    async (repoPath, commitHash) => {
+      return await gitManager.getCommitFileStats(commitHash);
+    },
+    [gitManager.repoPath, commit.hash],
+  );
 
   const toggleDetail = () => {
     setIsShowingDetail(!isShowingDetail);
@@ -36,6 +43,7 @@ export function CommitDiffView({ commit, gitManager, navigationActions }: Commit
       onSelectionChange={(id) => setSelectedFilePath(id)}
       filtering={{ keepSectionOrder: true }}
       isShowingDetail={isShowingDetail}
+      isLoading={isLoading}
       actions={
         <ActionPanel>
           <Action
@@ -67,6 +75,7 @@ export function CommitDiffView({ commit, gitManager, navigationActions }: Commit
               isShowingDetail={isShowingDetail}
               onToggleDetail={toggleDetail}
               selectedFilePath={selectedFilePath}
+              statsMap={statsMap}
             />
           ))}
         </List.Section>
@@ -83,6 +92,7 @@ interface FileListItemProps {
   isShowingDetail: boolean;
   onToggleDetail: () => void;
   selectedFilePath: string | null;
+  statsMap: Record<string, { insertions: number; deletions: number }> | undefined;
 }
 
 function FileListItem({
@@ -93,6 +103,7 @@ function FileListItem({
   isShowingDetail,
   onToggleDetail,
   selectedFilePath,
+  statsMap,
 }: FileListItemProps) {
   // Create a unique identifier for each file item
   const fileId = `${file.path}-${commit.hash}`;
@@ -109,6 +120,20 @@ function FileListItem({
   const absolutePath = join(gitManager.repoPath, file.path);
   const fileExists = existsSync(absolutePath);
 
+  const accessories = useMemo(() => {
+    const accessories: List.Item.Accessory[] = [];
+    const stats = statsMap?.[file.path];
+    if (stats) {
+      if (stats.insertions > 0) {
+        accessories.push({ tag: { value: `+${stats.insertions}`, color: Color.Green }, tooltip: "Insertions" });
+      }
+      if (stats.deletions > 0) {
+        accessories.push({ tag: { value: `-${stats.deletions}`, color: Color.Red }, tooltip: "Deletions" });
+      }
+    }
+    return accessories;
+  }, [statsMap, file.path]);
+
   return (
     <List.Item
       id={fileId}
@@ -119,6 +144,7 @@ function FileListItem({
         tintColor: getCommitFileColor(file.status),
         tooltip: getCommitFileStatusText(file.status),
       }}
+      accessories={accessories}
       keywords={[file.path, file.oldPath].filter((keyword): keyword is string => Boolean(keyword))}
       detail={
         isShowingDetail ? (

@@ -1,6 +1,6 @@
 import { Action, Icon, Color, confirmAlert, Alert, Keyboard, getDefaultApplication } from "@raycast/api";
 import { GitManager } from "../../utils/git-utils";
-import { FileStatus } from "../../types";
+import { CommitFileChange, FileStatus } from "../../types";
 import { existsSync } from "fs";
 
 interface FileActionProps {
@@ -271,7 +271,7 @@ export const getFileStatusIcon = (file: FileStatus) => {
     case "deleted":
       return Icon.Trash;
     case "renamed":
-      return Icon.ArrowRight;
+      return Icon.ArrowClockwise;
     case "copied":
       return Icon.Duplicate;
     case "conflicted":
@@ -306,7 +306,7 @@ export const getFileStatusColor = (file: FileStatus) => {
 /**
  * Icons for commit file changes
  */
-export const getCommitFileIcon = (status: string) => {
+export const getCommitFileIcon = (status: CommitFileChange["status"]) => {
   switch (status) {
     case "added":
       return Icon.Plus;
@@ -316,7 +316,7 @@ export const getCommitFileIcon = (status: string) => {
     case "deleted":
       return Icon.Trash;
     case "renamed":
-      return Icon.ArrowsContract;
+      return Icon.ArrowClockwise;
     case "copied":
       return Icon.Duplicate;
     default:
@@ -327,7 +327,7 @@ export const getCommitFileIcon = (status: string) => {
 /**
  * Colors for commit file changes
  */
-export const getCommitFileColor = (status: string) => {
+export const getCommitFileColor = (status: CommitFileChange["status"]) => {
   switch (status) {
     case "added":
       return Color.Green;
@@ -348,7 +348,7 @@ export const getCommitFileColor = (status: string) => {
 /**
  * Status text for commit file changes
  */
-export const getCommitFileStatusText = (status: string) => {
+export const getCommitFileStatusText = (status: CommitFileChange["status"]) => {
   switch (status) {
     case "added":
       return "Added";
@@ -359,7 +359,7 @@ export const getCommitFileStatusText = (status: string) => {
     case "deleted":
       return "Deleted";
     case "renamed":
-      return "Renamed";
+      return "Moved";
     case "copied":
       return "Copied";
     default:
