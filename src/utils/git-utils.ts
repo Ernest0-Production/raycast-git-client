@@ -12,7 +12,7 @@ import {
 } from "simple-git";
 import { showToast, Toast, getPreferenceValues, Alert, confirmAlert } from "@raycast/api";
 import { join } from "path";
-import { readFileSync, writeFileSync, mkdtempSync, chmodSync, rmSync } from "fs";
+import { readFileSync, writeFileSync, mkdtempSync, chmodSync, rmSync, existsSync } from "fs";
 import { tmpdir } from "os";
 import {
   Branch,
@@ -25,7 +25,11 @@ import {
   Preferences,
   RebasePlanItem,
   FileChangeStats,
+  StatusState,
+  ConflictState,
 } from "../types";
+import * as path from "path";
+import { promises as fs } from "fs";
 
 /**
  * Manager for Git operations within a repository.
@@ -55,9 +59,10 @@ export class GitManager {
 
     const preferences = getPreferenceValues<Preferences>();
     if (preferences.environmentPath === "homebrew") {
+      const path = require("child_process").execSync("echo $PATH").toString().trim();
       this.git = this.git.env(
         "PATH",
-        `/opt/homebrew/bin:/opt/homebrew/sbin:${process.env.PATH || "/usr/bin"}`,
+        `/opt/homebrew/bin:/opt/homebrew/sbin:${path}`,
       );
     }
 
@@ -134,6 +139,13 @@ export class GitManager {
       };
     };
 
+    let currentBranchName = summary.current;
+    if (summary.current && summary.current.startsWith("(no")) {
+      const headNamePath = path.join(this.repoPath, ".git", "rebase-merge", "head-name");
+      const headNameContent = await fs.readFile(headNamePath, "utf-8");
+      currentBranchName = headNameContent.trim().replace(/^refs\/heads\//, "");
+    }
+
     let currentBranch: Branch | undefined;
     let detachedHead: DetachedHead | undefined;
     const localBranches: Branch[] = [];
@@ -152,17 +164,16 @@ export class GitManager {
         commitHash,
         shortCommitHash: commitHash,
         commitMessage: message?.trim() || "No commit message",
-        commitDate: dateStr ? new Date(dateStr) : new Date()
+        commitDate: dateStr ? new Date(dateStr) : new Date(),
       };
     } else if (summary.current) {
       // Current Branch
       const currentBranchDetails = summary.branches[summary.current];
-      console.log(`[GIT] Current branch: ${currentBranchDetails.label}`);
       if (currentBranchDetails) {
         const { ahead, behind, upstream, isGone } = parseBranchInfo(currentBranchDetails.label);
 
         currentBranch = {
-          name: currentBranchDetails.name,
+          name: currentBranchName,
           type: "current",
           ahead,
           behind,
@@ -237,7 +248,7 @@ export class GitManager {
   /**
    * Gets the status of files in the repository using detailed FileStatusResult.
    */
-  async getStatus(): Promise<{ branch: string | null, files: FileStatus[] }> {
+  async getStatus(): Promise<StatusState> {
     const status = await this.git.status();
     const files: FileStatus[] = [];
 
@@ -247,7 +258,31 @@ export class GitManager {
       files.push(...fileEntries);
     }
 
-    return { branch: status.current, files };
+    const rebaseMergePath = path.join(this.repoPath, ".git", "rebase-merge");
+    const mergeHeadPath = path.join(this.repoPath, ".git", "MERGE_HEAD");
+
+    let conflict: ConflictState | undefined;
+
+    if (existsSync(rebaseMergePath)) {
+      const msgNumContent = await fs.readFile(
+        path.join(rebaseMergePath, "msgnum"),
+        "utf-8"
+      );
+      const endContent = await fs.readFile(
+        path.join(rebaseMergePath, "end"),
+        "utf-8"
+      );
+
+      conflict = {
+        type: "rebase",
+        current: parseInt(msgNumContent.trim()) || 0,
+        total: parseInt(endContent.trim()) || 0,
+      };
+    } else if (existsSync(mergeHeadPath)) {
+      conflict = { type: "merge", current: 0, total: 1, };
+    }
+
+    return { branch: status.current, files, conflict };
   }
 
   /**
@@ -930,6 +965,13 @@ __REBASE_TODO__
   }
 
   /**
+   * Creates a merge commit.
+   */
+  async commitMerge(): Promise<void> {
+    await this.git.raw(["commit", "--no-edit"]);
+  }
+
+  /**
    * Pushes changes.
    */
   async push(force = false, branch?: { name: string, upstream?: string, isGone?: boolean }): Promise<void> {
@@ -1141,10 +1183,19 @@ __REBASE_TODO__
   }
 
   /**
+   * Aborts an ongoing merge.
+   */
+  async abortMerge(): Promise<void> {
+    await this.git.merge(["--abort"]);
+  }
+
+  /**
    * Continues an ongoing rebase.
    */
   async continueRebase(): Promise<void> {
-    await this.git.rebase(["--continue"]);
+    await this.git
+      .env("GIT_EDITOR", "true")
+      .rebase(["--continue"]);
   }
 
   /**

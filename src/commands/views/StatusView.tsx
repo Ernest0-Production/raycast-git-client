@@ -15,11 +15,13 @@ import {
   getFileStatusColor,
   FileQuickLookAction,
   FileRefreshStatusAction,
+  FileCommitAction,
+  FileConflictAbortAction,
 } from "../../components/actions/FileActions";
 import { CreateStashAction } from "../../components/actions/StashActions";
 import { GitManager } from "../../utils/git-utils";
-import { FileStatus } from "../../types";
-import { useState } from "react";
+import { FileStatus, StatusState } from "../../types";
+import { useMemo, useState } from "react";
 import { existsSync } from "fs";
 import { CommitMessageForm } from "./CommitMessageView";
 
@@ -28,7 +30,7 @@ interface StatusViewProps {
   navigationActions: React.ReactNode;
   viewDropdown: React.ReactElement<any>;
   onNavigateToCommits?: () => void;
-  status?: { branch: string | null, files: FileStatus[] };
+  status?: StatusState;
   isLoading: boolean;
   error?: Error;
   revalidateStatus: () => void | Promise<unknown>;
@@ -62,10 +64,25 @@ export function StatusView({
   const stagedFiles = status?.files ? status.files.filter((f) => f.status === "staged") : [];
   const unstagedFiles = status?.files ? status.files.filter((f) => f.status === "unstaged" || f.status === "untracked") : [];
 
+  const navigationTitle = useMemo(() => {
+    if (status?.conflict) {
+      switch (status.conflict.type) {
+        case "rebase":
+          return `⚠️ Rebase Conflict (${status.conflict.current}/${status.conflict.total})`;
+        case "merge":
+          return `⚠️ Merge Conflict (${status.conflict.current}/${status.conflict.total})`;
+        default:
+          return "⚠️ Conflict";
+      }
+    } else {
+      return "Repository Status";
+    }
+  }, [status?.conflict]);
+
   return (
     <List
       isLoading={isLoading}
-      navigationTitle="Repository Status"
+      navigationTitle={navigationTitle}
       searchBarPlaceholder="Search files by name, path..."
       onSelectionChange={(id) => setSelectedFilePath(id)}
       filtering={{ keepSectionOrder: true }}
@@ -73,6 +90,12 @@ export function StatusView({
       searchBarAccessory={viewDropdown}
       actions={
         <ActionPanel>
+          {status && (
+            <FileCommitAction
+              status={status}
+              gitManager={gitManager}
+              onFinish={refreshAndNavigateToCommits} />
+          )}
           <ActionPanel.Section>
             <Action
               title={isShowingDetail ? "Hide Diff" : "Show Diff"}
@@ -85,6 +108,10 @@ export function StatusView({
           <ActionPanel.Section>
             <FileRefreshStatusAction onRefresh={revalidateStatus} />
           </ActionPanel.Section>
+
+          {status && (
+            <FileConflictAbortAction status={status} gitManager={gitManager} onRefresh={revalidateStatus} />
+          )}
 
           {navigationActions}
         </ActionPanel>
@@ -115,14 +142,13 @@ export function StatusView({
                 <FileListItem
                   key={file.path}
                   file={file}
-                  currentBranch={status?.branch}
+                  status={status}
                   gitManager={gitManager}
                   onRefresh={revalidateStatus}
                   navigationActions={navigationActions}
                   isShowingDetail={isShowingDetail}
                   onToggleDetail={toggleDetail}
                   selectedFilePath={selectedFilePath}
-                  hasStagedChanges={stagedFiles.length > 0}
                   onCommitSuccess={refreshAndNavigateToCommits}
                 />
               ))}
@@ -135,14 +161,13 @@ export function StatusView({
                 <FileListItem
                   key={file.path}
                   file={file}
-                  currentBranch={status?.branch}
+                  status={status}
                   gitManager={gitManager}
                   onRefresh={revalidateStatus}
                   navigationActions={navigationActions}
                   isShowingDetail={isShowingDetail}
                   onToggleDetail={toggleDetail}
                   selectedFilePath={selectedFilePath}
-                  hasStagedChanges={stagedFiles.length > 0}
                   onCommitSuccess={refreshAndNavigateToCommits}
                 />
               ))}
@@ -156,27 +181,25 @@ export function StatusView({
 
 interface FileListItemProps {
   file: FileStatus;
-  currentBranch: string | null;
+  status: StatusState;
   gitManager: GitManager;
   onRefresh: () => void;
   navigationActions: React.ReactNode;
   isShowingDetail: boolean;
   onToggleDetail: () => void;
   selectedFilePath: string | null;
-  hasStagedChanges: boolean;
   onCommitSuccess: () => void;
 }
 
 function FileListItem({
   file,
-  currentBranch,
+  status,
   gitManager,
   onRefresh,
   navigationActions,
   isShowingDetail,
   onToggleDetail,
   selectedFilePath,
-  hasStagedChanges,
   onCommitSuccess,
 }: FileListItemProps) {
   // Create a unique identifier for each file item
@@ -252,14 +275,8 @@ function FileListItem({
           </ActionPanel.Section>
 
           <ActionPanel.Section>
-            {hasStagedChanges && currentBranch && (
-              <Action.Push
-                title="Commit Changes"
-                icon={Icon.Message}
-                target={<CommitMessageForm gitManager={gitManager} onFinish={onCommitSuccess} />}
-                shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
-              />
-            )}
+            <FileCommitAction status={status} gitManager={gitManager} onContinue={onCommitSuccess} onFinish={onCommitSuccess} />
+            <FileConflictAbortAction status={status} gitManager={gitManager} onRefresh={onRefresh} />
             <FileStageAllAction gitManager={gitManager} onRefresh={onRefresh} />
             <FileUnstageAllAction gitManager={gitManager} onRefresh={onRefresh} />
             <FileDiscardAllAction gitManager={gitManager} onRefresh={onRefresh} />

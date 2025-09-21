@@ -1,7 +1,8 @@
 import { Action, Icon, Color, confirmAlert, Alert, Keyboard, getDefaultApplication } from "@raycast/api";
 import { GitManager } from "../../utils/git-utils";
-import { CommitFileChange, FileStatus } from "../../types";
+import { CommitFileChange, FileStatus, StatusState } from "../../types";
 import { existsSync } from "fs";
+import { CommitMessageForm } from "../../commands/views/CommitMessageView";
 
 interface FileActionProps {
   file: FileStatus;
@@ -24,9 +25,9 @@ export function FileStageAction({ file, gitManager, onRefresh }: FileActionProps
 
   return (
     <Action
-      title={file.type === "conflicted" ? "Stage Resolution" : "Stage"}
+      title={file.type === "conflicted" ? "Mark as Resolved" : "Stage"}
       onAction={handleStageFile}
-      icon={Icon.Plus}
+      icon={file.type === "conflicted" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Plus}
     />
   );
 }
@@ -158,6 +159,144 @@ export function FileMoveToTrashAction({
       onTrash={onRefresh}
     />
   );
+}
+
+/**
+ * Action to commit changes or continue a rebase/merge.
+ */
+export function FileCommitAction({
+  status,
+  gitManager,
+  onContinue,
+  onFinish,
+}: {
+  status: StatusState;
+  onContinue: () => void;
+  gitManager: GitManager;
+  onFinish: () => void;
+}) {
+  const hasStagedFiles = status.files.some((f) => f.status === "staged");
+  const hasConflictedFiles = status.files.some((f) => f.type === "conflicted");
+
+  if (status.conflict) {
+    if (hasConflictedFiles) {
+      return null; // Don't show if there are still conflicts
+    }
+
+    switch (status.conflict.type) {
+      case "rebase":
+        const handleContinueRebase = async () => {
+          try { await gitManager.continueRebase(); }
+          // Git error is already shown by GitManager
+          catch (error) { }
+          onContinue();
+        };
+        return <
+          Action title="Continue Rebase"
+          onAction={handleContinueRebase}
+          icon={{ source: Icon.ArrowRight, tintColor: Color.Blue }}
+          shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
+        />;
+
+      case "merge":
+        const handleCommitMerge = async () => {
+          try { await gitManager.commitMerge(); }
+          // Git error is already shown by GitManager
+          catch (error) { }
+          onFinish();
+        };
+
+        return <Action
+          title="Commit Merge"
+          onAction={handleCommitMerge}
+          icon={{ source: Icon.Check, tintColor: Color.Green }}
+          shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
+        />;
+
+      case undefined:
+        return null;
+    }
+  }
+
+  if (hasStagedFiles && status.branch) {
+    return (
+      <Action.Push
+        title="Commit Changes"
+        icon={Icon.Envelope}
+        target={<CommitMessageForm gitManager={gitManager} onFinish={onFinish} />}
+        shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
+      />
+    );
+  }
+
+  return null;
+}
+
+/**
+ * Action to abort a rebase or merge.
+ */
+export function FileConflictAbortAction({
+  status,
+  gitManager,
+  onRefresh,
+}: {
+  status: StatusState;
+  gitManager: GitManager;
+  onRefresh: () => void;
+}) {
+  if (!status.conflict) {
+    return null;
+  }
+
+  switch (status.conflict?.type) {
+    case "rebase":
+      return (
+        <Action
+          title="Abort Rebase"
+          onAction={async () => {
+            const confirmed = await confirmAlert({
+              title: "Abort Rebase",
+              message: "Are you sure you want to abort the rebase? This action cannot be undone.",
+              primaryAction: {
+                title: "Abort Rebase",
+                style: Alert.ActionStyle.Destructive,
+              },
+            });
+
+            if (confirmed) {
+              await gitManager.abortRebase();
+              onRefresh();
+            }
+          }}
+          icon={Icon.XMarkCircleHalfDash}
+          style={Action.Style.Destructive}
+        />
+      );
+    case "merge":
+    case undefined:
+      return (
+        <Action
+          title="Abort Merge"
+          onAction={async () => {
+            const confirmed = await confirmAlert({
+              title: "Abort Merge",
+              message: "Are you sure you want to abort the merge? This action cannot be undone.",
+              primaryAction: {
+                title: "Abort Merge",
+                style: Alert.ActionStyle.Destructive,
+              },
+            });
+
+            if (confirmed) {
+              await gitManager.abortMerge();
+              onRefresh();
+            }
+          }}
+          icon={Icon.XMarkCircleHalfDash}
+          style={Action.Style.Destructive}
+        />
+      );
+  }
 }
 
 // === Bulk actions ===

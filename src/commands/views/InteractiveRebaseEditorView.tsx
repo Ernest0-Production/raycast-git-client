@@ -48,7 +48,7 @@ export default function InteractiveRebaseEditorView({ gitManager, startFromCommi
         setCommits((prev) => {
             const index = prev.findIndex((c) => c.hash === hash);
             if (index === -1) return prev;
-            const newIndex = direction === "up" ? index - 1 : index + 1;
+            const newIndex = direction === "down" ? index - 1 : index + 1;
             if (newIndex < 0 || newIndex >= prev.length) return prev;
             const cloned = prev.slice();
             const [item] = cloned.splice(index, 1);
@@ -90,7 +90,7 @@ export default function InteractiveRebaseEditorView({ gitManager, startFromCommi
             navigationTitle="Interactive Rebase"
             filtering={false}
         >
-            {commits.map((commit) => (
+            {[...commits].reverse().map((commit) => (
                 <List.Item
                     key={commit.hash}
                     title={plan[commit.hash]?.newMessage ?? commit.message}

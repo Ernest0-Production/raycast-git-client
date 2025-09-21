@@ -174,3 +174,26 @@ export interface FileChangeStats {
   /** Number of deleted lines in the file. */
   deletions: number;
 }
+
+/**
+ * Represents the state of a git conflict.
+ */
+export interface ConflictState {
+  type: "rebase" | "merge" | undefined;
+  /** The current step of the conflict resolution. */
+  current: number;
+  /** The total number of steps in the conflict resolution. */
+  total: number;
+}
+
+/**
+ * Represents the status of the repository.
+ */
+export interface StatusState {
+  /** The current branch name, or null if in a detached HEAD state. */
+  branch: string | null;
+  /** An array of file statuses. */
+  files: FileStatus[];
+  /** Information about an ongoing conflict, if any. */
+  conflict?: ConflictState;
+}

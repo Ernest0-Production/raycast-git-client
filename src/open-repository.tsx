@@ -177,7 +177,10 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           isLoading={commitsIsLoading}
           commits={commits}
           error={commitsError}
-          revalidate={revalidateCommits}
+          revalidate={() => {
+            revalidateCommits();
+            revalidateStatus();
+          }}
           pagination={pagination}
         />
       );
