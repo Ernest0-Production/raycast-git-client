@@ -13,7 +13,7 @@ import {
 import { showToast, Toast, getPreferenceValues, Alert, confirmAlert } from "@raycast/api";
 import { join } from "path";
 import { readFileSync, writeFileSync, mkdtempSync, chmodSync, rmSync } from "fs";
-import { tmpdir, homedir } from "os";
+import { tmpdir } from "os";
 import {
   Branch,
   FileStatus,
@@ -694,7 +694,7 @@ export class GitManager {
     // Используем многострочный шаблонный литерал для генерации shell-скрипта sequence editor
     const script = `#!/bin/sh
 TODO_FILE="$1"
-cat > "$TODO_FILE" <<'__REBASE_TODO__'
+/bin/cat > "$TODO_FILE" <<'__REBASE_TODO__'
 ${todoLines.join("\n")}
 __REBASE_TODO__
 `;
