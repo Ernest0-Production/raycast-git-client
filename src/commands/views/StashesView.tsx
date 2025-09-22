@@ -85,7 +85,7 @@ function StashListItem({
       keywords={[stash.hash, stash.author, stash.authorEmail].filter(Boolean)}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title="Stash Operations">
+          <ActionPanel.Section>
             <StashApplyAction
               stash={stash}
               index={index}
@@ -93,8 +93,14 @@ function StashListItem({
               onRefresh={onRefresh}
               onNavigateToStatus={onNavigateToStatus}
             />
-            <StashDropAction stash={stash} index={index} gitManager={gitManager} onRefresh={onRefresh} />
           </ActionPanel.Section>
+
+          <StashDropAction
+            stash={stash}
+            index={index}
+            gitManager={gitManager}
+            onRefresh={onRefresh}
+          />
 
           {navigationActions}
         </ActionPanel>

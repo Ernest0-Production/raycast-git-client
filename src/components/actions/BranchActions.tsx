@@ -45,7 +45,7 @@ export function BranchCkeckoutAction({ branch, gitManager, onRefresh }: BranchAc
     <Action
       title="Checkout"
       onAction={handleCheckout}
-      icon={Icon.ArrowRight}
+      icon={`arrow-checkout.svg`}
     />
   );
 }
@@ -178,7 +178,7 @@ export function BranchMergeAction({ branch, gitManager, onRefresh }: BranchActio
     <Action
       title="Merge into Current"
       onAction={handleMergeBranch}
-      icon={Icon.ArrowClockwise}
+      icon={`git-merge.svg`}
       shortcut={{ modifiers: ["cmd"], key: "m" }}
     />
   );
@@ -212,7 +212,7 @@ export function BranchRebaseAction({ branch, gitManager, onRefresh }: BranchActi
     <Action
       title="Rebase to Here"
       onAction={handleRebaseBranch}
-      icon={Icon.ArrowClockwise}
+      icon={`arrow-rebase.svg`}
       shortcut={{ modifiers: ["cmd", "shift"], key: "r" }}
     />
   );
@@ -265,7 +265,7 @@ export function PullAction({ gitManager, onRefresh }: { gitManager: GitManager; 
 
   return (
     <ActionPanel.Submenu title="Pull" icon={Icon.ArrowDown} shortcut={{ modifiers: ["cmd", "shift"], key: "l" }}>
-      <Action title="Rebase" icon={Icon.ArrowClockwise} onAction={handlePullRebase} />
+      <Action title="Rebase" icon={`arrow-rebase.svg`} onAction={handlePullRebase} />
       <Action title="Merge" icon={`git-merge.svg`} onAction={handlePullMerge} />
     </ActionPanel.Submenu>
   );

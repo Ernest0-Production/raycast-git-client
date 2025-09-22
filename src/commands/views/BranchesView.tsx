@@ -243,8 +243,8 @@ function BranchListItem({
               <>
                 <PullAction gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchPushAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
-                <BranchCopyNameAction branch={branch.name} />
                 <BranchRenameAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchCopyNameAction branch={branch.name} />
               </>
             )}
 
@@ -252,11 +252,11 @@ function BranchListItem({
             {branch.type === "local" && (
               <>
                 <BranchCkeckoutAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
-                <BranchCopyNameAction branch={branch.name} />
                 <BranchPushAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchRebaseAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchMergeAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchRenameAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchCopyNameAction branch={branch.name} />
                 <BranchDeleteAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
               </>
             )}

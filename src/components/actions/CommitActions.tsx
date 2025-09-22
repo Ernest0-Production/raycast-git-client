@@ -40,7 +40,7 @@ export function CommitCheckoutAction({ commit, gitManager, onRefresh }: CommitAc
   return <Action
     title="Checkout Commit"
     onAction={handleCheckoutCommit}
-    icon={Icon.ArrowRight}
+    icon={`arrow-checkout.svg`}
   />;
 }
 
@@ -157,8 +157,8 @@ export function CommitResetAction({ commit, gitManager, onRefresh }: CommitActio
 export function CommitInteractiveRebaseAction({ commit, gitManager, onRefresh }: CommitActionProps) {
   return (
     <Action.Push
-      title="Interactive Rebase to Here"
-      icon={Icon.ArrowClockwise}
+      title="Interactive Rebase from Here"
+      icon={`arrow-rebase.svg`}
       target={
         <InteractiveRebaseEditorView
           gitManager={gitManager}

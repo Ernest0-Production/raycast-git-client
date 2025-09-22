@@ -118,7 +118,7 @@ export default function InteractiveRebaseEditorView({ gitManager, startFromCommi
                         <ActionPanel>
                             <Action
                                 title="Rebase"
-                                icon={Icon.ArrowClockwise}
+                                icon={Icon.Checkmark}
                                 onAction={performRebase}
                                 shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
                             />
