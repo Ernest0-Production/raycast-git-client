@@ -188,6 +188,7 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           revalidate={() => {
             revalidateCommits();
             revalidateStatus();
+            revalidateBranches();
           }}
           pagination={pagination}
         />

@@ -229,11 +229,11 @@ function CommitListItem({
 
   const icon = useMemo(() => {
     if (selectedBranch && 'type' in selectedBranch && selectedBranch.ahead) {
-      if (selectedBranch.ahead <= index) {
+      if (selectedBranch.ahead > index) {
         return { source: Icon.Dot, tintColor: Color.Blue, tooltip: "Unpushed" };
       }
     }
-    return Icon.Dot;
+    return undefined;
   }, [selectedBranch]);
 
   const commitUrls = useMemo(() => {
@@ -375,6 +375,7 @@ function CommitListItem({
     <List.Item
       id={commit.hash}
       title={commit.message}
+      icon={icon}
       accessories={accessories}
       keywords={[
         commit.hash,
