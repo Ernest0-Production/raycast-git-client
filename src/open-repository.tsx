@@ -7,7 +7,7 @@ import { BranchesView } from "./commands/views/BranchesView";
 import { StatusView } from "./commands/views/StatusView";
 import { CommitsView } from "./commands/views/CommitsView";
 import { StashesView } from "./commands/views/StashesView";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { RepositoryDirectoryActions } from "./components/actions/RepositoryDirectoryActions";
 import { useGitBranches } from "./hooks/useGitBranches";
 import { useCommitsBranchFilter } from "./hooks/useCommitsBranchFilter";
@@ -63,13 +63,36 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
     setBranchFilter,
   } = useCommitsBranchFilter(gitManager.repoPath, branchesState);
 
+  const selectedSourceName = useMemo(() => {
+    if (!selectedBranch) {
+      return undefined;
+    }
+    if ('name' in selectedBranch) {
+      switch (selectedBranch.type) {
+        case 'local':
+        case 'current':
+          return selectedBranch.name;
+        case 'remote':
+          return `${selectedBranch.remote}/${selectedBranch.name}`;
+      }
+    }
+    if ('commitHash' in selectedBranch) {
+      return selectedBranch.commitHash;
+    }
+    return undefined;
+  }, [selectedBranch]);
+
   const {
     isLoading: commitsIsLoading,
     data: commits,
     error: commitsError,
     revalidate: revalidateCommits,
     pagination,
-  } = useGitCommits(gitManager, selectedBranch, branchesState !== undefined);
+  } = useGitCommits(
+    gitManager,
+    selectedSourceName,
+    branchesState !== undefined
+  );
 
   const { stashes, isLoading: stashesIsLoading, revalidate: revalidateStashes } = useGitStash(gitManager);
 

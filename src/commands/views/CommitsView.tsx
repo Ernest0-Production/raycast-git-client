@@ -28,7 +28,7 @@ import {
   replaceUrlPatternsWithLinks,
 } from "../../hooks/useUrlTracker";
 import "../../utils/date-utils";
-import { Commit, UrlTrackerConfig, BranchesState } from "../../types";
+import { Commit, UrlTrackerConfig, BranchesState, Branch, DetachedHead } from "../../types";
 import { useMemo, useState } from "react";
 import { CommitMessageForm } from "./CommitMessageView";
 
@@ -46,7 +46,7 @@ interface CommitsViewProps {
   branchesState?: BranchesState;
   // Filter state
   branchFilter: string;
-  selectedBranch?: string;
+  selectedBranch?: Branch | DetachedHead;
   setBranchFilter: (branchName: string) => void;
   // Commits data
   isLoading: boolean;
@@ -201,7 +201,7 @@ interface CommitListItemProps {
   urlTrackerConfigs: UrlTrackerConfig[];
   selectedCommitId: string | null;
   isAllBranchesFilter: boolean;
-  selectedBranch?: string;
+  selectedBranch?: Branch | DetachedHead;
   branchFilter: string;
   updateSelectedBranch: (branchName: string) => void;
   branchesState?: BranchesState;
@@ -226,6 +226,16 @@ function CommitListItem({
   branchesState,
 }: CommitListItemProps) {
   const { push } = useNavigation();
+
+  const icon = useMemo(() => {
+    if (selectedBranch && 'type' in selectedBranch && selectedBranch.ahead) {
+      if (selectedBranch.ahead <= index) {
+        return { source: Icon.Dot, tintColor: Color.Blue, tooltip: "Unpushed" };
+      }
+    }
+    return Icon.Dot;
+  }, [selectedBranch]);
+
   const commitUrls = useMemo(() => {
     if (selectedCommitId !== commit.hash) return [];
     return extractUrlsFromCommitWithConfigs(commit.message, urlTrackerConfigs);
@@ -488,7 +498,9 @@ function CommitListItem({
               <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={onRefresh} />
             )}
             <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
-            {selectedBranch && <BranchCopyNameAction branch={selectedBranch} />}
+            {selectedBranch && 'name' in selectedBranch &&
+              <BranchCopyNameAction branch={selectedBranch.displayName} />
+            }
           </ActionPanel.Section>
 
           <ActionPanel.Section>

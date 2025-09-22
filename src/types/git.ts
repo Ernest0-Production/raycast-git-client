@@ -4,6 +4,8 @@
 export interface Branch {
   /** The name of the branch. */
   name: string;
+  /** The display name of the branch. */
+  displayName: string;
   /** The type of the branch: current, local, or remote. */
   type: "current" | "local" | "remote";
   /** The upstream branch, if any. */

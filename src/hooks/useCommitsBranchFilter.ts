@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { useCachedState } from "@raycast/utils";
-import { Branch, BranchesState } from "../types";
+import { Branch, BranchesState, DetachedHead } from "../types";
 
 /**
  * Special constant for the "All Branches" filter
@@ -36,7 +36,7 @@ export function useCommitsBranchFilter(repositoryPath: string, branchesState?: B
         return;
       }
 
-      if (Object.values(branchesState.remoteBranches).some((branches) => branches.some((branch) => `${branch.remote}/${branch.name}` === branchFilter))) {
+      if (Object.values(branchesState.remoteBranches).some((branches) => branches.some((branch) => `${branch.displayName}` === branchFilter))) {
         return;
       }
 
@@ -45,18 +45,33 @@ export function useCommitsBranchFilter(repositoryPath: string, branchesState?: B
   }, [branchesState, branchFilter, setBranchFilter]);
 
   // Get the actual filter to pass to the commits hook
-  const selectedBranch: string | undefined = useMemo(() => {
+  const selectedBranch: Branch | DetachedHead | undefined = useMemo(() => {
     if (branchFilter === ALL_BRANCHES_FILTER) {
       return undefined; // undefined means all branches
     }
     if (branchFilter === CURRENT_BRANCH_FILTER) {
       if (branchesState?.detachedHead) {
-        return branchesState.detachedHead.commitHash;
+        return branchesState.detachedHead;
       } else {
-        return branchesState?.currentBranch?.name;
+        return branchesState?.currentBranch;
       }
     }
-    return branchFilter;
+
+    if (!branchesState) {
+      return undefined;
+    }
+
+    const localBranch = branchesState.localBranches.find((branch) => branch.name === branchFilter);
+    if (localBranch) {
+      return localBranch;
+    }
+
+    const remoteBranch = Object.values(branchesState.remoteBranches).flat().find((branch) => `${branch.displayName}` === branchFilter);
+    if (remoteBranch) {
+      return remoteBranch;
+    }
+
+    return undefined;
   }, [branchFilter, branchesState]);
 
   return {

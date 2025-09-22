@@ -177,6 +177,7 @@ export class GitManager {
 
         currentBranch = {
           name: currentBranchName,
+          displayName: currentBranchName,
           type: "current",
           ahead,
           behind,
@@ -201,6 +202,7 @@ export class GitManager {
 
         localBranches.push({
           name: branch.name,
+          displayName: branch.name,
           type: "local",
           ahead,
           behind,
@@ -231,6 +233,7 @@ export class GitManager {
 
         remoteBranches[remote].push({
           name: branchName,
+          displayName: `${remote}/${branchName}`,
           type: "remote",
           remote,
           upstream: branch.name, // The full remote name is the upstream ref

@@ -67,7 +67,7 @@ export function CommitBranchFilterAction({
         <ActionPanel.Section key={remoteName} title={`Remote: ${remoteName}`}>
           {branches.map((branch) => (
             <BranchFilterAction
-              key={`${branch.remote}/${branch.name}`}
+              key={`${branch.displayName}`}
               branch={branch}
               branchFilter={branchFilter}
               updateSelectedBranch={updateSelectedBranch}
@@ -88,7 +88,7 @@ function BranchFilterAction({
   branchFilter: string;
   updateSelectedBranch: (name: string) => void;
 }) {
-  const branchValue = branch.type === "remote" ? `${branch.remote}/${branch.name}` : branch.name;
+  const branchValue = branch.displayName;
   const isSelected = branchFilter === branchValue;
   const baseIcon = branch.type === "remote" ? Icon.Globe : Icon.Dot;
   const icon = isSelected ? Icon.Checkmark : baseIcon;

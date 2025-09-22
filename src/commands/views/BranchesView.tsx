@@ -133,7 +133,7 @@ export function BranchesView({
             <List.Section key={remoteName} title={`Remote: ${remoteName}`}>
               {remoteBranches.map((branch) => (
                 <BranchListItem
-                  key={`${branch.remote}/${branch.name}`}
+                  key={`${branch.displayName}`}
                   branch={branch}
                   gitManager={gitManager}
                   onRefresh={revalidateAll}
