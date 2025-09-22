@@ -205,9 +205,9 @@ function BranchListItem({
       result.push({
         tag: {
           value: branch.upstream,
-          color: branch.isGone ? Color.Yellow : Color.SecondaryText
+          color: branch.isGone ? Color.Yellow : Color.SecondaryText,
         },
-        tooltip: branch.isGone ? "Upstream was removed from remote" : undefined,
+        tooltip: branch.isGone ? "Upstream was removed from remote" : "Tracked upstream",
         icon: branch.isGone ? Icon.ExclamationMark : Icon.Globe
       });
     }

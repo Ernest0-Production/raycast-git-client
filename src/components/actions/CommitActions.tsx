@@ -37,7 +37,11 @@ export function CommitCheckoutAction({ commit, gitManager, onRefresh }: CommitAc
     }
   };
 
-  return <Action title="Checkout Commit" onAction={handleCheckoutCommit} icon={Icon.Checkmark} />;
+  return <Action
+    title="Checkout Commit"
+    onAction={handleCheckoutCommit}
+    icon={Icon.ArrowRight}
+  />;
 }
 
 /**

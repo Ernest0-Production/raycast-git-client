@@ -936,9 +936,6 @@ __REBASE_TODO__
    * Reverts a commit.
    */
   async revert(commitHash: string): Promise<void> {
-    if (!commitHash || typeof commitHash !== "string" || !/^[a-f0-9]{7,40}$/i.test(commitHash.trim())) {
-      throw new Error("Invalid commit hash");
-    }
     await this.git.raw(["revert", "--no-edit", commitHash.trim()]);
   }
 
