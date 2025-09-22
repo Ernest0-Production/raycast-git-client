@@ -77,7 +77,17 @@ export function BranchDeleteAction({ branch, gitManager, onRefresh }: BranchActi
               },
             });
             if (confirmed) {
-              await gitManager.deleteUpstreamBranch(branch.upstream);
+              const summaryConfirm = await confirmAlert({
+                title: "Confirm deletion",
+                message: `This action will be undone.`,
+                primaryAction: {
+                  title: "Delete Both",
+                  style: Alert.ActionStyle.Destructive,
+                },
+              });
+              if (summaryConfirm) {
+                await gitManager.deleteUpstreamBranch(branch.upstream);
+              }
             }
           }
           await gitManager.deleteBranch(branch.name);
