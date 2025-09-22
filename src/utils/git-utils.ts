@@ -945,15 +945,8 @@ __REBASE_TODO__
   /**
    * Resets to the specified commit.
    */
-  async reset(commitHash: string, mode = "--hard"): Promise<void> {
-    if (!commitHash || typeof commitHash !== "string" || !/^[a-f0-9]{7,40}$/i.test(commitHash.trim())) {
-      throw new Error("Invalid commit hash");
-    }
-    const allowedModes = ["--soft", "--mixed", "--hard"];
-    if (!allowedModes.includes(mode)) {
-      throw new Error("Invalid reset mode");
-    }
-    await this.git.raw(["reset", mode, commitHash.trim()]);
+  async reset(commitHash: string, mode: ResetMode): Promise<void> {
+    await this.git.reset(mode, [commitHash]);
   }
 
   /**
@@ -1281,10 +1274,6 @@ __REBASE_TODO__
    * Pushes tags to remote with optional delete flag.
    */
   async pushTag(tagName: string, remoteName?: string, deleteTag: boolean = false): Promise<void> {
-    if (!tagName || typeof tagName !== "string" || tagName.trim().length === 0) {
-      throw new Error("Invalid tag name");
-    }
-
     // Use provided remote name or get the default remote
     const targetRemote = remoteName || (await this.getDefaultRemote());
 

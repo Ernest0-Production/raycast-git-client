@@ -19,12 +19,11 @@ export const CURRENT_BRANCH_FILTER = "CURRENT_BRANCH";
 export function useCommitsBranchFilter(repositoryPath: string, branchesState?: BranchesState) {
   const cacheKey = `commits-branch-filter-${Buffer.from(repositoryPath).toString("base64")}`;
 
-  const [branchFilter, setBranchFilter] = useCachedState<string>(cacheKey, ALL_BRANCHES_FILTER);
+  const [branchFilter, setBranchFilter] = useCachedState<string>(cacheKey, CURRENT_BRANCH_FILTER);
 
   // Validate cached branch when branches change
   useEffect(() => {
     if (branchesState && branchFilter !== ALL_BRANCHES_FILTER && branchFilter !== CURRENT_BRANCH_FILTER) {
-
       if (branchesState.detachedHead) {
         return;
       }

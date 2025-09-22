@@ -200,7 +200,7 @@ function RewordForm({ commit, initialMessage, onSubmit }: { commit: Commit; init
 
     return (
         <Form
-            navigationTitle={`Reword ${commit.shortHash}`}
+            navigationTitle={`Reword ${commit.message}`}
             actions={
                 <ActionPanel>
                     <Action.SubmitForm title="Save Message" onSubmit={handleSubmit} icon={Icon.CheckCircle} />

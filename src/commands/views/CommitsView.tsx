@@ -13,7 +13,7 @@ import {
   CommitCopyMessageAction,
   CommitInteractiveRebaseAction,
 } from "../../components/actions/CommitActions";
-import { TagCreateAction, TagRemoveAction } from "../../components/actions/TagActions";
+import { TagCreateAction, TagRemoveAction, TagCopyNameAction } from "../../components/actions/TagActions";
 import { BranchCopyNameAction, BranchPushAction, FetchAction, PullAction } from "../../components/actions/BranchActions";
 import { CommitDiffView } from "./CommitDiffView";
 import { ConfigureUrlTrackerForm } from "../../components/shared/ConfigureUrlTrackerForm";
@@ -460,14 +460,24 @@ function CommitListItem({
             }
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="Tags">
+          {commit.tags.map((tag) => (
+            <ActionPanel.Section title={`Tag '${tag}'`}>
+              <TagCopyNameAction key={`copy-${tag}`} tagName={tag} />
+              <TagRemoveAction key={`remove-${tag}`} tagName={tag} gitManager={gitManager} onRefresh={onRefresh} />
+            </ActionPanel.Section>
+          ))}
+          <ActionPanel.Section>
             <TagCreateAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
-            {commit.tags.map((tag) => (
-              <TagRemoveAction key={tag} tagName={tag} gitManager={gitManager} onRefresh={onRefresh} />
-            ))}
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Branch">
+            {branchesState && (
+              <CommitBranchFilterAction
+                branchFilter={branchFilter}
+                updateSelectedBranch={updateSelectedBranch}
+                branchesState={branchesState}
+              />
+            )}
             <PullAction gitManager={gitManager} onRefresh={onRefresh} />
             {branchesState?.currentBranch && branchesState.currentBranch.type === "current" && (
               <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={onRefresh} />
@@ -477,13 +487,6 @@ function CommitListItem({
           </ActionPanel.Section>
 
           <ActionPanel.Section title="History">
-            {branchesState && (
-              <CommitBranchFilterAction
-                branchFilter={branchFilter}
-                updateSelectedBranch={updateSelectedBranch}
-                branchesState={branchesState}
-              />
-            )}
             <Action.Push
               title="Configure URL Tracker"
               icon={Icon.Link}

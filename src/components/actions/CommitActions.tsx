@@ -2,6 +2,7 @@ import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast, clear
 import { GitManager } from "../../utils/git-utils";
 import { Commit } from "../../types";
 import InteractiveRebaseEditorView from "../../commands/views/InteractiveRebaseEditorView";
+import { ResetMode } from "simple-git";
 
 interface CommitActionProps {
   commit: Commit;
@@ -62,7 +63,7 @@ export function CommitRevertAction({ commit, gitManager, onRefresh }: CommitActi
   const handleRevert = async () => {
     const confirmed = await confirmAlert({
       title: "Revert commit",
-      message: `Are you sure you want to revert commit "${commit.shortHash}"? This will create a new commit that undoes the changes.`,
+      message: `Are you sure you want to revert commit '${commit.message}'? This will create a new commit that undoes the changes.`,
       primaryAction: {
         title: "Revert",
         style: Alert.ActionStyle.Default,
@@ -84,7 +85,6 @@ export function CommitRevertAction({ commit, gitManager, onRefresh }: CommitActi
       title="Revert Commit"
       onAction={handleRevert}
       icon={Icon.ArrowCounterClockwise}
-      shortcut={{ modifiers: ["cmd", "opt"], key: "r" }}
     />
   );
 }
@@ -93,7 +93,7 @@ export function CommitRevertAction({ commit, gitManager, onRefresh }: CommitActi
  * Action submenu for resetting to a commit.
  */
 export function CommitResetAction({ commit, gitManager, onRefresh }: CommitActionProps) {
-  const handleReset = async (mode: string) => {
+  const handleReset = async (mode: ResetMode) => {
     const confirmed = await confirmAlert({
       title: "Reset to commit",
       message: `Are you sure you want to reset to commit "${commit.shortHash}"? This action cannot be undone.`,
@@ -114,21 +114,18 @@ export function CommitResetAction({ commit, gitManager, onRefresh }: CommitActio
   };
 
   return (
-    <ActionPanel.Submenu title="Reset to This Commit" icon={Icon.ArrowClockwise}>
+    <ActionPanel.Submenu title="Reset to Here" icon={Icon.ArrowClockwise}>
       <Action
         title="Soft Reset (Keep Changes Staged)"
-        onAction={() => handleReset("--soft")}
-        icon={Icon.ArrowClockwise}
+        onAction={() => handleReset(ResetMode.SOFT)}
       />
       <Action
         title="Mixed Reset (Keep Changes Unstaged)"
-        onAction={() => handleReset("--mixed")}
-        icon={Icon.ArrowClockwise}
+        onAction={() => handleReset(ResetMode.MIXED)}
       />
       <Action
         title="Hard Reset (Discard All Changes)"
-        onAction={() => handleReset("--hard")}
-        icon={Icon.ArrowClockwise}
+        onAction={() => handleReset(ResetMode.HARD)}
         style={Action.Style.Destructive}
       />
     </ActionPanel.Submenu>

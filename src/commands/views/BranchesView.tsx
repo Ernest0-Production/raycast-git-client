@@ -242,8 +242,8 @@ function BranchListItem({
             {branch.type === "current" && (
               <>
                 <PullAction gitManager={gitManager} onRefresh={onRefresh} />
-                <BranchCopyNameAction branch={branch.name} />
                 <BranchPushAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchCopyNameAction branch={branch.name} />
                 <BranchRenameAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
               </>
             )}

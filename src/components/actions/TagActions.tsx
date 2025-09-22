@@ -17,7 +17,7 @@ export function TagCreateAction({ commit, gitManager, onRefresh }: TagActionProp
     <Action.Push
       title="Create Tag"
       target={<CreateTagForm commit={commit} gitManager={gitManager} onRefresh={onRefresh} />}
-      icon={Icon.Tag}
+      icon={Icon.Plus}
       shortcut={{ modifiers: ["cmd", "opt"], key: "t" }}
     />
   );
@@ -74,10 +74,20 @@ export function TagRemoveAction({
 
   return (
     <Action
-      title={`Remove Tag "${tagName}"`}
+      title={`Remove Tag '${tagName}'`}
       onAction={handleRemoveTag}
       icon={Icon.Trash}
       style={Action.Style.Destructive}
     />
   );
+}
+
+/**
+ * Action for copying tag name to clipboard.
+ */
+export function TagCopyNameAction({ tagName }: { tagName: string }) {
+  return <Action.CopyToClipboard
+    title={`Copy Tag Name '${tagName}'`}
+    content={tagName} icon={Icon.Clipboard}
+  />;
 }
