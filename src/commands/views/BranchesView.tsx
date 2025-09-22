@@ -117,7 +117,6 @@ export function BranchesView({
             <List.Section title="Local Branches">
               {branchesState.localBranches.map((branch) => (
                 <BranchListItem
-                  key={branch.name}
                   branch={branch}
                   gitManager={gitManager}
                   onRefresh={revalidateAll}
@@ -133,7 +132,6 @@ export function BranchesView({
             <List.Section key={remoteName} title={`Remote: ${remoteName}`}>
               {remoteBranches.map((branch) => (
                 <BranchListItem
-                  key={`${branch.displayName}`}
                   branch={branch}
                   gitManager={gitManager}
                   onRefresh={revalidateAll}
@@ -231,20 +229,20 @@ function BranchListItem({
   return (
     <List.Item
       key={branch.name}
-      title={branch.name}
+      title={branch.displayName}
       icon={getIcon()}
       accessories={accessories}
       keywords={[branch.upstream, branch.remote].filter((keyword): keyword is string => Boolean(keyword))}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title={branch.name}>
+          <ActionPanel.Section title={branch.displayName}>
             {/* Actions for current branch */}
             {branch.type === "current" && (
               <>
                 <PullAction gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchPushAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchRenameAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
-                <BranchCopyNameAction branch={branch.name} />
+                <BranchCopyNameAction branch={branch.displayName} />
               </>
             )}
 
@@ -256,7 +254,7 @@ function BranchListItem({
                 <BranchRebaseAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchMergeAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchRenameAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
-                <BranchCopyNameAction branch={branch.name} />
+                <BranchCopyNameAction branch={branch.displayName} />
                 <BranchDeleteAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
               </>
             )}
@@ -265,7 +263,7 @@ function BranchListItem({
             {branch.type === "remote" && (
               <>
                 <BranchCkeckoutAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
-                <BranchCopyNameAction branch={branch.name} />
+                <BranchCopyNameAction branch={branch.displayName} />
                 <BranchDeleteAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
               </>
             )}

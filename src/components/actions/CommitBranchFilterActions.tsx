@@ -40,8 +40,8 @@ export function CommitBranchFilterAction({
         )}
         {branchesState.currentBranch && (
           <Action
-            title={branchesState.currentBranch.name}
-            icon={branchFilter === CURRENT_BRANCH_FILTER ? Icon.Checkmark : { source: Icon.Dot, tintColor: Color.Green }}
+            title={branchesState.currentBranch.displayName}
+            icon={{ source: branchFilter === CURRENT_BRANCH_FILTER ? Icon.Checkmark : Icon.Dot, tintColor: Color.Green }}
             autoFocus={branchFilter === CURRENT_BRANCH_FILTER}
             onAction={() => updateSelectedBranch(CURRENT_BRANCH_FILTER)}
           />
@@ -53,7 +53,6 @@ export function CommitBranchFilterAction({
         <ActionPanel.Section title="Local Branches">
           {branchesState.localBranches.map((branch) => (
             <BranchFilterAction
-              key={branch.name}
               branch={branch}
               branchFilter={branchFilter}
               updateSelectedBranch={updateSelectedBranch}
@@ -67,7 +66,6 @@ export function CommitBranchFilterAction({
         <ActionPanel.Section key={remoteName} title={`Remote: ${remoteName}`}>
           {branches.map((branch) => (
             <BranchFilterAction
-              key={`${branch.displayName}`}
               branch={branch}
               branchFilter={branchFilter}
               updateSelectedBranch={updateSelectedBranch}
