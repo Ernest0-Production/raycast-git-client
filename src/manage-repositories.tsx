@@ -4,6 +4,7 @@ import { useRepositoriesList } from "./hooks/useRepositoriesList";
 import { RepositoryDirectoryActions } from "./components/actions/RepositoryDirectoryActions";
 import { validateGitRepository } from "./utils/validation";
 import OpenRepository from "./open-repository";
+import { showFailureToast } from "@raycast/utils";
 
 export default function ManageRepositories() {
   const { repositories, addToRecent, removeFromRecent, clearRepositoriesList } = useRepositoriesList();
@@ -26,11 +27,7 @@ export default function ManageRepositories() {
           title: "List cleared",
         });
       } catch (error) {
-        await showToast({
-          style: Toast.Style.Failure,
-          title: "Failed to clear list",
-          message: error instanceof Error ? error.message : "Unknown error",
-        });
+        await showFailureToast(error, { title: "Failed to clear list" });
       }
     }
   };

@@ -30,6 +30,7 @@ import {
 } from "../types";
 import * as path from "path";
 import { promises as fs } from "fs";
+import { showFailureToast } from "@raycast/utils";
 
 /**
  * Manager for Git operations within a repository.
@@ -46,11 +47,7 @@ export class GitManager {
       {
         errors: (error, _result) => {
           if (error) {
-            showToast({
-              style: Toast.Style.Failure,
-              title: `Error running command`,
-              message: error.toString(),
-            });
+            showFailureToast(error, { title: `Error running command` });
           }
           return error;
         }
@@ -626,7 +623,7 @@ export class GitManager {
    * Returns the first parent hash of a given commit or null if none (root commit).
    */
   async getFirstParentOfCommit(commitHash: string): Promise<string | null> {
-    const output = await this.git.raw(["rev-list", "--parents", "-n", "1", commitHash.trim()]);
+    const output = await this.git.raw(["rev-list", "--parents", "-n", "1", commitHash]);
     const parts = output.trim().split(/\s+/);
     // Format: <child> <parent1> [parent2 ...]
     if (parts.length >= 2) {
@@ -698,7 +695,7 @@ export class GitManager {
 
     for (const item of plan) {
       const action = item.action;
-      const hash = item.hash.trim();
+      const hash = item.hash;
 
       switch (action) {
         case "pick":
@@ -847,31 +844,21 @@ __REBASE_TODO__
    * Checks out a specific commit (creates detached HEAD state).
    */
   async checkoutCommit(commitHash: string): Promise<void> {
-    if (!commitHash || typeof commitHash !== "string" || commitHash.trim().length === 0) {
-      throw new Error("Invalid commit hash");
-    }
-
-    await this.git.checkout(commitHash.trim());
+    await this.git.checkout(commitHash);
   }
 
   /**
    * Creates a new branch.
    */
   async createBranch(name: string): Promise<void> {
-    await this.git.checkoutLocalBranch(name.trim());
+    await this.git.checkoutLocalBranch(name);
   }
 
   /**
    * Deletes a local branch.
    */
   async deleteBranch(name: string, force = false): Promise<void> {
-    if (!name || typeof name !== "string" || name.trim().length === 0) {
-      throw new Error("Invalid branch name");
-    }
-    if (name.includes("..") || name.includes(" ")) {
-      throw new Error("Branch name contains invalid characters");
-    }
-    await this.git.deleteLocalBranch(name.trim(), true);
+    await this.git.deleteLocalBranch(name, true);
   }
 
   /**
@@ -889,30 +876,21 @@ __REBASE_TODO__
    * Adds a file to the staging area.
    */
   async stageFile(file: string): Promise<void> {
-    if (!file || typeof file !== "string" || file.trim().length === 0) {
-      throw new Error("Invalid file path");
-    }
-    await this.git.add(file.trim());
+    await this.git.add(file);
   }
 
   /**
    * Removes a file from the staging area.
    */
   async unstageFile(file: string): Promise<void> {
-    if (!file || typeof file !== "string" || file.trim().length === 0) {
-      throw new Error("Invalid file path");
-    }
-    await this.git.reset(["HEAD", file.trim()]);
+    await this.git.reset(["HEAD", file]);
   }
 
   /**
    * Discards changes in a file.
    */
   async discardChanges(file: string): Promise<void> {
-    if (!file || typeof file !== "string" || file.trim().length === 0) {
-      throw new Error("Invalid file path");
-    }
-    await this.git.checkout(["--", file.trim()]);
+    await this.git.checkout(["--", file]);
   }
 
   /**
@@ -929,17 +907,14 @@ __REBASE_TODO__
    * Cherry-picks a commit.
    */
   async cherryPick(commitHash: string): Promise<void> {
-    if (!commitHash || typeof commitHash !== "string" || !/^[a-f0-9]{7,40}$/i.test(commitHash.trim())) {
-      throw new Error("Invalid commit hash");
-    }
-    await this.git.raw(["cherry-pick", commitHash.trim()]);
+    await this.git.raw(["cherry-pick", commitHash]);
   }
 
   /**
    * Reverts a commit.
    */
   async revert(commitHash: string): Promise<void> {
-    await this.git.raw(["revert", "--no-edit", commitHash.trim()]);
+    await this.git.raw(["revert", "--no-edit", commitHash]);
   }
 
   /**
@@ -1087,21 +1062,11 @@ __REBASE_TODO__
    * Creates a tag.
    */
   async createTag(tagName: string, commitHash: string, message?: string): Promise<void> {
-    if (!tagName || typeof tagName !== "string" || tagName.trim().length === 0) {
-      throw new Error("Invalid tag name");
-    }
-    if (!commitHash || typeof commitHash !== "string" || !/^[a-f0-9]{7,40}$/i.test(commitHash.trim())) {
-      throw new Error("Invalid commit hash");
-    }
-
-    const args = ["tag"];
-    if (message && message.trim()) {
-      args.push("-a", tagName.trim(), "-m", message.trim(), commitHash.trim());
+    if (message) {
+      this.git.raw(`tag -a ${tagName} -m ${message} ${commitHash}`);
     } else {
-      args.push(tagName.trim(), commitHash.trim());
+      this.git.raw(`tag ${tagName} ${commitHash}`);
     }
-
-    await this.git.raw(args);
   }
 
   /**
@@ -1156,19 +1121,16 @@ __REBASE_TODO__
   /**
    * Merges a branch into the current branch.
    */
-  async mergeBranch(branchName: string, noFF = false): Promise<void> {
-    if (!branchName || typeof branchName !== "string" || branchName.trim().length === 0) {
-      throw new Error("Invalid branch name");
-    }
-    const options = noFF ? ["--no-ff"] : [];
-    await this.git.merge([branchName.trim(), ...options]);
+  async mergeBranch(branchName: string, noFastForward = false): Promise<void> {
+    const options = noFastForward ? ["--no-ff"] : [];
+    await this.git.merge([branchName, ...options]);
   }
 
   /**
    * Rebases the current branch onto the specified branch.
    */
   async rebase(targetBranch: string): Promise<void> {
-    await this.git.rebase([targetBranch.trim()]);
+    await this.git.rebase([targetBranch]);
   }
 
   /**
@@ -1233,23 +1195,14 @@ __REBASE_TODO__
    * Adds a new remote.
    */
   async addRemote(name: string, url: string): Promise<void> {
-    if (!name || typeof name !== "string" || name.trim().length === 0) {
-      throw new Error("Invalid remote name");
-    }
-    if (!url || typeof url !== "string" || url.trim().length === 0) {
-      throw new Error("Invalid remote URL");
-    }
-    await this.git.addRemote(name.trim(), url.trim());
+    await this.git.addRemote(name, url);
   }
 
   /**
    * Removes a remote.
    */
   async removeRemote(name: string): Promise<void> {
-    if (!name || typeof name !== "string" || name.trim().length === 0) {
-      throw new Error("Invalid remote name");
-    }
-    await this.git.removeRemote(name.trim());
+    await this.git.removeRemote(name);
   }
 
   /**
@@ -1264,10 +1217,7 @@ __REBASE_TODO__
    * Deletes a tag.
    */
   async deleteTag(tagName: string): Promise<void> {
-    if (!tagName || typeof tagName !== "string" || tagName.trim().length === 0) {
-      throw new Error("Invalid tag name");
-    }
-    await this.git.raw(["tag", "-d", tagName.trim()]);
+    await this.git.raw(["tag", "-d", tagName]);
   }
 
   /**
@@ -1302,14 +1252,7 @@ __REBASE_TODO__
    * Renames a local branch. If oldName is not provided, renames the current branch.
    */
   async renameBranch(newName: string, oldName: string, upstream?: string): Promise<void> {
-    if (!newName || typeof newName !== "string" || newName.trim().length === 0) {
-      throw new Error("Invalid new branch name");
-    }
-    if (newName.includes("..") || newName.includes(" ") || newName.startsWith("-")) {
-      throw new Error("New branch name contains invalid characters");
-    }
-
-    await this.git.raw(["branch", "-m", oldName.trim(), newName.trim()]);
+    await this.git.raw(["branch", "-m", oldName, newName]);
 
     if (upstream) {
       let remote = upstream.split("/")[0];

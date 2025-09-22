@@ -1,6 +1,6 @@
 import { GitManager } from "../../utils/git-utils";
 import { Preferences } from "../../types";
-import { useCachedState } from "@raycast/utils";
+import { showFailureToast, useCachedState } from "@raycast/utils";
 import { useEffect, useState } from "react";
 import { showToast, Toast, getPreferenceValues, confirmAlert, environment, useNavigation, Color } from "@raycast/api";
 import { AI } from "@raycast/api";
@@ -113,11 +113,7 @@ export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: {
         message: "Review and edit as needed.",
       });
     } catch (error) {
-      await showToast({
-        style: Toast.Style.Failure,
-        title: "Failed to generate commit message",
-        message: error instanceof Error ? error.message : "Unknown error occurred",
-      });
+      await showFailureToast(error, { title: "Failed to generate commit message" });
     } finally {
       setIsGenerating(false);
     }

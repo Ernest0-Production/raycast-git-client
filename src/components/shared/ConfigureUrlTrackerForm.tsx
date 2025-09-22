@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { UrlTrackerConfig } from "../../types";
 import { useUrlTracker, validateUrlTrackerConfig } from "../../hooks/useUrlTracker";
 import { nanoid } from "nanoid";
+import { showFailureToast } from "@raycast/utils";
 
 interface ConfigureUrlTrackerFormProps {
   repositoryPath: string;
@@ -66,14 +67,9 @@ export function ConfigureUrlTrackerForm({ repositoryPath, onConfigurationSaved }
       });
 
       onConfigurationSaved?.();
-
       pop();
     } catch (error) {
-      await showToast({
-        style: Toast.Style.Failure,
-        title: "Failed to save configuration",
-        message: error instanceof Error ? error.message : "Unknown error",
-      });
+      await showFailureToast(error, { title: "Failed to save configuration" });
     }
   };
 

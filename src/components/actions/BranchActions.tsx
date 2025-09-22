@@ -307,14 +307,6 @@ function CreateBranchForm({ gitManager, onRefresh }: { gitManager: GitManager; o
 
   const handleSubmit = async (values: { branchName: string }) => {
     setIsLoading(true);
-    if (!values.branchName.trim()) {
-      await showToast({
-        style: Toast.Style.Failure,
-        title: "Branch name is required",
-      });
-      return;
-    }
-
     try {
       await gitManager.createBranch(values.branchName);
       onRefresh();
@@ -339,6 +331,7 @@ function CreateBranchForm({ gitManager, onRefresh }: { gitManager: GitManager; o
         id="branchName"
         title="Branch Name"
         placeholder="Enter branch name"
+        error={branchName.trim().length === 0 ? "Required" : undefined}
         value={branchName}
         onChange={(value) => setBranchName(value.replace(/ /g, "-"))}
       />
@@ -352,18 +345,6 @@ function RenameBranchForm({ branch, gitManager, onRefresh }: { branch: Branch; g
   const [newBranchName, setNewBranchName] = useState(branch.name);
   const [renameRemote, setRenameRemote] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Enhanced validation
-  const getValidationError = (): string | undefined => {
-    if (newBranchName.length === 0) {
-      return "Required";
-    }
-    // Git branch name validation
-    if (newBranchName.includes("..") || newBranchName.startsWith("-")) {
-      return "Invalid characters";
-    }
-    return undefined;
-  };
 
   const handleSubmit = async (values: { newBranchName: string; renameRemote?: boolean }) => {
     setIsLoading(true);
@@ -398,9 +379,9 @@ function RenameBranchForm({ branch, gitManager, onRefresh }: { branch: Branch; g
         id="newBranchName"
         title="Branch Name"
         placeholder="New branch name"
+        error={newBranchName.trim().length === 0 ? "Required" : undefined}
         value={newBranchName}
         onChange={(value) => setNewBranchName(value.replace(/ /g, "-"))}
-        error={getValidationError()}
       />
 
       {branch.upstream && (
