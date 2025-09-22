@@ -1,4 +1,4 @@
-import { ActionPanel, Action, List, Icon, clearSearchBar } from "@raycast/api";
+import { ActionPanel, Action, List, Icon } from "@raycast/api";
 import { useGitDiff } from "../../hooks/useGitDiff";
 import {
   FileStageAction,
@@ -12,7 +12,6 @@ import {
   FileUnstageAllAction,
   FileDiscardAllAction,
   getFileStatusIcon,
-  getFileStatusColor,
   FileQuickLookAction,
   FileRefreshStatusAction,
   FileCommitAction,
@@ -219,10 +218,7 @@ function FileListItem({
       id={fileId}
       title={file.path.split("/").pop() || file.path}
       subtitle={isShowingDetail ? undefined : file.relativePath}
-      icon={{
-        value: { source: getFileStatusIcon(file), tintColor: getFileStatusColor(file) },
-        tooltip: file.type.charAt(0).toUpperCase() + file.type.slice(1),
-      }}
+      icon={getFileStatusIcon(file)}
       keywords={[file.path, file.oldPath].filter((keyword): keyword is string => Boolean(keyword))}
       detail={
         isShowingDetail ? (
@@ -267,7 +263,7 @@ function FileListItem({
           <ActionPanel.Section>
             <FileRefreshStatusAction onRefresh={onRefresh} />
             <Action
-              title={isShowingDetail ? "Hide Detail" : "Show Detail"}
+              title={isShowingDetail ? "Hide Changes" : "Show Changes"}
               icon={Icon.AppWindowSidebarLeft}
               onAction={onToggleDetail}
               shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}

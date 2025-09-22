@@ -7,8 +7,6 @@ import {
   FileOpenWithAction,
   FileCopyPathAction,
   getCommitFileIcon,
-  getCommitFileColor,
-  getCommitFileStatusText,
   FileQuickLookAction,
 } from "../../components/actions/FileActions";
 import { useState, useMemo } from "react";
@@ -139,11 +137,7 @@ function FileListItem({
       id={fileId}
       title={file.path.split("/").pop() || file.path}
       subtitle={isShowingDetail ? undefined : file.path}
-      icon={{
-        source: getCommitFileIcon(file.status),
-        tintColor: getCommitFileColor(file.status),
-        tooltip: getCommitFileStatusText(file.status),
-      }}
+      icon={getCommitFileIcon(file)}
       accessories={accessories}
       keywords={[file.path, file.oldPath].filter((keyword): keyword is string => Boolean(keyword))}
       detail={

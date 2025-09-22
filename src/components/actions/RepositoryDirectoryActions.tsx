@@ -39,7 +39,7 @@ export function RepositoryDirectoryActions({ repositoryPath, onOpen }: Repositor
           target={repositoryPath}
           application={preferences.externalGitClient}
           icon={{ fileIcon: preferences.externalGitClient.path }}
-          shortcut={{ modifiers: ["cmd", "shift", "opt"], key: "o" }}
+          shortcut={{ modifiers: ["cmd", "shift"], key: "g" }}
           onOpen={() => onOpen?.()}
         />
       )}

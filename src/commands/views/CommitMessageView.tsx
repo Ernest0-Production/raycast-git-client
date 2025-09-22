@@ -2,7 +2,7 @@ import { GitManager } from "../../utils/git-utils";
 import { Preferences } from "../../types";
 import { useCachedState } from "@raycast/utils";
 import { useEffect, useState } from "react";
-import { showToast, Toast, getPreferenceValues, confirmAlert, environment, useNavigation } from "@raycast/api";
+import { showToast, Toast, getPreferenceValues, confirmAlert, environment, useNavigation, Color } from "@raycast/api";
 import { AI } from "@raycast/api";
 import { Action, ActionPanel, Form, Icon, Alert } from "@raycast/api";
 
@@ -175,7 +175,11 @@ export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: {
       actions={
         <ActionPanel>
           <ActionPanel.Section>
-            <Action.SubmitForm title={amend ? "Amend" : "Commit"} onSubmit={handleSubmit} icon={Icon.CheckCircle} />
+            <Action.SubmitForm
+              title={amend ? "Amend" : "Commit"}
+              onSubmit={handleSubmit}
+              icon={{ source: Icon.Checkmark, tintColor: Color.Green }}
+            />
             <Action
               title={amend ? "Amend and Push" : "Commit and Push"}
               onAction={() => handleCommit(true, false)}

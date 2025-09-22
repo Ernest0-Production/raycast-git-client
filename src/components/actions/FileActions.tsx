@@ -171,7 +171,7 @@ export function FileCommitAction({
   onFinish,
 }: {
   status: StatusState;
-  onContinue: () => void;
+  onContinue?: () => void;
   gitManager: GitManager;
   onFinish: () => void;
 }) {
@@ -189,7 +189,7 @@ export function FileCommitAction({
           try { await gitManager.continueRebase(); }
           // Git error is already shown by GitManager
           catch (error) { }
-          onContinue();
+          onContinue?.();
         };
         return <
           Action title="Continue Rebase"
@@ -222,7 +222,7 @@ export function FileCommitAction({
     return (
       <Action.Push
         title="Commit Changes"
-        icon={Icon.Envelope}
+        icon={{ source: Icon.Checkmark, tintColor: Color.Green }}
         target={<CommitMessageForm gitManager={gitManager} onFinish={onFinish} />}
         shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
       />
@@ -318,7 +318,7 @@ export function FileStageAllAction({ gitManager, onRefresh }: { gitManager: GitM
     <Action
       title="Stage All Files"
       onAction={handleStageAll}
-      icon={Icon.Plus}
+      icon={{ source: Icon.Plus, tintColor: Color.Blue }}
       shortcut={{ modifiers: ["cmd", "shift"], key: "a" }}
     />
   );
@@ -341,7 +341,7 @@ export function FileUnstageAllAction({ gitManager, onRefresh }: { gitManager: Gi
     <Action
       title="Unstage All Files"
       onAction={handleUnstageAll}
-      icon={Icon.Minus}
+      icon={{ source: Icon.Minus, tintColor: Color.Blue }}
       shortcut={{ modifiers: ["cmd", "shift"], key: "z" }}
     />
   );
@@ -404,104 +404,39 @@ export function FileRefreshStatusAction({ onRefresh }: { onRefresh: () => void }
 export const getFileStatusIcon = (file: FileStatus) => {
   switch (file.type) {
     case "added":
-      return Icon.Plus;
+      return { source: `plus-square.svg`, tintColor: Color.Green, tooltip: "Added" };
     case "modified":
-      return Icon.Pencil;
+      return { source: `square-pen.svg`, tintColor: Color.Yellow, tooltip: "Modified" };
     case "deleted":
-      return Icon.Trash;
+      return { source: `square-minus.svg`, tintColor: Color.Red, tooltip: "Deleted" };
     case "renamed":
-      return Icon.ArrowClockwise;
+      return { source: `square-arrow-right-filled.svg`, tintColor: Color.Blue, tooltip: "Moved from " + file.oldPath };
     case "copied":
-      return Icon.Duplicate;
+      return { source: `copy.svg`, tintColor: Color.Purple, tooltip: "Copied" };
     case "conflicted":
-      return Icon.ExclamationMark;
+      return { source: `alert-square-filled.svg`, tintColor: Color.Red, tooltip: "Conflicted" };
     default:
-      return Icon.Document;
-  }
-};
-
-/**
- * Colors for different types of changes
- */
-export const getFileStatusColor = (file: FileStatus) => {
-  switch (file.type) {
-    case "added":
-      return Color.Green;
-    case "modified":
-      return Color.Yellow;
-    case "deleted":
-      return Color.Red;
-    case "renamed":
-      return Color.Purple;
-    case "copied":
-      return Color.Orange;
-    case "conflicted":
-      return Color.Red;
-    default:
-      return Color.SecondaryText;
+      return { source: Icon.Document, tintColor: Color.SecondaryText, tooltip: "Unknown" };
   }
 };
 
 /**
  * Icons for commit file changes
  */
-export const getCommitFileIcon = (status: CommitFileChange["status"]) => {
-  switch (status) {
+export const getCommitFileIcon = (change: CommitFileChange) => {
+  switch (change.status) {
     case "added":
-      return Icon.Plus;
+      return { source: `plus-square.svg`, tintColor: Color.Green, tooltip: "Added" };
     case "modified":
     case "changed":
-      return Icon.Pencil;
+      return { source: `square-pen.svg`, tintColor: Color.Yellow, tooltip: "Modified" };
     case "deleted":
-      return Icon.Trash;
+      return { source: `square-minus.svg`, tintColor: Color.Red, tooltip: "Deleted" };
     case "renamed":
-      return Icon.ArrowClockwise;
+      return { source: `square-arrow-right-filled.svg`, tintColor: Color.Blue, tooltip: "Moved from " + change.oldPath };
     case "copied":
-      return Icon.Duplicate;
+      return { source: `copy.svg`, tintColor: Color.Purple, tooltip: "Copied" };
     default:
-      return Icon.Document;
-  }
-};
-
-/**
- * Colors for commit file changes
- */
-export const getCommitFileColor = (status: CommitFileChange["status"]) => {
-  switch (status) {
-    case "added":
-      return Color.Green;
-    case "modified":
-    case "changed":
-      return Color.Yellow;
-    case "deleted":
-      return Color.Red;
-    case "renamed":
-      return Color.Blue;
-    case "copied":
-      return Color.Purple;
-    default:
-      return Color.SecondaryText;
-  }
-};
-
-/**
- * Status text for commit file changes
- */
-export const getCommitFileStatusText = (status: CommitFileChange["status"]) => {
-  switch (status) {
-    case "added":
-      return "Added";
-    case "modified":
-      return "Modified";
-    case "changed":
-      return "Changed";
-    case "deleted":
-      return "Deleted";
-    case "renamed":
-      return "Moved";
-    case "copied":
-      return "Copied";
-    default:
-      return "Unknown";
+      return { source: Icon.Document, tintColor: Color.SecondaryText, tooltip: "Unknown" };
   }
 };
