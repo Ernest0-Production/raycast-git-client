@@ -230,7 +230,7 @@ function CommitListItem({
   const icon = useMemo(() => {
     if (selectedBranch && 'type' in selectedBranch && selectedBranch.ahead) {
       if (selectedBranch.ahead > index) {
-        return { source: Icon.Dot, tintColor: Color.Blue, tooltip: "Unpushed" };
+        return { source: Icon.Dot, tintColor: Color.Orange, tooltip: "Unpushed" };
       }
     }
     return undefined;

@@ -106,12 +106,12 @@ export default function InteractiveRebaseEditorView({ gitManager, startFromCommi
                     ]}
                     icon={(() => {
                         switch (plan[commit.hash]?.action) {
-                            case "pick": return { value: { source: Icon.Dot, tintColor: Color.Green }, tooltip: "Use this commit" };
-                            case "reword": return { value: { source: Icon.Message, tintColor: Color.Yellow }, tooltip: "Edit the commit message" };
-                            case "edit": return { value: { source: Icon.Pencil, tintColor: Color.Yellow }, tooltip: "Stop for amending" };
-                            case "drop": return { value: { source: Icon.Trash, tintColor: Color.Red }, tooltip: "Remove commit" };
-                            case "squash": return { value: { source: Icon.ArrowDown, tintColor: Color.Blue }, tooltip: "Meld commit into previous one and keep message" };
-                            case "fixup": return { value: { source: Icon.Download, tintColor: Color.Blue }, tooltip: "Meld commit into previous one and discard message" };
+                            case "pick": return { value: { source: Icon.Dot, tintColor: Color.Green }, tooltip: "Pick: Use this commit" };
+                            case "reword": return { value: { source: Icon.Message, tintColor: Color.Yellow }, tooltip: "Reword: Edit the commit message" };
+                            case "edit": return { value: { source: Icon.Pencil, tintColor: Color.Yellow }, tooltip: "Edit: Stop for amending" };
+                            case "drop": return { value: { source: Icon.Trash, tintColor: Color.Red }, tooltip: "Drop: Remove commit" };
+                            case "squash": return { value: { source: Icon.ArrowDown, tintColor: Color.Blue }, tooltip: "Squash: Meld commit into previous one and keep message" };
+                            case "fixup": return { value: { source: Icon.Download, tintColor: Color.Blue }, tooltip: "Fixup: Meld commit into previous one and discard message" };
                         }
                     })()}
                     actions={
