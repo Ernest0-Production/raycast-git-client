@@ -49,15 +49,30 @@ export function CommitCheckoutAction({ commit, gitManager, onRefresh }: CommitAc
  */
 export function CommitCherryPickAction({ commit, gitManager, onRefresh }: CommitActionProps) {
   const handleCherryPick = async () => {
-    try {
-      await gitManager.cherryPick(commit.hash);
-      onRefresh();
-    } catch (error) {
-      // Git error is already shown by GitManager
+    const confirmed = await confirmAlert({
+      title: "Cherry-pick commit",
+      message: `Are you sure you want to cherry-pick commit '${commit.shortHash}'? This will create a new commit that undoes the changes.`,
+      primaryAction: {
+        title: "Cherry-pick",
+        style: Alert.ActionStyle.Default,
+      },
+    });
+
+    if (confirmed) {
+      try {
+        await gitManager.cherryPick(commit.hash);
+        onRefresh();
+      } catch (error) {
+        // Git error is already shown by GitManager
+      }
     }
   };
 
-  return <Action title="Cherry-Pick Commit" onAction={handleCherryPick} icon={Icon.Download} />;
+  return <Action
+    title="Cherry-Pick Commit"
+    onAction={handleCherryPick}
+    icon={Icon.Download}
+  />;
 }
 
 /**
@@ -180,35 +195,40 @@ export function CommitCopyMessageAction({ commit }: { commit: Commit }) {
  * Action for copying short commit hash to clipboard.
  */
 export function CommitCopyShortHashAction({ commit }: { commit: Commit }) {
-  return <Action.CopyToClipboard title="Copy Short Hash" content={commit.shortHash} />;
+  return <Action.CopyToClipboard
+    title="Copy Short Hash"
+    content={commit.shortHash}
+  />;
 }
 
 /**
  * Action for copying commit author to clipboard.
  */
 export function CommitCopyAuthorAction({ commit }: { commit: Commit }) {
-  return <Action.CopyToClipboard title="Copy Author Name" content={commit.author} />;
+  return <Action.CopyToClipboard
+    title="Copy Author Name"
+    content={commit.author}
+  />;
 }
 
 /**
  * Action for copying commit author email to clipboard.
  */
 export function CommitCopyAuthorEmailAction({ commit }: { commit: Commit }) {
-  return <Action.CopyToClipboard title="Copy Author Email" content={commit.authorEmail} />;
+  return <Action.CopyToClipboard
+    title="Copy Author Email"
+    content={commit.authorEmail}
+  />;
 }
 
 /**
  * Action for refreshing commit history.
  */
 export function CommitRefreshHistoryAction({ onRefresh }: { onRefresh: () => void }) {
-  const handleRefresh = async () => {
-    onRefresh();
-  };
-
   return (
     <Action
       title="Refresh History"
-      onAction={handleRefresh}
+      onAction={onRefresh}
       icon={Icon.ArrowClockwise}
       shortcut={{ modifiers: ["cmd"], key: "r" }}
     />

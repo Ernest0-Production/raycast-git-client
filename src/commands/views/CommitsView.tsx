@@ -106,9 +106,6 @@ export function CommitsView({
               <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={revalidate} />
             )}
             <FetchAction gitManager={gitManager} onRefresh={revalidate} />
-          </ActionPanel.Section>
-
-          <ActionPanel.Section title="History">
             {branchFilter && branchesState && (
               <CommitBranchFilterAction
                 branchFilter={branchFilter}
@@ -116,11 +113,6 @@ export function CommitsView({
                 branchesState={branchesState}
               />
             )}
-            <Action.Push
-              title="Configure URL Tracker"
-              icon={Icon.Gear}
-              target={<ConfigureUrlTrackerForm repositoryPath={gitManager.repoPath} onConfigurationSaved={revalidate} />}
-            />
           </ActionPanel.Section>
 
           <ActionPanel.Section>
@@ -138,6 +130,16 @@ export function CommitsView({
                 shortcut={{ modifiers: ["shift", "cmd"], key: "i" }}
               />
             )}
+            <Action.Push
+              title="Configure URL Tracker"
+              icon={Icon.Gear}
+              target={
+                <ConfigureUrlTrackerForm
+                  repositoryPath={gitManager.repoPath}
+                  onConfigurationSaved={revalidate}
+                />
+              }
+            />
           </ActionPanel.Section>
 
           {navigationActions}
@@ -159,10 +161,11 @@ export function CommitsView({
         <List.EmptyView title="No commits" description="No commits in this branch." icon={`git-commit.svg`} />
       ) : (
         <List.Section title={currentFilterDisplayName}>
-          {commits.map((commit) => (
+          {commits.map((commit, index) => (
             <CommitListItem
               key={commit.hash}
               commit={commit}
+              index={index}
               gitManager={gitManager}
               onRefresh={revalidate}
               navigationActions={navigationActions}
@@ -187,6 +190,7 @@ export function CommitsView({
 
 interface CommitListItemProps {
   commit: Commit;
+  index: number;
   gitManager: GitManager;
   onRefresh: () => void;
   navigationActions: React.ReactNode;
@@ -205,6 +209,7 @@ interface CommitListItemProps {
 
 function CommitListItem({
   commit,
+  index,
   gitManager,
   onRefresh,
   navigationActions,
@@ -486,14 +491,6 @@ function CommitListItem({
             {selectedBranch && <BranchCopyNameAction branch={selectedBranch} />}
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="History">
-            <Action.Push
-              title="Configure URL Tracker"
-              icon={Icon.Link}
-              target={<ConfigureUrlTrackerForm repositoryPath={gitManager.repoPath} onConfigurationSaved={onRefresh} />}
-            />
-          </ActionPanel.Section>
-
           <ActionPanel.Section>
             <Action
               title={isShowingDetail ? "Hide Detail" : "Show Detail"}
@@ -509,6 +506,16 @@ function CommitListItem({
                 shortcut={{ modifiers: ["shift", "cmd"], key: "i" }}
               />
             )}
+            <Action.Push
+              title="Configure URL Tracker"
+              icon={Icon.Link}
+              target={
+                <ConfigureUrlTrackerForm
+                  repositoryPath={gitManager.repoPath}
+                  onConfigurationSaved={onRefresh}
+                />
+              }
+            />
           </ActionPanel.Section>
 
           {navigationActions}

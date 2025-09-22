@@ -120,10 +120,26 @@ export function getBranchFilterDisplayName(
       return `Commits on HEAD '${branchesState.detachedHead.shortCommitHash}'`;
     }
     if (branchesState?.currentBranch) {
-      return `Filtered by '${branchesState.currentBranch.name}' branch`;
+      const aheadBehindInfo = getAheadBehindInfo(branchesState.currentBranch);
+      return `Filtered by '${branchesState.currentBranch.name}' branch ${aheadBehindInfo ? ` • ${aheadBehindInfo}` : ""}`;
     }
     return undefined;
   }
 
+  const localBranch = branchesState?.localBranches.find((branch) => branch.name === selectedBranch);
+  if (localBranch) {
+    const aheadBehindInfo = getAheadBehindInfo(localBranch);
+    return `Filtered by '${localBranch.name}' branch ${aheadBehindInfo ? ` • ${aheadBehindInfo}` : ""}`;
+  }
+
   return `Filtered by '${selectedBranch}' branch`;
+}
+
+function getAheadBehindInfo(branch: Branch): string | undefined {
+  const parts = [];
+  if (branch.ahead) parts.push(`↑ ${branch.ahead} ahead`);
+  if (branch.behind) parts.push(`↓ ${branch.behind} behind`);
+
+  if (parts.length > 0) return parts.join(" • ");
+  return undefined;
 }
