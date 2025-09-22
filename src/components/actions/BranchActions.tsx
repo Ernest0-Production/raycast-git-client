@@ -29,7 +29,7 @@ export function BranchCkeckoutAction({ branch, gitManager, onRefresh }: BranchAc
     if (confirmed) {
       try {
         if (isRemote) {
-          await gitManager.checkoutRemoteBranch(branch.name);
+          await gitManager.checkoutRemoteBranch(branch.name, branch.upstream!);
         } else {
           await gitManager.checkoutLocalBranch(branch.name);
         }

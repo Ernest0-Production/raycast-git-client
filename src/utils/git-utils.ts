@@ -836,8 +836,8 @@ __REBASE_TODO__
     await this.git.checkout(branchName);
   }
 
-  async checkoutRemoteBranch(branchName: string): Promise<void> {
-    await this.git.checkout(["--track", "-B", branchName]);
+  async checkoutRemoteBranch(branchName: string, upstream: string): Promise<void> {
+    await this.git.checkout(["--track", "-B", branchName, upstream]);
   }
 
   /**
