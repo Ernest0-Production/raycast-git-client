@@ -8,6 +8,7 @@ import {
   FileCopyPathAction,
   getCommitFileIcon,
   FileQuickLookAction,
+  FileRestoreAction,
 } from "../../components/actions/FileActions";
 import { useState, useMemo } from "react";
 import { usePromise } from "@raycast/utils";
@@ -18,9 +19,10 @@ interface CommitDiffViewProps {
   commit: Commit;
   gitManager: GitManager;
   navigationActions: React.ReactNode;
+  onRefresh: () => void;
 }
 
-export function CommitDiffView({ commit, gitManager, navigationActions }: CommitDiffViewProps) {
+export function CommitDiffView({ commit, gitManager, navigationActions, onRefresh }: CommitDiffViewProps) {
   const [isShowingDetail, setIsShowingDetail] = useState(false);
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
   const { data: statsMap, isLoading } = usePromise(
@@ -74,6 +76,7 @@ export function CommitDiffView({ commit, gitManager, navigationActions }: Commit
               onToggleDetail={toggleDetail}
               selectedFilePath={selectedFilePath}
               statsMap={statsMap}
+              onRefresh={onRefresh}
             />
           ))}
         </List.Section>
@@ -91,9 +94,10 @@ interface FileListItemProps {
   onToggleDetail: () => void;
   selectedFilePath: string | null;
   statsMap: Record<string, { insertions: number; deletions: number }> | undefined;
+  onRefresh: () => void;
 }
 
-function FileListItem({
+export function FileListItem({
   file,
   commit,
   gitManager,
@@ -102,6 +106,7 @@ function FileListItem({
   onToggleDetail,
   selectedFilePath,
   statsMap,
+  onRefresh,
 }: FileListItemProps) {
   // Create a unique identifier for each file item
   const fileId = `${file.path}-${commit.hash}`;
@@ -162,6 +167,12 @@ function FileListItem({
             <FileOpenWithAction filePath={absolutePath} shortcut={{ modifiers: ["cmd"], key: "o" }} />
             <FileCopyPathAction filePath={absolutePath} />
             <FileQuickLookAction filePath={absolutePath} />
+            <FileRestoreAction
+              filePath={absolutePath}
+              commit={commit.hash}
+              gitManager={gitManager}
+              onRefresh={onRefresh}
+            />
           </ActionPanel.Section>
           {navigationActions}
         </ActionPanel>

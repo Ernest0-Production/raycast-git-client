@@ -1,8 +1,9 @@
 import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast, Form, useNavigation, clearSearchBar } from "@raycast/api";
 import { useState } from "react";
 import { GitManager } from "../../utils/git-utils";
-import { Branch } from "../../types";
+import { Branch, MergeMode } from "../../types";
 import { usePromise } from "@raycast/utils";
+import InteractiveRebaseEditorView from "../../commands/views/InteractiveRebaseEditorView";
 
 interface BranchActionProps {
   branch: Branch;
@@ -33,10 +34,11 @@ export function BranchCkeckoutAction({ branch, gitManager, onRefresh }: BranchAc
         } else {
           await gitManager.checkoutLocalBranch(branch.name);
         }
-        onRefresh();
         clearSearchBar();
       } catch (error) {
         // Git error is already shown by GitManager
+      } finally {
+        onRefresh();
       }
     }
   };
@@ -144,7 +146,7 @@ export function BranchPushAction({ branch, gitManager, onRefresh }: BranchAction
     <Action
       title="Push"
       onAction={handlePush}
-      icon={Icon.ArrowUp}
+      icon={`git-push.svg`}
       shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
     />
   );
@@ -154,7 +156,7 @@ export function BranchPushAction({ branch, gitManager, onRefresh }: BranchAction
  * Action for merging a branch into the current branch.
  */
 export function BranchMergeAction({ branch, gitManager, onRefresh }: BranchActionProps) {
-  const handleMergeBranch = async () => {
+  const handleMergeBranch = async (mode: MergeMode) => {
     const confirmed = await confirmAlert({
       title: "Merge branch",
       message: `Are you sure you want to merge branch "${branch.name}" into the current branch?`,
@@ -166,21 +168,37 @@ export function BranchMergeAction({ branch, gitManager, onRefresh }: BranchActio
 
     if (confirmed) {
       try {
-        await gitManager.mergeBranch(branch.name);
-        onRefresh();
+        await gitManager.mergeBranch(branch.name, mode);
       } catch (error) {
         // Git error is already shown by GitManager
+      } finally {
+        onRefresh();
       }
     }
   };
 
   return (
-    <Action
+    <ActionPanel.Submenu
       title="Merge into Current"
-      onAction={handleMergeBranch}
       icon={`git-merge.svg`}
-      shortcut={{ modifiers: ["cmd"], key: "m" }}
-    />
+      shortcut={{ modifiers: ["cmd"], key: "m" }}>
+      <Action
+        title="Fast Forward (if possible)"
+        onAction={() => handleMergeBranch(MergeMode.FAST_FORWARD)}
+      />
+      <Action
+        title="No Fast Forward"
+        onAction={() => handleMergeBranch(MergeMode.NO_FF)}
+      />
+      <Action
+        title="Squash"
+        onAction={() => handleMergeBranch(MergeMode.SQUASH)}
+      />
+      <Action
+        title="No Commit"
+        onAction={() => handleMergeBranch(MergeMode.NO_COMMIT)}
+      />
+    </ActionPanel.Submenu>
   );
 }
 
@@ -201,9 +219,10 @@ export function BranchRebaseAction({ branch, gitManager, onRefresh }: BranchActi
     if (confirmed) {
       try {
         await gitManager.rebase(branch.name);
-        onRefresh();
       } catch (error) {
         // Git error is already shown by GitManager
+      } finally {
+        onRefresh();
       }
     }
   };
@@ -214,6 +233,26 @@ export function BranchRebaseAction({ branch, gitManager, onRefresh }: BranchActi
       onAction={handleRebaseBranch}
       icon={`arrow-rebase.svg`}
       shortcut={{ modifiers: ["cmd", "shift"], key: "r" }}
+    />
+  );
+}
+
+/**
+ * Action to open Interactive Rebase Editor starting from selected branch.
+ */
+export function BranchInteractiveRebaseAction({ branch, gitManager, onRefresh }: BranchActionProps) {
+  return (
+    <Action.Push
+      title="Interactive Rebase from Here"
+      icon={`arrow-rebase.svg`}
+      target={
+        <InteractiveRebaseEditorView
+          gitManager={gitManager}
+          startFromCommit={branch.name}
+          onFinish={onRefresh}
+        />
+      }
+      shortcut={{ modifiers: ["cmd", "shift", "opt"], key: "e" }}
     />
   );
 }
@@ -235,8 +274,8 @@ export function FetchAction({ gitManager, onRefresh }: { gitManager: GitManager;
     <Action
       title="Fetch"
       onAction={handleFetch}
-      icon={Icon.ArrowClockwise}
-      shortcut={{ modifiers: ["cmd"], key: "r" }}
+      icon={`git-fetch.svg`}
+      shortcut={{ modifiers: ["cmd", "shift"], key: "f" }}
     />
   );
 }
@@ -248,18 +287,20 @@ export function PullAction({ gitManager, onRefresh }: { gitManager: GitManager; 
   const handlePullRebase = async () => {
     try {
       await gitManager.pull(true);
-      onRefresh();
     } catch (error) {
       // Git error is already shown by GitManager
+    } finally {
+      onRefresh();
     }
   };
 
   const handlePullMerge = async () => {
     try {
       await gitManager.pull(false);
-      onRefresh();
     } catch (error) {
       // Git error is already shown by GitManager
+    } finally {
+      onRefresh();
     }
   };
 

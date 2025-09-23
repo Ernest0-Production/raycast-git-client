@@ -1,4 +1,4 @@
-import { ActionPanel, List, Icon, Action, useNavigation, Color } from "@raycast/api";
+import { ActionPanel, List, Icon, Action, Color } from "@raycast/api";
 import { getFavicon, useCachedState } from "@raycast/utils";
 import {
   CommitCheckoutAction,
@@ -225,8 +225,6 @@ function CommitListItem({
   updateSelectedBranch,
   branchesState,
 }: CommitListItemProps) {
-  const { push } = useNavigation();
-
   const icon = useMemo(() => {
     if (selectedBranch && 'type' in selectedBranch && selectedBranch.ahead) {
       if (selectedBranch.ahead > index) {
@@ -440,11 +438,16 @@ function CommitListItem({
       actions={
         <ActionPanel>
           <ActionPanel.Section title="Commit">
-            <Action
+            <Action.Push
               title="View Commit Files"
               icon={Icon.Document}
-              onAction={() =>
-                push(<CommitDiffView commit={commit} gitManager={gitManager} navigationActions={navigationActions} />)
+              target={
+                <CommitDiffView
+                  commit={commit}
+                  gitManager={gitManager}
+                  navigationActions={navigationActions}
+                  onRefresh={onRefresh}
+                />
               }
             />
             <CommitCheckoutAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />

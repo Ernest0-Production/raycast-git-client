@@ -11,6 +11,7 @@ import {
   FetchAction,
   PullAction,
   BranchCopyNameAction,
+  BranchInteractiveRebaseAction,
 } from "../../components/actions/BranchActions";
 import { GitManager } from "../../utils/git-utils";
 import { Branch, DetachedHead, BranchesState } from "../../types";
@@ -89,6 +90,7 @@ export function BranchesView({
           {branchesState.currentBranch && (
             <List.Section title="Current Branch">
               <BranchListItem
+                key={branchesState.currentBranch.displayName}
                 branch={branchesState.currentBranch}
                 gitManager={gitManager}
                 onRefresh={revalidateAll}
@@ -117,6 +119,7 @@ export function BranchesView({
             <List.Section title="Local Branches">
               {branchesState.localBranches.map((branch) => (
                 <BranchListItem
+                  key={branch.displayName}
                   branch={branch}
                   gitManager={gitManager}
                   onRefresh={revalidateAll}
@@ -132,6 +135,7 @@ export function BranchesView({
             <List.Section key={remoteName} title={`Remote: ${remoteName}`}>
               {remoteBranches.map((branch) => (
                 <BranchListItem
+                  key={branch.displayName}
                   branch={branch}
                   gitManager={gitManager}
                   onRefresh={revalidateAll}
@@ -256,6 +260,7 @@ function BranchListItem({
                 <BranchRenameAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchCopyNameAction branch={branch.displayName} />
                 <BranchDeleteAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchInteractiveRebaseAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
               </>
             )}
 

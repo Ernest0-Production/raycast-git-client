@@ -1,4 +1,4 @@
-import { ActionPanel, Action, Icon, List, confirmAlert, Alert, showToast, Toast, LaunchType, Form, useNavigation } from "@raycast/api";
+import { ActionPanel, Action, Icon, List, confirmAlert, Alert, showToast, Toast, LaunchType, Form, useNavigation, Color } from "@raycast/api";
 import { useState } from "react";
 import { useRepositoriesList } from "./hooks/useRepositoriesList";
 import { RepositoryDirectoryActions } from "./components/actions/RepositoryDirectoryActions";
@@ -74,13 +74,13 @@ export default function ManageRepositories() {
         <List.EmptyView
           title="No recent repositories"
           description="Open a Git repository via the 'Open Git Repository' command or add one using the 'Add Repository' action"
-          icon={Icon.Folder}
+          icon={`git-project.svg`}
         />
       ) : (
         repositories.map((repo) => (
           <List.Item
             key={repo.id}
-            icon={Icon.Folder}
+            icon={{ source: `git-project.svg`, tintColor: Color.SecondaryText }}
             title={repo.name}
             subtitle={repo.path}
             keywords={[repo.path]}

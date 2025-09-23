@@ -1,8 +1,9 @@
 import { Action, Icon, Color, confirmAlert, Alert, Keyboard, getDefaultApplication } from "@raycast/api";
 import { GitManager } from "../../utils/git-utils";
-import { CommitFileChange, FileStatus, StatusState } from "../../types";
+import { Commit, CommitFileChange, FileStatus, StatusState } from "../../types";
 import { existsSync } from "fs";
 import { CommitMessageForm } from "../../commands/views/CommitMessageView";
+import FileHistoryView from "../../commands/views/FileHistoryView";
 
 interface FileActionProps {
   file: FileStatus;
@@ -297,6 +298,53 @@ export function FileConflictAbortAction({
         />
       );
   }
+}
+
+export function FileRestoreAction({ filePath, commit, gitManager, onRefresh }: { filePath: string, commit: string, gitManager: GitManager, onRefresh: () => void }) {
+  const handleRestore = async () => {
+    const confirmed = await confirmAlert({
+      title: "Restore File to This Commit",
+      message: `Are you sure you want to restore '${filePath.split("/").pop()}' to commit ${commit}? This will modify the working tree`,
+      primaryAction: {
+        title: "Restore",
+        style: Alert.ActionStyle.Destructive
+      },
+    });
+
+    if (!confirmed) return;
+    try {
+      await gitManager.restoreFileToCommit(filePath, commit);
+      onRefresh();
+    } catch (error) {
+      // Error toast is shown by GitManager
+    }
+  };
+
+  return (
+    <Action
+      title="Restore File to This Commit"
+      icon={Icon.RotateClockwise}
+      style={Action.Style.Destructive}
+      onAction={handleRestore}
+    />
+  );
+}
+
+export function FileHistoryAction({ filePath, gitManager, onRefresh, onPush }: { filePath: string, gitManager: GitManager, onRefresh: () => void, onPush?: () => void }) {
+  return (
+    <Action.Push
+      title="Show File History"
+      icon={Icon.Clock}
+      onPush={onPush}
+      target={
+        <FileHistoryView
+          gitManager={gitManager}
+          filePath={filePath}
+          onRefresh={onRefresh}
+        />
+      }
+    />
+  );
 }
 
 // === Bulk actions ===

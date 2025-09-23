@@ -1,4 +1,4 @@
-import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast, clearSearchBar, useNavigation } from "@raycast/api";
+import { ActionPanel, Action, Icon, confirmAlert, Alert, clearSearchBar } from "@raycast/api";
 import { GitManager } from "../../utils/git-utils";
 import { Commit } from "../../types";
 import InteractiveRebaseEditorView from "../../commands/views/InteractiveRebaseEditorView";
@@ -29,10 +29,11 @@ export function CommitCheckoutAction({ commit, gitManager, onRefresh }: CommitAc
     if (confirmed) {
       try {
         await gitManager.checkoutCommit(targetName);
-        onRefresh();
         clearSearchBar();
       } catch (error) {
         // Git error is already shown by GitManager
+      } finally {
+        onRefresh();
       }
     }
   };
@@ -61,9 +62,10 @@ export function CommitCherryPickAction({ commit, gitManager, onRefresh }: Commit
     if (confirmed) {
       try {
         await gitManager.cherryPick(commit.hash);
-        onRefresh();
       } catch (error) {
         // Git error is already shown by GitManager
+      } finally {
+        onRefresh();
       }
     }
   };
@@ -71,7 +73,7 @@ export function CommitCherryPickAction({ commit, gitManager, onRefresh }: Commit
   return <Action
     title="Cherry-Pick Commit"
     onAction={handleCherryPick}
-    icon={Icon.Download}
+    icon={`arrow-bounce.svg`}
   />;
 }
 
@@ -92,9 +94,10 @@ export function CommitRevertAction({ commit, gitManager, onRefresh }: CommitActi
     if (confirmed) {
       try {
         await gitManager.revert(commit.hash);
-        onRefresh();
       } catch (error) {
         // Git error is already shown by GitManager
+      } finally {
+        onRefresh();
       }
     }
   };
@@ -125,9 +128,10 @@ export function CommitResetAction({ commit, gitManager, onRefresh }: CommitActio
     if (confirmed) {
       try {
         await gitManager.reset(commit.hash, mode);
-        onRefresh();
       } catch (error) {
         // Git error is already shown by GitManager
+      } finally {
+        onRefresh();
       }
     }
   };
@@ -162,7 +166,7 @@ export function CommitInteractiveRebaseAction({ commit, gitManager, onRefresh }:
       target={
         <InteractiveRebaseEditorView
           gitManager={gitManager}
-          startFromCommit={commit}
+          startFromCommit={commit.hash}
           onFinish={onRefresh}
         />
       }

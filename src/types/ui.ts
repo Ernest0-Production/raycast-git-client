@@ -1,7 +1,7 @@
 /**
  * Git repository view types.
  */
-export type GitView = "branches" | "status" | "commits" | "stashes";
+export type GitView = "branches" | "status" | "commits" | "stashes" | "files history";
 
 /**
  * Repository view state.

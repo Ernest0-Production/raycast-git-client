@@ -199,3 +199,13 @@ export interface StatusState {
   /** Information about an ongoing conflict, if any. */
   conflict?: ConflictState;
 }
+
+/**
+ * Represents the mode of a merge.
+ */
+export enum MergeMode {
+  FAST_FORWARD = "ff",
+  NO_FF = "no-ff",
+  SQUASH = "squash",
+  NO_COMMIT = "no-commit",
+}

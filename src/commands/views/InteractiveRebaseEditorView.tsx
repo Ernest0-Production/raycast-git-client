@@ -5,7 +5,7 @@ import { Commit, RebaseAction, RebasePlanItem } from "../../types";
 
 interface InteractiveRebaseEditorViewProps {
     gitManager: GitManager;
-    startFromCommit: Commit;
+    startFromCommit: string;
     onFinish: () => void;
 }
 
@@ -23,7 +23,7 @@ export default function InteractiveRebaseEditorView({ gitManager, startFromCommi
         (async () => {
             try {
                 setIsLoading(true);
-                const list = await gitManager.getCommitsSince(startFromCommit.hash);
+                const list = await gitManager.getCommitsSince(startFromCommit);
                 setCommits(list);
 
                 // Default plan: pick all
@@ -38,7 +38,7 @@ export default function InteractiveRebaseEditorView({ gitManager, startFromCommi
                 setIsLoading(false);
             }
         })();
-    }, [gitManager, startFromCommit.hash]);
+    }, [gitManager, startFromCommit]);
 
     const setAction = (hash: string, action: RebaseAction, newMessage?: string) => {
         setPlan((prev) => ({ ...prev, [hash]: { ...prev[hash], action, newMessage } }));
@@ -73,7 +73,7 @@ export default function InteractiveRebaseEditorView({ gitManager, startFromCommi
             setIsLoading(true);
             await showToast({ style: Toast.Style.Animated, title: "Rebasing..." });
             const planList: RebasePlanItem[] = commits.map((c) => plan[c.hash]);
-            await gitManager.interactiveRebase(startFromCommit.hash, planList);
+            await gitManager.interactiveRebase(startFromCommit, planList);
             await showToast({ style: Toast.Style.Success, title: "Rebase completed" });
         } catch (error) {
             // GitManager will show the error toast

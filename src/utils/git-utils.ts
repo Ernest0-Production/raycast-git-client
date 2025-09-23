@@ -27,6 +27,7 @@ import {
   FileChangeStats,
   StatusState,
   ConflictState,
+  MergeMode,
 } from "../types";
 import * as path from "path";
 import { promises as fs } from "fs";
@@ -1121,9 +1122,8 @@ __REBASE_TODO__
   /**
    * Merges a branch into the current branch.
    */
-  async mergeBranch(branchName: string, noFastForward = false): Promise<void> {
-    const options = noFastForward ? ["--no-ff"] : [];
-    await this.git.merge([branchName, ...options]);
+  async mergeBranch(branchName: string, mode: MergeMode): Promise<void> {
+    await this.git.merge([branchName, `--${mode}`]);
   }
 
   /**
@@ -1284,5 +1284,65 @@ __REBASE_TODO__
    */
   async unstageAll(): Promise<void> {
     await this.git.reset(["HEAD"]);
+  }
+
+  /**
+   * Returns list of tracked file paths.
+   */
+  async getTrackedFilePaths(): Promise<string[]> {
+    return (await this.git.raw(["ls-files"]))
+      .trim()
+      .split("\n")
+  }
+
+  /**
+   * Returns commit history for a specific file (follows renames).
+   */
+  async getFileHistory(relativePath: string): Promise<Commit[]> {
+    const log = await this.git.log([
+      "--name-status",
+      "--decorate=full",
+      "--follow",
+      "--",
+      relativePath,
+    ]);
+
+    return log.all.map(
+      (commit: {
+        hash: string;
+        message: string;
+        body: string;
+        author_name: string;
+        author_email: string;
+        date: string;
+        refs?: string;
+        diff?: DiffResult;
+      }) => {
+        const changedFiles = this.parseCommitChangedFiles(commit.diff!);
+        const parsedRefs = this.parseCommitRefs(commit.refs);
+
+        return {
+          hash: commit.hash,
+          shortHash: commit.hash.substring(0, 7),
+          message: commit.message,
+          body: commit.body,
+          author: commit.author_name,
+          authorEmail: commit.author_email,
+          date: new Date(commit.date),
+          localBranches: parsedRefs.localBranches,
+          remoteBranches: parsedRefs.remoteBranches,
+          tags: parsedRefs.tags,
+          currentBranchName: parsedRefs.currentBranchName,
+          changedFiles,
+        } as Commit;
+      },
+    );
+  }
+
+  /**
+   * Restores a file content to the state from a given commit (kept in working tree and staged area unchanged).
+   */
+  async restoreFileToCommit(filePath: string, commitHash: string): Promise<void> {
+    await this.git.raw(["restore", "--source", commitHash, "--", filePath]);
   }
 }

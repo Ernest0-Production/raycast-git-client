@@ -7,6 +7,7 @@ import { BranchesView } from "./commands/views/BranchesView";
 import { StatusView } from "./commands/views/StatusView";
 import { CommitsView } from "./commands/views/CommitsView";
 import { StashesView } from "./commands/views/StashesView";
+import FilesView from "./commands/views/FilesView";
 import { useEffect, useMemo } from "react";
 import { RepositoryDirectoryActions } from "./components/actions/RepositoryDirectoryActions";
 import { useGitBranches } from "./hooks/useGitBranches";
@@ -20,7 +21,7 @@ interface Arguments {
 }
 
 export default function OpenRepository({ arguments: args }: { arguments: Arguments }) {
-  const [currentView, setCurrentView] = useCachedState<GitView>("git-current-view", "commits");
+  const [currentView, setCurrentView] = useCachedState<GitView>("git-current-view", "branches");
   const repositoryPath = args.path;
 
   // Hook for working with a Git repository (synchronous validation)
@@ -131,6 +132,12 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           icon={Icon.Bookmark}
           shortcut={{ modifiers: ["cmd"], key: "4" }}
         />
+        <Action
+          title="Go to Files History"
+          onAction={() => setCurrentView("files history")}
+          icon={Icon.Document}
+          shortcut={{ modifiers: ["cmd"], key: "5" }}
+        />
       </ActionPanel.Section>
       <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} />
     </>
@@ -147,6 +154,7 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
       <List.Dropdown.Item title="Commits" value="commits" keywords={["log"]} icon={`git-commit.svg`} />
       <List.Dropdown.Item title="Branches" value="branches" keywords={["graph"]} icon={`git-branch.svg`} />
       <List.Dropdown.Item title="Stashes" value="stashes" icon={Icon.Bookmark} />
+      <List.Dropdown.Item title="Files History" value="files history" keywords={["history", "ls-files"]} icon={Icon.Clock} />
     </List.Dropdown>
   );
 
@@ -220,5 +228,18 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           revalidate={revalidateStashes}
         />
       );
+    case "files history":
+      return (
+        <FilesView
+          gitManager={gitManager}
+          navigationActions={navigationActions}
+          viewDropdown={viewSelectorDropdown}
+          onRefresh={() => {
+            revalidateStatus();
+          }}
+        />
+      );
+    default:
+      setCurrentView("branches");
   }
 }
