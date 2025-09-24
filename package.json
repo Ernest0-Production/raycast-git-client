@@ -26,6 +26,12 @@
           "required": true
         }
       ]
+    },
+    {
+      "name": "manage-ai-message-prompts",
+      "title": "Manage AI Message Prompts",
+      "description": "Configure AI commit message prompt presets",
+      "mode": "view"
     }
   ],
   "preferences": [
@@ -85,14 +91,6 @@
       "title": "Max Branches to Load",
       "default": "20",
       "description": "Maximum number of branches to load in local and remote branches sections"
-    },
-    {
-      "name": "aiCommitPrompt",
-      "required": false,
-      "type": "textfield",
-      "title": "AI Commit Message System Prompt",
-      "default": "You are a helpful assistant that generates concise, clear Git commit messages. Analyze the provided git diff and generate a conventional commit message that accurately describes the changes. Use conventional commit format: <short title>\n<listed changes>. Focus on what changed and why.",
-      "description": "System prompt used when generating commit messages with Raycast AI"
     },
     {
       "name": "autoGenerateCommitMessage",

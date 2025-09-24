@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { showToast, Toast, getPreferenceValues, confirmAlert, environment, useNavigation, Color } from "@raycast/api";
 import { AI } from "@raycast/api";
 import { Action, ActionPanel, Form, Icon, Alert } from "@raycast/api";
+import { AiPromptPreset, useAiPromptPresets } from "../../hooks/useAiPromptPresets";
+import { AiMessagePresetEditorForm } from "../../manage-ai-message-prompts";
 
 /**
  * Form for creating a commit with AI generation support.
@@ -23,10 +25,11 @@ export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: {
     : useCachedState(`commit-amend-${gitManager.repoPath}`, false);
   const [isGenerating, setIsGenerating] = useState(false);
   const { pop } = useNavigation();
+  const { presets } = useAiPromptPresets();
 
   useEffect(() => {
     if (preferences.autoGenerateCommitMessage && !amendOnly) {
-      generateCommitMessage();
+      generateCommitMessage(presets[0]);
     }
   }, []);
 
@@ -53,7 +56,7 @@ export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: {
     setAmend(false);
   };
 
-  const generateCommitMessage = async () => {
+  const generateCommitMessage = async (presetPrompt: AiPromptPreset) => {
     try {
       setIsGenerating(true);
 
@@ -64,8 +67,8 @@ export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: {
         lastCommit = await gitManager.getLastCommit()
       }
 
-      // Form a more structured and readable prompt for AI generation of commit message
-      const promptParts = [preferences.aiCommitPrompt!.trim(), ""];
+      // Form a more structured and readable prompt for AI generation of commit message using selected preset
+      const promptParts = [presetPrompt.prompt.trim(), ""];
 
       // If amend is enabled and we have a last commit, include it in the context
       if (amend && lastCommit) {
@@ -91,20 +94,13 @@ export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: {
         );
       }
 
-      if (amend && lastCommit) {
-        promptParts.push(
-          "Please provide an summarized commit message based on the previous commit message and the new changes.",
-          "Only return the commit message, no explanations."
-        );
-      } else {
-        promptParts.push(
-          "Please provide only the commit message, no explanations."
-        );
-      }
-
       const prompt = promptParts.join("\n");
+      const model = presetPrompt.model ? AI.Model[presetPrompt.model as keyof typeof AI.Model] : undefined;
 
-      const aiResponse = AI.ask(prompt, { creativity: "none" });
+      const aiResponse = AI.ask(prompt, {
+        creativity: "none",
+        model: model,
+      });
       await showToast({
         style: Toast.Style.Animated,
         title: "Generating commit message...",
@@ -197,12 +193,26 @@ export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: {
 
           {environment.canAccess("AI") && (
             <ActionPanel.Section title="AI Assistant">
-              <Action
+              <ActionPanel.Submenu
                 title="Generate Commit Message"
-                onAction={generateCommitMessage}
                 icon={Icon.Wand}
                 shortcut={{ modifiers: ["cmd"], key: "g" }}
-              />
+              >
+                {presets.map((preset) => (
+                  <Action
+                    key={preset.id}
+                    title={preset.name}
+                    onAction={() => generateCommitMessage(preset)}
+                  />
+                ))}
+                <ActionPanel.Section>
+                  <Action.Push
+                    icon={Icon.Plus}
+                    title="Add New Preset"
+                    target={<AiMessagePresetEditorForm />}
+                  />
+                </ActionPanel.Section>
+              </ActionPanel.Submenu>
             </ActionPanel.Section>
           )}
 

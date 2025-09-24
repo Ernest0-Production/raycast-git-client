@@ -113,6 +113,7 @@ export function BranchesView({
                 gitManager={gitManager}
                 onRefresh={revalidateAll}
                 navigationActions={navigationActions}
+                hasConflicts={hasConflicts}
                 hasUncommittedChanges={hasUncommittedChanges}
               />
             </List.Section>
@@ -183,7 +184,7 @@ function BranchListItem({
     }
 
     // Add uncommitted changes indicator for current branch
-    if (branch.type === "current" && hasUncommittedChanges) {
+    if (branch.type === "current" && hasUncommittedChanges && !hasConflicts) {
       result.push({
         tag: { value: "Uncommitted", color: Color.Orange },
         icon: Icon.Document,
@@ -295,23 +296,36 @@ function DetachedHeadListItem({
   gitManager,
   onRefresh,
   navigationActions,
+  hasConflicts,
   hasUncommittedChanges,
 }: {
   detachedHead: DetachedHead;
   gitManager: GitManager;
   onRefresh: () => void;
   navigationActions: React.ReactNode;
+  hasConflicts?: boolean;
   hasUncommittedChanges?: boolean;
 }) {
-  const accessories = [];
+  const accessories = useMemo(() => {
+    const result = [];
 
-  // Add uncommitted changes indicator
-  if (hasUncommittedChanges) {
-    accessories.push({
-      icon: { source: Icon.Dot, tintColor: Color.Orange },
-      tooltip: "Uncommitted changes",
-    });
-  }
+    if (hasConflicts) {
+      result.push({
+        icon: { source: Icon.ExclamationMark },
+        tag: { value: "Conflicts", color: Color.Red },
+        tooltip: "Conflicts",
+      });
+    }
+
+    if (hasUncommittedChanges && !hasConflicts) {
+      result.push({
+        icon: { source: Icon.Dot, tintColor: Color.Orange },
+        tag: { value: "Uncommitted", color: Color.Orange },
+        tooltip: "Uncommitted changes",
+      });
+    }
+    return result;
+  }, [detachedHead, hasUncommittedChanges, hasConflicts]);
 
   return (
     <List.Item
