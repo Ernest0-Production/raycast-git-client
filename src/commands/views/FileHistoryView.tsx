@@ -1,10 +1,10 @@
 import { Action, ActionPanel, Alert, Color, Icon, List, confirmAlert } from "@raycast/api";
 import { useMemo, useState } from "react";
 import { useCachedState, usePromise } from "@raycast/utils";
-import { GitManager } from "../../utils/git-utils";
+import { GitManager } from "../../utils/git-manager";
 import { Commit, CommitFileChange } from "../../types";
 import { useGitDiff } from "../../hooks/useGitDiff";
-import { FileCopyPathAction, FileOpenAction, FileOpenWithAction, FileQuickLookAction, FileRestoreAction } from "../../components/actions/FileActions";
+import { FileCopyPathAction, FileOpenAction, FileOpenWithAction, FileQuickLookAction, FileRestoreAction, getCommitFileIcon } from "../../components/actions/FileActions";
 import { join } from "path";
 import { CommitCopyAuthorAction, CommitCopyHashAction, CommitCopyMessageAction } from "../../components/actions/CommitActions";
 import { existsSync } from "fs";
@@ -21,8 +21,8 @@ export default function FileHistoryView({ gitManager, filePath, onRefresh }: Fil
     const [selectedCommitId, setSelectedCommitId] = useState<string | null>(null);
 
     const { data: commits, isLoading, revalidate, error } = usePromise(
-        async (file, repoPath) => {
-            return await gitManager.getFileHistory(file);
+        async (filePath, repoPath) => {
+            return await gitManager.getFileHistory(filePath);
         },
         [filePath, gitManager.repoPath],
     );
@@ -74,7 +74,7 @@ export default function FileHistoryView({ gitManager, filePath, onRefresh }: Fil
                         <CommitListItem
                             key={commit.hash}
                             commit={commit}
-                            file={commit.changedFiles?.find(file => file.path === filePath)!}
+                            file={commit.changedFiles![0]}
                             gitManager={gitManager}
                             isShowingDetail={isShowingDetail}
                             onToggleDetail={toggleDetail}
@@ -129,7 +129,7 @@ function CommitListItem({
 
         return [
             { text: { value: commit.author }, tooltip: commit.authorEmail },
-            { text: commit.date.toLocaleString() },
+            { text: commit.date.toRelativeDateString() },
         ];
     }, [commit.author, commit.authorEmail, commit.date, isShowingDetail]);
 
@@ -140,6 +140,7 @@ function CommitListItem({
         <List.Item
             id={commit.hash}
             title={commit.message}
+            icon={getCommitFileIcon(file)}
             accessories={accessories}
             keywords={[
                 commit.hash,

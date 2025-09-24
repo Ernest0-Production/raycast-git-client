@@ -1,6 +1,6 @@
 import { ActionPanel, Action, List, Icon } from "@raycast/api";
 import { StashApplyAction, StashDropAction, CreateStashAction } from "../../components/actions/StashActions";
-import { GitManager } from "../../utils/git-utils";
+import { GitManager } from "../../utils/git-manager";
 import "../../utils/date-utils";
 import { Stash } from "../../types";
 import { getAvatarIcon } from "@raycast/utils";
@@ -81,7 +81,7 @@ function StashListItem({
       title={stash.message}
       icon={{ source: getAvatarIcon(stash.author), tooltip: stash.author }}
       subtitle={{ value: stash.author, tooltip: stash.authorEmail }}
-      accessories={[{ text: stash.date.toRelativeDateString(), tooltip: stash.date.toLocaleString() }]}
+      accessories={[{ text: stash.date.toRelativeDateString(), tooltip: stash.date.toRelativeDateString() }]}
       keywords={[stash.hash, stash.author, stash.authorEmail].filter(Boolean)}
       actions={
         <ActionPanel>

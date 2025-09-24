@@ -1,6 +1,6 @@
 import { Action, ActionPanel, Icon, List, Toast, showToast } from "@raycast/api";
 import { useCachedState, usePromise } from "@raycast/utils";
-import { GitManager } from "../../utils/git-utils";
+import { GitManager } from "../../utils/git-manager";
 import { FileCopyPathAction, FileHistoryAction, FileOpenAction, FileOpenWithAction, FileQuickLookAction } from "../../components/actions/FileActions";
 import { join } from "path";
 import { useMemo, useState } from "react";
@@ -90,7 +90,7 @@ export default function FilesView({ gitManager, navigationActions, viewDropdown,
                 <>
                     {searchText.trim().length === 0 ? (
                         recentFiles && recentFiles.length > 0 ? (
-                            <List.Section title="Recent Files">
+                            <List.Section title="Recent Visited Files">
                                 {recentFiles
                                     .filter((path: string) => filePaths?.includes(path))
                                     .map((filePath: string) => (
@@ -100,7 +100,7 @@ export default function FilesView({ gitManager, navigationActions, viewDropdown,
                                             gitManager={gitManager}
                                             navigationActions={navigationActions}
                                             onRefresh={onRefresh}
-                                            onHistoryOpen={() => handleAddRecent(filePath)}
+                                            onOpen={() => handleAddRecent(filePath)}
                                         />
                                     ))}
                             </List.Section>
@@ -127,7 +127,7 @@ export default function FilesView({ gitManager, navigationActions, viewDropdown,
                                 gitManager={gitManager}
                                 navigationActions={navigationActions}
                                 onRefresh={onRefresh}
-                                onHistoryOpen={() => handleAddRecent(filePath)}
+                                onOpen={() => handleAddRecent(filePath)}
                             />
                         ))
                     )}
@@ -142,13 +142,13 @@ function FileListItem({
     gitManager,
     navigationActions,
     onRefresh,
-    onHistoryOpen,
+    onOpen,
 }: {
     filePath: string;
     gitManager: GitManager;
     navigationActions: React.ReactNode;
     onRefresh: () => void;
-    onHistoryOpen?: () => void;
+    onOpen?: () => void;
 }) {
     const fileName = useMemo(() => filePath.split("/").pop() || filePath, [filePath]);
     const absolutePath = join(gitManager.repoPath, filePath);
@@ -162,16 +162,22 @@ function FileListItem({
             quickLook={existsSync(absolutePath) ? { path: absolutePath, name: absolutePath } : undefined}
             actions={
                 <ActionPanel>
-                    <FileHistoryAction
-                        filePath={filePath}
-                        gitManager={gitManager}
-                        onRefresh={onRefresh}
-                        onPush={onHistoryOpen}
-                    />
-
                     <ActionPanel.Section title={fileName}>
-                        <FileOpenAction filePath={absolutePath} />
-                        <FileOpenWithAction filePath={absolutePath} shortcut={{ modifiers: ["cmd"], key: "o" }} />
+                        <FileHistoryAction
+                            filePath={absolutePath}
+                            gitManager={gitManager}
+                            onRefresh={onRefresh}
+                            onOpen={onOpen}
+                        />
+                        <FileOpenAction
+                            filePath={absolutePath}
+                            onOpen={onOpen}
+                        />
+                        <FileOpenWithAction
+                            filePath={absolutePath}
+                            shortcut={{ modifiers: ["cmd"], key: "o" }}
+                            onOpen={onOpen}
+                        />
                         <FileQuickLookAction filePath={absolutePath} />
                         <FileCopyPathAction filePath={absolutePath} />
                     </ActionPanel.Section>

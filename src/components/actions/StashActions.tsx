@@ -1,7 +1,7 @@
 import { ActionPanel, Action, Icon, showToast, Toast, confirmAlert, Alert, Form, useNavigation } from "@raycast/api";
 import { useState } from "react";
 import { Stash } from "../../types";
-import { GitManager } from "../../utils/git-utils";
+import { GitManager } from "../../utils/git-manager";
 
 interface StashActionProps {
   stash: Stash;

@@ -1,12 +1,12 @@
 import { Action, ActionPanel, Alert, Color, Form, Icon, List, Toast, confirmAlert, showToast, useNavigation } from "@raycast/api";
 import { useEffect, useMemo, useState } from "react";
-import { GitManager } from "../../utils/git-utils";
+import { GitManager } from "../../utils/git-manager";
 import { Commit, RebaseAction, RebasePlanItem } from "../../types";
 
 interface InteractiveRebaseEditorViewProps {
     gitManager: GitManager;
     startFromCommit: string;
-    onFinish: () => void;
+    onFinish: (error?: Error) => void;
 }
 
 /**
@@ -75,12 +75,13 @@ export default function InteractiveRebaseEditorView({ gitManager, startFromCommi
             const planList: RebasePlanItem[] = commits.map((c) => plan[c.hash]);
             await gitManager.interactiveRebase(startFromCommit, planList);
             await showToast({ style: Toast.Style.Success, title: "Rebase completed" });
+            onFinish();
+            pop();
         } catch (error) {
-            // GitManager will show the error toast
+            pop();
+            onFinish(error as Error);
         } finally {
             setIsLoading(false);
-            pop();
-            onFinish();
         }
     };
 
@@ -100,7 +101,7 @@ export default function InteractiveRebaseEditorView({ gitManager, startFromCommi
                             tooltip: commit.authorEmail
                         },
                         {
-                            text: { value: commit.date.toLocaleDateString() },
+                            text: { value: commit.date.toRelativeDateString() },
                             tooltip: Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(commit.date)
                         },
                     ]}

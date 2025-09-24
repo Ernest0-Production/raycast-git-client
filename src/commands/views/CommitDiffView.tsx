@@ -1,6 +1,6 @@
 import { ActionPanel, Action, List, Icon, Color } from "@raycast/api";
 import { useGitDiff } from "../../hooks/useGitDiff";
-import { GitManager } from "../../utils/git-utils";
+import { GitManager } from "../../utils/git-manager";
 import { Commit, CommitFileChange } from "../../types";
 import {
   FileOpenAction,
@@ -9,6 +9,7 @@ import {
   getCommitFileIcon,
   FileQuickLookAction,
   FileRestoreAction,
+  FileHistoryAction,
 } from "../../components/actions/FileActions";
 import { useState, useMemo } from "react";
 import { usePromise } from "@raycast/utils";
@@ -167,6 +168,11 @@ export function FileListItem({
             <FileOpenWithAction filePath={absolutePath} shortcut={{ modifiers: ["cmd"], key: "o" }} />
             <FileCopyPathAction filePath={absolutePath} />
             <FileQuickLookAction filePath={absolutePath} />
+            <FileHistoryAction
+              filePath={absolutePath}
+              gitManager={gitManager}
+              onRefresh={onRefresh}
+            />
             <FileRestoreAction
               filePath={absolutePath}
               commit={commit.hash}

@@ -1,4 +1,4 @@
-import { GitManager } from "../../utils/git-utils";
+import { GitManager } from "../../utils/git-manager";
 import { Preferences } from "../../types";
 import { showFailureToast, useCachedState } from "@raycast/utils";
 import { useEffect, useState } from "react";
@@ -11,8 +11,13 @@ import { Action, ActionPanel, Form, Icon, Alert } from "@raycast/api";
  */
 export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: { amendOnly?: boolean; gitManager: GitManager; onFinish: () => void }) {
   const preferences = getPreferenceValues<Preferences>();
-  const [draftMessage, setDraftMessage] = useCachedState(`commit-draft-${gitManager.repoPath}`, "");
-  // Используем useState для режима только amend, иначе useCachedState
+
+  // Use useState for autoGenerateCommitMessage mode, and useCachedState for amendOnly mode
+  const [draftMessage, setDraftMessage] = preferences.autoGenerateCommitMessage
+    ? useState("")
+    : useCachedState(`commit-draft-${gitManager.repoPath}`, "");
+
+  // Use useState for amendOnly mode, and useCachedState for autoGenerateCommitMessage mode
   const [amend, setAmend] = amendOnly
     ? useState(true)
     : useCachedState(`commit-amend-${gitManager.repoPath}`, false);

@@ -1,5 +1,4 @@
 import { ActionPanel, Action, List, Icon, Color } from "@raycast/api";
-import { usePromise } from "@raycast/utils";
 import {
   BranchCkeckoutAction,
   BranchDeleteAction,
@@ -13,8 +12,8 @@ import {
   BranchCopyNameAction,
   BranchInteractiveRebaseAction,
 } from "../../components/actions/BranchActions";
-import { GitManager } from "../../utils/git-utils";
-import { Branch, DetachedHead, BranchesState } from "../../types";
+import { GitManager } from "../../utils/git-manager";
+import { Branch, DetachedHead, BranchesState, GitView } from "../../types";
 import { useMemo } from "react";
 
 interface BranchesViewProps {
@@ -28,6 +27,7 @@ interface BranchesViewProps {
   hasConflicts?: boolean;
   hasUncommittedChanges?: boolean;
   revalidateStatus: () => void | Promise<unknown>;
+  navigateTo: (destination: GitView) => void;
 }
 
 export function BranchesView({
@@ -40,12 +40,16 @@ export function BranchesView({
   revalidateBranches,
   hasConflicts,
   hasUncommittedChanges,
-  revalidateStatus
+  revalidateStatus,
+  navigateTo
 }: BranchesViewProps) {
 
-  const revalidateAll = () => {
+  const revalidateAll = (error?: Error) => {
     revalidateBranches();
     revalidateStatus();
+    if (error) {
+      navigateTo("status");
+    }
   };
 
   return (
@@ -57,7 +61,7 @@ export function BranchesView({
       actions={
         <ActionPanel>
           <ActionPanel.Section title="Branches">
-            <Action title="Refresh Branch List" onAction={revalidateAll} icon={Icon.ArrowClockwise} />
+            <Action title="Refresh Branch List" onAction={revalidateBranches} icon={Icon.ArrowClockwise} />
             <CreateBranchAction gitManager={gitManager} onRefresh={revalidateAll} />
             <FetchAction gitManager={gitManager} onRefresh={revalidateAll} />
           </ActionPanel.Section>

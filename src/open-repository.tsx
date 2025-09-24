@@ -1,5 +1,4 @@
 import { Action, ActionPanel, Icon, List } from "@raycast/api";
-import { GitView } from "./types";
 import { useCachedState } from "@raycast/utils";
 import { useGitRepository } from "./hooks/useGitRepository";
 import { useRepositoriesList } from "./hooks/useRepositoriesList";
@@ -15,6 +14,7 @@ import { useCommitsBranchFilter } from "./hooks/useCommitsBranchFilter";
 import { useGitCommits } from "./hooks/useGitCommits";
 import { useGitStash } from "./hooks/useGitStash";
 import { useGitStatus } from "./hooks/useGitStatus";
+import { GitView } from "./types";
 
 interface Arguments {
   path: string;
@@ -127,15 +127,15 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           shortcut={{ modifiers: ["cmd"], key: "3" }}
         />
         <Action
-          title="Go to Stash"
-          onAction={() => setCurrentView("stashes")}
-          icon={Icon.Bookmark}
+          title="Go to Files History"
+          onAction={() => setCurrentView("files")}
+          icon={Icon.Document}
           shortcut={{ modifiers: ["cmd"], key: "4" }}
         />
         <Action
-          title="Go to Files History"
-          onAction={() => setCurrentView("files history")}
-          icon={Icon.Document}
+          title="Go to Stash"
+          onAction={() => setCurrentView("stashes")}
+          icon={Icon.Bookmark}
           shortcut={{ modifiers: ["cmd"], key: "5" }}
         />
       </ActionPanel.Section>
@@ -150,11 +150,11 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
       value={currentView}
       onChange={(newValue) => setCurrentView(newValue as GitView)}
     >
-      <List.Dropdown.Item title="Status" value="status" keywords={["diff", "changes"]} icon={Icon.NewDocument} />
-      <List.Dropdown.Item title="Commits" value="commits" keywords={["log"]} icon={`git-commit.svg`} />
-      <List.Dropdown.Item title="Branches" value="branches" keywords={["graph"]} icon={`git-branch.svg`} />
+      <List.Dropdown.Item title="Status" value="status" keywords={["diff", "changes", "state", "workspace"]} icon={Icon.NewDocument} />
+      <List.Dropdown.Item title="Commits" value="commits" keywords={["log", "history"]} icon={`git-commit.svg`} />
+      <List.Dropdown.Item title="Branches" value="branches" keywords={["graph", "remote"]} icon={`git-branch.svg`} />
+      <List.Dropdown.Item title="Files" value="files" keywords={["history", "ls-files", "workspace", "project"]} icon={Icon.Clock} />
       <List.Dropdown.Item title="Stashes" value="stashes" icon={Icon.Bookmark} />
-      <List.Dropdown.Item title="Files History" value="files history" keywords={["history", "ls-files"]} icon={Icon.Clock} />
     </List.Dropdown>
   );
 
@@ -193,11 +193,10 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           isLoading={commitsIsLoading}
           commits={commits}
           error={commitsError}
-          revalidate={() => {
-            revalidateCommits();
-            revalidateStatus();
-            revalidateBranches();
-          }}
+          revalidateCommits={revalidateCommits}
+          revalidateStatus={revalidateStatus}
+          revalidateBranches={revalidateBranches}
+          navigateTo={setCurrentView}
           pagination={pagination}
         />
       );
@@ -214,6 +213,18 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           hasConflicts={status?.files?.some(file => file.type === "conflicted")}
           hasUncommittedChanges={status?.files?.length !== 0}
           revalidateStatus={revalidateStatus}
+          navigateTo={setCurrentView}
+        />
+      );
+    case "files":
+      return (
+        <FilesView
+          gitManager={gitManager}
+          navigationActions={navigationActions}
+          viewDropdown={viewSelectorDropdown}
+          onRefresh={() => {
+            revalidateStatus();
+          }}
         />
       );
     case "stashes":
@@ -226,17 +237,6 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           stashes={stashes}
           isLoading={stashesIsLoading}
           revalidate={revalidateStashes}
-        />
-      );
-    case "files history":
-      return (
-        <FilesView
-          gitManager={gitManager}
-          navigationActions={navigationActions}
-          viewDropdown={viewSelectorDropdown}
-          onRefresh={() => {
-            revalidateStatus();
-          }}
         />
       );
     default:

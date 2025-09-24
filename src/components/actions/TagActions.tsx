@@ -1,5 +1,5 @@
 import { Action, Icon, confirmAlert, Alert } from "@raycast/api";
-import { GitManager } from "../../utils/git-utils";
+import { GitManager } from "../../utils/git-manager";
 import { Commit } from "../../types";
 import { CreateTagForm } from "../shared/CreateTagForm";
 

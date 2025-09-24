@@ -16,13 +16,13 @@ import {
   FileRefreshStatusAction,
   FileCommitAction,
   FileConflictAbortAction,
+  FileHistoryAction,
 } from "../../components/actions/FileActions";
 import { CreateStashAction } from "../../components/actions/StashActions";
-import { GitManager } from "../../utils/git-utils";
+import { GitManager } from "../../utils/git-manager";
 import { FileStatus, StatusState } from "../../types";
 import { useMemo, useState } from "react";
 import { existsSync } from "fs";
-import { CommitMessageForm } from "./CommitMessageView";
 
 interface StatusViewProps {
   gitManager: GitManager;
@@ -235,6 +235,7 @@ function FileListItem({
                 <FileUnstageAction file={file} gitManager={gitManager} onRefresh={onRefresh} />
                 <FileOpenAction filePath={file.path} />
                 <FileOpenWithAction filePath={file.path} shortcut={{ modifiers: ["cmd"], key: "o" }} />
+                <FileQuickLookAction filePath={file.path} />
                 <FileCopyPathAction filePath={file.path} />
               </>
             )}
@@ -257,6 +258,7 @@ function FileListItem({
                 )}
               </>
             )}
+            <FileHistoryAction filePath={file.path} gitManager={gitManager} onRefresh={onRefresh} />
             <CreateStashAction gitManager={gitManager} onRefresh={onRefresh} filePath={file.relativePath} />
           </ActionPanel.Section>
 

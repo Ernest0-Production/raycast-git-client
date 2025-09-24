@@ -1,9 +1,9 @@
 import { Application } from "@raycast/api";
 
 // Export all types from modules
-export * from "./repository";
-export * from "./git";
-export * from "./ui";
+export * from "./git-types";
+
+export type GitView = "branches" | "status" | "commits" | "files" | "stashes";
 
 /**
  * User preferences for the Git Client extension.

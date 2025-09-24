@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { GitManager } from "../utils/git-utils";
+import { GitManager } from "../utils/git-manager";
 import { validateGitRepository, resolveTildePath } from "../utils/validation";
 
 /**

@@ -1,6 +1,6 @@
 import { Form, Action, ActionPanel, useNavigation, showToast, Toast, confirmAlert, Alert, Icon } from "@raycast/api";
 import { useState } from "react";
-import { GitManager } from "../../utils/git-utils";
+import { GitManager } from "../../utils/git-manager";
 import { Commit } from "../../types";
 
 interface CreateTagFormProps {

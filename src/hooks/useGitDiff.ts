@@ -1,5 +1,5 @@
 import { usePromise } from "@raycast/utils";
-import { GitManager } from "../utils/git-utils";
+import { GitManager } from "../utils/git-manager";
 import { FileStatus } from "../types";
 
 interface UseGitDiffProps {

@@ -1,6 +1,6 @@
 import { Action, Icon, Color, confirmAlert, Alert, Keyboard, getDefaultApplication } from "@raycast/api";
-import { GitManager } from "../../utils/git-utils";
-import { Commit, CommitFileChange, FileStatus, StatusState } from "../../types";
+import { GitManager } from "../../utils/git-manager";
+import { CommitFileChange, FileStatus, StatusState } from "../../types";
 import { existsSync } from "fs";
 import { CommitMessageForm } from "../../commands/views/CommitMessageView";
 import FileHistoryView from "../../commands/views/FileHistoryView";
@@ -58,7 +58,7 @@ export function FileDiscardAction({ file, gitManager, onRefresh }: FileActionPro
   const handleDiscardChanges = async () => {
     const confirmed = await confirmAlert({
       title: "Discard changes",
-      message: `Are you sure you want to discard changes in file "${file.relativePath}"? This action cannot be undone.`,
+      message: `Are you sure you want to discard changes in file "${file.path.split("/").pop()}"? This action cannot be undone.`,
       primaryAction: {
         title: "Discard changes",
         style: Alert.ActionStyle.Destructive,
@@ -89,7 +89,7 @@ export function FileDiscardAction({ file, gitManager, onRefresh }: FileActionPro
 /**
  * Action for opening a file in default editor by absolute path.
  */
-export function FileOpenAction({ filePath, shortcut }: { filePath: string, shortcut?: Keyboard.Shortcut }) {
+export function FileOpenAction({ filePath, shortcut, onOpen }: { filePath: string, shortcut?: Keyboard.Shortcut, onOpen?: () => void }) {
   if (!existsSync(filePath)) return null;
 
   return (
@@ -98,6 +98,7 @@ export function FileOpenAction({ filePath, shortcut }: { filePath: string, short
       target={filePath}
       icon={Icon.Document}
       shortcut={shortcut}
+      onOpen={onOpen}
     />
   );
 }
@@ -105,13 +106,14 @@ export function FileOpenAction({ filePath, shortcut }: { filePath: string, short
 /**
  * Action for opening a file with a custom application by absolute path.
  */
-export function FileOpenWithAction({ filePath, shortcut }: { filePath: string, shortcut?: Keyboard.Shortcut }) {
+export function FileOpenWithAction({ filePath, shortcut, onOpen }: { filePath: string, shortcut?: Keyboard.Shortcut, onOpen?: () => void }) {
   if (!existsSync(filePath)) return null;
 
   return (
     <Action.OpenWith
       path={filePath}
       shortcut={shortcut}
+      onOpen={onOpen}
     />
   );
 }
@@ -330,12 +332,14 @@ export function FileRestoreAction({ filePath, commit, gitManager, onRefresh }: {
   );
 }
 
-export function FileHistoryAction({ filePath, gitManager, onRefresh, onPush }: { filePath: string, gitManager: GitManager, onRefresh: () => void, onPush?: () => void }) {
+export function FileHistoryAction({ filePath, gitManager, onRefresh, onOpen }: { filePath: string, gitManager: GitManager, onRefresh: () => void, onOpen?: () => void }) {
+  if (!existsSync(filePath)) return null;
+
   return (
     <Action.Push
       title="Show File History"
       icon={Icon.Clock}
-      onPush={onPush}
+      onPush={onOpen}
       target={
         <FileHistoryView
           gitManager={gitManager}
@@ -343,6 +347,7 @@ export function FileHistoryAction({ filePath, gitManager, onRefresh, onPush }: {
           onRefresh={onRefresh}
         />
       }
+      shortcut={{ modifiers: ["cmd", "shift"], key: "h" }}
     />
   );
 }
@@ -366,7 +371,7 @@ export function FileStageAllAction({ gitManager, onRefresh }: { gitManager: GitM
     <Action
       title="Stage All Files"
       onAction={handleStageAll}
-      icon={{ source: Icon.Plus, tintColor: Color.Blue }}
+      icon={Icon.Plus}
       shortcut={{ modifiers: ["cmd", "shift"], key: "a" }}
     />
   );
@@ -389,7 +394,7 @@ export function FileUnstageAllAction({ gitManager, onRefresh }: { gitManager: Gi
     <Action
       title="Unstage All Files"
       onAction={handleUnstageAll}
-      icon={{ source: Icon.Minus, tintColor: Color.Blue }}
+      icon={Icon.Minus}
       shortcut={{ modifiers: ["cmd", "shift"], key: "z" }}
     />
   );

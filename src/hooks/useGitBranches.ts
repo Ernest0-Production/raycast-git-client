@@ -1,5 +1,5 @@
 import { useCachedPromise } from "@raycast/utils";
-import { GitManager } from "../utils/git-utils";
+import { GitManager } from "../utils/git-manager";
 
 /**
  * Hook for fetching and managing Git branches state.

@@ -1,5 +1,5 @@
 import { ActionPanel, Action, Icon, confirmAlert, Alert, clearSearchBar } from "@raycast/api";
-import { GitManager } from "../../utils/git-utils";
+import { GitManager } from "../../utils/git-manager";
 import { Commit } from "../../types";
 import InteractiveRebaseEditorView from "../../commands/views/InteractiveRebaseEditorView";
 import { ResetMode } from "simple-git";
@@ -7,7 +7,7 @@ import { ResetMode } from "simple-git";
 interface CommitActionProps {
   commit: Commit;
   gitManager: GitManager;
-  onRefresh: () => void;
+  onRefresh: (error?: Error) => void;
 }
 
 /**
@@ -62,10 +62,9 @@ export function CommitCherryPickAction({ commit, gitManager, onRefresh }: Commit
     if (confirmed) {
       try {
         await gitManager.cherryPick(commit.hash);
-      } catch (error) {
-        // Git error is already shown by GitManager
-      } finally {
         onRefresh();
+      } catch (error) {
+        onRefresh(error as Error);
       }
     }
   };
@@ -94,10 +93,9 @@ export function CommitRevertAction({ commit, gitManager, onRefresh }: CommitActi
     if (confirmed) {
       try {
         await gitManager.revert(commit.hash);
-      } catch (error) {
-        // Git error is already shown by GitManager
-      } finally {
         onRefresh();
+      } catch (error) {
+        onRefresh(error as Error);
       }
     }
   };
@@ -128,10 +126,9 @@ export function CommitResetAction({ commit, gitManager, onRefresh }: CommitActio
     if (confirmed) {
       try {
         await gitManager.reset(commit.hash, mode);
-      } catch (error) {
-        // Git error is already shown by GitManager
-      } finally {
         onRefresh();
+      } catch (error) {
+        onRefresh(error as Error);
       }
     }
   };
@@ -223,18 +220,4 @@ export function CommitCopyAuthorEmailAction({ commit }: { commit: Commit }) {
     title="Copy Author Email"
     content={commit.authorEmail}
   />;
-}
-
-/**
- * Action for refreshing commit history.
- */
-export function CommitRefreshHistoryAction({ onRefresh }: { onRefresh: () => void }) {
-  return (
-    <Action
-      title="Refresh History"
-      onAction={onRefresh}
-      icon={Icon.ArrowClockwise}
-      shortcut={{ modifiers: ["cmd"], key: "r" }}
-    />
-  );
 }

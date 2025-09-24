@@ -1,6 +1,6 @@
 import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast, Form, useNavigation, clearSearchBar } from "@raycast/api";
 import { useState } from "react";
-import { GitManager } from "../../utils/git-utils";
+import { GitManager } from "../../utils/git-manager";
 import { Branch, MergeMode } from "../../types";
 import { usePromise } from "@raycast/utils";
 import InteractiveRebaseEditorView from "../../commands/views/InteractiveRebaseEditorView";
@@ -8,7 +8,7 @@ import InteractiveRebaseEditorView from "../../commands/views/InteractiveRebaseE
 interface BranchActionProps {
   branch: Branch;
   gitManager: GitManager;
-  onRefresh: () => void;
+  onRefresh: (error?: Error) => void;
 }
 
 /**
@@ -35,10 +35,9 @@ export function BranchCkeckoutAction({ branch, gitManager, onRefresh }: BranchAc
           await gitManager.checkoutLocalBranch(branch.name);
         }
         clearSearchBar();
-      } catch (error) {
-        // Git error is already shown by GitManager
-      } finally {
         onRefresh();
+      } catch (error) {
+        onRefresh(error as Error);
       }
     }
   };
@@ -169,10 +168,9 @@ export function BranchMergeAction({ branch, gitManager, onRefresh }: BranchActio
     if (confirmed) {
       try {
         await gitManager.mergeBranch(branch.name, mode);
-      } catch (error) {
-        // Git error is already shown by GitManager
-      } finally {
         onRefresh();
+      } catch (error) {
+        onRefresh(error as Error);
       }
     }
   };
@@ -219,10 +217,9 @@ export function BranchRebaseAction({ branch, gitManager, onRefresh }: BranchActi
     if (confirmed) {
       try {
         await gitManager.rebase(branch.name);
-      } catch (error) {
-        // Git error is already shown by GitManager
-      } finally {
         onRefresh();
+      } catch (error) {
+        onRefresh(error as Error);
       }
     }
   };
@@ -283,24 +280,22 @@ export function FetchAction({ gitManager, onRefresh }: { gitManager: GitManager;
 /**
  * Global pull action that can be reused across different views.
  */
-export function PullAction({ gitManager, onRefresh }: { gitManager: GitManager; onRefresh: () => void }) {
+export function PullAction({ gitManager, onRefresh }: { gitManager: GitManager; onRefresh: (error?: Error) => void }) {
   const handlePullRebase = async () => {
     try {
       await gitManager.pull(true);
-    } catch (error) {
-      // Git error is already shown by GitManager
-    } finally {
       onRefresh();
+    } catch (error) {
+      onRefresh(error as Error);
     }
   };
 
   const handlePullMerge = async () => {
     try {
       await gitManager.pull(false);
-    } catch (error) {
-      // Git error is already shown by GitManager
-    } finally {
       onRefresh();
+    } catch (error) {
+      onRefresh(error as Error);
     }
   };
 

@@ -9,7 +9,6 @@ import {
   CommitCopyShortHashAction,
   CommitCopyAuthorAction,
   CommitCopyAuthorEmailAction,
-  CommitRefreshHistoryAction,
   CommitCopyMessageAction,
   CommitInteractiveRebaseAction,
 } from "../../components/actions/CommitActions";
@@ -21,14 +20,14 @@ import {
   CommitBranchFilterAction,
   getBranchFilterDisplayName,
 } from "../../components/actions/CommitBranchFilterActions";
-import { GitManager } from "../../utils/git-utils";
+import { GitManager } from "../../utils/git-manager";
 import {
   useUrlTracker,
   extractUrlsFromCommitWithConfigs,
   replaceUrlPatternsWithLinks,
 } from "../../hooks/useUrlTracker";
 import "../../utils/date-utils";
-import { Commit, UrlTrackerConfig, BranchesState, Branch, DetachedHead } from "../../types";
+import { Commit, UrlTrackerConfig, BranchesState, Branch, DetachedHead, GitView } from "../../types";
 import { useMemo, useState } from "react";
 import { CommitMessageForm } from "./CommitMessageView";
 
@@ -52,8 +51,11 @@ interface CommitsViewProps {
   isLoading: boolean;
   commits?: Commit[];
   error?: Error;
-  revalidate: () => void | Promise<unknown>;
+  revalidateCommits: () => void;
+  revalidateStatus: () => void;
+  revalidateBranches: () => void;
   pagination?: ListPagination;
+  navigateTo: (destination: GitView) => void;
 }
 
 export function CommitsView({
@@ -67,8 +69,11 @@ export function CommitsView({
   isLoading,
   commits,
   error,
-  revalidate,
+  revalidateCommits,
+  revalidateStatus,
+  revalidateBranches,
   pagination,
+  navigateTo,
 }: CommitsViewProps) {
   const [isShowingDetail, setIsShowingDetail] = useState(false);
   const [isShowingMetadata, setIsShowingMetadata] = useCachedState("commits-metadata-visible", true);
@@ -88,6 +93,15 @@ export function CommitsView({
     setIsShowingMetadata(!isShowingMetadata);
   };
 
+  const revalidateAll = (error?: Error) => {
+    revalidateCommits();
+    revalidateStatus();
+    revalidateBranches();
+    if (error) {
+      navigateTo("status");
+    }
+  };
+
   return (
     <List
       isLoading={isLoading}
@@ -100,12 +114,17 @@ export function CommitsView({
       actions={
         <ActionPanel>
           <ActionPanel.Section title="Branch">
-            <CommitRefreshHistoryAction onRefresh={revalidate} />
-            <PullAction gitManager={gitManager} onRefresh={revalidate} />
+            <Action
+              title="Refresh History"
+              onAction={revalidateAll}
+              icon={Icon.ArrowClockwise}
+              shortcut={{ modifiers: ["cmd"], key: "r" }}
+            />
+            <PullAction gitManager={gitManager} onRefresh={revalidateAll} />
             {branchesState?.currentBranch && branchesState.currentBranch.type === "current" && (
-              <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={revalidate} />
+              <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={revalidateAll} />
             )}
-            <FetchAction gitManager={gitManager} onRefresh={revalidate} />
+            <FetchAction gitManager={gitManager} onRefresh={revalidateAll} />
             {branchFilter && branchesState && (
               <CommitBranchFilterAction
                 branchFilter={branchFilter}
@@ -136,7 +155,7 @@ export function CommitsView({
               target={
                 <ConfigureUrlTrackerForm
                   repositoryPath={gitManager.repoPath}
-                  onConfigurationSaved={revalidate}
+                  onConfigurationSaved={revalidateAll}
                 />
               }
             />
@@ -153,7 +172,10 @@ export function CommitsView({
           icon={Icon.ExclamationMark}
           actions={
             <ActionPanel>
-              <Action title="Retry" onAction={revalidate} icon={Icon.ArrowClockwise} />
+              <Action title="Retry"
+                onAction={revalidateAll}
+                icon={Icon.ArrowClockwise}
+              />
             </ActionPanel>
           }
         />
@@ -167,7 +189,7 @@ export function CommitsView({
               commit={commit}
               index={index}
               gitManager={gitManager}
-              onRefresh={revalidate}
+              onRefresh={revalidateAll}
               navigationActions={navigationActions}
               isShowingDetail={isShowingDetail}
               isShowingMetadata={isShowingMetadata}
@@ -192,7 +214,7 @@ interface CommitListItemProps {
   commit: Commit;
   index: number;
   gitManager: GitManager;
-  onRefresh: () => void;
+  onRefresh: (error?: Error) => void;
   navigationActions: React.ReactNode;
   isShowingDetail: boolean;
   onToggleDetail: () => void;
