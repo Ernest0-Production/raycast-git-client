@@ -35,7 +35,8 @@ interface StatusViewProps {
   isLoading: boolean;
   error?: Error;
   revalidateStatus: () => void | Promise<unknown>;
-  revalidateHistory: () => void | Promise<unknown>;
+  revalidateCommits: () => void | Promise<unknown>;
+  revalidateBranches: () => void | Promise<unknown>;
 }
 
 export function StatusView({
@@ -46,7 +47,8 @@ export function StatusView({
   status, isLoading,
   error,
   revalidateStatus,
-  revalidateHistory
+  revalidateCommits,
+  revalidateBranches
 }: StatusViewProps) {
   const [isShowingDetail, setIsShowingDetail] = useState(false);
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
@@ -54,7 +56,8 @@ export function StatusView({
   // Combined callback for commit actions: refresh data and navigate
   const refreshAndNavigateToCommits = () => {
     revalidateStatus();
-    revalidateHistory();
+    revalidateBranches();
+    revalidateCommits();
     onNavigateToCommits?.();
   };
 
