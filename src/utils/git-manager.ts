@@ -1345,4 +1345,53 @@ __REBASE_TODO__
   async restoreFileToCommit(filePath: string, commitHash: string): Promise<void> {
     await this.git.raw(["restore", "--source", commitHash, "--", filePath]);
   }
+
+  /**
+   * Creates a unified diff patch file for all unstaged changes in the working tree.
+   * Includes modified/deleted tracked files and untracked files (via intent-to-add trick).
+   * Returns the absolute path to the created patch file.
+   */
+  async createPatchForUnstaged(outputDirectoryPath: string): Promise<string> {
+    // Validate target directory
+    const stat = await fs.stat(outputDirectoryPath);
+    if (!stat.isDirectory()) {
+      throw new Error("Selected path is not a directory");
+    }
+
+    // Collect untracked files to include in diff
+    const status = await this.git.status();
+    const untrackedFiles = (status.not_added || []).filter((p) => !!p);
+
+    // Temporarily mark untracked files with intent-to-add so git diff will include them
+    if (untrackedFiles.length > 0) {
+      await this.git.add(["-N", "--", ...untrackedFiles]);
+    }
+
+    try {
+      // Generate patch content for all unstaged changes, include binary diffs as well
+      const patchContent = await this.git.diff(["--binary"]);
+
+      if (!patchContent || patchContent.trim().length === 0) {
+        throw new Error("No unstaged changes to create patch");
+      }
+
+      // Compose unique patch file name
+      const now = new Date();
+      const pad = (n: number) => n.toString().padStart(2, "0");
+      const fileName = `${this.repoName}-unstaged-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.patch`;
+      const targetPath = join(outputDirectoryPath, fileName);
+
+      await fs.writeFile(targetPath, patchContent, { encoding: "utf-8" });
+      return targetPath;
+    } finally {
+      // Revert intent-to-add marks to avoid changing repo state
+      for (const file of untrackedFiles) {
+        try {
+          await this.git.reset(["HEAD", file]);
+        } catch (error) {
+          // Ignore cleanup errors; main operation already completed or failed
+        }
+      }
+    }
+  }
 }

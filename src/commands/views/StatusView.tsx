@@ -17,6 +17,7 @@ import {
   FileCommitAction,
   FileConflictAbortAction,
   FileHistoryAction,
+  CreatePatchAction,
 } from "../../components/actions/FileActions";
 import { CreateStashAction } from "../../components/actions/StashActions";
 import { GitManager } from "../../utils/git-manager";
@@ -111,6 +112,10 @@ export function StatusView({
           {status && (
             <FileConflictAbortAction status={status} gitManager={gitManager} onRefresh={revalidateStatus} />
           )}
+
+          <ActionPanel.Section title="Workspace">
+            <CreatePatchAction gitManager={gitManager} />
+          </ActionPanel.Section>
 
           {navigationActions}
         </ActionPanel>
@@ -282,6 +287,7 @@ function FileListItem({
 
           <ActionPanel.Section title="Workspace">
             <CreateStashAction gitManager={gitManager} onRefresh={onRefresh} />
+            <CreatePatchAction gitManager={gitManager} />
           </ActionPanel.Section>
 
           {navigationActions}

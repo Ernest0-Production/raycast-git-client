@@ -1,9 +1,11 @@
-import { Action, Icon, Color, confirmAlert, Alert, Keyboard, getDefaultApplication } from "@raycast/api";
+import { Action, Icon, Color, confirmAlert, Alert, Keyboard, getDefaultApplication, ActionPanel, Form, useNavigation, showToast, Toast } from "@raycast/api";
 import { GitManager } from "../../utils/git-manager";
 import { CommitFileChange, FileStatus, StatusState } from "../../types";
 import { existsSync } from "fs";
 import { CommitMessageForm } from "../../commands/views/CommitMessageView";
 import FileHistoryView from "../../commands/views/FileHistoryView";
+import { useState } from "react";
+import { showFailureToast } from "@raycast/utils";
 
 interface FileActionProps {
   file: FileStatus;
@@ -446,6 +448,68 @@ export function FileRefreshStatusAction({ onRefresh }: { onRefresh: () => void }
       icon={Icon.ArrowClockwise}
       shortcut={{ modifiers: ["cmd"], key: "r" }}
     />
+  );
+}
+
+/**
+ * Action to create a patch for all unstaged changes.
+ */
+export function CreatePatchAction({ gitManager }: { gitManager: GitManager }) {
+  return (
+    <Action.Push
+      title="Create Patch from Unstaged"
+      icon={Icon.Document}
+      target={<CreatePatchForm gitManager={gitManager} />}
+    />
+  );
+}
+
+function CreatePatchForm({ gitManager }: { gitManager: GitManager }) {
+  const { pop } = useNavigation();
+  const [directoryPath, setDirectoryPath] = useState<string[]>([]);
+
+  const validateDirectory = (paths: string[]): string | undefined => {
+    if (paths.length === 0) return "Required";
+    return undefined;
+  };
+
+  const handleSubmit = async (values: { directoryPath: string[] }) => {
+    const targetDir = values.directoryPath?.[0];
+    if (!targetDir) {
+      await showToast({ style: Toast.Style.Failure, title: "Directory is required" });
+      return;
+    }
+
+    try {
+      await showToast({ style: Toast.Style.Animated, title: "Creating patch..." });
+      const patchPath = await gitManager.createPatchForUnstaged(targetDir);
+      await showToast({ style: Toast.Style.Success, title: "Patch created", message: patchPath });
+      pop();
+    } catch (error) {
+      await showFailureToast(error, { title: "Failed to create patch" });
+    }
+  };
+
+  return (
+    <Form
+      navigationTitle="Create Patch"
+      actions={
+        <ActionPanel>
+          <Action.SubmitForm title="Create Patch" onSubmit={handleSubmit} />
+        </ActionPanel>
+      }
+    >
+      <Form.FilePicker
+        id="directoryPath"
+        title="Target Directory"
+        value={directoryPath}
+        error={validateDirectory(directoryPath)}
+        onChange={setDirectoryPath}
+        allowMultipleSelection={false}
+        canChooseDirectories
+        canChooseFiles={false}
+      />
+    </Form>
   );
 }
 
