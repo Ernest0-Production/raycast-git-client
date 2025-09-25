@@ -502,7 +502,7 @@ function CommitListItem({
           </ActionPanel.Section>
 
           {commit.tags.map((tag) => (
-            <ActionPanel.Section title={`Tag '${tag}'`}>
+            <ActionPanel.Section key={`tag-${tag}`} title={`Tag '${tag}'`}>
               <TagCopyNameAction key={`copy-${tag}`} tagName={tag} />
               <TagRemoveAction key={`remove-${tag}`} tagName={tag} gitManager={gitManager} onRefresh={onRefresh} />
             </ActionPanel.Section>

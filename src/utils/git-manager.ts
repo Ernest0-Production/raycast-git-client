@@ -32,6 +32,7 @@ import {
 import * as path from "path";
 import { promises as fs } from "fs";
 import { showFailureToast } from "@raycast/utils";
+import { execSync } from "child_process";
 
 /**
  * Manager for Git operations within a repository.
@@ -57,7 +58,7 @@ export class GitManager {
 
     const preferences = getPreferenceValues<Preferences>();
     if (preferences.environmentPath === "homebrew") {
-      const path = require("child_process").execSync("echo $PATH").toString().trim();
+      const path = execSync("echo $PATH").toString().trim();
       this.git = this.git.env(
         "PATH",
         `/opt/homebrew/bin:/opt/homebrew/sbin:${path}`,
@@ -88,7 +89,6 @@ export class GitManager {
       showToast({ style: Toast.Style.Animated, title: command_description, message: "Running..." });
 
       let lastOutput = "";
-
 
       // Process stdout (standard output)
       stdout.on("data", (data: Buffer) => {
