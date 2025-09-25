@@ -1168,6 +1168,67 @@ __REBASE_TODO__
   }
 
   /**
+   * Clone a repository from a remote URL into a parent directory.
+   * If credentials are provided for HTTPS, they will be embedded into the URL.
+   * For SSH, credentials are generally managed via ssh-agent and not passed here.
+   * Returns the absolute path of the cloned repository.
+   */
+  static async cloneRepository(options: {
+    url: string;
+    parentDirectory: string;
+    directoryName?: string;
+    httpsCredentials?: { username?: string; password?: string };
+    depth?: number;
+  }): Promise<string> {
+    const { url, parentDirectory, directoryName, httpsCredentials, depth } = options;
+
+    // Prepare URL with HTTPS basic auth if provided
+    let effectiveUrl = url.trim();
+    if (httpsCredentials && /^https?:\/\//i.test(effectiveUrl)) {
+      const parsed = new URL(effectiveUrl);
+      if (httpsCredentials.username) parsed.username = httpsCredentials.username;
+      if (httpsCredentials.password) parsed.password = httpsCredentials.password;
+      effectiveUrl = parsed.toString();
+    }
+
+    const inferDirName = (input: string): string => {
+      // HTTPS
+      if (/^https?:\/\//i.test(input)) {
+        try {
+          const u = new URL(input);
+          const last = u.pathname.split("/").filter(Boolean).pop() || "repo";
+          return last.replace(/\.git$/i, "");
+        } catch {
+          // fall through to generic parsing
+        }
+      }
+      // SSH scp-like: git@host:org/repo.git
+      const tail = input.includes("/") ? input.substring(input.lastIndexOf("/") + 1) : input;
+      const colonTail = tail.includes(":") ? tail.substring(tail.lastIndexOf(":") + 1) : tail;
+      return colonTail.replace(/\.git$/i, "");
+    };
+
+    const targetDir = directoryName
+      ? path.join(parentDirectory, directoryName)
+      : path.join(parentDirectory, inferDirName(effectiveUrl));
+
+    const git = simpleGit(
+      undefined,
+      {
+        errors: (error, _result) => error,
+      }
+    );
+
+    const cloneArgs: string[] = [];
+    if (typeof depth === "number" && depth > 0) {
+      cloneArgs.push("--depth", String(depth));
+    }
+
+    await git.clone(effectiveUrl, targetDir, cloneArgs);
+    return targetDir;
+  }
+
+  /**
    * Gets the default remote name (usually 'origin', but can be the first available remote).
    */
   async getDefaultRemote(): Promise<string> {

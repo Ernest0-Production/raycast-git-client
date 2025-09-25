@@ -28,6 +28,20 @@
       ]
     },
     {
+      "name": "clone-repository",
+      "title": "Clone Git Repository",
+      "description": "Clone a repository from SSH or HTTPS URL",
+      "mode": "view",
+      "arguments": [
+        {
+          "name": "url",
+          "placeholder": "Repository URL (SSH or HTTPS)",
+          "type": "text",
+          "required": false
+        }
+      ]
+    },
+    {
       "name": "manage-ai-message-prompts",
       "title": "Manage AI Message Prompts",
       "description": "Configure AI commit message prompt presets",
