@@ -1,11 +1,11 @@
-import { Action, Icon, Color, confirmAlert, Alert, Keyboard, getDefaultApplication, ActionPanel, Form, useNavigation, showToast, Toast } from "@raycast/api";
+import { Action, Icon, Color, confirmAlert, Alert, Keyboard, ActionPanel, Form, useNavigation, Clipboard } from "@raycast/api";
 import { GitManager } from "../../utils/git-manager";
-import { CommitFileChange, FileStatus, StatusState } from "../../types";
+import { CommitFileChange, FileStatus, PatchScope, StatusState } from "../../types";
 import { existsSync } from "fs";
 import { CommitMessageForm } from "../../commands/views/CommitMessageView";
 import FileHistoryView from "../../commands/views/FileHistoryView";
-import { useState } from "react";
-import { showFailureToast } from "@raycast/utils";
+import { useEffect, useState } from "react";
+import { useCachedState } from "@raycast/utils";
 
 interface FileActionProps {
   file: FileStatus;
@@ -456,37 +456,50 @@ export function FileRefreshStatusAction({ onRefresh }: { onRefresh: () => void }
  */
 export function CreatePatchAction({ gitManager }: { gitManager: GitManager }) {
   return (
-    <Action.Push
-      title="Create Patch from Unstaged"
-      icon={Icon.Document}
-      target={<CreatePatchForm gitManager={gitManager} />}
-    />
+    <ActionPanel.Submenu
+      title="Save as Patch"
+      icon={`patch.svg`}
+      shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
+    >
+      <Action.Push
+        title="All Changes"
+        target={<CreatePatchForm scope={PatchScope.ALL} gitManager={gitManager} />}
+      />
+      <Action.Push
+        title="Only Staged"
+        target={<CreatePatchForm scope={PatchScope.STAGED} gitManager={gitManager} />}
+      />
+      <Action.Push
+        title="Only Unstaged"
+        target={<CreatePatchForm scope={PatchScope.UNSTAGED} gitManager={gitManager} />}
+      />
+    </ActionPanel.Submenu>
   );
 }
 
-function CreatePatchForm({ gitManager }: { gitManager: GitManager }) {
+function CreatePatchForm({ scope, gitManager }: { scope: PatchScope, gitManager: GitManager }) {
   const { pop } = useNavigation();
-  const [directoryPath, setDirectoryPath] = useState<string[]>([]);
+  const [directoryPath, setDirectoryPath] = useCachedState<string[]>(`patches-directory`, []);
 
-  const validateDirectory = (paths: string[]): string | undefined => {
-    if (paths.length === 0) return "Required";
+  const validateDirectoryPath = (directoryPath: string[]) => {
+    if (directoryPath.length === 0) {
+      return "Required";
+    }
+
+    if (!existsSync(directoryPath[0])) {
+      return "Not exists";
+    }
+
     return undefined;
   };
 
   const handleSubmit = async (values: { directoryPath: string[] }) => {
-    const targetDir = values.directoryPath?.[0];
-    if (!targetDir) {
-      await showToast({ style: Toast.Style.Failure, title: "Directory is required" });
-      return;
-    }
-
     try {
-      await showToast({ style: Toast.Style.Animated, title: "Creating patch..." });
-      const patchPath = await gitManager.createPatchForUnstaged(targetDir);
-      await showToast({ style: Toast.Style.Success, title: "Patch created", message: patchPath });
+      const patchPath = await gitManager.createPatch(directoryPath[0], scope);
+      await Clipboard.copy(patchPath);
       pop();
     } catch (error) {
-      await showFailureToast(error, { title: "Failed to create patch" });
+      // Git error is already shown by GitManager
     }
   };
 
@@ -501,9 +514,9 @@ function CreatePatchForm({ gitManager }: { gitManager: GitManager }) {
     >
       <Form.FilePicker
         id="directoryPath"
-        title="Target Directory"
+        title="Output Directory"
         value={directoryPath}
-        error={validateDirectory(directoryPath)}
+        error={validateDirectoryPath(directoryPath)}
         onChange={setDirectoryPath}
         allowMultipleSelection={false}
         canChooseDirectories
@@ -512,6 +525,78 @@ function CreatePatchForm({ gitManager }: { gitManager: GitManager }) {
     </Form>
   );
 }
+
+export function ApplyPatchAction({ gitManager, onRefresh }: { gitManager: GitManager, onRefresh: () => void }) {
+  return (
+    <Action.Push
+      title="Apply Patch"
+      icon={Icon.Download}
+      target={<ApplyPatchForm gitManager={gitManager} onRefresh={onRefresh} />}
+    />
+  );
+}
+
+export function ApplyPatchForm({ gitManager, onRefresh }: { gitManager: GitManager, onRefresh: () => void }) {
+  const { pop } = useNavigation();
+  const [patchFilePath, setPatchFilePath] = useState<string[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const content = await Clipboard.read();
+      if (!content.file) return;
+      const filePath = decodeURIComponent(content.file).replace('file://', '');
+
+      if (filePath.endsWith(".patch") && existsSync(filePath)) {
+        setPatchFilePath([filePath]);
+      }
+    })();
+  }, []);
+
+  const handleSubmit = async (values: { patchFilePath: string[] }) => {
+    try {
+      const confirmed = await confirmAlert({
+        title: "Apply Patch",
+        message: "Are you sure you want to apply the patch? This action cannot be undone.",
+        primaryAction: {
+          title: "Apply",
+          style: Alert.ActionStyle.Destructive,
+        },
+      });
+
+      if (confirmed) {
+        await gitManager.applyPatch(patchFilePath[0]);
+        onRefresh();
+        pop();
+      }
+    } catch (error) {
+      // Git error is already shown by GitManager
+    }
+  };
+
+  return (
+    <Form
+      navigationTitle="Apply Patch"
+      actions={
+        <ActionPanel>
+          <Action.SubmitForm title="Apply Patch" onSubmit={handleSubmit} />
+        </ActionPanel>
+      }
+    >
+      <Form.FilePicker
+        id="patchFilePath"
+        title="Patch File"
+        value={patchFilePath}
+        error={patchFilePath.length === 0 ? "Required" : undefined}
+        info="It should be a '.patch' file"
+        onChange={setPatchFilePath}
+        allowMultipleSelection={false}
+        canChooseDirectories={false}
+        canChooseFiles={true}
+      />
+    </Form>
+  );
+}
+
 
 // === Utility functions ===
 

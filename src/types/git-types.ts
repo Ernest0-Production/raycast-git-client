@@ -223,3 +223,9 @@ export enum MergeMode {
   SQUASH = "squash",
   NO_COMMIT = "no-commit",
 }
+
+export enum PatchScope {
+  ALL = "all",
+  STAGED = "staged",
+  UNSTAGED = "unstaged",
+}

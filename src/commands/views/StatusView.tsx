@@ -18,6 +18,7 @@ import {
   FileConflictAbortAction,
   FileHistoryAction,
   CreatePatchAction,
+  ApplyPatchAction,
 } from "../../components/actions/FileActions";
 import { CreateStashAction } from "../../components/actions/StashActions";
 import { GitManager } from "../../utils/git-manager";
@@ -96,7 +97,9 @@ export function StatusView({
               gitManager={gitManager}
               onFinish={refreshAndNavigateToCommits} />
           )}
+
           <ActionPanel.Section>
+            <FileRefreshStatusAction onRefresh={revalidateStatus} />
             <Action
               title={isShowingDetail ? "Hide Diff" : "Show Diff"}
               icon={Icon.CodeBlock}
@@ -105,18 +108,17 @@ export function StatusView({
             />
           </ActionPanel.Section>
 
-          <ActionPanel.Section>
-            <FileRefreshStatusAction onRefresh={revalidateStatus} />
+          <ActionPanel.Section title="Workspace">
+            <ApplyPatchAction gitManager={gitManager} onRefresh={revalidateStatus} />
           </ActionPanel.Section>
 
           {status && (
-            <FileConflictAbortAction status={status} gitManager={gitManager} onRefresh={revalidateStatus} />
+            <FileConflictAbortAction
+              status={status}
+              gitManager={gitManager}
+              onRefresh={revalidateStatus}
+            />
           )}
-
-          <ActionPanel.Section title="Workspace">
-            <CreatePatchAction gitManager={gitManager} />
-          </ActionPanel.Section>
-
           {navigationActions}
         </ActionPanel>
       }
@@ -288,6 +290,7 @@ function FileListItem({
           <ActionPanel.Section title="Workspace">
             <CreateStashAction gitManager={gitManager} onRefresh={onRefresh} />
             <CreatePatchAction gitManager={gitManager} />
+            <ApplyPatchAction gitManager={gitManager} onRefresh={onRefresh} />
           </ActionPanel.Section>
 
           {navigationActions}
