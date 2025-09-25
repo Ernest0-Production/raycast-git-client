@@ -79,8 +79,8 @@ export function BranchDeleteAction({ branch, gitManager, onRefresh }: BranchActi
             });
             if (confirmed) {
               const summaryConfirm = await confirmAlert({
-                title: "Confirm deletion",
-                message: `This action will be undone.`,
+                title: "Final confirmation of deletion",
+                message: `This action will delete local and remote branch. This action cannot be undone.`,
                 primaryAction: {
                   title: "Delete Both",
                   style: Alert.ActionStyle.Destructive,
