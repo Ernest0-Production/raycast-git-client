@@ -45,7 +45,7 @@ export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: {
     if (newAmendValue && lastCommit) {
       // If amend is enabled, populate with last commit message (trimmed)
       setDraftMessage((lastCommit.message + "\n\n" + lastCommit.body).trim());
-    } else if (!newAmendValue) {
+    } else if (!newAmendValue && amend !== newAmendValue) {
       // If amend is disabled, clear draft message
       setDraftMessage("");
     }
