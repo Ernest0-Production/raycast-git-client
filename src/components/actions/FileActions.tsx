@@ -465,7 +465,7 @@ export const getFileStatusIcon = (file: FileStatus) => {
     case "renamed":
       return { source: `square-arrow-right-filled.svg`, tintColor: Color.Blue, tooltip: "Moved from " + file.oldPath };
     case "copied":
-      return { source: `copy.svg`, tintColor: Color.Purple, tooltip: "Copied" };
+      return { source: `copy.svg`, tintColor: Color.Purple, tooltip: "Copied from " + file.oldPath };
     case "conflicted":
       return { source: `alert-square-filled.svg`, tintColor: Color.Red, tooltip: "Conflicted" };
     default:
@@ -488,7 +488,7 @@ export const getCommitFileIcon = (change: CommitFileChange) => {
     case "renamed":
       return { source: `square-arrow-right-filled.svg`, tintColor: Color.Blue, tooltip: "Moved from " + change.oldPath };
     case "copied":
-      return { source: `copy.svg`, tintColor: Color.Purple, tooltip: "Copied" };
+      return { source: `copy.svg`, tintColor: Color.Purple, tooltip: "Copied from " + change.oldPath };
     default:
       return { source: Icon.Document, tintColor: Color.SecondaryText, tooltip: "Unknown" };
   }

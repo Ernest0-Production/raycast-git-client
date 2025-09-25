@@ -90,7 +90,7 @@ export default function FilesView({ gitManager, navigationActions, viewDropdown,
                 <>
                     {searchText.trim().length === 0 ? (
                         recentFiles && recentFiles.length > 0 ? (
-                            <List.Section title="Recent Visited Files">
+                            <List.Section title="Recently Visited Files">
                                 {recentFiles
                                     .filter((path: string) => filePaths?.includes(path))
                                     .map((filePath: string) => (
