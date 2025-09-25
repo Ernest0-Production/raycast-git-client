@@ -1,6 +1,6 @@
 import { Action, Icon, Color, confirmAlert, Alert, Keyboard, ActionPanel, Form, useNavigation, Clipboard } from "@raycast/api";
 import { GitManager } from "../../utils/git-manager";
-import { CommitFileChange, FileStatus, PatchScope, StatusState } from "../../types";
+import { Branch, CommitFileChange, FileStatus, PatchScope, StatusState } from "../../types";
 import { existsSync } from "fs";
 import { CommitMessageForm } from "../../commands/views/CommitMessageView";
 import FileHistoryView from "../../commands/views/FileHistoryView";
@@ -171,11 +171,13 @@ export function FileMoveToTrashAction({
  */
 export function FileCommitAction({
   status,
+  currentBranch,
   gitManager,
   onContinue,
   onFinish,
 }: {
   status: StatusState;
+  currentBranch: Branch;
   onContinue?: () => void;
   gitManager: GitManager;
   onFinish: () => void;
@@ -218,6 +220,10 @@ export function FileCommitAction({
           shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
         />;
 
+      case "squash":
+        // It should be regular commit
+        break;
+
       case undefined:
         return null;
     }
@@ -228,7 +234,13 @@ export function FileCommitAction({
       <Action.Push
         title="Commit Changes"
         icon={{ source: Icon.Checkmark, tintColor: Color.Green }}
-        target={<CommitMessageForm gitManager={gitManager} onFinish={onFinish} />}
+        target={
+          <CommitMessageForm
+            gitManager={gitManager}
+            onFinish={onFinish}
+            currentBranch={currentBranch}
+          />
+        }
         shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
       />
     );

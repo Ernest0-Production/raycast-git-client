@@ -164,6 +164,7 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
       return (
         <StatusView
           gitManager={gitManager}
+          currentBranch={branchesState?.currentBranch}
           navigationActions={navigationActions}
           viewDropdown={viewSelectorDropdown}
           onNavigateToCommits={() => setCurrentView("commits")}

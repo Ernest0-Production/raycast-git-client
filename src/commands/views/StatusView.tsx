@@ -22,12 +22,13 @@ import {
 } from "../../components/actions/FileActions";
 import { CreateStashAction } from "../../components/actions/StashActions";
 import { GitManager } from "../../utils/git-manager";
-import { FileStatus, StatusState } from "../../types";
+import { Branch, FileStatus, StatusState } from "../../types";
 import { useMemo, useState } from "react";
 import { existsSync } from "fs";
 
 interface StatusViewProps {
   gitManager: GitManager;
+  currentBranch?: Branch;
   navigationActions: React.ReactNode;
   viewDropdown: React.ReactElement<any>;
   onNavigateToCommits?: () => void;
@@ -41,6 +42,7 @@ interface StatusViewProps {
 
 export function StatusView({
   gitManager,
+  currentBranch,
   navigationActions,
   viewDropdown,
   onNavigateToCommits,
@@ -96,10 +98,11 @@ export function StatusView({
       searchBarAccessory={viewDropdown}
       actions={
         <ActionPanel>
-          {status && (
+          {status && currentBranch && (
             <FileCommitAction
               status={status}
               gitManager={gitManager}
+              currentBranch={currentBranch}
               onFinish={refreshAndNavigateToCommits} />
           )}
 
@@ -154,6 +157,7 @@ export function StatusView({
                   key={file.path}
                   file={file}
                   status={status}
+                  currentBranch={currentBranch}
                   gitManager={gitManager}
                   onRefresh={revalidateStatus}
                   navigationActions={navigationActions}
@@ -173,6 +177,7 @@ export function StatusView({
                   key={file.path}
                   file={file}
                   status={status}
+                  currentBranch={currentBranch}
                   gitManager={gitManager}
                   onRefresh={revalidateStatus}
                   navigationActions={navigationActions}
@@ -193,6 +198,7 @@ export function StatusView({
 interface FileListItemProps {
   file: FileStatus;
   status: StatusState;
+  currentBranch?: Branch;
   gitManager: GitManager;
   onRefresh: () => void;
   navigationActions: React.ReactNode;
@@ -205,6 +211,7 @@ interface FileListItemProps {
 function FileListItem({
   file,
   status,
+  currentBranch,
   gitManager,
   onRefresh,
   navigationActions,
@@ -285,7 +292,15 @@ function FileListItem({
           </ActionPanel.Section>
 
           <ActionPanel.Section>
-            <FileCommitAction status={status} gitManager={gitManager} onContinue={onCommitSuccess} onFinish={onCommitSuccess} />
+            {currentBranch && (
+              <FileCommitAction
+                status={status}
+                currentBranch={currentBranch}
+                gitManager={gitManager}
+                onContinue={onCommitSuccess}
+                onFinish={onCommitSuccess}
+              />
+            )}
             <FileConflictAbortAction status={status} gitManager={gitManager} onRefresh={onRefresh} />
             <FileStageAllAction gitManager={gitManager} onRefresh={onRefresh} />
             <FileUnstageAllAction gitManager={gitManager} onRefresh={onRefresh} />

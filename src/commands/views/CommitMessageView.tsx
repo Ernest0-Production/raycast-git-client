@@ -1,5 +1,5 @@
 import { GitManager } from "../../utils/git-manager";
-import { Preferences } from "../../types";
+import { Branch, Preferences } from "../../types";
 import { showFailureToast, useCachedState } from "@raycast/utils";
 import { useEffect, useState } from "react";
 import { showToast, Toast, getPreferenceValues, confirmAlert, environment, useNavigation, Color } from "@raycast/api";
@@ -11,7 +11,16 @@ import { AiMessagePresetEditorForm } from "../../manage-ai-message-prompts";
 /**
  * Form for creating a commit with AI generation support.
  */
-export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: { amendOnly?: boolean; gitManager: GitManager; onFinish: () => void }) {
+export function CommitMessageForm({
+  currentBranch,
+  amendOnly = false,
+  gitManager,
+  onFinish }: {
+    currentBranch: Branch;
+    amendOnly?: boolean;
+    gitManager: GitManager;
+    onFinish: () => void
+  }) {
   const preferences = getPreferenceValues<Preferences>();
 
   // Use useState for autoGenerateCommitMessage mode, and useCachedState for amendOnly mode
@@ -154,7 +163,7 @@ export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: {
 
     // Push if requested
     if (push) {
-      try { await gitManager.push(forcePush); }
+      try { await gitManager.push(forcePush, currentBranch); }
       // Git error is already shown by GitManager
       catch (error) { }
     }

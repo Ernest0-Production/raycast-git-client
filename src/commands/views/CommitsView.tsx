@@ -491,11 +491,17 @@ function CommitListItem({
             <CommitCopyShortHashAction commit={commit} />
             <CommitCopyAuthorAction commit={commit} />
             <CommitCopyAuthorEmailAction commit={commit} />
-            {commit.currentBranchName &&
+            {commit.currentBranchName && branchesState?.currentBranch &&
               <Action.Push
                 title="Reword Commit Message"
                 icon={Icon.Message}
-                target={<CommitMessageForm amendOnly={true} gitManager={gitManager} onFinish={onRefresh} />}
+                target={
+                  <CommitMessageForm
+                    currentBranch={branchesState.currentBranch}
+                    amendOnly={true}
+                    gitManager={gitManager}
+                    onFinish={onRefresh}
+                  />}
                 shortcut={{ modifiers: ["cmd", "shift"], key: "a" }}
               />
             }
