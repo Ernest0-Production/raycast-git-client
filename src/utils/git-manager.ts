@@ -28,6 +28,7 @@ import {
   StatusState,
   ConflictState,
   MergeMode,
+  PatchScope,
 } from "../types";
 import * as path from "path";
 import { promises as fs } from "fs";
@@ -264,6 +265,7 @@ export class GitManager {
 
     const rebaseMergePath = path.join(this.repoPath, ".git", "rebase-merge");
     const mergeHeadPath = path.join(this.repoPath, ".git", "MERGE_HEAD");
+    const squashMessagePath = path.join(this.repoPath, ".git", "SQUASH_MSG");
 
     let conflict: ConflictState | undefined;
 
@@ -284,6 +286,8 @@ export class GitManager {
       };
     } else if (existsSync(mergeHeadPath)) {
       conflict = { type: "merge", current: 0, total: 1, };
+    } else if (existsSync(squashMessagePath)) {
+      conflict = { type: "squash", current: 0, total: 1, };
     }
 
     return { branch: status.current, files, conflict };
@@ -1344,5 +1348,63 @@ __REBASE_TODO__
    */
   async restoreFileToCommit(filePath: string, commitHash: string): Promise<void> {
     await this.git.raw(["restore", "--source", commitHash, "--", filePath]);
+  }
+
+  /**
+   * Creates a unified diff patch file for changes in the working tree.
+   * Returns the absolute path to the created patch file.
+   */
+  async createPatch(outputDirectoryPath: string, scope: PatchScope): Promise<string> {
+    // Collect untracked files to include in diff
+    const status = await this.git.status();
+    const untrackedFiles = (status.not_added || []).filter((p) => !!p);
+
+    // Temporarily mark untracked files with intent-to-add so git diff will include them
+    if (untrackedFiles.length > 0) {
+      await this.git.add(["-N", "--", ...untrackedFiles]);
+    }
+
+    try {
+      // Generate patch content for all unstaged changes, include binary diffs as well
+      let patchContent: string;
+      switch (scope) {
+        case "staged":
+          patchContent = await this.git.diff(["--binary", "--staged"]);
+          break;
+        case "unstaged":
+          patchContent = await this.git.diff(["--binary"]);
+          break;
+        case "all":
+        default:
+          patchContent = await this.git.diff(["--binary", "HEAD"]);
+          break;
+      }
+
+      // Compose unique patch file name
+      const currentDateString = new Date().toISOString().replace(/[:.]/g, '-');
+      const fileName = `${this.repoName}_${currentDateString}.patch`;
+      const targetPath = join(outputDirectoryPath, fileName);
+
+      await fs.writeFile(targetPath, patchContent, { encoding: "utf-8" });
+      return targetPath;
+    } finally {
+      // Revert intent-to-add marks to avoid changing repo state
+      for (const file of untrackedFiles) {
+        await this.git.reset(["HEAD", file]);
+      }
+    }
+  }
+
+  /**
+   * Applies a patch file to the repository.
+   * @param patchFilePath - Absolute path to the patch file
+   * @throws Will throw an error if the patch cannot be applied
+   */
+  async applyPatch(patchFilePath: string): Promise<void> {
+    if (!existsSync(patchFilePath)) {
+      throw new Error(`Patch file not found: ${patchFilePath}`);
+    }
+
+    await this.git.applyPatch(patchFilePath, ["--binary", "--allow-binary-replacement", "--3way"]);
   }
 }

@@ -195,7 +195,7 @@ export interface FileChangeStats {
  * Represents the state of a git conflict.
  */
 export interface ConflictState {
-  type: "rebase" | "merge" | undefined;
+  type: "rebase" | "merge" | "squash" | undefined;
   /** The current step of the conflict resolution. */
   current: number;
   /** The total number of steps in the conflict resolution. */
@@ -222,4 +222,10 @@ export enum MergeMode {
   NO_FF = "no-ff",
   SQUASH = "squash",
   NO_COMMIT = "no-commit",
+}
+
+export enum PatchScope {
+  ALL = "all",
+  STAGED = "staged",
+  UNSTAGED = "unstaged",
 }
