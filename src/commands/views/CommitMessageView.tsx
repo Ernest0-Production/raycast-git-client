@@ -24,6 +24,7 @@ export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: {
     ? useState(true)
     : useCachedState(`commit-amend-${gitManager.repoPath}`, false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { pop } = useNavigation();
   const { presets } = useAiPromptPresets();
 
@@ -141,11 +142,14 @@ export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: {
     }
 
     try {
+      setIsSubmitting(true);
       // Commit changes
       await gitManager.commit(draftMessage.trim(), amend);
     } catch (error) {
       // Git error is already shown by GitManager
       return
+    } finally {
+      setIsSubmitting(false);
     }
 
     // Push if requested
@@ -168,7 +172,7 @@ export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: {
   return (
     <Form
       navigationTitle={"Commit Message"}
-      isLoading={isGenerating}
+      isLoading={isGenerating || isSubmitting}
       actions={
         <ActionPanel>
           <ActionPanel.Section>
@@ -193,10 +197,19 @@ export function CommitMessageForm({ amendOnly = false, gitManager, onFinish }: {
 
           {environment.canAccess("AI") && (
             <ActionPanel.Section title="AI Assistant">
+              {presets.length > 0 && (
+                <Action
+                  key={presets[0].id}
+                  title="Generate Message"
+                  icon={Icon.Wand}
+                  onAction={() => generateCommitMessage(presets[0])}
+                  shortcut={{ modifiers: ["cmd"], key: "g" }}
+                />
+              )}
               <ActionPanel.Submenu
-                title="Generate Commit Message"
+                title="Generate Message with"
                 icon={Icon.Wand}
-                shortcut={{ modifiers: ["cmd"], key: "g" }}
+                shortcut={{ modifiers: ["cmd", "shift"], key: "g" }}
               >
                 {presets.map((preset) => (
                   <Action
