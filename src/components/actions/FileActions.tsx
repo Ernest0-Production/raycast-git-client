@@ -91,7 +91,7 @@ export function FileDiscardAction({ file, gitManager, onRefresh }: FileActionPro
 /**
  * Action for opening a file in default editor by absolute path.
  */
-export function FileOpenAction({ filePath, shortcut, onOpen }: { filePath: string, shortcut?: Keyboard.Shortcut, onOpen?: () => void }) {
+export function FileOpenAction({ filePath, onOpen }: { filePath: string, onOpen?: () => void }) {
   if (!existsSync(filePath)) return null;
 
   return (
@@ -99,7 +99,7 @@ export function FileOpenAction({ filePath, shortcut, onOpen }: { filePath: strin
       title="Open"
       target={filePath}
       icon={Icon.Document}
-      shortcut={shortcut}
+      shortcut={{ modifiers: ["cmd"], key: "o" }}
       onOpen={onOpen}
     />
   );
@@ -108,13 +108,13 @@ export function FileOpenAction({ filePath, shortcut, onOpen }: { filePath: strin
 /**
  * Action for opening a file with a custom application by absolute path.
  */
-export function FileOpenWithAction({ filePath, shortcut, onOpen }: { filePath: string, shortcut?: Keyboard.Shortcut, onOpen?: () => void }) {
+export function FileOpenWithAction({ filePath, onOpen }: { filePath: string, onOpen?: () => void }) {
   if (!existsSync(filePath)) return null;
 
   return (
     <Action.OpenWith
       path={filePath}
-      shortcut={shortcut}
+      shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
       onOpen={onOpen}
     />
   );

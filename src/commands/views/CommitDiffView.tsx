@@ -165,7 +165,7 @@ export function FileListItem({
               shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
             />
             <FileOpenAction filePath={absolutePath} />
-            <FileOpenWithAction filePath={absolutePath} shortcut={{ modifiers: ["cmd"], key: "o" }} />
+            <FileOpenWithAction filePath={absolutePath} />
             <FileCopyPathAction filePath={absolutePath} />
             <FileQuickLookAction filePath={absolutePath} />
             <FileHistoryAction

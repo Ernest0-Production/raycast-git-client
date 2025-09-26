@@ -43,8 +43,16 @@ export function RepositoryDirectoryActions({ repositoryPath, onOpen }: Repositor
           onOpen={() => onOpen?.()}
         />
       )}
-      <Action.OpenWith path={repositoryPath} title="Open Repository with…" onOpen={() => onOpen?.()} />
-      <Action.CopyToClipboard title="Copy Repository Path" content={repositoryPath} />
+      <Action.OpenWith
+        path={repositoryPath}
+        title="Open Repository with…"
+        onOpen={() => onOpen?.()}
+        shortcut={{ modifiers: ["cmd", "shift", "opt"], key: "o" }}
+      />
+      <Action.CopyToClipboard
+        title="Copy Repository Path"
+        content={repositoryPath}
+      />
     </ActionPanel.Section>
   );
 }

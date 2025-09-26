@@ -175,7 +175,6 @@ function FileListItem({
                         />
                         <FileOpenWithAction
                             filePath={absolutePath}
-                            shortcut={{ modifiers: ["cmd"], key: "o" }}
                             onOpen={onOpen}
                         />
                         <FileQuickLookAction filePath={absolutePath} />

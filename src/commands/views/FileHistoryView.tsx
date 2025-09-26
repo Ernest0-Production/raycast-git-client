@@ -186,7 +186,7 @@ function CommitListItem({
 
                     <ActionPanel.Section title={file.path.split("/").pop()}>
                         <FileOpenAction filePath={absolutePath} />
-                        <FileOpenWithAction filePath={absolutePath} shortcut={{ modifiers: ["cmd"], key: "o" }} />
+                        <FileOpenWithAction filePath={absolutePath} />
                         <FileCopyPathAction filePath={absolutePath} />
                         <FileQuickLookAction filePath={absolutePath} />
                         <FileRestoreAction
