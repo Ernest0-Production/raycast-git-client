@@ -1,4 +1,6 @@
-import { Action, ActionPanel, Icon, getPreferenceValues } from "@raycast/api";
+import { Action, ActionPanel, Icon, getPreferenceValues, getApplications, open, confirmAlert, Alert, Application } from "@raycast/api";
+import { useEffect, useMemo, useState } from "react";
+import { useCachedState, usePromise } from "@raycast/utils";
 import { Preferences } from "../../types";
 
 interface RepositoryDirectoryActionsProps {
@@ -14,17 +16,62 @@ interface RepositoryDirectoryActionsProps {
  */
 export function RepositoryDirectoryActions({ repositoryPath, onOpen }: RepositoryDirectoryActionsProps) {
   const preferences = getPreferenceValues<Preferences>();
+  const { data: applications } = usePromise(() => getApplications(repositoryPath));
+  const [defaultApp, setDefaultApp] = useCachedState<Application | undefined>(`${repositoryPath}:repo-default-app`, undefined);
+
+  async function handleOpenWith(app: Application) {
+    const remember = await confirmAlert({
+      title: "Remember choise?",
+      message: `Do you want to remember "${app.name}" as the default app for this repository?`,
+      primaryAction: {
+        title: "Remember",
+        style: Alert.ActionStyle.Default,
+      },
+      dismissAction: {
+        title: "No",
+      }
+    });
+
+    await open(repositoryPath, app);
+    onOpen?.();
+
+    if (remember) {
+      setDefaultApp(app);
+    }
+  }
+
+  function handleChangeDefault(app: Application) {
+    setDefaultApp(app);
+  }
 
   return (
     <ActionPanel.Section title={repositoryPath.split("/").pop() || repositoryPath}>
-      <Action.Open
-        title={`Open Repository in ${preferences.defaultEditor.name}`}
-        target={repositoryPath}
-        application={preferences.defaultEditor}
-        icon={{ fileIcon: preferences.defaultEditor.path }}
-        shortcut={{ modifiers: ["cmd", "shift"], key: "o" }}
-        onOpen={() => onOpen?.()}
-      />
+      {defaultApp ? (
+        <Action.Open
+          key={defaultApp.bundleId || defaultApp.path}
+          title="Open Repository"
+          icon={{ fileIcon: defaultApp.path }}
+          application={defaultApp}
+          target={repositoryPath}
+          onOpen={() => onOpen?.()}
+          shortcut={{ modifiers: ["cmd", "shift"], key: "o" }}
+        />
+      ) : (
+        <ActionPanel.Submenu
+          title="Open Repository"
+          icon={Icon.AppWindow}
+          shortcut={{ modifiers: ["cmd", "shift"], key: "o" }}
+        >
+          {applications?.map((app: Application) => (
+            <Action
+              key={app.bundleId || app.path}
+              title={app.name}
+              icon={{ fileIcon: app.path }}
+              onAction={() => handleOpenWith(app)}
+            />
+          ))}
+        </ActionPanel.Submenu>
+      )}
       <Action.Open
         title={`Open Repository in ${preferences.defaultTerminal.name}`}
         target={repositoryPath}
@@ -49,6 +96,21 @@ export function RepositoryDirectoryActions({ repositoryPath, onOpen }: Repositor
         onOpen={() => onOpen?.()}
         shortcut={{ modifiers: ["cmd", "shift", "opt"], key: "o" }}
       />
+      {defaultApp && (
+        <ActionPanel.Submenu
+          title="Change Repository Default App"
+          icon={Icon.AppWindow}
+        >
+          {applications?.map((app: Application) => (
+            <Action
+              key={app.bundleId || app.path}
+              title={app.name}
+              icon={{ fileIcon: app.path }}
+              onAction={() => handleChangeDefault(app)}
+            />
+          ))}
+        </ActionPanel.Submenu>
+      )}
       <Action.CopyToClipboard
         title="Copy Repository Path"
         content={repositoryPath}
