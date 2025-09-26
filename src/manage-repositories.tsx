@@ -6,9 +6,11 @@ import { validateGitRepository } from "./utils/validation";
 import OpenRepository from "./open-repository";
 import { showFailureToast } from "@raycast/utils";
 import { Repository } from "./types";
+import { RepositoriesView, useRepositoriesView } from "./hooks/useRepositoriesView";
 
 export default function ManageRepositories() {
   const { repositories, addRepository, visitRepository, removeRepository, clearRepositoriesList } = useRepositoriesList();
+  const { currentView, setCurrentView, displayedRepositories } = useRepositoriesView(repositories);
 
   const handleClearRepositories = async () => {
     const confirmed = await confirmAlert({
@@ -77,16 +79,22 @@ export default function ManageRepositories() {
           icon={`git-project.svg`}
         />
       ) : (
-        repositories.map((repo) => (
-          <RepositoryListItem
-            key={repo.id}
-            repo={repo}
-            onOpen={() => visitRepository(repo.path)}
-            onRemove={() => handleRemoveRepository(repo.name, repo.path)}
-            onAddRepository={addRepository}
-            repositoriesCount={repositories.length}
-            onClearAll={handleClearRepositories}
-          />
+        displayedRepositories.map((group) => (
+          <List.Section key={group.groupTitle} title={group.groupTitle}>
+            {group.repositories.map((repo) => (
+              <RepositoryListItem
+                key={`${repo.id}-${group.groupTitle}`}
+                repo={repo}
+                onOpen={() => visitRepository(repo.path)}
+                onRemove={() => handleRemoveRepository(repo.name, repo.path)}
+                onAddRepository={addRepository}
+                repositoriesCount={repositories.length}
+                onClearAll={handleClearRepositories}
+                selectedView={currentView}
+                onViewChange={setCurrentView}
+              />
+            ))}
+          </List.Section>
         ))
       )}
     </List>
@@ -100,6 +108,8 @@ function RepositoryListItem({
   onAddRepository,
   repositoriesCount,
   onClearAll,
+  selectedView,
+  onViewChange,
 }: {
   repo: Repository;
   onOpen: () => void;
@@ -107,6 +117,8 @@ function RepositoryListItem({
   onAddRepository: (repoPath: string) => void;
   repositoriesCount: number;
   onClearAll: () => Promise<void> | void;
+  selectedView: RepositoriesView;
+  onViewChange: (view: RepositoriesView) => void;
 }) {
   const accessories = useMemo(() => {
     if (repo.languageStats && repo.languageStats.length > 0) {
@@ -121,7 +133,10 @@ function RepositoryListItem({
       icon={{ source: `git-project.svg`, tintColor: Color.SecondaryText }}
       title={repo.name}
       subtitle={repo.path}
-      keywords={[repo.path]}
+      keywords={[
+        repo.path,
+        ...(repo.languageStats?.map((lang) => lang.name) || [])
+      ].filter((keyword): keyword is string => Boolean(keyword))}
       accessories={accessories}
       actions={
         <ActionPanel>
@@ -152,6 +167,39 @@ function RepositoryListItem({
           </ActionPanel.Section>
 
           <RepositoryDirectoryActions repositoryPath={repo.path} onOpen={onOpen} />
+
+          <ActionPanel.Section title="View">
+            <ActionPanel.Submenu title="Sort by" icon={Icon.NumberList}>
+              <Action
+                title="Visit Date"
+                icon={selectedView.order === "visit-date" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Clock}
+                onAction={() => onViewChange({ ...selectedView, order: "visit-date" })}
+              />
+              <Action
+                title="Alphabetically"
+                icon={selectedView.order === "alphabetical" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Lowercase}
+                onAction={() => onViewChange({ ...selectedView, order: "alphabetical" })}
+              />
+            </ActionPanel.Submenu>
+
+            <ActionPanel.Submenu title="Group by" icon={Icon.List}>
+              <Action
+                title="None"
+                icon={selectedView.group === "none" ? { source: Icon.Checkmark, tintColor: Color.Green } : undefined}
+                onAction={() => onViewChange({ ...selectedView, group: "none" })}
+              />
+              <Action
+                title="Language"
+                icon={selectedView.group === "language" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Code}
+                onAction={() => onViewChange({ ...selectedView, group: "language" })}
+              />
+              <Action
+                title="Directory"
+                icon={selectedView.group === "parent" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Folder}
+                onAction={() => onViewChange({ ...selectedView, group: "parent" })}
+              />
+            </ActionPanel.Submenu>
+          </ActionPanel.Section>
 
           <ActionPanel.Section title="Global">
             <Action.Push
