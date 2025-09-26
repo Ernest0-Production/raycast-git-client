@@ -1,10 +1,11 @@
-import { ActionPanel, Action, Icon, List, confirmAlert, Alert, showToast, Toast, LaunchType, Form, useNavigation, Color } from "@raycast/api";
-import { useState } from "react";
+import { ActionPanel, Action, Icon, List, confirmAlert, Alert, showToast, Toast, Form, useNavigation, Color } from "@raycast/api";
+import { useMemo, useState } from "react";
 import { useRepositoriesList } from "./hooks/useRepositoriesList";
 import { RepositoryDirectoryActions } from "./components/actions/RepositoryDirectoryActions";
 import { validateGitRepository } from "./utils/validation";
 import OpenRepository from "./open-repository";
 import { showFailureToast } from "@raycast/utils";
+import { useProjectLanguage } from "./hooks/useProjectLanguage";
 
 export default function ManageRepositories() {
   const { repositories, addToRecent, removeFromRecent, clearRepositoriesList } = useRepositoriesList();
@@ -52,7 +53,6 @@ export default function ManageRepositories() {
     }
   };
 
-
   return (
     <List
       navigationTitle="Recent Git Repositories"
@@ -78,66 +78,103 @@ export default function ManageRepositories() {
         />
       ) : (
         repositories.map((repo) => (
-          <List.Item
+          <RepositoryListItem
             key={repo.id}
-            icon={{ source: `git-project.svg`, tintColor: Color.SecondaryText }}
-            title={repo.name}
-            subtitle={repo.path}
-            keywords={[repo.path]}
-            actions={
-              <ActionPanel>
-                <ActionPanel.Section>
-                  <Action.Push
-                    title="Show Repository"
-                    target={<OpenRepository arguments={{ path: repo.path }} />}
-                    icon={Icon.Book}
-                    onPush={() => addToRecent(repo.path)}
-                  />
-                  <Action.CreateQuicklink
-                    title="Create Quicklink"
-                    quicklink={{
-                      link: `raycast://extensions/ernest0n/git-client/open-repository?arguments=${encodeURIComponent(JSON.stringify({ path: repo.path }))}`,
-                      name: `Show ${repo.name} in Git`,
-                    }}
-                    shortcut={{ modifiers: ["shift", "cmd"], key: "l" }}
-                  />
-                  <Action
-                    title="Remove"
-                    onAction={() => handleRemoveRepository(repo.name, repo.path)}
-                    icon={Icon.Trash}
-                    style={Action.Style.Destructive}
-                    shortcut={{ modifiers: ["ctrl"], key: "x" }}
-                  />
-                </ActionPanel.Section>
-
-                <RepositoryDirectoryActions
-                  repositoryPath={repo.path}
-                  onOpen={() => addToRecent(repo.path)}
-                />
-
-                <ActionPanel.Section title="Global">
-                  <Action.Push
-                    title="Add Repository"
-                    target={<AddRepositoryForm />}
-                    icon={Icon.Plus}
-                    shortcut={{ modifiers: ["cmd"], key: "n" }}
-                  />
-                  {repositories.length > 1 && (
-                    <Action
-                      title="Remove All"
-                      onAction={handleClearRepositories}
-                      icon={Icon.Trash}
-                      style={Action.Style.Destructive}
-                      shortcut={{ modifiers: ["cmd", "ctrl"], key: "x" }}
-                    />
-                  )}
-                </ActionPanel.Section>
-              </ActionPanel>
-            }
+            repo={repo}
+            onOpen={() => addToRecent(repo.path)}
+            onRemove={() => handleRemoveRepository(repo.name, repo.path)}
+            repositoriesCount={repositories.length}
+            onClearAll={handleClearRepositories}
           />
         ))
       )}
     </List>
+  );
+}
+
+function RepositoryListItem({
+  repo,
+  onOpen,
+  onRemove,
+  repositoriesCount,
+  onClearAll,
+}: {
+  repo: { id: string; name: string; path: string };
+  onOpen: () => void;
+  onRemove: () => void;
+  repositoriesCount: number;
+  onClearAll: () => Promise<void> | void;
+}) {
+  const { data: languages, isLoading } = useProjectLanguage(repo.path);
+
+  const accessories = useMemo(() => {
+    if (languages && languages.length > 0) {
+      return languages.map((lang) => ({ tag: { value: lang.name, color: lang.color } }));
+    }
+    if (isLoading) {
+      return [{ icon: { source: Icon.CircleProgress, tintColor: Color.PrimaryText }, tooltip: "Analyzing language..." }];
+    }
+    return undefined;
+  }, [isLoading, languages]);
+
+  return (
+    <List.Item
+      key={repo.id}
+      icon={{ source: `git-project.svg`, tintColor: Color.SecondaryText }}
+      title={repo.name}
+      subtitle={repo.path}
+      keywords={[repo.path]}
+      accessories={accessories}
+      actions={
+        <ActionPanel>
+          <ActionPanel.Section>
+            <Action.Push
+              title="Show Repository"
+              target={<OpenRepository arguments={{ path: repo.path }} />}
+              icon={Icon.Book}
+              onPush={onOpen}
+            />
+            <Action.CreateQuicklink
+              title="Create Quicklink"
+              quicklink={{
+                link: `raycast://extensions/ernest0n/git-client/open-repository?arguments=${encodeURIComponent(
+                  JSON.stringify({ path: repo.path }),
+                )}`,
+                name: `Show ${repo.name} in Git`,
+              }}
+              shortcut={{ modifiers: ["shift", "cmd"], key: "l" }}
+            />
+            <Action
+              title="Remove"
+              onAction={onRemove}
+              icon={Icon.Trash}
+              style={Action.Style.Destructive}
+              shortcut={{ modifiers: ["ctrl"], key: "x" }}
+            />
+          </ActionPanel.Section>
+
+          <RepositoryDirectoryActions repositoryPath={repo.path} onOpen={onOpen} />
+
+          <ActionPanel.Section title="Global">
+            <Action.Push
+              title="Add Repository"
+              target={<AddRepositoryForm />}
+              icon={Icon.Plus}
+              shortcut={{ modifiers: ["cmd"], key: "n" }}
+            />
+            {repositoriesCount > 1 && (
+              <Action
+                title="Remove All"
+                onAction={onClearAll}
+                icon={Icon.Trash}
+                style={Action.Style.Destructive}
+                shortcut={{ modifiers: ["cmd", "ctrl"], key: "x" }}
+              />
+            )}
+          </ActionPanel.Section>
+        </ActionPanel>
+      }
+    />
   );
 }
 

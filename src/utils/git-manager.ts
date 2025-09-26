@@ -82,6 +82,11 @@ export class GitManager {
    */
   private setupGlobalLogging(): void {
     this.git.outputHandler((command, stdout, stderr, args) => {
+      // Skip logging for ls-files command
+      if (args.includes('ls-files')) {
+        return;
+      }
+
       const command_description = `${command} ${args.join(" ")}`;
 
       // Log the full command for debugging
