@@ -5,10 +5,10 @@ import { RepositoryDirectoryActions } from "./components/actions/RepositoryDirec
 import { validateGitRepository } from "./utils/validation";
 import OpenRepository from "./open-repository";
 import { showFailureToast } from "@raycast/utils";
-import { useProjectLanguage } from "./hooks/useProjectLanguage";
+import { Repository } from "./types";
 
 export default function ManageRepositories() {
-  const { repositories, addToRecent, removeFromRecent, clearRepositoriesList } = useRepositoriesList();
+  const { repositories, addRepository, visitRepository, removeRepository, clearRepositoriesList } = useRepositoriesList();
 
   const handleClearRepositories = async () => {
     const confirmed = await confirmAlert({
@@ -44,7 +44,7 @@ export default function ManageRepositories() {
     });
 
     if (confirmed) {
-      await removeFromRecent(repoPath);
+      await removeRepository(repoPath);
       await showToast({
         style: Toast.Style.Success,
         title: "Repository removed",
@@ -62,7 +62,7 @@ export default function ManageRepositories() {
           <ActionPanel.Section title="Add Repository">
             <Action.Push
               title="Add Repository"
-              target={<AddRepositoryForm />}
+              target={<AddRepositoryForm onAddRepository={addRepository} />}
               icon={Icon.Plus}
               shortcut={{ modifiers: ["cmd"], key: "n" }}
             />
@@ -81,8 +81,9 @@ export default function ManageRepositories() {
           <RepositoryListItem
             key={repo.id}
             repo={repo}
-            onOpen={() => addToRecent(repo.path)}
+            onOpen={() => visitRepository(repo.path)}
             onRemove={() => handleRemoveRepository(repo.name, repo.path)}
+            onAddRepository={addRepository}
             repositoriesCount={repositories.length}
             onClearAll={handleClearRepositories}
           />
@@ -96,26 +97,23 @@ function RepositoryListItem({
   repo,
   onOpen,
   onRemove,
+  onAddRepository,
   repositoriesCount,
   onClearAll,
 }: {
-  repo: { id: string; name: string; path: string };
+  repo: Repository;
   onOpen: () => void;
   onRemove: () => void;
+  onAddRepository: (repoPath: string) => void;
   repositoriesCount: number;
   onClearAll: () => Promise<void> | void;
 }) {
-  const { data: languages, isLoading } = useProjectLanguage(repo.path);
-
   const accessories = useMemo(() => {
-    if (languages && languages.length > 0) {
-      return languages.map((lang) => ({ tag: { value: lang.name, color: lang.color } }));
-    }
-    if (isLoading) {
-      return [{ icon: { source: Icon.CircleProgress, tintColor: Color.PrimaryText }, tooltip: "Analyzing language..." }];
+    if (repo.languageStats && repo.languageStats.length > 0) {
+      return repo.languageStats.map((lang) => ({ tag: { value: lang.name, color: lang.color } }));
     }
     return undefined;
-  }, [isLoading, languages]);
+  }, [repo.languageStats]);
 
   return (
     <List.Item
@@ -158,7 +156,7 @@ function RepositoryListItem({
           <ActionPanel.Section title="Global">
             <Action.Push
               title="Add Repository"
-              target={<AddRepositoryForm />}
+              target={<AddRepositoryForm onAddRepository={onAddRepository} />}
               icon={Icon.Plus}
               shortcut={{ modifiers: ["cmd"], key: "n" }}
             />
@@ -178,8 +176,7 @@ function RepositoryListItem({
   );
 }
 
-function AddRepositoryForm() {
-  const { addToRecent } = useRepositoriesList();
+function AddRepositoryForm({ onAddRepository }: { onAddRepository: (repoPath: string) => void }) {
   const { pop } = useNavigation();
   const [repositoryPaths, setRepositoryPaths] = useState<string[]>([]);
 
@@ -205,7 +202,7 @@ function AddRepositoryForm() {
     for (const repoPath of values.repositoryPath) {
       const repoName = repoPath.split("/").pop() || repoPath;
 
-      addToRecent(repoPath);
+      onAddRepository(repoPath);
 
       await showToast({
         style: Toast.Style.Animated,

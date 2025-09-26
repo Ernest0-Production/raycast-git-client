@@ -28,14 +28,14 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
   const { data: gitManager, error: repoError } = useGitRepository(repositoryPath);
 
   // Hook for managing recent repositories
-  const { addToRecent } = useRepositoriesList();
+  const { visitRepository } = useRepositoriesList();
 
   // Add repository to recent cache when successfully opened
   useEffect(() => {
     if (gitManager && repositoryPath) {
-      addToRecent(repositoryPath);
+      visitRepository(repositoryPath);
     }
-  }, [gitManager, repositoryPath, addToRecent]);
+  }, [gitManager, repositoryPath, visitRepository]);
 
   // Validation error state
   if (repoError || !gitManager) {

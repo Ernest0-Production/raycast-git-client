@@ -1,7 +1,8 @@
 import { useCachedState } from "@raycast/utils";
-import { useCallback } from "react";
-import { Repository } from "../types";
+import { useCallback, useEffect } from "react";
+import { LanguageStats, Repository } from "../types";
 import { resolveTildePath } from "../utils/validation";
+import { detectRepositoryLanguages } from "../utils/language-detector";
 
 /**
  * Hook for managing the list of repositories.
@@ -17,23 +18,43 @@ export function useRepositoriesList() {
    * Moves the repository to the top of the list (most recent position).
    * Resolves tilde (~) paths to absolute paths.
    */
-  const addToRecent = useCallback(
-    (path: string) => {
-      // Resolve tilde path
-      const resolvedPath = resolveTildePath(path)
-        // Trim '/' from last component
-        .replace(/\/+$/, "");
-
-      const name = resolvedPath.split("/").pop() || resolvedPath;
-      const id = Buffer.from(resolvedPath).toString("base64");
-      const newRepo: Repository = { id, name, path: resolvedPath };
+  const addRepository = useCallback(
+    async (path: string) => {
+      const resolvedPath = resolveTildePath(path).replace(/\/+$/, "");
+      const stats = await detectRepositoryLanguages(resolvedPath);
 
       setRepositories((currentRepositories) => {
-        // Remove the repository if it already exists in the list
-        const filteredRepos = currentRepositories.filter((repo) => repo.path !== resolvedPath);
+        if (currentRepositories.some((repo) => repo.path === resolvedPath)) return currentRepositories;
 
-        // Add the repository to the beginning of the list (most recent position)
-        return [newRepo, ...filteredRepos];
+        const newRepo: Repository = {
+          id: Buffer.from(resolvedPath).toString("base64"),
+          name: resolvedPath.split("/").pop() || resolvedPath,
+          path: resolvedPath,
+          lastOpenedAt: Date.now(),
+          languageStats: stats
+        };
+
+        return [...currentRepositories, newRepo];
+      });
+    },
+    [setRepositories],
+  );
+
+  const visitRepository = useCallback(
+    async (repositoryPath: string) => {
+      const resolvedPath = resolveTildePath(repositoryPath).replace(/\/+$/, "");
+      const stats = await detectRepositoryLanguages(repositoryPath);
+
+      setRepositories((currentRepositories) => {
+        return currentRepositories.map((repo) => {
+          if (repo.path !== resolvedPath) return repo;
+
+          return {
+            ...repo,
+            lastOpenedAt: Date.now(),
+            languageStats: stats
+          }
+        })
       });
     },
     [setRepositories],
@@ -42,7 +63,7 @@ export function useRepositoriesList() {
   /**
    * Removes a specific repository from the recent list.
    */
-  const removeFromRecent = useCallback(
+  const removeRepository = useCallback(
     (repositoryPath: string) => {
       const resolvedPath = resolveTildePath(repositoryPath).replace(/\/+$/, "");
 
@@ -60,8 +81,9 @@ export function useRepositoriesList() {
 
   return {
     repositories,
-    addToRecent,
-    removeFromRecent,
+    addRepository,
+    visitRepository,
+    removeRepository,
     clearRepositoriesList,
   };
 }

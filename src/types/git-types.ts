@@ -2,6 +2,8 @@
 /**
  * Represents a Git repository with access information.
  */
+import { Color } from "@raycast/api";
+
 export interface Repository {
   /** Unique identifier for the repository. */
   id: string;
@@ -9,6 +11,22 @@ export interface Repository {
   name: string;
   /** The full path to the repository. */
   path: string;
+  /** Unix timestamp (ms) of the last time the repository was opened. */
+  lastOpenedAt: number;
+  /** Cached language detection stats for the repository. */
+  languageStats?: LanguageStats[];
+}
+
+/**
+ * Primary programming language statistics for a repository.
+ */
+export interface LanguageStats {
+  /** Human-friendly language name. */
+  name: string;
+  /** Percentage of tracked files belonging to this language. */
+  percentage: number;
+  /** Optional UI color to display for the language. */
+  color?: Color;
 }
 
 
