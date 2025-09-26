@@ -98,7 +98,7 @@ interface FileListItemProps {
   onRefresh: () => void;
 }
 
-export function FileListItem({
+function FileListItem({
   file,
   commit,
   gitManager,
