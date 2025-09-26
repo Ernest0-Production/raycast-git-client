@@ -252,7 +252,7 @@ function FileListItem({
             {file.status === "staged" && (
               <>
                 <FileUnstageAction file={file} gitManager={gitManager} onRefresh={onRefresh} />
-                <FileOpenAction filePath={file.path} />
+                <FileOpenAction filePath={file.path} shortcut={{ modifiers: ["cmd"], key: "o" }} />
                 <FileOpenWithAction filePath={file.path} shortcut={{ modifiers: ["cmd"], key: "o" }} />
                 <FileQuickLookAction filePath={file.path} />
                 <FileCopyPathAction filePath={file.path} />
@@ -263,7 +263,7 @@ function FileListItem({
             {(file.status === "unstaged" || file.status === "untracked") && (
               <>
                 <FileStageAction file={file} gitManager={gitManager} onRefresh={onRefresh} />
-                <FileOpenAction filePath={file.path} />
+                <FileOpenAction filePath={file.path} shortcut={{ modifiers: ["cmd"], key: "o" }} />
                 <FileOpenWithAction filePath={file.path} shortcut={{ modifiers: ["cmd"], key: "o" }} />
                 <FileQuickLookAction filePath={file.path} />
                 <FileCopyPathAction filePath={file.path} />
@@ -278,7 +278,6 @@ function FileListItem({
               </>
             )}
             <FileHistoryAction filePath={file.path} gitManager={gitManager} onRefresh={onRefresh} />
-            <CreateStashAction gitManager={gitManager} onRefresh={onRefresh} filePath={file.relativePath} />
           </ActionPanel.Section>
 
           <ActionPanel.Section>

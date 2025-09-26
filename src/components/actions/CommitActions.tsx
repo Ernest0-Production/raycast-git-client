@@ -1,8 +1,10 @@
-import { ActionPanel, Action, Icon, confirmAlert, Alert, clearSearchBar } from "@raycast/api";
+import { ActionPanel, Action, Icon, confirmAlert, Alert, clearSearchBar, useNavigation, Clipboard, Form } from "@raycast/api";
 import { GitManager } from "../../utils/git-manager";
 import { Commit } from "../../types";
 import InteractiveRebaseEditorView from "../../commands/views/InteractiveRebaseEditorView";
 import { ResetMode } from "simple-git";
+import { useCachedState } from "@raycast/utils";
+import { existsSync } from "fs";
 
 interface CommitActionProps {
   commit: Commit;
@@ -169,6 +171,73 @@ export function CommitInteractiveRebaseAction({ commit, gitManager, onRefresh }:
       }
       shortcut={{ modifiers: ["cmd"], key: "e" }}
     />
+  );
+}
+
+/**
+ * Action to save a commit as a patch.
+ */
+export function CommitCreatePatchAction({ commit, gitManager }: { commit: Commit, gitManager: GitManager }) {
+  return (
+    <Action.Push
+      title="Save as Patch"
+      icon={`patch.svg`}
+      shortcut={{ modifiers: ["cmd", "shift"], key: "s" }}
+      target={
+        <CreatePatchForm
+          commit={commit}
+          gitManager={gitManager}
+        />}
+    />
+  );
+}
+
+function CreatePatchForm({ gitManager, commit }: { gitManager: GitManager, commit: Commit }) {
+  const { pop } = useNavigation();
+  const [directoryPath, setDirectoryPath] = useCachedState<string[]>(`patches-directory`, []);
+
+  const validateDirectoryPath = (directoryPath: string[]) => {
+    if (directoryPath.length === 0) {
+      return "Required";
+    }
+
+    if (!existsSync(directoryPath[0])) {
+      return "Not exists";
+    }
+
+    return undefined;
+  };
+
+  const handleSubmit = async (values: { directoryPath: string[] }) => {
+    try {
+      const patchPath = await gitManager.createPatchFromCommit(commit.hash, values.directoryPath[0]);
+      await Clipboard.copy(patchPath);
+      pop();
+    } catch (error) {
+      // Git error is already shown by GitManager
+    }
+  };
+
+  return (
+    <Form
+      navigationTitle="Create Patch"
+      actions={
+        <ActionPanel>
+          <Action.SubmitForm title="Create Patch" onSubmit={handleSubmit} />
+        </ActionPanel>
+      }
+    >
+      <Form.FilePicker
+        id="directoryPath"
+        title="Output Directory"
+        value={directoryPath}
+        error={validateDirectoryPath(directoryPath)}
+        onChange={setDirectoryPath}
+        allowMultipleSelection={false}
+        canChooseDirectories
+        canChooseFiles={false}
+      />
+    </Form>
   );
 }
 

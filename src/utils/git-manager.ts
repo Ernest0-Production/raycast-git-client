@@ -1015,18 +1015,6 @@ __REBASE_TODO__
   }
 
   /**
-   * Creates a stash for a specific file with an optional message.
-   */
-  async stashFile(filePath: string, message?: string): Promise<void> {
-    const args = ["push"];
-    if (message) {
-      args.push("-m", message);
-    }
-    args.push("--", filePath);
-    await this.git.stash(args);
-  }
-
-  /**
    * Applies a stash by index.
    */
   async applyStash(index = 0): Promise<void> {
@@ -1394,6 +1382,24 @@ __REBASE_TODO__
     }
   }
 
+  /**
+   * Creates a patch file for a specific commit.
+   * Returns the absolute path to the created patch file.
+   */
+  async createPatchFromCommit(commitHash: string, outputDirectoryPath: string): Promise<string> {
+    // Generate a patch using format-patch which properly includes commit metadata and binary files
+    const shortHash = commitHash.substring(0, 8);
+    const fileName = `${this.repoName}_commit_${shortHash}.patch`;
+    const targetPath = join(outputDirectoryPath, fileName);
+
+    // Use format-patch with -1 to create patch for a single commit
+    // --binary ensures binary files are included
+    // --stdout redirects output to be captured instead of written to file
+    const patchContent = await this.git.raw(["format-patch", "-1", commitHash, "--binary", "--stdout"]);
+
+    await fs.writeFile(targetPath, patchContent, { encoding: "utf-8" });
+    return targetPath;
+  }
   /**
    * Applies a patch file to the repository.
    * @param patchFilePath - Absolute path to the patch file

@@ -11,6 +11,7 @@ import {
   CommitCopyAuthorEmailAction,
   CommitCopyMessageAction,
   CommitInteractiveRebaseAction,
+  CommitCreatePatchAction,
 } from "../../components/actions/CommitActions";
 import { TagCreateAction, TagRemoveAction, TagCopyNameAction } from "../../components/actions/TagActions";
 import { BranchCopyNameAction, BranchPushAction, FetchAction, PullAction } from "../../components/actions/BranchActions";
@@ -477,6 +478,7 @@ function CommitListItem({
             <CommitRevertAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
             <CommitResetAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
             <CommitInteractiveRebaseAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
+            <CommitCreatePatchAction commit={commit} gitManager={gitManager} />
             {commitUrls.map((urlInfo: { title: string; url: string }, index: number) => (
               <Action.OpenInBrowser
                 key={`${urlInfo.url}-${index}`}

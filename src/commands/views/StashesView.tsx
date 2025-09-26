@@ -33,10 +33,7 @@ export function StashesView({
       searchBarAccessory={viewDropdown}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title="Stash Management">
-            <Action title="Refresh Stash" onAction={revalidate} icon={Icon.ArrowClockwise} />
-            <CreateStashAction gitManager={gitManager} onRefresh={revalidate} />
-          </ActionPanel.Section>
+          <Action title="Refresh Stash" onAction={revalidate} icon={Icon.ArrowClockwise} />
 
           {navigationActions}
         </ActionPanel>

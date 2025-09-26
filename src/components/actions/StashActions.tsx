@@ -87,59 +87,32 @@ export function StashDropAction({ stash, index, gitManager, onRefresh }: StashAc
 interface CreateStashActionProps {
   gitManager: GitManager;
   onRefresh: () => void;
-  filePath?: string;
 }
 
-export function CreateStashAction({ gitManager, onRefresh, filePath }: CreateStashActionProps) {
-  const actionTitle = filePath ? "Stash File" : "Stash All Changes";
-
+export function CreateStashAction({ gitManager, onRefresh }: CreateStashActionProps) {
   return (
     <Action.Push
-      title={actionTitle}
+      title={"Stash Changes"}
       icon={Icon.Bookmark}
-      target={<CreateStashForm gitManager={gitManager} onRefresh={onRefresh} filePath={filePath} />}
-      shortcut={filePath ? {
-        modifiers: ["cmd"], key: "s"
-      } : {
-        modifiers: ["cmd", "shift"], key: "s"
-      }}
+      target={<CreateStashForm gitManager={gitManager} onRefresh={onRefresh} />}
+      shortcut={{ modifiers: ["cmd"], key: "s" }}
     />
   );
 }
 
 function CreateStashForm({
   gitManager,
-  onRefresh,
-  filePath,
+  onRefresh
 }: {
   gitManager: GitManager;
   onRefresh: () => void;
-  filePath?: string;
 }) {
   const [message, setMessage] = useState("");
   const { pop } = useNavigation();
 
   const handleSubmit = async (values: { message: string }) => {
     try {
-      const trimmedMessage = values.message?.trim();
-
-      if (filePath) {
-        // Stash specific file
-        if (trimmedMessage) {
-          await gitManager.stashFile(filePath, trimmedMessage);
-        } else {
-          const defaultMessage = `Stash changes for ${filePath}`;
-          await gitManager.stashFile(filePath, defaultMessage);
-        }
-      } else {
-        // Stash all changes
-        if (trimmedMessage) {
-          await gitManager.stash(trimmedMessage);
-        } else {
-          await gitManager.stash();
-        }
-      }
-
+      await gitManager.stash(values.message);
       onRefresh();
       pop();
     } catch (error) {
@@ -147,27 +120,25 @@ function CreateStashForm({
     }
   };
 
-  const formTitle = filePath ? "Stash File" : "Stash Changes";
-  const placeholder = "Describe the changes being stashed";
 
   return (
     <Form
-      navigationTitle={formTitle}
+      navigationTitle={"Stash Changes"}
       actions={
         <ActionPanel>
-          <Action.SubmitForm title={formTitle} onSubmit={handleSubmit} />
+          <Action.SubmitForm title={"Stash Changes"} onSubmit={handleSubmit} />
         </ActionPanel>
       }
     >
       <Form.TextField
         id="message"
         title="Stash Message"
-        placeholder={placeholder}
+        placeholder="Describe the changes being stashed"
         info="Optional"
+        error={message.trim().length === 0 ? "Required" : undefined}
         value={message}
         onChange={setMessage}
       />
-      {filePath && <Form.Description text={`This will stash changes for: ${filePath}`} />}
     </Form>
   );
 }

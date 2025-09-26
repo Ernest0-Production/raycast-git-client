@@ -471,7 +471,7 @@ export function CreatePatchAction({ gitManager }: { gitManager: GitManager }) {
     <ActionPanel.Submenu
       title="Save as Patch"
       icon={`patch.svg`}
-      shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
+      shortcut={{ modifiers: ["cmd", "shift"], key: "s" }}
     >
       <Action.Push
         title="All Changes"
@@ -507,7 +507,7 @@ function CreatePatchForm({ scope, gitManager }: { scope: PatchScope, gitManager:
 
   const handleSubmit = async (values: { directoryPath: string[] }) => {
     try {
-      const patchPath = await gitManager.createPatch(directoryPath[0], scope);
+      const patchPath = await gitManager.createPatch(values.directoryPath[0], scope);
       await Clipboard.copy(patchPath);
       pop();
     } catch (error) {
