@@ -179,6 +179,13 @@ function FileListItem({
               gitManager={gitManager}
               onRefresh={onRefresh}
             />
+            <FileRestoreAction
+              filePath={absolutePath}
+              before={true}
+              commit={commit.hash}
+              gitManager={gitManager}
+              onRefresh={onRefresh}
+            />
           </ActionPanel.Section>
           {navigationActions}
         </ActionPanel>

@@ -195,6 +195,13 @@ function CommitListItem({
                             gitManager={gitManager}
                             onRefresh={onRefresh}
                         />
+                        <FileRestoreAction
+                            filePath={absolutePath}
+                            before={true}
+                            commit={commit.hash}
+                            gitManager={gitManager}
+                            onRefresh={onRefresh}
+                        />
                     </ActionPanel.Section>
 
                     <ActionPanel.Section title="Commit">

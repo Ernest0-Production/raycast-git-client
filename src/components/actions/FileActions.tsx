@@ -316,10 +316,10 @@ export function FileConflictAbortAction({
   }
 }
 
-export function FileRestoreAction({ filePath, commit, gitManager, onRefresh }: { filePath: string, commit: string, gitManager: GitManager, onRefresh: () => void }) {
+export function FileRestoreAction({ filePath, before = false, commit, gitManager, onRefresh }: { filePath: string, before?: boolean, commit: string, gitManager: GitManager, onRefresh: () => void }) {
   const handleRestore = async () => {
     const confirmed = await confirmAlert({
-      title: "Restore File to This Commit",
+      title: before ? "Restore File to Before Commit" : "Restore File to This Commit",
       message: `Are you sure you want to restore '${filePath.split("/").pop()}' to commit ${commit}? This will modify the working tree`,
       primaryAction: {
         title: "Restore",
@@ -329,7 +329,7 @@ export function FileRestoreAction({ filePath, commit, gitManager, onRefresh }: {
 
     if (!confirmed) return;
     try {
-      await gitManager.restoreFileToCommit(filePath, commit);
+      await gitManager.restoreFileToCommit(filePath, before ? `${commit}^` : commit);
       onRefresh();
     } catch (error) {
       // Error toast is shown by GitManager
@@ -338,7 +338,7 @@ export function FileRestoreAction({ filePath, commit, gitManager, onRefresh }: {
 
   return (
     <Action
-      title="Restore File to This Commit"
+      title={before ? "Restore File to Before Commit" : "Restore File to This Commit"}
       icon={Icon.RotateClockwise}
       style={Action.Style.Destructive}
       onAction={handleRestore}
