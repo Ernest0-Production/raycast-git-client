@@ -186,6 +186,39 @@ export interface Remote {
 }
 
 /**
+ * Known Git hosting providers.
+ */
+export type RemoteProvider =
+  | "github"
+  | "gitlab"
+  | "bitbucket"
+  | "azure-devops"
+  | "gitea"
+  | undefined;
+
+/**
+ * Connection protocol type for a remote URL.
+ */
+export type RemoteProtocol = "ssh" | "http";
+
+/**
+ * Detailed metadata for a Git remote.
+ */
+export interface RemoteMetadata {
+  /** The remote name (e.g., origin). */
+  name: string;
+  /** Fetch and push URLs for the remote if present. */
+  urls: {
+    fetch?: string;
+    push?: string;
+  };
+  /** Connection protocol detected from URL (ssh or http). */
+  type: RemoteProtocol;
+  /** Detected hosting provider or undefined if unknown. */
+  provider: RemoteProvider;
+}
+
+/**
  * Represents a Git tag.
  */
 export interface Tag {
