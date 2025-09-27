@@ -277,15 +277,15 @@ function CommitNavigationActions({ onMoveToCommit }: { onMoveToCommit: (directio
   return (
     <ActionPanel.Section title="History">
       <Action
-        title="Move to Child Commit"
-        icon={Icon.ChevronUp}
-        onAction={() => onMoveToCommit("child")}
-        shortcut={{ modifiers: ["cmd"], key: "[" }}
-      />
-      <Action
         title="Move to Parent Commit"
         icon={Icon.ChevronDown}
         onAction={() => onMoveToCommit("parent")}
+        shortcut={{ modifiers: ["cmd"], key: "[" }}
+      />
+      <Action
+        title="Move to Child Commit"
+        icon={Icon.ChevronUp}
+        onAction={() => onMoveToCommit("child")}
         shortcut={{ modifiers: ["cmd"], key: "]" }}
       />
     </ActionPanel.Section>

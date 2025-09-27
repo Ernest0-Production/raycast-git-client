@@ -589,6 +589,7 @@ export class GitManager {
       `--max-count=${commitsPerPage}`,
       `--skip=${page * commitsPerPage}`,
       "--name-status",
+      "--first-parent",
       ...(branch ? [branch] : ["--all"]),
       '--decorate=full',
     ]);
