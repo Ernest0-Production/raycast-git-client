@@ -201,7 +201,7 @@ function RepositoryListItem({
             </ActionPanel.Submenu>
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="Global">
+          <ActionPanel.Section title="List">
             <Action.Push
               title="Add Repository"
               target={<AddRepositoryForm onAddRepository={onAddRepository} />}
