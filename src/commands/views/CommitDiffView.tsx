@@ -1,7 +1,7 @@
-import { ActionPanel, Action, List, Icon, Color } from "@raycast/api";
+import { ActionPanel, Action, List, Icon, Color, showToast, Toast } from "@raycast/api";
 import { useGitDiff } from "../../hooks/useGitDiff";
 import { GitManager } from "../../utils/git-manager";
-import { Commit, CommitFileChange } from "../../types";
+import { Commit, CommitFileChange, ListPagination } from "../../types";
 import {
   FileOpenAction,
   FileOpenWithAction,
@@ -17,20 +17,95 @@ import { existsSync } from "fs";
 import { join } from "path";
 
 interface CommitDiffViewProps {
-  commit: Commit;
+  index: number;
   gitManager: GitManager;
   navigationActions: React.ReactNode;
   onRefresh: () => void;
+  commits: Commit[];
+  pagination?: ListPagination;
+  onMoveToCommit: (commitHash: string) => void;
 }
 
-export function CommitDiffView({ commit, gitManager, navigationActions, onRefresh }: CommitDiffViewProps) {
+export function CommitDiffView({ index, gitManager, navigationActions, onRefresh, commits, onMoveToCommit, pagination }: CommitDiffViewProps) {
+  const [currentIndex, setCurrentIndex] = useState(index);
   const [isShowingDetail, setIsShowingDetail] = useState(false);
+
+  const switchToCommit = async (direction: ("parent" | "child")) => {
+    let nextIndex = currentIndex;
+    switch (direction) {
+      case "parent":
+        nextIndex = currentIndex + 1;
+        break;
+      case "child":
+        nextIndex = currentIndex - 1;
+        break;
+    }
+
+    if (nextIndex < 0) {
+      showToast({
+        style: Toast.Style.Failure,
+        title: "No more commits",
+        message: "This is the last commit in the repository.",
+      });
+      return;
+    }
+
+    if (nextIndex >= commits.length) {
+      pagination?.onLoadMore()
+
+      if (!pagination?.hasMore) {
+        showToast({
+          style: Toast.Style.Failure,
+          title: "No more commits",
+          message: "This is the last commit in the repository.",
+        });
+        return;
+      }
+
+      switchToCommit(direction);
+      return;
+    }
+
+    setCurrentIndex(nextIndex);
+    onMoveToCommit(commits[nextIndex].hash);
+  };
+
+  return (
+    <SpecificCommitDiffView
+      commit={commits[currentIndex]}
+      gitManager={gitManager}
+      navigationActions={navigationActions}
+      onRefresh={onRefresh}
+      onMoveToCommit={switchToCommit}
+      isShowingDetail={isShowingDetail}
+      setIsShowingDetail={setIsShowingDetail}
+    />
+  );
+}
+
+function SpecificCommitDiffView({
+  commit,
+  gitManager,
+  navigationActions,
+  onRefresh,
+  onMoveToCommit,
+  isShowingDetail,
+  setIsShowingDetail,
+}: {
+  commit: Commit,
+  gitManager: GitManager,
+  navigationActions: React.ReactNode,
+  onRefresh: () => void,
+  onMoveToCommit: (direction: ("parent" | "child")) => void
+  isShowingDetail: boolean,
+  setIsShowingDetail: (isShowingDetail: boolean) => void
+}) {
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
   const { data: statsMap, isLoading } = usePromise(
     async (repoPath, commitHash) => {
       return await gitManager.getCommitFileStats(commitHash);
     },
-    [gitManager.repoPath, commit.hash],
+    [gitManager.repoPath, commit.hash]
   );
 
   const toggleDetail = () => {
@@ -53,7 +128,7 @@ export function CommitDiffView({ commit, gitManager, navigationActions, onRefres
             onAction={toggleDetail}
             shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
           />
-
+          <CommitNavigationActions onMoveToCommit={onMoveToCommit} />
           {navigationActions}
         </ActionPanel>
       }
@@ -78,6 +153,7 @@ export function CommitDiffView({ commit, gitManager, navigationActions, onRefres
               selectedFilePath={selectedFilePath}
               statsMap={statsMap}
               onRefresh={onRefresh}
+              onMoveToCommit={onMoveToCommit}
             />
           ))}
         </List.Section>
@@ -90,24 +166,26 @@ interface FileListItemProps {
   file: CommitFileChange;
   commit: Commit;
   gitManager: GitManager;
-  navigationActions: React.ReactNode;
   isShowingDetail: boolean;
   onToggleDetail: () => void;
   selectedFilePath: string | null;
   statsMap: Record<string, { insertions: number; deletions: number }> | undefined;
   onRefresh: () => void;
+  onMoveToCommit: (direction: ("parent" | "child")) => void;
+  navigationActions: React.ReactNode;
 }
 
 function FileListItem({
   file,
   commit,
   gitManager,
-  navigationActions,
   isShowingDetail,
   onToggleDetail,
   selectedFilePath,
   statsMap,
   onRefresh,
+  onMoveToCommit,
+  navigationActions,
 }: FileListItemProps) {
   // Create a unique identifier for each file item
   const fileId = `${file.path}-${commit.hash}`;
@@ -187,9 +265,29 @@ function FileListItem({
               onRefresh={onRefresh}
             />
           </ActionPanel.Section>
+          <CommitNavigationActions onMoveToCommit={onMoveToCommit} />
           {navigationActions}
         </ActionPanel>
       }
     />
+  );
+}
+
+function CommitNavigationActions({ onMoveToCommit }: { onMoveToCommit: (direction: ("parent" | "child")) => void }) {
+  return (
+    <ActionPanel.Section title="History">
+      <Action
+        title="Move to Child Commit"
+        icon={Icon.ChevronUp}
+        onAction={() => onMoveToCommit("child")}
+        shortcut={{ modifiers: ["cmd"], key: "[" }}
+      />
+      <Action
+        title="Move to Parent Commit"
+        icon={Icon.ChevronDown}
+        onAction={() => onMoveToCommit("parent")}
+        shortcut={{ modifiers: ["cmd"], key: "]" }}
+      />
+    </ActionPanel.Section>
   );
 }

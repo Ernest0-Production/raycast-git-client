@@ -1,4 +1,4 @@
-import { ActionPanel, List, Icon, Action, Color } from "@raycast/api";
+import { ActionPanel, List, Icon, Action, Color, useNavigation } from "@raycast/api";
 import { getFavicon, useCachedState } from "@raycast/utils";
 import {
   CommitCheckoutAction,
@@ -28,15 +28,9 @@ import {
   replaceUrlPatternsWithLinks,
 } from "../../hooks/useUrlTracker";
 import "../../utils/date-utils";
-import { Commit, UrlTrackerConfig, BranchesState, Branch, DetachedHead, GitView } from "../../types";
+import { Commit, UrlTrackerConfig, BranchesState, Branch, DetachedHead, GitView, ListPagination } from "../../types";
 import { useMemo, useState } from "react";
 import { CommitMessageForm } from "./CommitMessageView";
-
-type ListPagination = {
-  pageSize: number;
-  hasMore: boolean;
-  onLoadMore: () => void;
-};
 
 interface CommitsViewProps {
   gitManager: GitManager;
@@ -109,6 +103,7 @@ export function CommitsView({
       pagination={pagination}
       navigationTitle="Repository Commits"
       searchBarPlaceholder="Search commits by message, sha, author, tags, files..."
+      selectedItemId={selectedCommitId || undefined}
       onSelectionChange={(id) => setSelectedCommitId(id)}
       isShowingDetail={isShowingDetail}
       searchBarAccessory={viewDropdown}
@@ -206,6 +201,11 @@ export function CommitsView({
               branchFilter={branchFilter}
               updateSelectedBranch={setBranchFilter}
               branchesState={branchesState}
+              onMoveToCommit={(commitHash) => {
+                setSelectedCommitId(commitHash);
+              }}
+              commits={commits}
+              pagination={pagination}
             />
           ))}
         </List.Section>
@@ -231,6 +231,9 @@ interface CommitListItemProps {
   branchFilter: string;
   updateSelectedBranch: (branchName: string) => void;
   branchesState?: BranchesState;
+  onMoveToCommit: (commitHash: string) => void;
+  commits: Commit[];
+  pagination?: ListPagination;
 }
 
 function CommitListItem({
@@ -250,6 +253,9 @@ function CommitListItem({
   branchFilter,
   updateSelectedBranch,
   branchesState,
+  onMoveToCommit,
+  commits,
+  pagination,
 }: CommitListItemProps) {
   const icon = useMemo(() => {
     if (selectedBranch && 'type' in selectedBranch && selectedBranch.ahead) {
@@ -469,10 +475,13 @@ function CommitListItem({
               icon={Icon.Document}
               target={
                 <CommitDiffView
-                  commit={commit}
+                  index={index}
+                  commits={commits}
                   gitManager={gitManager}
                   navigationActions={navigationActions}
                   onRefresh={onRefresh}
+                  pagination={pagination}
+                  onMoveToCommit={onMoveToCommit}
                 />
               }
             />

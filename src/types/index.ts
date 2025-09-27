@@ -38,3 +38,9 @@ export interface UrlTrackerConfig {
   /** URL template where @key will be replaced with the regex match. */
   urlPlaceholder: string;
 }
+
+export type ListPagination = {
+  pageSize: number;
+  hasMore: boolean;
+  onLoadMore: () => void;
+};

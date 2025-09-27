@@ -550,34 +550,30 @@ export class GitManager {
    * Gets the last commit from the repository.
    */
   async getLastCommit(): Promise<Commit | null> {
-    try {
-      const log = await this.git.log(["--max-count=1", "--name-status", "--decorate=full"]);
+    const log = await this.git.log(["--max-count=1", "--name-status", "--decorate=full"]);
 
-      if (!log.latest) {
-        return null;
-      }
-
-      const commit = log.latest;
-      const changedFiles = this.parseCommitChangedFiles(commit.diff!);
-      const parsedRefs = this.parseCommitRefs(commit.refs);
-
-      return {
-        hash: commit.hash,
-        shortHash: commit.hash.substring(0, 7),
-        message: commit.message,
-        body: commit.body,
-        author: commit.author_name,
-        authorEmail: commit.author_email,
-        date: new Date(commit.date),
-        localBranches: parsedRefs.localBranches,
-        remoteBranches: parsedRefs.remoteBranches,
-        tags: parsedRefs.tags,
-        currentBranchName: parsedRefs.currentBranchName,
-        changedFiles,
-      };
-    } catch (error) {
+    if (!log.latest) {
       return null;
     }
+
+    const commit = log.latest;
+    const changedFiles = this.parseCommitChangedFiles(commit.diff!);
+    const parsedRefs = this.parseCommitRefs(commit.refs);
+
+    return {
+      hash: commit.hash,
+      shortHash: commit.hash.substring(0, 7),
+      message: commit.message,
+      body: commit.body,
+      author: commit.author_name,
+      authorEmail: commit.author_email,
+      date: new Date(commit.date),
+      localBranches: parsedRefs.localBranches,
+      remoteBranches: parsedRefs.remoteBranches,
+      tags: parsedRefs.tags,
+      currentBranchName: parsedRefs.currentBranchName,
+      changedFiles,
+    };
   }
 
   /**
