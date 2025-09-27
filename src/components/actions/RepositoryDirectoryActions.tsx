@@ -64,7 +64,7 @@ export function RepositoryDirectoryActions({ repositoryPath, onOpen }: Repositor
         >
           {applications?.map((app: Application) => (
             <Action
-              key={app.bundleId || app.path}
+              key={app.path}
               title={app.name}
               icon={{ fileIcon: app.path }}
               onAction={() => handleOpenWith(app)}
@@ -103,7 +103,7 @@ export function RepositoryDirectoryActions({ repositoryPath, onOpen }: Repositor
         >
           {applications?.map((app: Application) => (
             <Action
-              key={app.bundleId || app.path}
+              key={app.path}
               title={app.name}
               icon={{ fileIcon: app.path }}
               onAction={() => handleChangeDefault(app)}

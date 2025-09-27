@@ -104,7 +104,7 @@ export function CommitsView({
       navigationTitle="Repository Commits"
       searchBarPlaceholder="Search commits by message, sha, author, tags, files..."
       selectedItemId={selectedCommitId || undefined}
-      onSelectionChange={(id) => setSelectedCommitId(id)}
+      onSelectionChange={setSelectedCommitId}
       isShowingDetail={isShowingDetail}
       searchBarAccessory={viewDropdown}
       actions={
@@ -201,9 +201,7 @@ export function CommitsView({
               branchFilter={branchFilter}
               updateSelectedBranch={setBranchFilter}
               branchesState={branchesState}
-              onMoveToCommit={(commitHash) => {
-                setSelectedCommitId(commitHash);
-              }}
+              onMoveToCommit={setSelectedCommitId}
               commits={commits}
               pagination={pagination}
             />

@@ -36,18 +36,10 @@
   ],
   "preferences": [
     {
-      "name": "defaultEditor",
-      "required": true,
-      "type": "appPicker",
-      "title": "Default Editor",
-      "default": "com.apple.finder",
-      "description": "The default editor to open files with (e.g. 'Visual Studio Code')"
-    },
-    {
       "name": "defaultTerminal",
       "required": true,
       "type": "appPicker",
-      "title": "Default Terminal",
+      "title": "Default Terminal\n(shift + ⌘ + T)",
       "default": "com.apple.Terminal",
       "description": "The default terminal app to open repository directory in (e.g. 'Terminal', 'Warp')"
     },
@@ -55,7 +47,8 @@
       "name": "externalGitClient",
       "required": true,
       "type": "appPicker",
-      "title": "External Git Client",
+      "title": "External Git Client\n(shift + ⌘ + G)",
+      "default": "com.apple.Terminal",
       "description": "The external git client to use for git commands (e.g. 'GitKraken')"
     },
     {
@@ -89,7 +82,7 @@
       "required": false,
       "type": "textfield",
       "title": "Max Branches to Load",
-      "default": "20",
+      "default": "80",
       "description": "Maximum number of branches to load in local and remote branches sections"
     },
     {

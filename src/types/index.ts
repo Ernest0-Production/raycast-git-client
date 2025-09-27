@@ -9,8 +9,6 @@ export type GitView = "branches" | "status" | "commits" | "files" | "stashes";
  * User preferences for the Git Client extension.
  */
 export interface Preferences {
-  /** Default editor for opening files. */
-  defaultEditor: Application;
   /** Default terminal for opening repository directory. */
   defaultTerminal: Application;
   /** External git client for git commands. */

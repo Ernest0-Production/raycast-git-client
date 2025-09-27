@@ -37,7 +37,7 @@ export default function FileHistoryView({ gitManager, filePath, onRefresh }: Fil
             isLoading={isLoading}
             navigationTitle={`File History`}
             searchBarPlaceholder="Search commits by message, sha, author..."
-            onSelectionChange={(id) => setSelectedCommitId(id)}
+            onSelectionChange={setSelectedCommitId}
             isShowingDetail={isShowingDetail}
             actions={
                 <ActionPanel>
