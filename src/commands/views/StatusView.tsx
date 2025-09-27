@@ -107,17 +107,12 @@ export function StatusView({
           )}
 
           <ActionPanel.Section>
-            <FileRefreshStatusAction onRefresh={revalidateStatus} />
-            <Action
-              title={isShowingDetail ? "Hide Diff" : "Show Diff"}
-              icon={Icon.CodeBlock}
-              onAction={toggleDetail}
-              shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
-            />
+            <ToggleDetailAction isShowingDetail={isShowingDetail} onToggleDetail={toggleDetail} />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Workspace">
             <ApplyPatchAction gitManager={gitManager} onRefresh={revalidateStatus} />
+            <FileRefreshStatusAction onRefresh={revalidateStatus} />
           </ActionPanel.Section>
 
           {status && (
@@ -252,6 +247,7 @@ function FileListItem({
             {file.status === "staged" && (
               <>
                 <FileUnstageAction file={file} gitManager={gitManager} onRefresh={onRefresh} />
+                <ToggleDetailAction isShowingDetail={isShowingDetail} onToggleDetail={onToggleDetail} />
                 <FileOpenAction filePath={file.path} />
                 <FileOpenWithAction filePath={file.path} />
                 <FileQuickLookAction filePath={file.path} />
@@ -263,6 +259,7 @@ function FileListItem({
             {(file.status === "unstaged" || file.status === "untracked") && (
               <>
                 <FileStageAction file={file} gitManager={gitManager} onRefresh={onRefresh} />
+                <ToggleDetailAction isShowingDetail={isShowingDetail} onToggleDetail={onToggleDetail} />
                 <FileOpenAction filePath={file.path} />
                 <FileOpenWithAction filePath={file.path} />
                 <FileQuickLookAction filePath={file.path} />
@@ -278,16 +275,6 @@ function FileListItem({
               </>
             )}
             <FileHistoryAction filePath={file.path} gitManager={gitManager} onRefresh={onRefresh} />
-          </ActionPanel.Section>
-
-          <ActionPanel.Section>
-            <FileRefreshStatusAction onRefresh={onRefresh} />
-            <Action
-              title={isShowingDetail ? "Hide Changes" : "Show Changes"}
-              icon={Icon.AppWindowSidebarLeft}
-              onAction={onToggleDetail}
-              shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
-            />
           </ActionPanel.Section>
 
           <ActionPanel.Section>
@@ -310,11 +297,23 @@ function FileListItem({
             <CreateStashAction gitManager={gitManager} onRefresh={onRefresh} />
             <CreatePatchAction gitManager={gitManager} />
             <ApplyPatchAction gitManager={gitManager} onRefresh={onRefresh} />
+            <FileRefreshStatusAction onRefresh={onRefresh} />
           </ActionPanel.Section>
 
           {navigationActions}
         </ActionPanel>
       }
+    />
+  );
+}
+
+function ToggleDetailAction({ isShowingDetail, onToggleDetail }: { isShowingDetail: boolean, onToggleDetail: () => void }) {
+  return (
+    <Action
+      title={isShowingDetail ? "Hide Changes" : "Show Changes"}
+      icon={Icon.AppWindowSidebarLeft}
+      onAction={onToggleDetail}
+      shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
     />
   );
 }
