@@ -83,9 +83,14 @@ export function useRepositoriesView(repositories: Repository[]) {
             .map(([groupTitle, repos]) => ({ groupTitle, repositories: repos }));
     }, [repositories, currentView]);
 
+    const lastVisitedRepository = useMemo(() => {
+        return repositories.sort((a, b) => b.lastOpenedAt - a.lastOpenedAt)[0];
+    }, [repositories]);
+
     return {
         currentView,
         setCurrentView,
         displayedRepositories,
+        lastVisitedRepository,
     };
 }

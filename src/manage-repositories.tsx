@@ -1,5 +1,5 @@
 import { ActionPanel, Action, Icon, List, confirmAlert, Alert, showToast, Toast, Form, useNavigation, Color } from "@raycast/api";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRepositoriesList } from "./hooks/useRepositoriesList";
 import { RepositoryDirectoryActions } from "./components/actions/RepositoryDirectoryActions";
 import { validateGitRepository } from "./utils/validation";
@@ -10,7 +10,8 @@ import { RepositoriesView, useRepositoriesView } from "./hooks/useRepositoriesVi
 
 export default function ManageRepositories() {
   const { repositories, addRepository, visitRepository, removeRepository, clearRepositoriesList } = useRepositoriesList();
-  const { currentView, setCurrentView, displayedRepositories } = useRepositoriesView(repositories);
+  const { currentView, setCurrentView, displayedRepositories, lastVisitedRepository } = useRepositoriesView(repositories);
+  const [selectedRepositoryItem, setSelectedRepositoryItem] = useState<string | undefined>(undefined);
 
   const handleClearRepositories = async () => {
     const confirmed = await confirmAlert({
@@ -55,20 +56,37 @@ export default function ManageRepositories() {
     }
   };
 
+  const repositoryItemId = (repoId: string, groupTitle?: string) => {
+    let groupTitleToUse = groupTitle;
+
+    if (!groupTitle) {
+      const group = displayedRepositories.find((group) => group.repositories.some((repo) => repo.id === repoId));
+      groupTitleToUse = group?.groupTitle;
+    }
+
+    return `${groupTitleToUse}-${repoId}`;
+  };
+
   return (
     <List
-      navigationTitle="Recent Git Repositories"
       searchBarPlaceholder="Search by name, path"
+      selectedItemId={selectedRepositoryItem}
+      onSelectionChange={(id) => {
+        if (!selectedRepositoryItem && id) {
+          console.log("initial auto select");
+          setSelectedRepositoryItem(repositoryItemId(lastVisitedRepository.id));
+        } else {
+          setSelectedRepositoryItem(id || undefined);
+        }
+      }}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title="Add Repository">
-            <Action.Push
-              title="Add Repository"
-              target={<AddRepositoryForm onAddRepository={addRepository} />}
-              icon={Icon.Plus}
-              shortcut={{ modifiers: ["cmd"], key: "n" }}
-            />
-          </ActionPanel.Section>
+          <Action.Push
+            title="Add Repository"
+            target={<AddRepositoryForm onAddRepository={addRepository} />}
+            icon={Icon.Plus}
+            shortcut={{ modifiers: ["cmd"], key: "n" }}
+          />
         </ActionPanel>
       }
     >
@@ -83,7 +101,8 @@ export default function ManageRepositories() {
           <List.Section key={group.groupTitle} title={group.groupTitle}>
             {group.repositories.map((repo) => (
               <RepositoryListItem
-                key={`${repo.id}-${group.groupTitle}`}
+                key={repositoryItemId(repo.id, group.groupTitle)}
+                id={repositoryItemId(repo.id, group.groupTitle)}
                 repo={repo}
                 onOpen={() => visitRepository(repo.path)}
                 onRemove={() => handleRemoveRepository(repo.name, repo.path)}
@@ -102,6 +121,7 @@ export default function ManageRepositories() {
 }
 
 function RepositoryListItem({
+  id,
   repo,
   onOpen,
   onRemove,
@@ -111,6 +131,7 @@ function RepositoryListItem({
   selectedView,
   onViewChange,
 }: {
+  id: string;
   repo: Repository;
   onOpen: () => void;
   onRemove: () => void;
@@ -129,6 +150,7 @@ function RepositoryListItem({
 
   return (
     <List.Item
+      id={id}
       key={repo.id}
       icon={{ source: `git-project.svg`, tintColor: Color.SecondaryText }}
       title={repo.name}
