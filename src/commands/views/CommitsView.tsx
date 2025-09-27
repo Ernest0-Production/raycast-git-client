@@ -14,7 +14,7 @@ import {
   CommitCreatePatchAction,
 } from "../../components/actions/CommitActions";
 import { TagCreateAction, TagRemoveAction, TagCopyNameAction } from "../../components/actions/TagActions";
-import { BranchCopyNameAction, BranchPushAction, FetchAction, PullAction } from "../../components/actions/BranchActions";
+import { BranchCopyNameAction, BranchPushAction, BranchPushForceAction, FetchAction, PullAction } from "../../components/actions/BranchActions";
 import { CommitDiffView } from "./CommitDiffView";
 import { ConfigureUrlTrackerForm } from "../../components/shared/ConfigureUrlTrackerForm";
 import {
@@ -123,7 +123,10 @@ export function CommitsView({
             />
             <PullAction gitManager={gitManager} onRefresh={revalidateAll} />
             {branchesState?.currentBranch && branchesState.currentBranch.type === "current" && (
-              <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={revalidateAll} />
+              <>
+                <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={revalidateAll} />
+                <BranchPushForceAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={revalidateAll} />
+              </>
             )}
             <FetchAction gitManager={gitManager} onRefresh={revalidateAll} />
             {branchFilter && branchesState && (
@@ -529,7 +532,10 @@ function CommitListItem({
             )}
             <PullAction gitManager={gitManager} onRefresh={onRefresh} />
             {branchesState?.currentBranch && branchesState.currentBranch.type === "current" && (
-              <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={onRefresh} />
+              <>
+                <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchPushForceAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={onRefresh} />
+              </>
             )}
             <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
             {selectedBranch && 'name' in selectedBranch &&
@@ -565,7 +571,7 @@ function CommitListItem({
           </ActionPanel.Section>
 
           {navigationActions}
-        </ActionPanel>
+        </ ActionPanel>
       }
     />
   );

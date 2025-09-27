@@ -11,6 +11,7 @@ import {
   PullAction,
   BranchCopyNameAction,
   BranchInteractiveRebaseAction,
+  BranchPushForceAction,
 } from "../../components/actions/BranchActions";
 import { GitManager } from "../../utils/git-manager";
 import { Branch, DetachedHead, BranchesState, GitView } from "../../types";
@@ -250,6 +251,7 @@ function BranchListItem({
               <>
                 <PullAction gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchPushAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchPushForceAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchRenameAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchCopyNameAction branch={branch.displayName} />
               </>
@@ -260,6 +262,7 @@ function BranchListItem({
               <>
                 <BranchCkeckoutAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchPushAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchPushForceAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchRebaseAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchMergeAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchRenameAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />

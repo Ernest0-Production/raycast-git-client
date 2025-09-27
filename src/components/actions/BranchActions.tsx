@@ -1,4 +1,4 @@
-import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast, Form, useNavigation, clearSearchBar } from "@raycast/api";
+import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast, Form, useNavigation, clearSearchBar, Color } from "@raycast/api";
 import { useState } from "react";
 import { GitManager } from "../../utils/git-manager";
 import { Branch, MergeMode } from "../../types";
@@ -147,6 +147,37 @@ export function BranchPushAction({ branch, gitManager, onRefresh }: BranchAction
       onAction={handlePush}
       icon={`git-push.svg`}
       shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
+    />
+  );
+}
+
+export function BranchPushForceAction({ branch, gitManager, onRefresh }: BranchActionProps) {
+  const handlePushForce = async () => {
+    const confirmed = await confirmAlert({
+      title: "Push Force",
+      message: `Are you sure you want to push force the current branch?`,
+      primaryAction: {
+        title: "Push Force",
+        style: Alert.ActionStyle.Destructive,
+      },
+    });
+
+    if (!confirmed) return;
+    try {
+      await gitManager.push(true, branch);
+      onRefresh();
+    } catch {
+      // Git error is already shown by GitManager
+    }
+  };
+
+  return (
+    <Action
+      title="Force Push"
+      onAction={handlePushForce}
+      icon={{ source: `git-push.svg`, tintColor: Color.Red }}
+      shortcut={{ modifiers: ["cmd", "shift", "opt"], key: "p" }}
+      style={Action.Style.Destructive}
     />
   );
 }
