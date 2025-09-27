@@ -3,6 +3,11 @@ import { GitManager } from "../utils/git-manager";
 import { RemoteMetadata } from "../types";
 
 /**
+ * Alias type for dictionary of remote metadata
+ */
+export type RemotesHosts = Record<string, RemoteMetadata>;
+
+/**
  * Hook for fetching Git remotes metadata.
  * Returns a dictionary keyed by remote name.
  * Repository path is included in cache dependencies to ensure separate cache per repository.
@@ -10,18 +15,16 @@ import { RemoteMetadata } from "../types";
 export function useGitRemotes(gitManager: GitManager) {
   return useCachedPromise(
     async (repoPath: string) => {
-      const list = await gitManager.getRemotesMetadata();
-      return list.reduce<Record<string, RemoteMetadata>>((acc, remote) => {
-        acc[remote.name] = remote;
-        return acc;
+      const remotes = await gitManager.getRemotesMetadata();
+
+      const remotesRecords = remotes.reduce<RemotesHosts>((dictionary, remote) => {
+        dictionary[remote.name] = remote;
+        return dictionary;
       }, {});
+
+      return remotesRecords;
     },
-    [gitManager.repoPath],
-    {
-      failureToastOptions: {
-        title: "Failed to load remotes",
-      },
-    }
+    [gitManager.repoPath]
   );
 }
 

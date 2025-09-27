@@ -15,6 +15,7 @@ import { useGitCommits } from "./hooks/useGitCommits";
 import { useGitStash } from "./hooks/useGitStash";
 import { useGitStatus } from "./hooks/useGitStatus";
 import { GitView } from "./types";
+import { useGitRemotes } from "./hooks/useGitRemotes";
 
 interface Arguments {
   path: string;
@@ -49,6 +50,8 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
       </List>
     );
   }
+
+  const { data: remotes } = useGitRemotes(gitManager);
 
   // Shared data hooks lifted to the top-level to persist across view switches
   const {
@@ -197,6 +200,7 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           revalidateBranches={revalidateBranches}
           navigateTo={setCurrentView}
           pagination={pagination}
+          remotesHosts={remotes ?? {}}
         />
       );
     case "branches":
@@ -213,6 +217,7 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           hasUncommittedChanges={status?.files?.length !== 0}
           revalidateStatus={revalidateStatus}
           navigateTo={setCurrentView}
+          remotesHosts={remotes ?? {}}
         />
       );
     case "files":

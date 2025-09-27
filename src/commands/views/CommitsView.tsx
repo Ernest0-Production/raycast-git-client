@@ -1,4 +1,4 @@
-import { ActionPanel, List, Icon, Action, Color, useNavigation } from "@raycast/api";
+import { ActionPanel, List, Icon, Action, Color, useNavigation, Image } from "@raycast/api";
 import { getFavicon, useCachedState } from "@raycast/utils";
 import {
   CommitCheckoutAction,
@@ -31,6 +31,8 @@ import "../../utils/date-utils";
 import { Commit, UrlTrackerConfig, BranchesState, Branch, DetachedHead, GitView, ListPagination } from "../../types";
 import { useMemo, useState } from "react";
 import { CommitMessageForm } from "./CommitMessageView";
+import { RemotesHosts } from "../../hooks/useGitRemotes";
+import { getRemoteHostIcon } from "../../components/icons/RemoteHostIcons";
 
 interface CommitsViewProps {
   gitManager: GitManager;
@@ -51,6 +53,7 @@ interface CommitsViewProps {
   revalidateBranches: () => void;
   pagination?: ListPagination;
   navigateTo: (destination: GitView) => void;
+  remotesHosts: RemotesHosts;
 }
 
 export function CommitsView({
@@ -69,6 +72,7 @@ export function CommitsView({
   revalidateBranches,
   pagination,
   navigateTo,
+  remotesHosts,
 }: CommitsViewProps) {
   const [isShowingDetail, setIsShowingDetail] = useState(false);
   const [isShowingMetadata, setIsShowingMetadata] = useCachedState("commits-metadata-visible", true);
@@ -129,6 +133,7 @@ export function CommitsView({
                 branchFilter={branchFilter}
                 updateSelectedBranch={setBranchFilter}
                 branchesState={branchesState}
+                remotesHosts={remotesHosts}
               />
             )}
           </ActionPanel.Section>
@@ -204,6 +209,7 @@ export function CommitsView({
               onMoveToCommit={setSelectedCommitId}
               commits={commits}
               pagination={pagination}
+              remotesHosts={remotesHosts}
             />
           ))}
         </List.Section>
@@ -232,6 +238,7 @@ interface CommitListItemProps {
   onMoveToCommit: (commitHash: string) => void;
   commits: Commit[];
   pagination?: ListPagination;
+  remotesHosts: RemotesHosts;
 }
 
 function CommitListItem({
@@ -254,6 +261,7 @@ function CommitListItem({
   onMoveToCommit,
   commits,
   pagination,
+  remotesHosts,
 }: CommitListItemProps) {
   const icon = useMemo(() => {
     if (selectedBranch && 'type' in selectedBranch && selectedBranch.ahead) {
@@ -344,7 +352,7 @@ function CommitListItem({
       let title: string | undefined = undefined;
       let tooltip: string | undefined = undefined;
       let color: Color = Color.SecondaryText;
-      let icon: Icon = Icon.Dot;
+      let icon: Image.ImageLike = Icon.Dot;
 
       const allCommitBranches = commit.localBranches.concat(commit.remoteBranches);
 
@@ -366,7 +374,8 @@ function CommitListItem({
         if (commit.localBranches.length > 0) {
           icon = Icon.Dot;
         } else if (commit.remoteBranches.length > 0) {
-          icon = Icon.Globe;
+          const remoteName = commit.remoteBranches[0].split("/")[0];
+          icon = getRemoteHostIcon(remotesHosts[remoteName]?.provider);
         }
       }
 
@@ -452,7 +461,7 @@ function CommitListItem({
                       {commit.remoteBranches.map((branch) => (
                         <List.Item.Detail.Metadata.TagList.Item
                           key={branch}
-                          icon={Icon.Globe}
+                          icon={getRemoteHostIcon(remotesHosts[branch.split("/")[0]]?.provider)}
                           text={branch}
                           color={Color.SecondaryText}
                         />
@@ -535,6 +544,7 @@ function CommitListItem({
                 branchFilter={branchFilter}
                 updateSelectedBranch={updateSelectedBranch}
                 branchesState={branchesState}
+                remotesHosts={remotesHosts}
               />
             )}
             <PullAction gitManager={gitManager} onRefresh={onRefresh} />

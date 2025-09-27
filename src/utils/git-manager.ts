@@ -31,6 +31,7 @@ import {
   PatchScope,
   RemoteMetadata,
   RemoteProvider,
+  RemoteProtocol,
 } from "../types";
 import * as path from "path";
 import { promises as fs } from "fs";
@@ -1168,51 +1169,48 @@ __REBASE_TODO__
    */
   async getRemotesMetadata(): Promise<RemoteMetadata[]> {
     const remotes = await this.git.getRemotes(true);
-    return remotes.map((remote) => {
-      const fetchUrl = remote.refs.fetch;
-      const pushUrl = remote.refs.push;
-      const representativeUrl = fetchUrl || pushUrl || "";
 
+    /**
+  * Detects protocol type from remote URL.
+  */
+    const detectRemoteProtocol = (url: string): RemoteProtocol => {
+      if (!url) return "http";
+      const lower = url.toLowerCase();
+      if (lower.startsWith("ssh://") || /^[^@\s]+@[^:]+:/.test(url)) {
+        return "ssh";
+      }
+      return "http";
+    }
+
+    /**
+     * Detects hosting provider based on remote URL hostname.
+     */
+    const detectRemoteProvider = (url: string): RemoteProvider => {
+      if (!url) return undefined;
+
+      const host = this.extractHostname(url);
+      if (!host) return undefined;
+
+      const hostname = host.toLowerCase();
+      if (hostname.includes("github")) return "github";
+      if (hostname.includes("gitlab")) return "gitlab";
+      if (hostname.includes("bitbucket")) return "bitbucket";
+      if (hostname.includes("azure") || hostname.includes("visualstudio")) return "azure-devops";
+      if (hostname.includes("gitea") || hostname === "codeberg.org") return "gitea";
+      return undefined;
+    }
+
+    return remotes.map((remote) => {
       return {
         name: remote.name,
         urls: {
-          fetch: fetchUrl,
-          push: pushUrl,
+          fetch: remote.refs.fetch,
+          push: remote.refs.push,
         },
-        type: this.detectRemoteProtocol(representativeUrl),
-        provider: this.detectRemoteProvider(representativeUrl),
+        type: detectRemoteProtocol(remote.refs.fetch),
+        provider: detectRemoteProvider(remote.refs.fetch),
       };
     });
-  }
-
-  /**
-   * Detects protocol type from remote URL.
-   */
-  private detectRemoteProtocol(url: string): "ssh" | "http" {
-    if (!url) return "http";
-    const lower = url.toLowerCase();
-    if (lower.startsWith("ssh://") || /^[^@\s]+@[^:]+:/.test(url)) {
-      return "ssh";
-    }
-    return "http";
-  }
-
-  /**
-   * Detects hosting provider based on remote URL hostname.
-   */
-  private detectRemoteProvider(url: string): RemoteProvider {
-    if (!url) return undefined;
-
-    const host = this.extractHostname(url);
-    if (!host) return undefined;
-
-    const hostname = host.toLowerCase();
-    if (hostname.includes("github")) return "github";
-    if (hostname.includes("gitlab")) return "gitlab";
-    if (hostname.includes("bitbucket")) return "bitbucket";
-    if (hostname.includes("azure") || hostname.includes("visualstudio")) return "azure-devops";
-    if (hostname.includes("gitea") || hostname === "codeberg.org") return "gitea";
-    return undefined;
   }
 
   /**

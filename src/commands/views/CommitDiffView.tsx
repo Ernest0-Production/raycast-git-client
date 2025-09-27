@@ -6,11 +6,11 @@ import {
   FileOpenAction,
   FileOpenWithAction,
   FileCopyPathAction,
-  getCommitFileIcon,
   FileQuickLookAction,
   FileRestoreAction,
   FileHistoryAction,
 } from "../../components/actions/FileActions";
+import { getCommitFileIcon } from "../../components/icons/StatusIcons";
 import { useState, useMemo } from "react";
 import { usePromise } from "@raycast/utils";
 import { existsSync } from "fs";

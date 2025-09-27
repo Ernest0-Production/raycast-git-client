@@ -1,11 +1,15 @@
-import { ActionPanel, Action, Icon, Color } from "@raycast/api";
+import { ActionPanel, Action, Icon, Color, Image } from "@raycast/api";
 import { BranchesState, DetachedHead, Branch } from "../../types";
 import { ALL_BRANCHES_FILTER, CURRENT_BRANCH_FILTER } from "../../hooks/useCommitsBranchFilter";
+import { useMemo } from "react";
+import { getRemoteHostIcon } from "../icons/RemoteHostIcons";
+import { RemotesHosts } from "../../hooks/useGitRemotes";
 
 interface CommitBranchFilterActionProps {
   branchFilter: string;
   updateSelectedBranch: (branchName: string) => void;
   branchesState: BranchesState;
+  remotesHosts: RemotesHosts;
 }
 
 /**
@@ -16,6 +20,7 @@ export function CommitBranchFilterAction({
   branchFilter,
   updateSelectedBranch,
   branchesState,
+  remotesHosts,
 }: CommitBranchFilterActionProps) {
   return (
     <ActionPanel.Submenu title="Filter by Branch" icon={Icon.Filter} shortcut={{ modifiers: ["cmd"], key: "f" }}>
@@ -57,6 +62,7 @@ export function CommitBranchFilterAction({
               branch={branch}
               branchFilter={branchFilter}
               updateSelectedBranch={updateSelectedBranch}
+              remotesHosts={remotesHosts}
             />
           ))}
         </ActionPanel.Section>
@@ -71,6 +77,7 @@ export function CommitBranchFilterAction({
               branch={branch}
               branchFilter={branchFilter}
               updateSelectedBranch={updateSelectedBranch}
+              remotesHosts={remotesHosts}
             />
           ))}
         </ActionPanel.Section>
@@ -83,15 +90,29 @@ function BranchFilterAction({
   branch,
   branchFilter,
   updateSelectedBranch,
+  remotesHosts,
 }: {
   branch: Branch;
   branchFilter: string;
   updateSelectedBranch: (name: string) => void;
+  remotesHosts: RemotesHosts;
 }) {
   const branchValue = branch.displayName;
   const isSelected = branchFilter === branchValue;
-  const baseIcon = branch.type === "remote" ? Icon.Globe : Icon.Dot;
-  const icon = isSelected ? Icon.Checkmark : baseIcon;
+
+  const icon: Image.ImageLike = useMemo(() => {
+    let baseIcon: Image.ImageLike = Icon.Dot;
+    switch (branch.type) {
+      case "remote":
+        baseIcon = getRemoteHostIcon(remotesHosts[branch.remote!]?.provider);
+        break;
+      case "local":
+        baseIcon = Icon.Dot;
+        break;
+    }
+
+    return isSelected ? Icon.Checkmark : baseIcon;
+  }, [isSelected]);
 
   return (
     <Action
