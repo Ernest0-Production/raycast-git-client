@@ -879,7 +879,8 @@ __REBASE_TODO__
   }
 
   async deleteUpstreamBranch(upstream: string): Promise<void> {
-    await this.deleteRemoteBranch(upstream.split("/")[0], upstream.split("/")[1]);
+    const [remote, ...branchParts] = upstream.split("/");
+    await this.deleteRemoteBranch(remote, branchParts.join("/"));
   }
 
   /**
@@ -1251,8 +1252,8 @@ __REBASE_TODO__
     await this.git.raw(["branch", "-m", oldName, newName]);
 
     if (upstream) {
-      let remote = upstream.split("/")[0];
-      let oldRemoteBranchName = upstream.split("/")[1];
+      let [remote, ...branchParts] = upstream.split("/");
+      let oldRemoteBranchName = branchParts.join("/");
 
       await this.git.push(
         remote,
