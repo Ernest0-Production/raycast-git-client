@@ -1,5 +1,5 @@
 import { Action, ActionPanel, Alert, Color, Form, Icon, List, Toast, confirmAlert, showToast, useNavigation } from "@raycast/api";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { GitManager } from "../../utils/git-manager";
 import { Commit, RebaseAction, RebasePlanItem } from "../../types";
 
@@ -121,7 +121,6 @@ export default function InteractiveRebaseEditorView({ gitManager, startFromCommi
                                 title="Rebase"
                                 icon={Icon.Checkmark}
                                 onAction={performRebase}
-                                shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
                             />
                             <ActionPanel.Section title="Rebase Action">
                                 <Action
