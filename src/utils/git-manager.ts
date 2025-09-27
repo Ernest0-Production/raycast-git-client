@@ -29,6 +29,8 @@ import {
   ConflictState,
   MergeMode,
   PatchScope,
+  RemoteMetadata,
+  RemoteProvider,
 } from "../types";
 import * as path from "path";
 import { promises as fs } from "fs";
@@ -1159,6 +1161,74 @@ __REBASE_TODO__
       name: remote.name,
       url: remote.refs.fetch || remote.refs.push || "",
     }));
+  }
+
+  /**
+   * Gets detailed metadata for all remotes including URLs, protocol and provider.
+   */
+  async getRemotesMetadata(): Promise<RemoteMetadata[]> {
+    const remotes = await this.git.getRemotes(true);
+    return remotes.map((remote) => {
+      const fetchUrl = remote.refs.fetch;
+      const pushUrl = remote.refs.push;
+      const representativeUrl = fetchUrl || pushUrl || "";
+
+      return {
+        name: remote.name,
+        urls: {
+          fetch: fetchUrl,
+          push: pushUrl,
+        },
+        type: this.detectRemoteProtocol(representativeUrl),
+        provider: this.detectRemoteProvider(representativeUrl),
+      };
+    });
+  }
+
+  /**
+   * Detects protocol type from remote URL.
+   */
+  private detectRemoteProtocol(url: string): "ssh" | "http" {
+    if (!url) return "http";
+    const lower = url.toLowerCase();
+    if (lower.startsWith("ssh://") || /^[^@\s]+@[^:]+:/.test(url)) {
+      return "ssh";
+    }
+    return "http";
+  }
+
+  /**
+   * Detects hosting provider based on remote URL hostname.
+   */
+  private detectRemoteProvider(url: string): RemoteProvider {
+    if (!url) return undefined;
+
+    const host = this.extractHostname(url);
+    if (!host) return undefined;
+
+    const hostname = host.toLowerCase();
+    if (hostname.includes("github")) return "github";
+    if (hostname.includes("gitlab")) return "gitlab";
+    if (hostname.includes("bitbucket")) return "bitbucket";
+    if (hostname.includes("azure") || hostname.includes("visualstudio")) return "azure-devops";
+    if (hostname.includes("gitea") || hostname === "codeberg.org") return "gitea";
+    return undefined;
+  }
+
+  /**
+   * Extracts hostname from http(s)/ssh URL or scp-like SSH URL.
+   */
+  private extractHostname(url: string): string | undefined {
+    // scp-like: user@host:org/repo.git
+    const scpMatch = url.match(/^[^@\s]+@([^:/]+)[:/].*$/);
+    if (scpMatch) return scpMatch[1];
+
+    try {
+      const parsed = new URL(url);
+      return parsed.hostname || undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   /**
