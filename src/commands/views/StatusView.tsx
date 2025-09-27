@@ -11,7 +11,6 @@ import {
   FileStageAllAction,
   FileUnstageAllAction,
   FileDiscardAllAction,
-  getFileStatusIcon,
   FileQuickLookAction,
   FileRefreshStatusAction,
   FileCommitAction,
@@ -20,6 +19,7 @@ import {
   CreatePatchAction,
   ApplyPatchAction,
 } from "../../components/actions/FileActions";
+import { getFileStatusIcon } from "../../components/icons/StatusIcons";
 import { CreateStashAction } from "../../components/actions/StashActions";
 import { GitManager } from "../../utils/git-manager";
 import { Branch, FileStatus, StatusState } from "../../types";

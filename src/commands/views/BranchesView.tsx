@@ -1,4 +1,4 @@
-import { ActionPanel, Action, List, Icon, Color } from "@raycast/api";
+import { ActionPanel, Action, List, Icon, Color, Image } from "@raycast/api";
 import {
   BranchCkeckoutAction,
   BranchDeleteAction,
@@ -16,6 +16,8 @@ import {
 import { GitManager } from "../../utils/git-manager";
 import { Branch, DetachedHead, BranchesState, GitView } from "../../types";
 import { useMemo } from "react";
+import { RemotesHosts } from "../../hooks/useGitRemotes";
+import { getRemoteHostIcon } from "../../components/icons/RemoteHostIcons";
 
 interface BranchesViewProps {
   gitManager: GitManager;
@@ -29,6 +31,7 @@ interface BranchesViewProps {
   hasUncommittedChanges?: boolean;
   revalidateStatus: () => void | Promise<unknown>;
   navigateTo: (destination: GitView) => void;
+  remotesHosts: RemotesHosts;
 }
 
 export function BranchesView({
@@ -42,7 +45,8 @@ export function BranchesView({
   hasConflicts,
   hasUncommittedChanges,
   revalidateStatus,
-  navigateTo
+  navigateTo,
+  remotesHosts
 }: BranchesViewProps) {
 
   const revalidateAll = (error?: Error) => {
@@ -102,6 +106,7 @@ export function BranchesView({
                 navigationActions={navigationActions}
                 hasConflicts={hasConflicts}
                 hasUncommittedChanges={hasUncommittedChanges}
+                remotesHosts={remotesHosts}
               />
             </List.Section>
           )}
@@ -131,6 +136,7 @@ export function BranchesView({
                   onRefresh={revalidateAll}
                   navigationActions={navigationActions}
                   hasUncommittedChanges={hasUncommittedChanges}
+                  remotesHosts={remotesHosts}
                 />
               ))}
             </List.Section>
@@ -147,6 +153,7 @@ export function BranchesView({
                   onRefresh={revalidateAll}
                   navigationActions={navigationActions}
                   hasUncommittedChanges={hasUncommittedChanges}
+                  remotesHosts={remotesHosts}
                 />
               ))}
             </List.Section>
@@ -164,6 +171,7 @@ function BranchListItem({
   navigationActions,
   hasConflicts,
   hasUncommittedChanges,
+  remotesHosts,
 }: {
   branch: Branch;
   gitManager: GitManager;
@@ -171,8 +179,9 @@ function BranchListItem({
   navigationActions: React.ReactNode;
   hasConflicts?: boolean;
   hasUncommittedChanges?: boolean;
+  remotesHosts: RemotesHosts;
 }) {
-  const accessories = useMemo(() => {
+  const accessories: List.Item.Accessory[] = useMemo(() => {
     const result = [];
 
     // Add conflict warning indicator for current branch
@@ -216,7 +225,7 @@ function BranchListItem({
           color: branch.isGone ? Color.Yellow : Color.SecondaryText,
         },
         tooltip: branch.isGone ? "Upstream was removed from remote" : "Tracked upstream",
-        icon: branch.isGone ? Icon.ExclamationMark : Icon.Globe
+        icon: branch.isGone ? Icon.ExclamationMark : getRemoteHostIcon(remotesHosts[branch.upstream!.split("/")[0]]?.provider)
       });
     }
 
@@ -224,23 +233,21 @@ function BranchListItem({
   }, [branch, hasConflicts, hasUncommittedChanges]);
 
   // Determine icon based on branch type
-  const getIcon = useMemo(() => {
-    return () => {
-      if (branch.type === "current") {
-        return { source: Icon.Dot, tintColor: Color.Green };
-      } else if (branch.type === "remote") {
-        return { source: Icon.Globe, tintColor: Color.SecondaryText };
-      } else {
-        return { source: Icon.Dot, tintColor: Color.SecondaryText };
-      }
-    };
+  const icon: Image.ImageLike = useMemo(() => {
+    if (branch.type === "current") {
+      return { source: Icon.Dot, tintColor: Color.Green };
+    } else if (branch.type === "remote") {
+      return getRemoteHostIcon(remotesHosts[branch.remote!]?.provider);
+    } else {
+      return { source: Icon.Dot, tintColor: Color.SecondaryText };
+    }
   }, [branch.type]);
 
   return (
     <List.Item
       key={branch.name}
       title={branch.displayName}
-      icon={getIcon()}
+      icon={icon}
       accessories={accessories}
       keywords={[branch.upstream, branch.remote].filter((keyword): keyword is string => Boolean(keyword))}
       actions={
