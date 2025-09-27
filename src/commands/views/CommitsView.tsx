@@ -258,7 +258,7 @@ function CommitListItem({
       }
     }
     return undefined;
-  }, [selectedBranch]);
+  }, [selectedBranch, index]);
 
   const commitUrls = useMemo(() => {
     if (selectedCommitId !== commit.hash) return [];
