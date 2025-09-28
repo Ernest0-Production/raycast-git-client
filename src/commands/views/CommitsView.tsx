@@ -132,8 +132,8 @@ export function CommitsView({
             <PullAction gitManager={gitManager} onRefresh={revalidateAll} />
             {branchesState?.currentBranch && branchesState.currentBranch.type === "current" && (
               <>
-                <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={revalidateAll} />
-                <BranchPushForceAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={revalidateAll} />
+                <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={revalidateAll} />
+                <BranchPushForceAction branch={branchesState.currentBranch} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={revalidateAll} />
               </>
             )}
             <FetchAction gitManager={gitManager} onRefresh={revalidateAll} />
@@ -523,6 +523,7 @@ function CommitListItem({
                     currentBranch={branchesState.currentBranch}
                     amendOnly={true}
                     gitManager={gitManager}
+                    remotesHosts={remotesHosts}
                     onFinish={onRefresh}
                   />}
                 shortcut={{ modifiers: ["cmd", "shift"], key: "a" }}
@@ -559,8 +560,8 @@ function CommitListItem({
             <PullAction gitManager={gitManager} onRefresh={onRefresh} />
             {branchesState?.currentBranch && branchesState.currentBranch.type === "current" && (
               <>
-                <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={onRefresh} />
-                <BranchPushForceAction branch={branchesState.currentBranch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
+                <BranchPushForceAction branch={branchesState.currentBranch} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
               </>
             )}
             <FetchAction gitManager={gitManager} onRefresh={onRefresh} />

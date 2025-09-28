@@ -257,8 +257,8 @@ function BranchListItem({
             {branch.type === "current" && (
               <>
                 <PullAction gitManager={gitManager} onRefresh={onRefresh} />
-                <BranchPushAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
-                <BranchPushForceAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchPushAction branch={branch} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
+                <BranchPushForceAction branch={branch} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
                 <BranchRenameAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchCopyNameAction branch={branch.displayName} />
               </>
@@ -268,8 +268,8 @@ function BranchListItem({
             {branch.type === "local" && (
               <>
                 <BranchCkeckoutAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
-                <BranchPushAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
-                <BranchPushForceAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchPushAction branch={branch} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
+                <BranchPushForceAction branch={branch} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
                 <BranchRebaseAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchMergeAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
                 <BranchRenameAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
@@ -283,6 +283,7 @@ function BranchListItem({
             {branch.type === "remote" && (
               <>
                 <BranchCkeckoutAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchPushAction branch={branch} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
                 <BranchCopyNameAction branch={branch.displayName} />
                 <BranchDeleteAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
               </>

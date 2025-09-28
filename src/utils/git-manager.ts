@@ -1165,30 +1165,6 @@ __REBASE_TODO__
   }
 
   /**
-   * Gets the default remote name (usually 'origin', but can be the first available remote).
-   */
-  async getDefaultRemote(): Promise<string> {
-    try {
-      const remotes = await this.getRemotes();
-
-      if (remotes.length === 0) {
-        throw new Error("No remotes found");
-      }
-
-      // Prefer 'origin' if it exists
-      const originRemote = remotes.find((remote) => remote.name === "origin");
-      if (originRemote) {
-        return originRemote.name;
-      }
-
-      // Otherwise, return the first available remote
-      return remotes[0].name;
-    } catch (error) {
-      throw new Error("Failed to get default remote");
-    }
-  }
-
-  /**
    * Adds a new remote.
    */
   async addRemote(name: string, url: string): Promise<void> {
@@ -1220,16 +1196,15 @@ __REBASE_TODO__
   /**
    * Pushes tags to remote with optional delete flag.
    */
-  async pushTag(tagName: string, remoteName?: string, deleteTag: boolean = false): Promise<void> {
+  async pushTag(tagName: string, remote: string, deleteTag: boolean = false): Promise<void> {
     // Use provided remote name or get the default remote
-    const targetRemote = remoteName || (await this.getDefaultRemote());
 
     if (deleteTag) {
       // Delete tag from remote using --delete flag
-      await this.git.push(targetRemote, tagName, ["--delete"]);
+      await this.git.push(remote, tagName, ["--delete"]);
     } else {
       // Push specific tag to remote
-      await this.git.push(targetRemote, tagName);
+      await this.git.push(remote, tagName);
     }
   }
 

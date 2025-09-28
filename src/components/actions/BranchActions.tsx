@@ -4,6 +4,8 @@ import { GitManager } from "../../utils/git-manager";
 import { Branch, MergeMode } from "../../types";
 import { usePromise } from "@raycast/utils";
 import InteractiveRebaseEditorView from "../../commands/views/InteractiveRebaseEditorView";
+import { RemotesHosts } from "../../hooks/useGitRemotes";
+import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 
 interface BranchActionProps {
   branch: Branch;
@@ -130,9 +132,7 @@ export function BranchCopyNameAction({ branch }: { branch: string }) {
 /**
  * Action for pushing the current branch.
  */
-export function BranchPushAction({ branch, gitManager, onRefresh }: BranchActionProps) {
-  const { data: remotes } = usePromise(async () => await gitManager.getRemotes(), []);
-
+export function BranchPushAction({ branch, gitManager, remotesHosts, onRefresh }: BranchActionProps & { remotesHosts?: RemotesHosts }) {
   const handlePushToRemote = async (remote: string) => {
     try {
       await gitManager.push(false, branch, remote);
@@ -142,15 +142,15 @@ export function BranchPushAction({ branch, gitManager, onRefresh }: BranchAction
     }
   };
 
-  if (!remotes || remotes.length === 0) {
-    return <></>;
+  if (!remotesHosts || Object.keys(remotesHosts).length === 0) {
+    return undefined;
   }
 
-  if (remotes.length === 1) {
+  if (Object.keys(remotesHosts).length === 1) {
     return (
       <Action
         title="Push"
-        onAction={() => handlePushToRemote(remotes[0].name)}
+        onAction={() => handlePushToRemote(Object.keys(remotesHosts)[0])}
         icon={`git-push.svg`}
         shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
       />
@@ -158,21 +158,20 @@ export function BranchPushAction({ branch, gitManager, onRefresh }: BranchAction
   }
 
   return (
-    <ActionPanel.Submenu title="Push" icon={`git-push.svg`} shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}>
-      {remotes.map((remote) => (
+    <ActionPanel.Submenu title="Push to" icon={`git-push.svg`} shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}>
+      {Object.keys(remotesHosts).map((remote) => (
         <Action
-          key={remote.name}
-          title={`to ${remote.name}`}
-          onAction={() => handlePushToRemote(remote.name)}
+          key={`${remote}:push`}
+          title={remote}
+          icon={RemoteHostIcon(remotesHosts[remote].provider)}
+          onAction={() => handlePushToRemote(remote)}
         />
       ))}
     </ActionPanel.Submenu>
   );
 }
 
-export function BranchPushForceAction({ branch, gitManager, onRefresh }: BranchActionProps) {
-  const { data: remotes } = usePromise(async () => await gitManager.getRemotes(), []);
-
+export function BranchPushForceAction({ branch, gitManager, remotesHosts, onRefresh }: BranchActionProps & { remotesHosts?: RemotesHosts }) {
   const handleForcePushToRemote = async (remote: string) => {
     const confirmed = await confirmAlert({
       title: "Push Force",
@@ -192,15 +191,15 @@ export function BranchPushForceAction({ branch, gitManager, onRefresh }: BranchA
     }
   };
 
-  if (!remotes || remotes.length === 0) {
-    return <></>;
+  if (!remotesHosts || Object.keys(remotesHosts).length === 0) {
+    return undefined;
   }
 
-  if (remotes.length === 1) {
+  if (Object.keys(remotesHosts).length === 1) {
     return (
       <Action
         title="Force Push"
-        onAction={() => handleForcePushToRemote(remotes[0].name)}
+        onAction={() => handleForcePushToRemote(Object.keys(remotesHosts)[0])}
         icon={{ source: `git-push.svg`, tintColor: Color.Red }}
         shortcut={{ modifiers: ["cmd", "shift", "opt"], key: "p" }}
         style={Action.Style.Destructive}
@@ -210,15 +209,16 @@ export function BranchPushForceAction({ branch, gitManager, onRefresh }: BranchA
 
   return (
     <ActionPanel.Submenu
-      title="Force Push"
+      title="Force Push to"
       icon={{ source: `git-push.svg`, tintColor: Color.Red }}
       shortcut={{ modifiers: ["cmd", "shift", "opt"], key: "p" }}
     >
-      {remotes.map((remote) => (
+      {Object.keys(remotesHosts).map((remote) => (
         <Action
-          key={remote.name}
-          title={`to ${remote.name}`}
-          onAction={() => handleForcePushToRemote(remote.name)}
+          key={`${remote}:force-push`}
+          title={remote}
+          icon={RemoteHostIcon(remotesHosts[remote].provider)}
+          onAction={() => handleForcePushToRemote(remote)}
           style={Action.Style.Destructive}
         />
       ))}

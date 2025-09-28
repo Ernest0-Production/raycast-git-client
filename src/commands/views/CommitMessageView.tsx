@@ -1,12 +1,14 @@
 import { GitManager } from "../../utils/git-manager";
 import { Branch, Preferences } from "../../types";
 import { showFailureToast, useCachedState } from "@raycast/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { showToast, Toast, getPreferenceValues, confirmAlert, environment, useNavigation, Color } from "@raycast/api";
 import { AI } from "@raycast/api";
 import { Action, ActionPanel, Form, Icon, Alert } from "@raycast/api";
 import { AiPromptPreset, useAiPromptPresets } from "../../hooks/useAiPromptPresets";
 import { AiMessagePresetEditorForm } from "../../manage-ai-message-prompts";
+import { RemotesHosts } from "../../hooks/useGitRemotes";
+import { RemoteHostIcon } from "../../components/icons/RemoteHostIcons";
 
 /**
  * Form for creating a commit with AI generation support.
@@ -15,10 +17,12 @@ export function CommitMessageForm({
   currentBranch,
   amendOnly = false,
   gitManager,
+  remotesHosts,
   onFinish }: {
     currentBranch: Branch;
     amendOnly?: boolean;
     gitManager: GitManager;
+    remotesHosts?: RemotesHosts;
     onFinish: () => void
   }) {
   const preferences = getPreferenceValues<Preferences>();
@@ -130,7 +134,7 @@ export function CommitMessageForm({
     }
   };
 
-  const handleCommit = async (push = false, forcePush = false) => {
+  const handleCommit = async (push = false, forcePush = false, remote: string) => {
     // Confirm force push if requested
     if (push && forcePush) {
       const confirmed = await confirmAlert({
@@ -190,17 +194,23 @@ export function CommitMessageForm({
               onSubmit={handleSubmit}
               icon={{ source: Icon.Checkmark, tintColor: Color.Green }}
             />
-            <Action
-              title={amend ? "Amend and Push" : "Commit and Push"}
-              onAction={() => handleCommit(true, false)}
-              icon={Icon.Upload}
+            <CommitAndPushAction
+              amend={amend}
+              forcePush={false}
+              onFinish={onFinish}
+              gitManager={gitManager}
+              currentBranch={currentBranch}
+              handleCommit={handleCommit}
+              remotesHosts={remotesHosts}
             />
-            <Action
-              title={amend ? "Amend and Force Push" : "Commit and Force Push"}
-              onAction={() => handleCommit(true, true)}
-              icon={Icon.ExclamationMark}
-              style={Action.Style.Destructive}
-              shortcut={{ modifiers: ["cmd", "opt", "shift"], key: "enter" }}
+            <CommitAndPushAction
+              amend={amend}
+              forcePush={true}
+              onFinish={onFinish}
+              gitManager={gitManager}
+              currentBranch={currentBranch}
+              handleCommit={handleCommit}
+              remotesHosts={remotesHosts}
             />
           </ActionPanel.Section>
 
@@ -266,5 +276,72 @@ export function CommitMessageForm({
         info="Modify the last commit instead of creating a new one"
       />
     </Form>
+  );
+}
+
+function CommitAndPushAction({
+  gitManager,
+  currentBranch,
+  amend,
+  forcePush,
+  onFinish,
+  handleCommit,
+  remotesHosts,
+}: {
+  gitManager: GitManager;
+  currentBranch: Branch;
+  amend: boolean;
+  forcePush: boolean;
+  onFinish: () => void;
+  handleCommit: (push: boolean, forcePush: boolean, remote: string) => void;
+  remotesHosts?: RemotesHosts;
+}) {
+  if (!remotesHosts || Object.keys(remotesHosts).length === 0) {
+    return undefined;
+  }
+
+  const title = useMemo(() => {
+    if (amend && forcePush) {
+      return "Amend and Force Push";
+    } else if (amend) {
+      return "Amend and Push";
+    } else if (forcePush) {
+      return "Force Push";
+    } else {
+      return "Push";
+    }
+  }, [amend, forcePush]);
+
+  if (Object.keys(remotesHosts).length === 1) {
+    return (
+      <Action
+        title={title}
+        onAction={() => handleCommit(amend, forcePush, Object.keys(remotesHosts)[0])}
+        icon={forcePush ? Icon.ExclamationMark : Icon.Upload}
+        style={forcePush ? Action.Style.Destructive : undefined}
+        shortcut={forcePush
+          ? { modifiers: ["cmd", "opt", "shift"], key: "enter" }
+          : { modifiers: ["cmd", "shift"], key: "enter" }}
+      />
+    );
+  }
+
+  return (
+    <ActionPanel.Submenu
+      title={`${title} to`}
+      icon={forcePush ? Icon.ExclamationMark : Icon.Upload}
+      shortcut={forcePush
+        ? { modifiers: ["cmd", "opt", "shift"], key: "enter" }
+        : { modifiers: ["cmd", "shift"], key: "enter" }}
+    >
+      {Object.keys(remotesHosts).map((remote) => (
+        <Action
+          key={`${remote}:commit-and-push`}
+          title={remote}
+          icon={RemoteHostIcon(remotesHosts[remote].provider)}
+          onAction={() => handleCommit(amend, forcePush, remote)}
+        />
+      ))}
+    </ActionPanel.Submenu>
   );
 }

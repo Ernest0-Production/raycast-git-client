@@ -106,6 +106,7 @@ export function StatusView({
               status={status}
               gitManager={gitManager}
               currentBranch={currentBranch}
+              remotesHosts={remotesHosts}
               onFinish={refreshAndNavigateToCommits} />
           )}
 
@@ -297,6 +298,7 @@ function FileListItem({
                 gitManager={gitManager}
                 onContinue={onCommitSuccess}
                 onFinish={onCommitSuccess}
+                remotesHosts={remotesHosts}
               />
             )}
             <FileConflictAbortAction status={status} gitManager={gitManager} onRefresh={onRefresh} />

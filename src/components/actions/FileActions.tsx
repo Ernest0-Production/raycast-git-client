@@ -176,12 +176,14 @@ export function FileCommitAction({
   gitManager,
   onContinue,
   onFinish,
+  remotesHosts,
 }: {
   status: StatusState;
   currentBranch: Branch;
   onContinue?: () => void;
   gitManager: GitManager;
   onFinish: () => void;
+  remotesHosts?: RemotesHosts;
 }) {
   const hasStagedFiles = status.files.some((f) => f.status === "staged");
   const hasConflictedFiles = status.files.some((f) => f.type === "conflicted");
@@ -240,6 +242,7 @@ export function FileCommitAction({
             gitManager={gitManager}
             onFinish={onFinish}
             currentBranch={currentBranch}
+            remotesHosts={remotesHosts}
           />
         }
         shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
