@@ -1183,12 +1183,28 @@ __REBASE_TODO__
     }
 
     /**
+  * Extracts hostname from http(s)/ssh URL or scp-like SSH URL.
+  */
+    function extractHostname(url: string): string | undefined {
+      // scp-like: user@host:org/repo.git
+      const scpMatch = url.match(/^[^@\s]+@([^:/]+)[:/].*$/);
+      if (scpMatch) return scpMatch[1];
+
+      try {
+        const parsed = new URL(url);
+        return parsed.hostname || undefined;
+      } catch {
+        return undefined;
+      }
+    }
+
+    /**
      * Detects hosting provider based on remote URL hostname.
      */
     const detectRemoteProvider = (url: string): RemoteProvider => {
       if (!url) return undefined;
 
-      const host = this.extractHostname(url);
+      const host = extractHostname(url);
       if (!host) return undefined;
 
       const hostname = host.toLowerCase();
@@ -1211,22 +1227,6 @@ __REBASE_TODO__
         provider: detectRemoteProvider(remote.refs.fetch),
       };
     });
-  }
-
-  /**
-   * Extracts hostname from http(s)/ssh URL or scp-like SSH URL.
-   */
-  private extractHostname(url: string): string | undefined {
-    // scp-like: user@host:org/repo.git
-    const scpMatch = url.match(/^[^@\s]+@([^:/]+)[:/].*$/);
-    if (scpMatch) return scpMatch[1];
-
-    try {
-      const parsed = new URL(url);
-      return parsed.hostname || undefined;
-    } catch {
-      return undefined;
-    }
   }
 
   /**

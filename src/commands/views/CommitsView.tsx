@@ -113,13 +113,23 @@ export function CommitsView({
       searchBarAccessory={viewDropdown}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title="Branch">
+          <ActionPanel.Section>
+            {pagination?.hasMore && (
+              <Action
+                title="Load More Commits"
+                onAction={pagination?.onLoadMore}
+                icon={Icon.ArrowDown}
+                shortcut={{ modifiers: ["cmd", "opt"], key: "arrowDown" }}
+              />
+            )}
             <Action
               title="Refresh History"
               onAction={revalidateAll}
               icon={Icon.ArrowClockwise}
               shortcut={{ modifiers: ["cmd"], key: "r" }}
             />
+          </ActionPanel.Section>
+          <ActionPanel.Section title="Branch">
             <PullAction gitManager={gitManager} onRefresh={revalidateAll} />
             {branchesState?.currentBranch && branchesState.currentBranch.type === "current" && (
               <>
@@ -558,6 +568,23 @@ function CommitListItem({
             {selectedBranch && 'name' in selectedBranch &&
               <BranchCopyNameAction branch={selectedBranch.displayName} />
             }
+          </ActionPanel.Section>
+
+          <ActionPanel.Section>
+            {pagination?.hasMore && (
+              <Action
+                title="Load More Commits"
+                onAction={pagination?.onLoadMore}
+                icon={Icon.ArrowDown}
+                shortcut={{ modifiers: ["cmd", "opt"], key: "arrowDown" }}
+              />
+            )}
+            <Action
+              title="Refresh History"
+              onAction={onRefresh}
+              icon={Icon.ArrowClockwise}
+              shortcut={{ modifiers: ["cmd"], key: "r" }}
+            />
           </ActionPanel.Section>
 
           <ActionPanel.Section>

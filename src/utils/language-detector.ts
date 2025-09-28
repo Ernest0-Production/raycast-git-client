@@ -17,7 +17,7 @@ const LANGUAGES_COLORS: Record<string, Color> = {
     Go: Color.Blue,
     Swift: Color.Orange,
     "Objective-C": Color.SecondaryText,
-    Kotlin: Color.Orange,
+    Kotlin: Color.Purple,
 };
 
 const LANGUAGE_EXTENSION: Record<string, string> = {
