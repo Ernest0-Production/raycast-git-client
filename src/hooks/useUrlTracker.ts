@@ -90,7 +90,11 @@ export function replaceUrlPatternsWithLinks(text: string, configs: UrlTrackerCon
         try {
             const regex = new RegExp(config.regex, "gi"); // Global flag to replace all matches
 
-            result = result.replace(regex, (match, captureGroup, offset, string) => {
+            result = result.replace(regex, (match, ...args) => {
+                const string = args[args.length - 1];
+                const offset = args[args.length - 2];
+                const captureGroup = args.length > 3 ? args[1] : args[0];
+
                 // Check if this match is already inside a markdown link
                 const beforeMatch = string.substring(0, offset);
                 const afterMatch = string.substring(offset + match.length);
@@ -118,9 +122,10 @@ export function replaceUrlPatternsWithLinks(text: string, configs: UrlTrackerCon
                 const url = config.urlPlaceholder.replace("@key", extractedKey);
                 return `[${match}](${url})`;
             });
-        } catch {
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Unknown error";
             // Skip invalid regex patterns
-            console.error(`Invalid regex pattern in config "${config.title}"`);
+            console.error(`Invalid regex pattern in config "${config.title}. Reason: ${errorMessage}"`);
         }
     }
 

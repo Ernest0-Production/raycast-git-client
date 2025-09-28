@@ -280,6 +280,8 @@ function CommitListItem({
   }, [selectedCommitId, commit.hash, commit.message]);
 
   const formatCommitDetail = (commit: Commit, urlTrackerConfigs: UrlTrackerConfig[]): string => {
+    if (selectedCommitId !== commit.hash) return "";
+
     // 1. Commit title (## heading) with URL patterns replaced by links
     const commitMessageWithLinks = replaceUrlPatternsWithLinks(commit.message, urlTrackerConfigs);
     let detail = `### ${commitMessageWithLinks}\n\n`;
