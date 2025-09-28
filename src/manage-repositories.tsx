@@ -182,7 +182,10 @@ function RepositoryListItem({
           <RepositoryDirectoryActions repositoryPath={repo.path} onOpen={onOpen} />
 
           {remotes && Object.keys(remotes).map((remote) => (
-            <ActionPanel.Section key={remote} title={remote}>
+            <ActionPanel.Section
+              key={remote}
+              title={`${remote} • ${remotes[remote].organizationName}/${remotes[remote].repositoryName}`}
+            >
               <RemoteOpenPullRequestAction key={remote} remote={remotes[remote]} />
             </ActionPanel.Section>
           ))}

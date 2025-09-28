@@ -145,7 +145,10 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
       </ActionPanel.Section>
       <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} />
       {remotes && Object.keys(remotes).map((remote) => (
-        <ActionPanel.Section key={remote} title={remote}>
+        <ActionPanel.Section
+          key={remote}
+          title={`${remote} • ${remotes[remote].organizationName}/${remotes[remote].repositoryName}`}
+        >
           <RemoteOpenPullRequestAction key={`${remote}-open-pull-request`} remote={remotes[remote]} />
           {branchesState?.currentBranch && (
             <RemoteCreatePullRequestAction
