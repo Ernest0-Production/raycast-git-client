@@ -192,13 +192,13 @@ export function CommitMessageForm({
             <CommitAndPushAction
               amend={amend}
               forcePush={false}
-              handleCommit={handleCommit}
+              handleCommit={(remote) => handleCommit(true, false, remote)}
               remotesHosts={remotesHosts}
             />
             <CommitAndPushAction
               amend={amend}
               forcePush={true}
-              handleCommit={handleCommit}
+              handleCommit={(remote) => handleCommit(true, true, remote)}
               remotesHosts={remotesHosts}
             />
           </ActionPanel.Section>
@@ -276,7 +276,7 @@ function CommitAndPushAction({
 }: {
   amend: boolean;
   forcePush: boolean;
-  handleCommit: (push: boolean, forcePush: boolean, remote: string) => void;
+  handleCommit: (remote: string) => void;
   remotesHosts?: RemotesHosts;
 }) {
   if (!remotesHosts || Object.keys(remotesHosts).length === 0) {
@@ -299,7 +299,7 @@ function CommitAndPushAction({
     return (
       <Action
         title={title}
-        onAction={() => handleCommit(amend, forcePush, Object.keys(remotesHosts)[0])}
+        onAction={() => handleCommit(Object.keys(remotesHosts)[0])}
         icon={forcePush ? Icon.ExclamationMark : Icon.Upload}
         style={forcePush ? Action.Style.Destructive : undefined}
         shortcut={forcePush
@@ -322,7 +322,7 @@ function CommitAndPushAction({
           key={`${remote}:commit-and-push`}
           title={remote}
           icon={RemoteHostIcon(remotesHosts[remote].provider)}
-          onAction={() => handleCommit(amend, forcePush, remote)}
+          onAction={() => handleCommit(remote)}
         />
       ))}
     </ActionPanel.Submenu>
