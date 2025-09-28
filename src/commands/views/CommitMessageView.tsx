@@ -134,9 +134,9 @@ export function CommitMessageForm({
     }
   };
 
-  const handleCommit = async (push = false, forcePush = false, remote: string) => {
+  const handleCommit = async (push = false, forcePush = false, remote?: string) => {
     // Confirm force push if requested
-    if (push && forcePush) {
+    if (push && forcePush && remote) {
       const confirmed = await confirmAlert({
         title: "Force Push Confirmation",
         message: "Force push will rewrite Git history on the remote repository. This can cause problems for other collaborators. Are you sure you want to continue?",
@@ -166,8 +166,8 @@ export function CommitMessageForm({
     }
 
     // Push if requested
-    if (push) {
-      try { await gitManager.push(forcePush, currentBranch); }
+    if (push && remote) {
+      try { await gitManager.push(forcePush, currentBranch, remote); }
       // Git error is already shown by GitManager
       catch (error) { }
     }
@@ -175,11 +175,6 @@ export function CommitMessageForm({
     clearDraft();
     pop();
     onFinish();
-  };
-
-  const handleSubmit = async (values: { message: string; amend: boolean }) => {
-    setDraftMessage(values.message);
-    await handleCommit();
   };
 
   return (
@@ -191,24 +186,18 @@ export function CommitMessageForm({
           <ActionPanel.Section>
             <Action.SubmitForm
               title={amend ? "Amend" : "Commit"}
-              onSubmit={handleSubmit}
+              onSubmit={() => handleCommit(false, false, undefined)}
               icon={{ source: Icon.Checkmark, tintColor: Color.Green }}
             />
             <CommitAndPushAction
               amend={amend}
               forcePush={false}
-              onFinish={onFinish}
-              gitManager={gitManager}
-              currentBranch={currentBranch}
               handleCommit={handleCommit}
               remotesHosts={remotesHosts}
             />
             <CommitAndPushAction
               amend={amend}
               forcePush={true}
-              onFinish={onFinish}
-              gitManager={gitManager}
-              currentBranch={currentBranch}
               handleCommit={handleCommit}
               remotesHosts={remotesHosts}
             />
@@ -280,19 +269,13 @@ export function CommitMessageForm({
 }
 
 function CommitAndPushAction({
-  gitManager,
-  currentBranch,
   amend,
   forcePush,
-  onFinish,
   handleCommit,
   remotesHosts,
 }: {
-  gitManager: GitManager;
-  currentBranch: Branch;
   amend: boolean;
   forcePush: boolean;
-  onFinish: () => void;
   handleCommit: (push: boolean, forcePush: boolean, remote: string) => void;
   remotesHosts?: RemotesHosts;
 }) {
