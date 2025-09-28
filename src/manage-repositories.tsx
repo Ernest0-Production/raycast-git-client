@@ -122,17 +122,18 @@ function RepositoryListItem({
   const accessories: List.Item.Accessory[] = useMemo(() => {
     const result = [];
 
+    if (remotes && Object.keys(remotes).length > 0) {
+      result.push(...Object.keys(remotes).map((remote) => ({
+        tag: { value: `${remotes[remote].organizationName}/${remotes[remote].repositoryName}` },
+        icon: RemoteHostIcon(remotes[remote].provider),
+        tooltip: `Hosted on ${remotes[remote].provider} at ${remotes[remote].organizationName}/${remotes[remote].repositoryName}`,
+      })));
+    }
+
     if (repo.languageStats && repo.languageStats.length > 0) {
       result.push(...repo.languageStats.map((lang) => ({
         tag: { value: lang.name, color: lang.color },
         tooltip: "Primary language",
-      })));
-    }
-
-    if (remotes && Object.keys(remotes).length > 0) {
-      result.push(...Object.keys(remotes).map((remote) => ({
-        icon: RemoteHostIcon(remotes[remote].provider),
-        tooltip: `Hosted on ${remotes[remote].provider} at ${remotes[remote].organizationName}/${remotes[remote].repositoryName}`,
       })));
     }
 

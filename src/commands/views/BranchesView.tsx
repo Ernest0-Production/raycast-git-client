@@ -144,7 +144,7 @@ export function BranchesView({
 
           {/* Remote Branches Sections */}
           {Object.entries(branchesState.remoteBranches).map(([remoteName, remoteBranches]) => (
-            <List.Section key={remoteName} title={`Remote: ${remoteName}`}>
+            <List.Section key={remoteName} title={`${remoteName} • ${remotesHosts[remoteName]?.organizationName}/${remotesHosts[remoteName]?.repositoryName}`}>
               {remoteBranches.map((branch) => (
                 <BranchListItem
                   key={branch.displayName}
