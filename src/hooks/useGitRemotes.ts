@@ -23,6 +23,7 @@ export function useGitRemotes(gitManager: GitManager): { data: RemotesHosts; isL
       name: remote.name,
       url: remote.url,
       type: detectRemoteProtocol(remote.url),
+      organizationName: parser.organizationName,
       repositoryName: parser.repositoryName,
       provider: parser.provider,
       pages: {

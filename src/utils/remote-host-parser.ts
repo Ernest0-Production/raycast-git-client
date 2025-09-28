@@ -39,6 +39,10 @@ function githubParser(_url: string, parsed: URLComponents) {
 
     return {
         provider: "GitHub" as RemoteProvider,
+        get organizationName() {
+            const match = path.match(/^([^\/]+)/);
+            return match ? match[1] : undefined;
+        },
         get repositoryName() {
             const match = path.match(/\/([^\/]+)$/);
             return match ? match[1] : undefined;
@@ -63,6 +67,10 @@ function gitlabParser(_url: string, parsed: URLComponents) {
 
     return {
         provider: "GitLab" as RemoteProvider,
+        get organizationName() {
+            const match = path.match(/^([^\/]+)/);
+            return match ? match[1] : undefined;
+        },
         get repositoryName() {
             const match = path.match(/\/([^\/]+)$/);
             return match ? match[1] : undefined;
@@ -87,6 +95,10 @@ function giteaParser(_url: string, parsed: URLComponents) {
 
     return {
         provider: "Gitea" as RemoteProvider,
+        get organizationName() {
+            const match = path.match(/^([^\/]+)/);
+            return match ? match[1] : undefined;
+        },
         get repositoryName() {
             const match = path.match(/\/([^\/]+)$/);
             return match ? match[1] : undefined;
@@ -134,6 +146,10 @@ function bitbucketParser(_url: string, parsed: URLComponents) {
 
     return {
         provider: "Bitbucket" as RemoteProvider,
+        get organizationName() {
+            const m = path.match(/^([^\/]+)/);
+            return m ? m[1] : undefined;
+        },
         get repositoryName() {
             return repositoryName;
         },
@@ -190,6 +206,25 @@ function azureDevopsParser(_url: string, parsed: URLComponents) {
 
     return {
         provider: "Azure DevOps" as RemoteProvider,
+        get organizationName() {
+            if (hostname === "ssh.dev.azure.com" || hostname === "vs-ssh.visualstudio.com") {
+                const pathPattern = path.startsWith("v3/")
+                    ? /^v3\/(?<org>[^\/]+)\/(?<project>[^\/]+)\/(?<repo>[^\/]+)$/
+                    : /^(?<org>[^\/]+)\/(?<project>[^\/]+)\/(?<repo>[^\/]+)$/;
+                const match = path.match(pathPattern);
+                return match?.groups?.org;
+            }
+            if (hostname === "dev.azure.com") {
+                const pathPattern = /^(?<org>[^\/]+)\/(?<project>[^\/]+)(?:\/.*)?_git\/(?<repo>[^\/]+)/;
+                const match = path.match(pathPattern);
+                return match?.groups?.org;
+            }
+            if (hostname.endsWith(".visualstudio.com")) {
+                const m = hostname.match(/^([^\.]+)\.visualstudio\.com$/);
+                return m ? m[1] : undefined;
+            }
+            return undefined;
+        },
         get repositoryName() {
             if (hostname === "ssh.dev.azure.com" || hostname === "vs-ssh.visualstudio.com") {
                 const m = path.match(/^(?:v3\/)?[^\/]+\/[^\/]+\/([^\/]+)$/);
@@ -218,6 +253,9 @@ function unknownParser(_url: string, parsed?: URLComponents) {
 
     return {
         provider: undefined as RemoteProvider,
+        get organizationName() {
+            return undefined;
+        },
         get repositoryWebUrl() {
             return scheme && hostname && path ? `${scheme}://${hostname}/${path}` : undefined;
         },

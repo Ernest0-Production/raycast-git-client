@@ -72,18 +72,10 @@ export function useRepositoriesList() {
     [setRepositories],
   );
 
-  /**
-   * Clears all recent repositories.
-   */
-  const clearRepositoriesList = useCallback(() => {
-    setRepositories([]);
-  }, [setRepositories]);
-
   return {
     repositories,
     addRepository,
     visitRepository,
     removeRepository,
-    clearRepositoriesList,
   };
 }

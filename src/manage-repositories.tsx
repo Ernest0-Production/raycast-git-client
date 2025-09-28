@@ -4,7 +4,6 @@ import { useRepositoriesList } from "./hooks/useRepositoriesList";
 import { RepositoryDirectoryActions } from "./components/actions/RepositoryDirectoryActions";
 import { validateGitRepository } from "./utils/validation";
 import OpenRepository from "./open-repository";
-import { showFailureToast } from "@raycast/utils";
 import { Repository } from "./types";
 import { RepositoriesView, useRepositoriesView } from "./hooks/useRepositoriesView";
 import { useGitRemotes } from "./hooks/useGitRemotes";
@@ -13,32 +12,9 @@ import { useGitRepository } from "./hooks/useGitRepository";
 import { RemoteOpenPullRequestAction } from "./components/actions/RemoteHostActions";
 
 export default function ManageRepositories() {
-  const { repositories, addRepository, visitRepository, removeRepository, clearRepositoriesList } = useRepositoriesList();
+  const { repositories, addRepository, visitRepository, removeRepository } = useRepositoriesList();
   const { currentView, setCurrentView, displayedRepositories, lastVisitedRepository } = useRepositoriesView(repositories);
   const [selectedRepositoryItem, setSelectedRepositoryItem] = useState<string | undefined>(undefined);
-
-  const handleClearRepositories = async () => {
-    const confirmed = await confirmAlert({
-      title: "Clear list",
-      message: "Are you sure you want to clear the recent repositories list?",
-      primaryAction: {
-        title: "Clear",
-        style: Alert.ActionStyle.Destructive,
-      },
-    });
-
-    if (confirmed) {
-      try {
-        await clearRepositoriesList();
-        await showToast({
-          style: Toast.Style.Success,
-          title: "List cleared",
-        });
-      } catch (error) {
-        await showFailureToast(error, { title: "Failed to clear list" });
-      }
-    }
-  };
 
   const handleRemoveRepository = async (repoName: string, repoPath: string) => {
     const confirmed = await confirmAlert({
@@ -111,8 +87,6 @@ export default function ManageRepositories() {
                 onOpen={() => visitRepository(repo.path)}
                 onRemove={() => handleRemoveRepository(repo.name, repo.path)}
                 onAddRepository={addRepository}
-                repositoriesCount={repositories.length}
-                onClearAll={handleClearRepositories}
                 selectedView={currentView}
                 onViewChange={setCurrentView}
               />
@@ -130,8 +104,6 @@ function RepositoryListItem({
   onOpen,
   onRemove,
   onAddRepository,
-  repositoriesCount,
-  onClearAll,
   selectedView,
   onViewChange,
 }: {
@@ -140,8 +112,6 @@ function RepositoryListItem({
   onOpen: () => void;
   onRemove: () => void;
   onAddRepository: (repoPath: string) => void;
-  repositoriesCount: number;
-  onClearAll: () => Promise<void> | void;
   selectedView: RepositoriesView;
   onViewChange: (view: RepositoriesView) => void;
 }) {
@@ -162,7 +132,7 @@ function RepositoryListItem({
     if (remotes && Object.keys(remotes).length > 0) {
       result.push(...Object.keys(remotes).map((remote) => ({
         icon: RemoteHostIcon(remotes[remote].provider),
-        tooltip: `Hosted on ${remotes[remote].provider}`,
+        tooltip: `Hosted on ${remotes[remote].provider} at ${remotes[remote].organizationName}/${remotes[remote].repositoryName}`,
       })));
     }
 
@@ -257,15 +227,6 @@ function RepositoryListItem({
               icon={Icon.Plus}
               shortcut={{ modifiers: ["cmd"], key: "n" }}
             />
-            {repositoriesCount > 1 && (
-              <Action
-                title="Remove All"
-                onAction={onClearAll}
-                icon={Icon.Trash}
-                style={Action.Style.Destructive}
-                shortcut={{ modifiers: ["cmd", "ctrl"], key: "x" }}
-              />
-            )}
           </ActionPanel.Section>
         </ActionPanel>
       }
