@@ -131,54 +131,98 @@ export function BranchCopyNameAction({ branch }: { branch: string }) {
  * Action for pushing the current branch.
  */
 export function BranchPushAction({ branch, gitManager, onRefresh }: BranchActionProps) {
-  const handlePush = async () => {
+  const { data: remotes } = usePromise(async () => await gitManager.getRemotes(), []);
 
+  const handlePushToRemote = async (remote: string) => {
     try {
-      await gitManager.push(false, branch);
+      await gitManager.push(false, branch, remote);
       onRefresh();
     } catch {
       // Git error is already shown by GitManager
     }
   };
 
+  if (!remotes || remotes.length === 0) {
+    return <></>;
+  }
+
+  if (remotes.length === 1) {
+    return (
+      <Action
+        title="Push"
+        onAction={() => handlePushToRemote(remotes[0].name)}
+        icon={`git-push.svg`}
+        shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
+      />
+    );
+  }
+
   return (
-    <Action
-      title="Push"
-      onAction={handlePush}
-      icon={`git-push.svg`}
-      shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
-    />
+    <ActionPanel.Submenu title="Push" icon={`git-push.svg`} shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}>
+      {remotes.map((remote) => (
+        <Action
+          key={remote.name}
+          title={`to ${remote.name}`}
+          onAction={() => handlePushToRemote(remote.name)}
+        />
+      ))}
+    </ActionPanel.Submenu>
   );
 }
 
 export function BranchPushForceAction({ branch, gitManager, onRefresh }: BranchActionProps) {
-  const handlePushForce = async () => {
+  const { data: remotes } = usePromise(async () => await gitManager.getRemotes(), []);
+
+  const handleForcePushToRemote = async (remote: string) => {
     const confirmed = await confirmAlert({
       title: "Push Force",
-      message: `Are you sure you want to push force the current branch?`,
+      message: `Are you sure you want to force push the current branch to '${remote}'?`,
       primaryAction: {
-        title: "Push Force",
+        title: "Force Push",
         style: Alert.ActionStyle.Destructive,
       },
     });
 
     if (!confirmed) return;
     try {
-      await gitManager.push(true, branch);
+      await gitManager.push(true, branch, remote);
       onRefresh();
     } catch {
       // Git error is already shown by GitManager
     }
   };
 
+  if (!remotes || remotes.length === 0) {
+    return <></>;
+  }
+
+  if (remotes.length === 1) {
+    return (
+      <Action
+        title="Force Push"
+        onAction={() => handleForcePushToRemote(remotes[0].name)}
+        icon={{ source: `git-push.svg`, tintColor: Color.Red }}
+        shortcut={{ modifiers: ["cmd", "shift", "opt"], key: "p" }}
+        style={Action.Style.Destructive}
+      />
+    );
+  }
+
   return (
-    <Action
+    <ActionPanel.Submenu
       title="Force Push"
-      onAction={handlePushForce}
       icon={{ source: `git-push.svg`, tintColor: Color.Red }}
       shortcut={{ modifiers: ["cmd", "shift", "opt"], key: "p" }}
-      style={Action.Style.Destructive}
-    />
+    >
+      {remotes.map((remote) => (
+        <Action
+          key={remote.name}
+          title={`to ${remote.name}`}
+          onAction={() => handleForcePushToRemote(remote.name)}
+          style={Action.Style.Destructive}
+        />
+      ))}
+    </ActionPanel.Submenu>
   );
 }
 

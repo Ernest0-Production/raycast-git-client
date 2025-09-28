@@ -955,11 +955,10 @@ __REBASE_TODO__
   }
 
   /**
-   * Pushes changes.
+   * Pushes changes to a specific remote.
    */
-  async push(force = false, branch: Branch): Promise<void> {
-    const remote = await this.getDefaultRemote();
-    const options = [];
+  async push(force = false, branch: Branch, remote: string): Promise<void> {
+    const options = [] as string[];
 
     if (force) {
       options.push("--force-with-lease");
@@ -967,7 +966,7 @@ __REBASE_TODO__
 
     // automatically set upstream for new branch or detached branch
     if (!branch.upstream || branch.isGone) {
-      options.push("--set-upstream")
+      options.push("--set-upstream");
     }
 
     try {
@@ -984,7 +983,7 @@ __REBASE_TODO__
           },
         });
         if (confirmed) {
-          await this.push(true, branch);
+          await this.push(true, branch, remote);
         }
       } else {
         throw error;
