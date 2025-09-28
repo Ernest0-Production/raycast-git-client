@@ -1,4 +1,4 @@
-import { ActionPanel, List, Icon, Action, Color, useNavigation, Image } from "@raycast/api";
+import { ActionPanel, List, Icon, Action, Color, Image } from "@raycast/api";
 import { getFavicon, useCachedState } from "@raycast/utils";
 import {
   CommitCheckoutAction,
@@ -16,7 +16,6 @@ import {
 import { TagCreateAction, TagRemoveAction, TagCopyNameAction } from "../../components/actions/TagActions";
 import { BranchCopyNameAction, BranchPushAction, BranchPushForceAction, FetchAction, PullAction } from "../../components/actions/BranchActions";
 import { CommitDiffView } from "./CommitDiffView";
-import { ConfigureUrlTrackerForm } from "../../components/shared/ConfigureUrlTrackerForm";
 import {
   CommitBranchFilterAction,
   getBranchFilterDisplayName,
@@ -24,7 +23,6 @@ import {
 import { GitManager } from "../../utils/git-manager";
 import {
   useUrlTracker,
-  extractUrlsFromCommitWithConfigs,
   replaceUrlPatternsWithLinks,
 } from "../../hooks/useUrlTracker";
 import "../../utils/date-utils";
@@ -32,7 +30,8 @@ import { Commit, UrlTrackerConfig, BranchesState, Branch, DetachedHead, GitView,
 import { useMemo, useState } from "react";
 import { CommitMessageForm } from "./CommitMessageView";
 import { RemotesHosts } from "../../hooks/useGitRemotes";
-import { getRemoteHostIcon } from "../../components/icons/RemoteHostIcons";
+import { RemoteHostIcon } from "../../components/icons/RemoteHostIcons";
+import { RemoteOpenCommitAction } from "../../components/actions/RemoteHostActions";
 
 interface CommitsViewProps {
   gitManager: GitManager;
@@ -79,7 +78,7 @@ export function CommitsView({
   const [selectedCommitId, setSelectedCommitId] = useState<string | null>(null);
 
   // Load URL tracker configurations once for the entire view
-  const { configs: urlTrackerConfigs } = useUrlTracker(gitManager.repoPath);
+  const { configs: urlTrackerConfigs, findUrls } = useUrlTracker();
 
   // Get current filter display name for List.Section title
   const currentFilterDisplayName = getBranchFilterDisplayName(branchFilter, branchesState);
@@ -163,16 +162,6 @@ export function CommitsView({
                 shortcut={{ modifiers: ["shift", "cmd"], key: "i" }}
               />
             )}
-            <Action.Push
-              title="Configure URL Tracker"
-              icon={Icon.Gear}
-              target={
-                <ConfigureUrlTrackerForm
-                  repositoryPath={gitManager.repoPath}
-                  onConfigurationSaved={revalidateAll}
-                />
-              }
-            />
           </ActionPanel.Section>
 
           {navigationActions}
@@ -210,6 +199,7 @@ export function CommitsView({
               onToggleDetail={toggleDetail}
               onToggleMetadata={toggleMetadata}
               urlTrackerConfigs={urlTrackerConfigs}
+              findUrls={findUrls}
               selectedCommitId={selectedCommitId}
               isAllBranchesFilter={selectedBranch === undefined}
               selectedBranch={selectedBranch}
@@ -239,6 +229,7 @@ interface CommitListItemProps {
   isShowingMetadata: boolean;
   onToggleMetadata: () => void;
   urlTrackerConfigs: UrlTrackerConfig[];
+  findUrls: (text: string) => Array<{ title: string; url: string }>;
   selectedCommitId: string | null;
   isAllBranchesFilter: boolean;
   selectedBranch?: Branch | DetachedHead;
@@ -262,6 +253,7 @@ function CommitListItem({
   isShowingMetadata,
   onToggleMetadata,
   urlTrackerConfigs,
+  findUrls,
   selectedCommitId,
   isAllBranchesFilter,
   selectedBranch,
@@ -284,8 +276,8 @@ function CommitListItem({
 
   const commitUrls = useMemo(() => {
     if (selectedCommitId !== commit.hash) return [];
-    return extractUrlsFromCommitWithConfigs(commit.message, urlTrackerConfigs);
-  }, [selectedCommitId, commit.hash, commit.message, urlTrackerConfigs]);
+    return findUrls(commit.message);
+  }, [selectedCommitId, commit.hash, commit.message]);
 
   const formatCommitDetail = (commit: Commit, urlTrackerConfigs: UrlTrackerConfig[]): string => {
     // 1. Commit title (## heading) with URL patterns replaced by links
@@ -385,7 +377,7 @@ function CommitListItem({
           icon = Icon.Dot;
         } else if (commit.remoteBranches.length > 0) {
           const remoteName = commit.remoteBranches[0].split("/")[0];
-          icon = getRemoteHostIcon(remotesHosts[remoteName]?.provider);
+          icon = RemoteHostIcon(remotesHosts[remoteName]?.provider);
         }
       }
 
@@ -471,7 +463,7 @@ function CommitListItem({
                       {commit.remoteBranches.map((branch) => (
                         <List.Item.Detail.Metadata.TagList.Item
                           key={branch}
-                          icon={getRemoteHostIcon(remotesHosts[branch.split("/")[0]]?.provider)}
+                          icon={RemoteHostIcon(remotesHosts[branch.split("/")[0]]?.provider)}
                           text={branch}
                           color={Color.SecondaryText}
                         />
@@ -510,7 +502,7 @@ function CommitListItem({
             <CommitCreatePatchAction commit={commit} gitManager={gitManager} />
             {commitUrls.map((urlInfo: { title: string; url: string }, index: number) => (
               <Action.OpenInBrowser
-                key={`${urlInfo.url}-${index}`}
+                key={`${urlInfo.title}-${index}`}
                 title={`Open ${urlInfo.title}`}
                 url={urlInfo.url}
                 icon={getFavicon(urlInfo.url, { fallback: Icon.Link })}
@@ -536,6 +528,13 @@ function CommitListItem({
                 shortcut={{ modifiers: ["cmd", "shift"], key: "a" }}
               />
             }
+            {Object.keys(remotesHosts).map((remote) => (
+              <RemoteOpenCommitAction
+                key={`${remote}-open-commit`}
+                remote={remotesHosts[remote]}
+                commit={commit.hash}
+              />
+            ))}
           </ActionPanel.Section>
 
           {commit.tags.map((tag) => (
@@ -602,16 +601,6 @@ function CommitListItem({
                 shortcut={{ modifiers: ["shift", "cmd"], key: "i" }}
               />
             )}
-            <Action.Push
-              title="Configure URL Tracker"
-              icon={Icon.Link}
-              target={
-                <ConfigureUrlTrackerForm
-                  repositoryPath={gitManager.repoPath}
-                  onConfigurationSaved={onRefresh}
-                />
-              }
-            />
           </ActionPanel.Section>
 
           {navigationActions}

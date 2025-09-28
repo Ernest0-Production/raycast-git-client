@@ -10,7 +10,7 @@ import {
   FileRestoreAction,
   FileHistoryAction,
 } from "../../components/actions/FileActions";
-import { getCommitFileIcon } from "../../components/icons/StatusIcons";
+import { CommitFileIcon } from "../../components/icons/StatusIcons";
 import { useState, useMemo } from "react";
 import { usePromise } from "@raycast/utils";
 import { existsSync } from "fs";
@@ -221,7 +221,7 @@ function FileListItem({
       id={fileId}
       title={file.path.split("/").pop() || file.path}
       subtitle={isShowingDetail ? undefined : file.path}
-      icon={getCommitFileIcon(file)}
+      icon={CommitFileIcon(file)}
       accessories={accessories}
       keywords={[file.path, file.oldPath].filter((keyword): keyword is string => Boolean(keyword))}
       detail={

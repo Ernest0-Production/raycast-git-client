@@ -5,18 +5,21 @@ import { GitManager } from "../../utils/git-manager";
 import { Commit, CommitFileChange } from "../../types";
 import { useGitDiff } from "../../hooks/useGitDiff";
 import { FileCopyPathAction, FileOpenAction, FileOpenWithAction, FileQuickLookAction, FileRestoreAction } from "../../components/actions/FileActions";
-import { getCommitFileIcon } from "../../components/icons/StatusIcons";
+import { CommitFileIcon } from "../../components/icons/StatusIcons";
 import { join } from "path";
 import { CommitCopyAuthorAction, CommitCopyHashAction, CommitCopyMessageAction } from "../../components/actions/CommitActions";
 import { existsSync } from "fs";
+import { RemotesHosts } from "../../hooks/useGitRemotes";
+import { RemoteOpenCommitAction } from "../../components/actions/RemoteHostActions";
 
 interface FileHistoryViewProps {
     gitManager: GitManager;
     filePath: string;
+    remotesHosts: RemotesHosts;
     onRefresh: () => void;
 }
 
-export default function FileHistoryView({ gitManager, filePath, onRefresh }: FileHistoryViewProps) {
+export default function FileHistoryView({ gitManager, filePath, remotesHosts, onRefresh }: FileHistoryViewProps) {
     const [isShowingDetail, setIsShowingDetail] = useState(false);
     const [isShowingMetadata, setIsShowingMetadata] = useCachedState("commits-metadata-visible", true);
     const [selectedCommitId, setSelectedCommitId] = useState<string | null>(null);
@@ -83,6 +86,7 @@ export default function FileHistoryView({ gitManager, filePath, onRefresh }: Fil
                             isShowingMetadata={isShowingMetadata}
                             onToggleMetadata={toggleMetadata}
                             onRefresh={onRefresh}
+                            remotesHosts={remotesHosts}
                         />
                     ))}
                 </List.Section>
@@ -101,6 +105,7 @@ interface CommitFileListItemProps {
     onToggleDetail: () => void;
     selectedCommitId: string | null;
     onRefresh: () => void;
+    remotesHosts: RemotesHosts;
 }
 
 function CommitListItem({
@@ -113,6 +118,7 @@ function CommitListItem({
     onToggleDetail,
     selectedCommitId,
     onRefresh,
+    remotesHosts,
 }: CommitFileListItemProps) {
     // Only load diff if this commit is selected and detail is visible
     const shouldLoadDiff = isShowingDetail && selectedCommitId === commit.hash;
@@ -141,7 +147,7 @@ function CommitListItem({
         <List.Item
             id={commit.hash}
             title={commit.message}
-            icon={getCommitFileIcon(file)}
+            icon={CommitFileIcon(file)}
             accessories={accessories}
             keywords={[
                 commit.hash,
@@ -209,6 +215,13 @@ function CommitListItem({
                         <CommitCopyMessageAction commit={commit} />
                         <CommitCopyAuthorAction commit={commit} />
                         <CommitCopyHashAction commit={commit} />
+                        {Object.keys(remotesHosts).map((remote) => (
+                            <RemoteOpenCommitAction
+                                key={`${remote}-open-commit`}
+                                remote={remotesHosts[remote]}
+                                commit={commit.hash}
+                            />
+                        ))}
                     </ActionPanel.Section>
 
                     <Action

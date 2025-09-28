@@ -6,6 +6,7 @@ import { CommitMessageForm } from "../../commands/views/CommitMessageView";
 import FileHistoryView from "../../commands/views/FileHistoryView";
 import { useEffect, useState } from "react";
 import { useCachedState } from "@raycast/utils";
+import { RemotesHosts } from "../../hooks/useGitRemotes";
 
 interface FileActionProps {
   file: FileStatus;
@@ -346,7 +347,7 @@ export function FileRestoreAction({ filePath, before = false, commit, gitManager
   );
 }
 
-export function FileHistoryAction({ filePath, gitManager, onRefresh, onOpen }: { filePath: string, gitManager: GitManager, onRefresh: () => void, onOpen?: () => void }) {
+export function FileHistoryAction({ filePath, gitManager, remotesHosts, onRefresh, onOpen }: { filePath: string, gitManager: GitManager, remotesHosts: RemotesHosts, onRefresh: () => void, onOpen?: () => void }) {
   if (!existsSync(filePath)) return null;
 
   return (
@@ -358,6 +359,7 @@ export function FileHistoryAction({ filePath, gitManager, onRefresh, onOpen }: {
         <FileHistoryView
           gitManager={gitManager}
           filePath={filePath}
+          remotesHosts={remotesHosts}
           onRefresh={onRefresh}
         />
       }

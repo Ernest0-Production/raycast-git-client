@@ -1,93 +1,83 @@
 import { useCachedState } from "@raycast/utils";
 import { UrlTrackerConfig } from "../types";
+import { nanoid } from "nanoid";
 
 /**
- * Hook to manage URL tracker configurations for a specific repository.
- *
- * @param repositoryPath The path of the repository.
+ * Hook to manage URL tracker configurations (global across the extension).
  */
-export function useUrlTracker(repositoryPath: string) {
-    const [allConfigs, setAllConfigs] = useCachedState<UrlTrackerConfig[]>(
-        `url-tracker-all-configs-${repositoryPath}`,
-        []
-    );
+export function useUrlTracker() {
+    const [configs, setConfigs] = useCachedState<UrlTrackerConfig[]>("url-tracker-configs", []);
 
-    const addConfig = (newConfig: UrlTrackerConfig) => {
-        setAllConfigs([...allConfigs, newConfig]);
+    const addConfig = (title: string, regex: string, urlPlaceholder: string) => {
+        const newConfig: UrlTrackerConfig = {
+            id: nanoid(),
+            title: title.trim(),
+            regex: regex.trim(),
+            urlPlaceholder: urlPlaceholder.trim(),
+        };
+        setConfigs((current) => [newConfig, ...current]);
         return newConfig;
     };
 
-    const updateConfig = (updatedConfig: UrlTrackerConfig) => {
-        setAllConfigs(allConfigs.map((c) => (c.id === updatedConfig.id ? updatedConfig : c)));
+    const updateConfig = (id: string, title: string, regex: string, urlPlaceholder: string) => {
+        setConfigs((current) =>
+            current.map((c) => (c.id === id ? { ...c, title: title.trim(), regex: regex.trim(), urlPlaceholder: urlPlaceholder.trim() } : c)),
+        );
     };
 
     const deleteConfig = (configId: string) => {
-        setAllConfigs(allConfigs.filter((c) => c.id !== configId));
+        setConfigs((current) => current.filter((c) => c.id !== configId));
     };
 
-    return {
-        configs: allConfigs,
-        setConfigs: setAllConfigs,
-        addConfig,
-        updateConfig,
-        deleteConfig,
-    };
-}
-
-/**
- * Validates URL tracker configuration.
- */
-export function validateUrlTrackerConfig(config: UrlTrackerConfig): string | null {
-    // Test regex validity
-    try {
+    const validateConfig = (config: { title: string; regex: string; urlPlaceholder: string }) => {
+        // Test regex validity
         new RegExp(config.regex);
-    } catch (error) {
-        return "Invalid regex pattern";
-    }
 
-    // Check if URL template contains @key placeholder
-    if (!config.urlPlaceholder.includes("@key")) {
-        return "URL template must contain @key placeholder";
-    }
-
-    return null;
-}
-
-/**
- * Extracts URLs from commit message using provided configurations.
- */
-export function extractUrlsFromCommitWithConfigs(
-    message: string,
-    configs: UrlTrackerConfig[],
-): Array<{ title: string; url: string }> {
-    const results: Array<{ title: string; url: string }> = [];
-
-    for (const config of configs) {
-        try {
-            const regex = new RegExp(config.regex, "i");
-            const match = message.match(regex);
-
-            let extractedKey: string | null = null;
-
-            if (match && match.length > 1) {
-                // Use first capture group
-                extractedKey = match[1];
-            } else if (match && match.length === 1) {
-                // Use full match if no capture groups
-                extractedKey = match[0];
-            }
-
-            if (extractedKey) {
-                const url = config.urlPlaceholder.replace("@key", extractedKey);
-                results.push({ title: config.title, url });
-            }
-        } catch {
-            // Skip invalid regex patterns
-            console.error(`Invalid regex pattern in config "${config.title}"`);
+        // Check if URL template contains @key placeholder
+        if (!config.urlPlaceholder.includes("@key")) {
+            throw new Error("URL template must contain @key placeholder");
         }
     }
 
-    return results;
+    const findUrls = (text: string) => {
+        const results: Array<{ title: string; url: string }> = [];
+
+        for (const config of configs) {
+            try {
+                const regex = new RegExp(config.regex, "i");
+                const match = text.match(regex);
+
+                let extractedKey: string | null = null;
+
+                if (match && match.length > 1) {
+                    // Use first capture group
+                    extractedKey = match[1];
+                } else if (match && match.length === 1) {
+                    // Use full match if no capture groups
+                    extractedKey = match[0];
+                }
+
+                if (extractedKey) {
+                    const url = config.urlPlaceholder.replace("@key", extractedKey);
+                    results.push({ title: config.title, url });
+                }
+            } catch {
+                // Skip invalid regex patterns
+                console.error(`Invalid regex pattern in config "${config.title}"`);
+            }
+        }
+
+        return results;
+    }
+
+    return {
+        configs,
+        addConfig,
+        updateConfig,
+        deleteConfig,
+        validateConfig,
+        findUrls,
+    };
 }
 
 /**

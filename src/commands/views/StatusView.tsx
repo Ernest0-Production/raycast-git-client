@@ -19,12 +19,13 @@ import {
   CreatePatchAction,
   ApplyPatchAction,
 } from "../../components/actions/FileActions";
-import { getFileStatusIcon } from "../../components/icons/StatusIcons";
+import { FileStatusIcon } from "../../components/icons/StatusIcons";
 import { CreateStashAction } from "../../components/actions/StashActions";
 import { GitManager } from "../../utils/git-manager";
 import { Branch, FileStatus, StatusState } from "../../types";
 import { useMemo, useState } from "react";
 import { existsSync } from "fs";
+import { RemotesHosts } from "../../hooks/useGitRemotes";
 
 interface StatusViewProps {
   gitManager: GitManager;
@@ -38,6 +39,7 @@ interface StatusViewProps {
   revalidateStatus: () => void | Promise<unknown>;
   revalidateCommits: () => void | Promise<unknown>;
   revalidateBranches: () => void | Promise<unknown>;
+  remotesHosts: RemotesHosts;
 }
 
 export function StatusView({
@@ -50,7 +52,8 @@ export function StatusView({
   error,
   revalidateStatus,
   revalidateCommits,
-  revalidateBranches
+  revalidateBranches,
+  remotesHosts,
 }: StatusViewProps) {
   const [isShowingDetail, setIsShowingDetail] = useState(false);
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
@@ -159,6 +162,7 @@ export function StatusView({
                   isShowingDetail={isShowingDetail}
                   onToggleDetail={toggleDetail}
                   selectedFilePath={selectedFilePath}
+                  remotesHosts={remotesHosts}
                   onCommitSuccess={refreshAndNavigateToCommits}
                 />
               ))}
@@ -179,6 +183,7 @@ export function StatusView({
                   isShowingDetail={isShowingDetail}
                   onToggleDetail={toggleDetail}
                   selectedFilePath={selectedFilePath}
+                  remotesHosts={remotesHosts}
                   onCommitSuccess={refreshAndNavigateToCommits}
                 />
               ))}
@@ -201,6 +206,7 @@ interface FileListItemProps {
   onToggleDetail: () => void;
   selectedFilePath: string | null;
   onCommitSuccess: () => void;
+  remotesHosts: RemotesHosts;
 }
 
 function FileListItem({
@@ -214,6 +220,7 @@ function FileListItem({
   onToggleDetail,
   selectedFilePath,
   onCommitSuccess,
+  remotesHosts,
 }: FileListItemProps) {
   // Create a unique identifier for each file item
   const fileId = `${file.relativePath}-${file.status}`;
@@ -232,7 +239,7 @@ function FileListItem({
       id={fileId}
       title={file.path.split("/").pop() || file.path}
       subtitle={isShowingDetail ? undefined : file.relativePath}
-      icon={getFileStatusIcon(file)}
+      icon={FileStatusIcon(file)}
       keywords={[file.path, file.oldPath].filter((keyword): keyword is string => Boolean(keyword))}
       detail={
         isShowingDetail ? (
@@ -274,7 +281,12 @@ function FileListItem({
                 )}
               </>
             )}
-            <FileHistoryAction filePath={file.path} gitManager={gitManager} onRefresh={onRefresh} />
+            <FileHistoryAction
+              filePath={file.path}
+              gitManager={gitManager}
+              remotesHosts={remotesHosts}
+              onRefresh={onRefresh}
+            />
           </ActionPanel.Section>
 
           <ActionPanel.Section>

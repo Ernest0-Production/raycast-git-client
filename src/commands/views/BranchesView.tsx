@@ -17,7 +17,7 @@ import { GitManager } from "../../utils/git-manager";
 import { Branch, DetachedHead, BranchesState, GitView } from "../../types";
 import { useMemo } from "react";
 import { RemotesHosts } from "../../hooks/useGitRemotes";
-import { getRemoteHostIcon } from "../../components/icons/RemoteHostIcons";
+import { RemoteHostIcon } from "../../components/icons/RemoteHostIcons";
 
 interface BranchesViewProps {
   gitManager: GitManager;
@@ -225,7 +225,7 @@ function BranchListItem({
           color: branch.isGone ? Color.Yellow : Color.SecondaryText,
         },
         tooltip: branch.isGone ? "Upstream was removed from remote" : "Tracked upstream",
-        icon: branch.isGone ? Icon.ExclamationMark : getRemoteHostIcon(remotesHosts[branch.upstream!.split("/")[0]]?.provider)
+        icon: branch.isGone ? Icon.ExclamationMark : RemoteHostIcon(remotesHosts[branch.upstream!.split("/")[0]]?.provider)
       });
     }
 
@@ -237,7 +237,7 @@ function BranchListItem({
     if (branch.type === "current") {
       return { source: Icon.Dot, tintColor: Color.Green };
     } else if (branch.type === "remote") {
-      return getRemoteHostIcon(remotesHosts[branch.remote!]?.provider);
+      return RemoteHostIcon(remotesHosts[branch.remote!]?.provider);
     } else {
       return { source: Icon.Dot, tintColor: Color.SecondaryText };
     }

@@ -29,9 +29,6 @@ import {
   ConflictState,
   MergeMode,
   PatchScope,
-  RemoteMetadata,
-  RemoteProvider,
-  RemoteProtocol,
 } from "../types";
 import * as path from "path";
 import { promises as fs } from "fs";
@@ -85,8 +82,12 @@ export class GitManager {
    */
   private setupGlobalLogging(): void {
     this.git.outputHandler((command, stdout, stderr, args) => {
+      const ignoredCommands = [
+        'ls-files',
+        'remote'
+      ];
       // Skip logging for ls-files command
-      if (args.includes('ls-files')) {
+      if (ignoredCommands.some(command => args.includes(command))) {
         return;
       }
 
@@ -1162,71 +1163,6 @@ __REBASE_TODO__
       name: remote.name,
       url: remote.refs.fetch || remote.refs.push || "",
     }));
-  }
-
-  /**
-   * Gets detailed metadata for all remotes including URLs, protocol and provider.
-   */
-  async getRemotesMetadata(): Promise<RemoteMetadata[]> {
-    const remotes = await this.git.getRemotes(true);
-
-    /**
-  * Detects protocol type from remote URL.
-  */
-    const detectRemoteProtocol = (url: string): RemoteProtocol => {
-      if (!url) return "http";
-      const lower = url.toLowerCase();
-      if (lower.startsWith("ssh://") || /^[^@\s]+@[^:]+:/.test(url)) {
-        return "ssh";
-      }
-      return "http";
-    }
-
-    /**
-  * Extracts hostname from http(s)/ssh URL or scp-like SSH URL.
-  */
-    function extractHostname(url: string): string | undefined {
-      // scp-like: user@host:org/repo.git
-      const scpMatch = url.match(/^[^@\s]+@([^:/]+)[:/].*$/);
-      if (scpMatch) return scpMatch[1];
-
-      try {
-        const parsed = new URL(url);
-        return parsed.hostname || undefined;
-      } catch {
-        return undefined;
-      }
-    }
-
-    /**
-     * Detects hosting provider based on remote URL hostname.
-     */
-    const detectRemoteProvider = (url: string): RemoteProvider => {
-      if (!url) return undefined;
-
-      const host = extractHostname(url);
-      if (!host) return undefined;
-
-      const hostname = host.toLowerCase();
-      if (hostname.includes("github")) return "github";
-      if (hostname.includes("gitlab")) return "gitlab";
-      if (hostname.includes("bitbucket")) return "bitbucket";
-      if (hostname.includes("azure") || hostname.includes("visualstudio")) return "azure-devops";
-      if (hostname.includes("gitea") || hostname === "codeberg.org") return "gitea";
-      return undefined;
-    }
-
-    return remotes.map((remote) => {
-      return {
-        name: remote.name,
-        urls: {
-          fetch: remote.refs.fetch,
-          push: remote.refs.push,
-        },
-        type: detectRemoteProtocol(remote.refs.fetch),
-        provider: detectRemoteProvider(remote.refs.fetch),
-      };
-    });
   }
 
   /**

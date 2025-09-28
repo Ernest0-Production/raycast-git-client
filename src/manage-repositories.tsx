@@ -1,5 +1,5 @@
 import { ActionPanel, Action, Icon, List, confirmAlert, Alert, showToast, Toast, Form, useNavigation, Color } from "@raycast/api";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRepositoriesList } from "./hooks/useRepositoriesList";
 import { RepositoryDirectoryActions } from "./components/actions/RepositoryDirectoryActions";
 import { validateGitRepository } from "./utils/validation";
@@ -7,6 +7,10 @@ import OpenRepository from "./open-repository";
 import { showFailureToast } from "@raycast/utils";
 import { Repository } from "./types";
 import { RepositoriesView, useRepositoriesView } from "./hooks/useRepositoriesView";
+import { useGitRemotes } from "./hooks/useGitRemotes";
+import { RemoteHostIcon } from "./components/icons/RemoteHostIcons";
+import { useGitRepository } from "./hooks/useGitRepository";
+import { RemoteOpenPullRequestAction } from "./components/actions/RemoteHostActions";
 
 export default function ManageRepositories() {
   const { repositories, addRepository, visitRepository, removeRepository, clearRepositoriesList } = useRepositoriesList();
@@ -141,12 +145,29 @@ function RepositoryListItem({
   selectedView: RepositoriesView;
   onViewChange: (view: RepositoriesView) => void;
 }) {
-  const accessories = useMemo(() => {
+  const { data: gitManager } = useGitRepository(repo.path);
+  if (!gitManager) return null;
+  const { data: remotes } = useGitRemotes(gitManager);
+
+  const accessories: List.Item.Accessory[] = useMemo(() => {
+    const result = [];
+
     if (repo.languageStats && repo.languageStats.length > 0) {
-      return repo.languageStats.map((lang) => ({ tag: { value: lang.name, color: lang.color } }));
+      result.push(...repo.languageStats.map((lang) => ({
+        tag: { value: lang.name, color: lang.color },
+        tooltip: "Primary language",
+      })));
     }
-    return undefined;
-  }, [repo.languageStats]);
+
+    if (remotes && Object.keys(remotes).length > 0) {
+      result.push(...Object.keys(remotes).map((remote) => ({
+        icon: RemoteHostIcon(remotes[remote].provider),
+        tooltip: `Hosted on ${remotes[remote].provider}`,
+      })));
+    }
+
+    return result;
+  }, [repo.languageStats, remotes]);
 
   return (
     <List.Item
@@ -189,6 +210,12 @@ function RepositoryListItem({
           </ActionPanel.Section>
 
           <RepositoryDirectoryActions repositoryPath={repo.path} onOpen={onOpen} />
+
+          {remotes && Object.keys(remotes).map((remote) => (
+            <ActionPanel.Section key={remote} title={remote}>
+              <RemoteOpenPullRequestAction key={remote} remote={remotes[remote]} />
+            </ActionPanel.Section>
+          ))}
 
           <ActionPanel.Section title="View">
             <ActionPanel.Submenu title="Sort by" icon={Icon.NumberList}>

@@ -28,6 +28,12 @@
       ]
     },
     {
+      "name": "configure-url-trackers",
+      "title": "Configure URL Trackers",
+      "description": "Manage URL tracker rules for linking commit messages",
+      "mode": "view"
+    },
+    {
       "name": "manage-ai-message-prompts",
       "title": "Manage AI Message Prompts",
       "description": "Configure AI commit message prompt presets",

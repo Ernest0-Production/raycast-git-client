@@ -2,7 +2,7 @@ import { ActionPanel, Action, Icon, Color, Image } from "@raycast/api";
 import { BranchesState, DetachedHead, Branch } from "../../types";
 import { ALL_BRANCHES_FILTER, CURRENT_BRANCH_FILTER } from "../../hooks/useCommitsBranchFilter";
 import { useMemo } from "react";
-import { getRemoteHostIcon } from "../icons/RemoteHostIcons";
+import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 import { RemotesHosts } from "../../hooks/useGitRemotes";
 
 interface CommitBranchFilterActionProps {
@@ -104,7 +104,7 @@ function BranchFilterAction({
     let baseIcon: Image.ImageLike = Icon.Dot;
     switch (branch.type) {
       case "remote":
-        baseIcon = getRemoteHostIcon(remotesHosts[branch.remote!]?.provider);
+        baseIcon = RemoteHostIcon(remotesHosts[branch.remote!]?.provider);
         break;
       case "local":
         baseIcon = Icon.Dot;

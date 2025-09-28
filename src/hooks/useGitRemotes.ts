@@ -1,30 +1,55 @@
 import { useCachedPromise } from "@raycast/utils";
 import { GitManager } from "../utils/git-manager";
-import { RemoteMetadata } from "../types";
+import { Remote } from "../types";
+import { remoteHostParser } from "../utils/remote-host-parser";
 
-/**
- * Alias type for dictionary of remote metadata
- */
-export type RemotesHosts = Record<string, RemoteMetadata>;
+export type RemotesHosts = Record<string, Remote>;
 
 /**
  * Hook for fetching Git remotes metadata.
  * Returns a dictionary keyed by remote name.
  * Repository path is included in cache dependencies to ensure separate cache per repository.
  */
-export function useGitRemotes(gitManager: GitManager) {
-  return useCachedPromise(
-    async (repoPath: string) => {
-      const remotes = await gitManager.getRemotesMetadata();
-
-      const remotesRecords = remotes.reduce<RemotesHosts>((dictionary, remote) => {
-        dictionary[remote.name] = remote;
-        return dictionary;
-      }, {});
-
-      return remotesRecords;
-    },
+export function useGitRemotes(gitManager: GitManager): { data: RemotesHosts; isLoading: boolean } {
+  const { data: remotes = [], isLoading } = useCachedPromise(
+    async (repoPath: string) => gitManager.getRemotes(),
     [gitManager.repoPath]
   );
+
+  const remotesRecords = remotes.reduce<RemotesHosts>((dictionary, remote) => {
+    const parser = remoteHostParser(remote.url);
+
+    const info: Remote = {
+      name: remote.name,
+      url: remote.url,
+      type: detectRemoteProtocol(remote.url),
+      repositoryName: parser.repositoryName,
+      provider: parser.provider,
+      pages: {
+        get mainPage() { return parser.repositoryWebUrl; },
+        get pullRequests() { return parser.pullRequestsListUrl; },
+        commitPage: parser.commitUrl,
+        createPullRequestForm: parser.createPullRequestUrl,
+      }
+    };
+    dictionary[remote.name] = info;
+
+    return dictionary;
+  }, {} as RemotesHosts);
+
+  return {
+    data: remotesRecords,
+    isLoading
+  };
+}
+
+function detectRemoteProtocol(url: string): "ssh" | "http" {
+  const lower = url.toLowerCase();
+
+  if (lower.startsWith("ssh://") || /^[^@\s]+@[^:]+:/.test(url)) {
+    return "ssh";
+  }
+
+  return "http";
 }
 

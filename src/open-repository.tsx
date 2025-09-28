@@ -16,6 +16,7 @@ import { useGitStash } from "./hooks/useGitStash";
 import { useGitStatus } from "./hooks/useGitStatus";
 import { GitView } from "./types";
 import { useGitRemotes } from "./hooks/useGitRemotes";
+import { RemoteCreatePullRequestAction, RemoteOpenPullRequestAction } from "./components/actions/RemoteHostActions";
 
 interface Arguments {
   path: string;
@@ -143,6 +144,18 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
         />
       </ActionPanel.Section>
       <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} />
+      {remotes && Object.keys(remotes).map((remote) => (
+        <ActionPanel.Section key={remote} title={remote}>
+          <RemoteOpenPullRequestAction key={`${remote}-open-pull-request`} remote={remotes[remote]} />
+          {branchesState?.currentBranch && (
+            <RemoteCreatePullRequestAction
+              key={`${remote}-create-pull-request`}
+              branch={branchesState.currentBranch.name}
+              remote={remotes[remote]}
+            />
+          )}
+        </ActionPanel.Section>
+      ))}
     </>
   );
 
@@ -177,6 +190,7 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           revalidateStatus={revalidateStatus}
           revalidateCommits={revalidateCommits}
           revalidateBranches={revalidateBranches}
+          remotesHosts={remotes ?? {}}
         />
       );
     case "commits":
@@ -226,6 +240,7 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           gitManager={gitManager}
           navigationActions={navigationActions}
           viewDropdown={viewSelectorDropdown}
+          remotesHosts={remotes ?? {}}
           onRefresh={() => {
             revalidateStatus();
           }}

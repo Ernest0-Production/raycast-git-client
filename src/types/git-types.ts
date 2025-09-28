@@ -176,47 +176,32 @@ export interface Stash {
 }
 
 /**
- * Represents a Git remote repository.
- */
-export interface Remote {
-  /** The name of the remote (e.g., 'origin'). */
-  name: string;
-  /** The URL of the remote repository. */
-  url: string;
-}
-
-/**
  * Known Git hosting providers.
  */
 export type RemoteProvider =
-  | "github"
-  | "gitlab"
-  | "bitbucket"
-  | "azure-devops"
-  | "gitea"
+  | "GitHub"
+  | "GitLab"
+  | "Bitbucket"
+  | "Azure DevOps"
+  | "Gitea"
   | undefined;
 
 /**
- * Connection protocol type for a remote URL.
+ * Extended remote info with parser-computed properties.
  */
-export type RemoteProtocol = "ssh" | "http";
-
-/**
- * Detailed metadata for a Git remote.
- */
-export interface RemoteMetadata {
-  /** The remote name (e.g., origin). */
+export type Remote = {
   name: string;
-  /** Fetch and push URLs for the remote if present. */
-  urls: {
-    fetch?: string;
-    push?: string;
-  };
-  /** Connection protocol detected from URL (ssh or http). */
-  type: RemoteProtocol;
-  /** Detected hosting provider or undefined if unknown. */
+  url: string;
+  type: "ssh" | "http";
+  repositoryName?: string;
   provider: RemoteProvider;
-}
+  pages: {
+    mainPage?: string;
+    pullRequests?: string;
+    commitPage: (sha: string) => string | undefined;
+    createPullRequestForm: (branchName: string) => string | undefined;
+  }
+};
 
 /**
  * Represents a Git tag.

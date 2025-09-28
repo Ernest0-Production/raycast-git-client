@@ -6,17 +6,19 @@ import { join } from "path";
 import { useMemo, useState } from "react";
 import { existsSync } from "fs";
 import { search, sortKind } from "fast-fuzzy";
+import { RemotesHosts } from "../../hooks/useGitRemotes";
 
 interface FilesViewProps {
     gitManager: GitManager;
     navigationActions: React.ReactNode;
     viewDropdown: React.ReactElement<any>;
+    remotesHosts: RemotesHosts;
     onRefresh: () => void;
 }
 
 const MAX_RESULTS = 60;
 
-export default function FilesView({ gitManager, navigationActions, viewDropdown, onRefresh }: FilesViewProps) {
+export default function FilesView({ gitManager, navigationActions, viewDropdown, remotesHosts, onRefresh }: FilesViewProps) {
     const [searchText, setSearchText] = useState("");
     const [isSearching, setIsSearching] = useState(false);
     const [recentFiles, setRecentFiles] = useCachedState<string[]>(`recent-files-${gitManager.repoPath}`, []);
@@ -101,6 +103,7 @@ export default function FilesView({ gitManager, navigationActions, viewDropdown,
                                             navigationActions={navigationActions}
                                             onRefresh={onRefresh}
                                             onOpen={() => handleAddRecent(filePath)}
+                                            remotesHosts={remotesHosts}
                                         />
                                     ))}
                             </List.Section>
@@ -128,6 +131,7 @@ export default function FilesView({ gitManager, navigationActions, viewDropdown,
                                 navigationActions={navigationActions}
                                 onRefresh={onRefresh}
                                 onOpen={() => handleAddRecent(filePath)}
+                                remotesHosts={remotesHosts}
                             />
                         ))
                     )}
@@ -143,12 +147,14 @@ function FileListItem({
     navigationActions,
     onRefresh,
     onOpen,
+    remotesHosts,
 }: {
     filePath: string;
     gitManager: GitManager;
     navigationActions: React.ReactNode;
     onRefresh: () => void;
     onOpen?: () => void;
+    remotesHosts: RemotesHosts;
 }) {
     const fileName = useMemo(() => filePath.split("/").pop() || filePath, [filePath]);
     const absolutePath = join(gitManager.repoPath, filePath);
@@ -166,6 +172,7 @@ function FileListItem({
                         <FileHistoryAction
                             filePath={absolutePath}
                             gitManager={gitManager}
+                            remotesHosts={remotesHosts}
                             onRefresh={onRefresh}
                             onOpen={onOpen}
                         />

@@ -4,7 +4,7 @@ import { CommitFileChange, FileStatus } from "../../types/git-types";
 /**
  * Icons for different types of changes
  */
-export const getFileStatusIcon = (file: FileStatus) => {
+export const FileStatusIcon = (file: FileStatus) => {
     switch (file.type) {
         case "added":
             return { source: `plus-square.svg`, tintColor: Color.Green, tooltip: "Added" };
@@ -26,7 +26,7 @@ export const getFileStatusIcon = (file: FileStatus) => {
 /**
  * Icons for commit file changes
  */
-export const getCommitFileIcon = (change: CommitFileChange) => {
+export const CommitFileIcon = (change: CommitFileChange) => {
     switch (change.status) {
         case "added":
             return { source: `plus-square.svg`, tintColor: Color.Green, tooltip: "Added" };
