@@ -405,8 +405,6 @@ function CommitListItem({
     commit.currentBranchName,
   ]);
 
-  console.log(commit.message)
-
   return (
     <List.Item
       id={commit.hash}

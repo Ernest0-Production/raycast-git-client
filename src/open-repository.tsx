@@ -14,9 +14,10 @@ import { useCommitsBranchFilter } from "./hooks/useCommitsBranchFilter";
 import { useGitCommits } from "./hooks/useGitCommits";
 import { useGitStash } from "./hooks/useGitStash";
 import { useGitStatus } from "./hooks/useGitStatus";
-import { GitView } from "./types";
+import { GitView, FileStatus } from "./types";
 import { useGitRemotes } from "./hooks/useGitRemotes";
 import { RemoteCreatePullRequestAction, RemoteOpenPullRequestAction } from "./components/actions/RemoteHostActions";
+import RemotesView from "./commands/views/RemotesView";
 
 interface Arguments {
   path: string;
@@ -52,7 +53,7 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
     );
   }
 
-  const { data: remotes } = useGitRemotes(gitManager);
+  const { data: remotes, revalidate: revalidateRemotes } = useGitRemotes(gitManager);
 
   // Shared data hooks lifted to the top-level to persist across view switches
   const {
@@ -131,16 +132,22 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           shortcut={{ modifiers: ["cmd"], key: "3" }}
         />
         <Action
+          title="Go to Remotes"
+          onAction={() => setCurrentView("remotes")}
+          icon={Icon.Network}
+          shortcut={{ modifiers: ["cmd"], key: "4" }}
+        />
+        <Action
           title="Go to Files History"
           onAction={() => setCurrentView("files")}
           icon={Icon.Document}
-          shortcut={{ modifiers: ["cmd"], key: "4" }}
+          shortcut={{ modifiers: ["cmd"], key: "5" }}
         />
         <Action
           title="Go to Stash"
           onAction={() => setCurrentView("stashes")}
           icon={Icon.Bookmark}
-          shortcut={{ modifiers: ["cmd"], key: "5" }}
+          shortcut={{ modifiers: ["cmd"], key: "6" }}
         />
       </ActionPanel.Section>
       <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} />
@@ -149,10 +156,9 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           key={remote}
           title={`${remote} • ${remotes[remote].organizationName}/${remotes[remote].repositoryName}`}
         >
-          <RemoteOpenPullRequestAction key={`${remote}-open-pull-request`} remote={remotes[remote]} />
+          <RemoteOpenPullRequestAction remote={remotes[remote]} />
           {branchesState?.currentBranch && (
             <RemoteCreatePullRequestAction
-              key={`${remote}-create-pull-request`}
               branch={branchesState.currentBranch.name}
               remote={remotes[remote]}
             />
@@ -167,13 +173,14 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
     <List.Dropdown
       tooltip="Select View"
       value={currentView}
-      onChange={(newValue) => setCurrentView(newValue as GitView)}
+      onChange={(newValue: string) => setCurrentView(newValue as GitView)}
     >
       <List.Dropdown.Item title="Status" value="status" keywords={["diff", "changes", "state", "workspace", "patch"]} icon={Icon.NewDocument} />
       <List.Dropdown.Item title="Commits" value="commits" keywords={["log", "history"]} icon={`git-commit.svg`} />
       <List.Dropdown.Item title="Branches" value="branches" keywords={["graph", "remote"]} icon={`git-branch.svg`} />
+      <List.Dropdown.Item title="Remotes" value="remotes" keywords={["origin"]} icon={Icon.Network} />
       <List.Dropdown.Item title="Files" value="files" keywords={["history", "ls-files", "workspace", "project"]} icon={Icon.Clock} />
-      <List.Dropdown.Item title="Stashes" value="stashes" icon={Icon.Bookmark} />
+      <List.Dropdown.Item title="Stashes" value="stashes" keywords={["bookmark"]} icon={Icon.Bookmark} />
     </List.Dropdown>
   );
 
@@ -230,11 +237,21 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           isLoading={branchesIsLoading}
           error={branchesError}
           revalidateBranches={revalidateBranches}
-          hasConflicts={status?.files?.some(file => file.type === "conflicted")}
+          hasConflicts={status?.files?.some((file: FileStatus) => file.type === "conflicted")}
           hasUncommittedChanges={status?.files?.length !== 0}
           revalidateStatus={revalidateStatus}
           navigateTo={setCurrentView}
           remotesHosts={remotes ?? {}}
+        />
+      );
+    case "remotes":
+      return (
+        <RemotesView
+          gitManager={gitManager}
+          navigationActions={navigationActions}
+          viewDropdown={viewSelectorDropdown}
+          remoteHosts={remotes ?? {}}
+          onRevalidateRemotes={revalidateRemotes}
         />
       );
     case "files":

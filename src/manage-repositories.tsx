@@ -135,7 +135,6 @@ function RepositoryListItem({
 
   const icon: Image.ImageLike = useMemo(() => {
     if (repo.languageStats && repo.languageStats.length > 0 && repo.languageStats[0].color) {
-      console.log("language stats", repo.languageStats[0].color);
       return repo.languageStats[0].color;
     }
 

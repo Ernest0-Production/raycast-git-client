@@ -84,6 +84,7 @@ export class GitManager {
     this.git.outputHandler((command, stdout, stderr, args) => {
       const ignoredCommands = [
         'ls-files',
+        'ls-remote',
         'remote'
       ];
       // Skip logging for ls-files command
@@ -1160,19 +1161,38 @@ __REBASE_TODO__
   /**
    * Gets a list of all remotes.
    */
-  async getRemotes(): Promise<{ name: string; url: string }[]> {
+  async getRemotes(): Promise<{ name: string; fetchUrl: string; pushUrl: string }[]> {
     const remotes = await this.git.getRemotes(true);
     return remotes.map((remote) => ({
       name: remote.name,
-      url: remote.refs.fetch || remote.refs.push || "",
+      fetchUrl: remote.refs.fetch,
+      pushUrl: remote.refs.push,
     }));
+  }
+
+  /**
+   * Checks connectivity to a given remote using `git ls-remote`.
+   */
+  async checkRemoteConnectivity(remoteName: string): Promise<void> {
+    await this.git.listRemote(["--heads", remoteName, "HEAD", "--quiet"]);
   }
 
   /**
    * Adds a new remote.
    */
-  async addRemote(name: string, url: string): Promise<void> {
-    await this.git.addRemote(name, url);
+  async addRemote(name: string, fetchUrl: string, pushUrl?: string): Promise<void> {
+    await this.git.addRemote(name, fetchUrl);
+
+    if (pushUrl) {
+      await this.git.raw(["remote", "set-url", "--push", name, pushUrl]);
+    }
+  }
+
+  async updateRemote(name: string, fetchUrl: string, pushUrl?: string): Promise<void> {
+    await this.git.raw(["remote", "set-url", name, fetchUrl]);
+    if (pushUrl) {
+      await this.git.raw(["remote", "set-url", "--push", name, pushUrl]);
+    }
   }
 
   /**

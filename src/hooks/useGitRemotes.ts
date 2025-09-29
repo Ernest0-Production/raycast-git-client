@@ -10,19 +10,21 @@ export type RemotesHosts = Record<string, Remote>;
  * Returns a dictionary keyed by remote name.
  * Repository path is included in cache dependencies to ensure separate cache per repository.
  */
-export function useGitRemotes(gitManager: GitManager): { data: RemotesHosts; isLoading: boolean } {
-  const { data: remotes = [], isLoading } = useCachedPromise(
+export function useGitRemotes(gitManager: GitManager): { data: RemotesHosts; isLoading: boolean; revalidate: () => void | Promise<unknown> } {
+  const { data: remotes = [], isLoading, revalidate } = useCachedPromise(
     async (repoPath: string) => gitManager.getRemotes(),
     [gitManager.repoPath]
   );
 
   const remotesRecords = remotes.reduce<RemotesHosts>((dictionary, remote) => {
-    const parser = remoteHostParser(remote.url);
+    const primaryUrl = remote.fetchUrl || remote.pushUrl || "";
+    const parser = remoteHostParser(primaryUrl);
 
     const info: Remote = {
       name: remote.name,
-      url: remote.url,
-      type: detectRemoteProtocol(remote.url),
+      fetchUrl: remote.fetchUrl,
+      pushUrl: remote.pushUrl,
+      type: detectRemoteProtocol(primaryUrl),
       organizationName: parser.organizationName,
       repositoryName: parser.repositoryName,
       provider: parser.provider,
@@ -40,7 +42,8 @@ export function useGitRemotes(gitManager: GitManager): { data: RemotesHosts; isL
 
   return {
     data: remotesRecords,
-    isLoading
+    isLoading,
+    revalidate
   };
 }
 
