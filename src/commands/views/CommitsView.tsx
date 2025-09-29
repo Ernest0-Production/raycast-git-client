@@ -107,7 +107,6 @@ export function CommitsView({
       navigationTitle="Repository Commits"
       searchBarPlaceholder="Search commits by message, sha, author, tags, files..."
       selectedItemId={selectedCommitId || undefined}
-      onSelectionChange={setSelectedCommitId}
       isShowingDetail={isShowingDetail}
       searchBarAccessory={viewDropdown}
       actions={
@@ -200,7 +199,6 @@ export function CommitsView({
               onToggleMetadata={toggleMetadata}
               urlTrackerConfigs={urlTrackerConfigs}
               findUrls={findUrls}
-              selectedCommitId={selectedCommitId}
               isAllBranchesFilter={selectedBranch === undefined}
               selectedBranch={selectedBranch}
               branchFilter={branchFilter}
@@ -230,7 +228,6 @@ interface CommitListItemProps {
   onToggleMetadata: () => void;
   urlTrackerConfigs: UrlTrackerConfig[];
   findUrls: (text: string) => Array<{ title: string; url: string }>;
-  selectedCommitId: string | null;
   isAllBranchesFilter: boolean;
   selectedBranch?: Branch | DetachedHead;
   branchFilter: string;
@@ -254,7 +251,6 @@ function CommitListItem({
   onToggleMetadata,
   urlTrackerConfigs,
   findUrls,
-  selectedCommitId,
   isAllBranchesFilter,
   selectedBranch,
   branchFilter,
@@ -275,13 +271,10 @@ function CommitListItem({
   }, [selectedBranch, index]);
 
   const commitUrls = useMemo(() => {
-    if (selectedCommitId !== commit.hash) return [];
     return findUrls(commit.message);
-  }, [selectedCommitId, commit.hash, commit.message]);
+  }, [commit.hash, commit.message]);
 
   const formatCommitDetail = (commit: Commit, urlTrackerConfigs: UrlTrackerConfig[]): string => {
-    if (selectedCommitId !== commit.hash) return "";
-
     // 1. Commit title (## heading) with URL patterns replaced by links
     const commitMessageWithLinks = replaceUrlPatternsWithLinks(commit.message, urlTrackerConfigs);
     let detail = `### ${commitMessageWithLinks}\n\n`;
@@ -411,6 +404,8 @@ function CommitListItem({
     commit.remoteBranches,
     commit.currentBranchName,
   ]);
+
+  console.log(commit.message)
 
   return (
     <List.Item
