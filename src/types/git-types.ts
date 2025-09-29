@@ -2,7 +2,7 @@
 /**
  * Represents a Git repository with access information.
  */
-import { Color } from "@raycast/api";
+import { Image } from "@raycast/api";
 
 export interface Repository {
   /** Unique identifier for the repository. */
@@ -26,7 +26,7 @@ export interface LanguageStats {
   /** Percentage of tracked files belonging to this language. */
   percentage: number;
   /** Optional UI color to display for the language. */
-  color?: Color;
+  color?: Image.ImageLike;
 }
 
 

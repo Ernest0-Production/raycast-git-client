@@ -50,11 +50,11 @@ export function useRepositoriesView(repositories: Repository[]) {
             switch (currentView.group) {
                 case "language":
                     if (repo.languageStats && repo.languageStats.length > 0) {
-                        for (const lang of repo.languageStats) {
-                            const groupTitle = lang.name;
-                            const existingGroup = groups.get(groupTitle) || [];
-                            groups.set(groupTitle, [...existingGroup, repo]);
-                        }
+                        const primaryLanguage = repo.languageStats[0];
+                        const groupTitle = primaryLanguage.name;
+                        const existingGroup = groups.get(groupTitle) || [];
+                        groups.set(groupTitle, [...existingGroup, repo]);
+                        break;
                     } else {
                         const groupTitle = "Unknown";
                         const existingGroup = groups.get(groupTitle) || [];

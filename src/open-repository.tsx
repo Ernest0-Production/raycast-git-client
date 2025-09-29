@@ -169,7 +169,7 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
       value={currentView}
       onChange={(newValue) => setCurrentView(newValue as GitView)}
     >
-      <List.Dropdown.Item title="Status" value="status" keywords={["diff", "changes", "state", "workspace"]} icon={Icon.NewDocument} />
+      <List.Dropdown.Item title="Status" value="status" keywords={["diff", "changes", "state", "workspace", "patch"]} icon={Icon.NewDocument} />
       <List.Dropdown.Item title="Commits" value="commits" keywords={["log", "history"]} icon={`git-commit.svg`} />
       <List.Dropdown.Item title="Branches" value="branches" keywords={["graph", "remote"]} icon={`git-branch.svg`} />
       <List.Dropdown.Item title="Files" value="files" keywords={["history", "ls-files", "workspace", "project"]} icon={Icon.Clock} />

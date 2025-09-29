@@ -1,23 +1,20 @@
-import { Color } from "@raycast/api";
+import { Color, Image } from "@raycast/api";
 import { LanguageStats } from "../types";
 import { GitManager } from "./git-manager";
 
 const MAIN_LANGUAGE_PERCENTAGE = 70;
 
-const LANGUAGES_COLORS: Record<string, Color> = {
-    JavaScript: Color.Yellow,
-    TypeScript: Color.Blue,
-    Python: Color.Blue,
-    Java: Color.Orange,
-    "C#": Color.Purple,
-    "C++": Color.Blue,
-    C: Color.Blue,
-    Ruby: Color.Red,
-    PHP: Color.Blue,
-    Go: Color.Blue,
-    Swift: Color.Orange,
-    "Objective-C": Color.SecondaryText,
-    Kotlin: Color.Purple,
+const LANGUAGES_COLORS: Record<string, Image.ImageLike> = {
+    JavaScript: "https://api.iconify.design/vscode-icons/file-type-js-official.svg",
+    TypeScript: "https://api.iconify.design/vscode-icons/file-type-typescript-official.svg",
+    Python: "https://api.iconify.design/vscode-icons/file-type-python.svg",
+    Java: "https://api.iconify.design/skill-icons/java-light.svg",
+    "C#": { source: "https://api.iconify.design/teenyicons/c-sharp-solid.svg", tintColor: Color.Purple },
+    Ruby: { source: "https://api.iconify.design/openmoji/ruby.svg" },
+    PHP: { source: "https://api.iconify.design/akar-icons/php-fill.svg", tintColor: Color.Blue },
+    Go: "https://api.iconify.design/vscode-icons/file-type-go-gopher.svg",
+    Swift: "https://api.iconify.design/vscode-icons/file-type-swift.svg",
+    Kotlin: "https://api.iconify.design/material-icon-theme/kotlin.svg",
 };
 
 const LANGUAGE_EXTENSION: Record<string, string> = {

@@ -1,4 +1,4 @@
-import { ActionPanel, Action, Icon, List, confirmAlert, Alert, showToast, Toast, Form, useNavigation, Color } from "@raycast/api";
+import { ActionPanel, Action, Icon, List, confirmAlert, Alert, showToast, Toast, Form, useNavigation, Color, Image } from "@raycast/api";
 import { useMemo, useState } from "react";
 import { useRepositoriesList } from "./hooks/useRepositoriesList";
 import { RepositoryDirectoryActions } from "./components/actions/RepositoryDirectoryActions";
@@ -130,21 +130,23 @@ function RepositoryListItem({
       })));
     }
 
-    if (repo.languageStats && repo.languageStats.length > 0) {
-      result.push(...repo.languageStats.map((lang) => ({
-        tag: { value: lang.name, color: lang.color },
-        tooltip: "Primary language",
-      })));
-    }
-
     return result;
   }, [repo.languageStats, remotes]);
+
+  const icon: Image.ImageLike = useMemo(() => {
+    if (repo.languageStats && repo.languageStats.length > 0 && repo.languageStats[0].color) {
+      console.log("language stats", repo.languageStats[0].color);
+      return repo.languageStats[0].color;
+    }
+
+    return { source: `git-project.svg`, tintColor: Color.SecondaryText };
+  }, [repo.languageStats]);
 
   return (
     <List.Item
       id={id}
       key={repo.id}
-      icon={{ source: `git-project.svg`, tintColor: Color.SecondaryText }}
+      icon={icon}
       title={repo.name}
       subtitle={repo.path}
       keywords={[
