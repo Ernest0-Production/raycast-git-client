@@ -1,22 +1,25 @@
-import { Action, Icon, confirmAlert, Alert } from "@raycast/api";
+import { Action, Icon, confirmAlert, Alert, ActionPanel } from "@raycast/api";
 import { GitManager } from "../../utils/git-manager";
 import { Commit } from "../../types";
 import { CreateTagForm } from "../shared/CreateTagForm";
+import { RemotesHosts } from "../../hooks/useGitRemotes";
+import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 
 interface TagActionProps {
   commit: Commit;
   gitManager: GitManager;
   onRefresh: () => void;
+  remotesHosts: RemotesHosts;
 }
 
 /**
  * Action for creating a tag on a commit.
  */
-export function TagCreateAction({ commit, gitManager, onRefresh }: TagActionProps) {
+export function TagCreateAction({ commit, gitManager, onRefresh, remotesHosts }: TagActionProps) {
   return (
     <Action.Push
       title="Create Tag"
-      target={<CreateTagForm commit={commit} gitManager={gitManager} onRefresh={onRefresh} />}
+      target={<CreateTagForm commit={commit} gitManager={gitManager} onRefresh={onRefresh} remotesHosts={remotesHosts} />}
       icon={Icon.Plus}
       shortcut={{ modifiers: ["cmd", "opt"], key: "t" }}
     />
@@ -30,17 +33,19 @@ export function TagRemoveAction({
   tagName,
   gitManager,
   onRefresh,
+  remotesHosts,
 }: {
   tagName: string;
   gitManager: GitManager;
   onRefresh: () => void;
+  remotesHosts: RemotesHosts;
 }) {
-  const handleRemoveTag = async () => {
+  const handleRemoveTag = async (remote?: string) => {
     const confirmed = await confirmAlert({
-      title: "Remove tag",
-      message: `Are you sure you want to remove tag "${tagName}"?`,
+      title: "Push tag deletion to remote?",
+      message: `Are you sure you want to push tag deletion to remote?`,
       primaryAction: {
-        title: "Remove",
+        title: "Push",
         style: Alert.ActionStyle.Destructive,
       },
     });
@@ -48,37 +53,64 @@ export function TagRemoveAction({
     if (!confirmed) return;
 
     try {
-      await gitManager.deleteTag(tagName);
-
-      const shouldPushTags = await confirmAlert({
-        title: "Push tag deletion to remote?",
-        message: `Tag "${tagName}" was removed successfully. Do you want to push changes to remote repository?`,
-        primaryAction: {
-          title: "Push",
-          style: Alert.ActionStyle.Destructive,
-        },
-        dismissAction: {
-          title: "Don't Push",
-        },
-      });
-
-      if (shouldPushTags) {
-        await gitManager.pushTag(tagName, undefined, true);
+      if (remote) {
+        await gitManager.pushTag(tagName, remote, true);
       }
 
+      if (Object.keys(remotesHosts).length === 1) {
+        const confirmed = await confirmAlert({
+          title: "Remove tag",
+          message: `Are you sure you want to remove tag "${tagName}"?`,
+          primaryAction: {
+            title: "Remove",
+            style: Alert.ActionStyle.Destructive,
+          },
+        });
+
+        if (confirmed) {
+          await gitManager.pushTag(tagName, Object.keys(remotesHosts)[0], true);
+          onRefresh();
+        }
+      }
+
+      await gitManager.deleteTag(tagName);
       onRefresh();
     } catch (error) {
       // Git error is already shown by GitManager
     }
   };
 
+  if (!remotesHosts || Object.keys(remotesHosts).length <= 1) {
+    return (
+      <Action
+        title={`Remove Tag '${tagName}'`}
+        onAction={() => handleRemoveTag(undefined)}
+        icon={Icon.Trash}
+        style={Action.Style.Destructive}
+      />
+    );
+  }
+
   return (
-    <Action
-      title={`Remove Tag '${tagName}'`}
-      onAction={handleRemoveTag}
+    <ActionPanel.Submenu
+      title={`Remove Tag '${tagName} from'`}
       icon={Icon.Trash}
-      style={Action.Style.Destructive}
-    />
+    >
+      <Action
+        title={`Local Only`}
+        onAction={() => handleRemoveTag(undefined)}
+        icon={Icon.Dot}
+      />
+      {Object.keys(remotesHosts).map((remote) => (
+        <Action
+          key={`${remote}:remove-tag`}
+          title={`Local and ${remote}`}
+          onAction={() => handleRemoveTag(remote)}
+          style={Action.Style.Destructive}
+          icon={RemoteHostIcon(remotesHosts[remote].provider)}
+        />
+      ))}
+    </ActionPanel.Submenu>
   );
 }
 

@@ -543,11 +543,11 @@ function CommitListItem({
           {commit.tags.map((tag) => (
             <ActionPanel.Section key={`tag-${tag}`} title={`Tag '${tag}'`}>
               <TagCopyNameAction key={`copy-${tag}`} tagName={tag} />
-              <TagRemoveAction key={`remove-${tag}`} tagName={tag} gitManager={gitManager} onRefresh={onRefresh} />
+              <TagRemoveAction key={`remove-${tag}`} tagName={tag} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
             </ActionPanel.Section>
           ))}
           <ActionPanel.Section>
-            <TagCreateAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
+            <TagCreateAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} remotesHosts={remotesHosts} />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Branch">
