@@ -1005,8 +1005,12 @@ __REBASE_TODO__
   /**
    * Fetches changes.
    */
-  async fetch(): Promise<void> {
-    await this.git.fetch(["--all", "--prune", "--tags"]);
+  async fetch(remote?: string): Promise<void> {
+    await this.git.fetch([
+      remote ? remote : "--all",
+      "--prune",
+      "--tags"
+    ]);
   }
 
   /**

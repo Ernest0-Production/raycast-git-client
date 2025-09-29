@@ -68,7 +68,7 @@ export function BranchesView({
           <ActionPanel.Section title="Branches">
             <Action title="Refresh Branch List" onAction={revalidateBranches} icon={Icon.ArrowClockwise} />
             <CreateBranchAction gitManager={gitManager} onRefresh={revalidateAll} />
-            <FetchAction gitManager={gitManager} onRefresh={revalidateAll} />
+            <FetchAction gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={revalidateAll} />
           </ActionPanel.Section>
 
           {navigationActions}
@@ -121,6 +121,7 @@ export function BranchesView({
                 navigationActions={navigationActions}
                 hasConflicts={hasConflicts}
                 hasUncommittedChanges={hasUncommittedChanges}
+                remotesHosts={remotesHosts}
               />
             </List.Section>
           )}
@@ -292,7 +293,7 @@ function BranchListItem({
 
           <ActionPanel.Section title="Branches">
             <CreateBranchAction gitManager={gitManager} onRefresh={onRefresh} />
-            <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
+            <FetchAction gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
           </ActionPanel.Section>
 
           {navigationActions}
@@ -309,6 +310,7 @@ function DetachedHeadListItem({
   navigationActions,
   hasConflicts,
   hasUncommittedChanges,
+  remotesHosts,
 }: {
   detachedHead: DetachedHead;
   gitManager: GitManager;
@@ -316,6 +318,7 @@ function DetachedHeadListItem({
   navigationActions: React.ReactNode;
   hasConflicts?: boolean;
   hasUncommittedChanges?: boolean;
+  remotesHosts: RemotesHosts;
 }) {
   const accessories = useMemo(() => {
     const result = [];
@@ -350,7 +353,7 @@ function DetachedHeadListItem({
         <ActionPanel>
           <ActionPanel.Section title="Branches">
             <CreateBranchAction gitManager={gitManager} onRefresh={onRefresh} />
-            <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
+            <FetchAction gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
           </ActionPanel.Section>
 
           {navigationActions}

@@ -332,23 +332,48 @@ export function BranchInteractiveRebaseAction({ branch, gitManager, onRefresh }:
 /**
  * Global fetch action that can be reused across different views.
  */
-export function FetchAction({ gitManager, onRefresh }: { gitManager: GitManager; onRefresh: () => void }) {
-  const handleFetch = async () => {
+export function FetchAction({ gitManager, remotesHosts, onRefresh }: { gitManager: GitManager; remotesHosts?: RemotesHosts; onRefresh: () => void }) {
+  const handleFetch = async (remote?: string) => {
     try {
-      await gitManager.fetch();
+      await gitManager.fetch(remote);
       onRefresh();
     } catch (error) {
       // Git error is already shown by GitManager
     }
   };
 
+  if (!remotesHosts || Object.keys(remotesHosts).length === 0) {
+    return undefined;
+  }
+
+  if (Object.keys(remotesHosts).length === 1) {
+
+    return (
+      <Action
+        title="Fetch"
+        onAction={() => handleFetch(undefined)}
+        icon={`git-fetch.svg`}
+        shortcut={{ modifiers: ["cmd", "shift"], key: "f" }}
+      />
+    );
+  }
+
   return (
-    <Action
-      title="Fetch"
-      onAction={handleFetch}
-      icon={`git-fetch.svg`}
-      shortcut={{ modifiers: ["cmd", "shift"], key: "f" }}
-    />
+    <ActionPanel.Submenu title="Fetch" icon={`git-fetch.svg`} shortcut={{ modifiers: ["cmd", "shift"], key: "f" }}>
+      <Action
+        title="Fetch All"
+        onAction={() => handleFetch(undefined)}
+        icon={`git-fetch.svg`}
+      />
+      {Object.keys(remotesHosts).map((remote) => (
+        <Action
+          key={`${remote}:fetch`}
+          title={remote}
+          icon={RemoteHostIcon(remotesHosts[remote].provider)}
+          onAction={() => handleFetch(remote)}
+        />
+      ))}
+    </ActionPanel.Submenu>
   );
 }
 

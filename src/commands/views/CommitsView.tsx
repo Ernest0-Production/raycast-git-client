@@ -135,7 +135,7 @@ export function CommitsView({
                 <BranchPushForceAction branch={branchesState.currentBranch} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={revalidateAll} />
               </>
             )}
-            <FetchAction gitManager={gitManager} onRefresh={revalidateAll} />
+            <FetchAction gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={revalidateAll} />
             {branchFilter && branchesState && (
               <CommitBranchFilterAction
                 branchFilter={branchFilter}
@@ -561,7 +561,7 @@ function CommitListItem({
                 <BranchPushForceAction branch={branchesState.currentBranch} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
               </>
             )}
-            <FetchAction gitManager={gitManager} onRefresh={onRefresh} />
+            <FetchAction gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
             {selectedBranch && 'name' in selectedBranch &&
               <BranchCopyNameAction branch={selectedBranch.displayName} />
             }
