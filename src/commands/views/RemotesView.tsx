@@ -124,7 +124,8 @@ function RemoteListItem({
       });
     } else if (connectivity) {
       result.push({
-        text: { value: connectivity.reachable ? "Online" : "Offline", color: connectivity.reachable ? Color.Green : Color.Red },
+        tag: { value: connectivity.reachable ? "Online" : "Offline", color: connectivity.reachable ? Color.Green : Color.Red },
+        icon: Icon.Dot,
         tooltip: connectivity.reachable ? "Connection established via ls-remote" : connectivity.reason,
       });
     }
