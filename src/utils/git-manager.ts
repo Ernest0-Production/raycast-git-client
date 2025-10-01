@@ -47,17 +47,14 @@ export class GitManager {
 
   constructor(repoPath: string) {
     this.repoPath = repoPath;
-    this.git = simpleGit(
-      repoPath,
-      {
-        errors: (error, _result) => {
-          if (error) {
-            showFailureToast(error, { title: `Error running command` });
-          }
-          return error;
+    this.git = simpleGit(repoPath, {
+      errors: (error, _result) => {
+        if (error) {
+          showFailureToast(error, { title: `Error running command` });
         }
+        return error;
       }
-    );
+    });
 
     const preferences = getPreferenceValues<Preferences>();
     if (preferences.environmentPath === "homebrew") {
