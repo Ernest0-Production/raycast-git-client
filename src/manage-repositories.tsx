@@ -128,7 +128,7 @@ export default function ManageRepositories() {
         <List.EmptyView
           title="No recent repositories"
           description="Add new repositories using the 'Add Repository' action"
-          icon={`git-project.svg`}
+          icon={{ source: `git-project.svg`, tintColor: Color.SecondaryText }}
         />
       ) : (
         displayedRepositories.map((group) => (
@@ -313,7 +313,7 @@ function AddRepositoryForm({ onAddRepository }: { onAddRepository: (repoPath: st
     >
       <Form.FilePicker
         id="repositoryPath"
-        title="Select Git Repository"
+        title="Select Git Repository(s)"
         value={repositoryPaths}
         error={validateRepositories(repositoryPaths)}
         onChange={setRepositoryPaths}

@@ -12,7 +12,7 @@ import { GitManager } from "../utils/git-manager";
  */
 export function useRepositoriesList() {
   // Cache the list of repositories between sessions
-  const [repositories, setRepositories] = useCachedState<Repository[]>("recent-repositories-list", []);
+  const [repositories, setRepositories] = useCachedState<Repository[]>("managed-repositories-list", []);
 
   // Revalidate all repositories in the list: remove if not valid, update languageStats if missing
   useEffect(() => {
