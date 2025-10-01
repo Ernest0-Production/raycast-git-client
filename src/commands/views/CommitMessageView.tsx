@@ -255,14 +255,13 @@ export function CommitMessageForm({
         value={draftMessage}
         error={draftMessage.length > 0 ? undefined : "Required"}
         onChange={setDraftMessage}
-        info="Draft is automatically saved and will be cleared after successful commit"
+        info={!amendOnly ? "Draft is automatically saved and will be cleared after successful commit" : undefined}
       />
       <Form.Checkbox
         id="amend"
         label="Amend"
         value={amend}
         onChange={handleAmendChange}
-        info="Modify the last commit instead of creating a new one"
       />
     </Form>
   );
