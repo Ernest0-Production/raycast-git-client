@@ -28,7 +28,7 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
   const repositoryPath = args.path;
 
   // Hook for working with a Git repository (synchronous validation)
-  const { data: gitManager, error: repoError } = useGitRepository(repositoryPath);
+  const { gitManager, error } = useGitRepository(repositoryPath);
 
   // Hook for managing recent repositories
   const { visitRepository } = useRepositoriesList();
@@ -41,12 +41,12 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
   }, [gitManager, repositoryPath, visitRepository]);
 
   // Validation error state
-  if (repoError || !gitManager) {
+  if (error || !gitManager) {
     return (
       <List navigationTitle="Git Repository">
         <List.EmptyView
           title="Error opening repository"
-          description={repoError?.message || "Unknown error"}
+          description={error?.message || "Unknown error"}
           icon={Icon.ExclamationMark}
         />
       </List>

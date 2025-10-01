@@ -15,6 +15,30 @@ export interface Repository {
   lastOpenedAt: number;
   /** Cached language detection stats for the repository. */
   languageStats?: LanguageStats[];
+  /** Cloning state information if repository is being cloned. */
+  cloning?: RepositoryCloningProcess;
+}
+
+/**
+ * Represents the state of a repository being cloned.
+ */
+export interface RepositoryCloningProcess {
+  /** The URL of the repository being cloned. */
+  url: string;
+  /** Path to the file containing stderr output. */
+  stderrPath: string;
+  /** Path to the file containing process PID. */
+  pidPath: string;
+  /** Path to the file containing exit code. */
+  exitCodePath: string;
+  /** Path to the script file. */
+  scriptPath: string;
+}
+
+export interface RepositoryCloningState {
+  output: string;
+  pid: number;
+  exitCode?: number;
 }
 
 /**

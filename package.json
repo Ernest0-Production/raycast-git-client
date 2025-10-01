@@ -14,6 +14,20 @@
       "mode": "view"
     },
     {
+      "name": "clone-repository",
+      "title": "Clone Git Repository",
+      "description": "Clone a Git repository from URL",
+      "mode": "view",
+      "arguments": [
+        {
+          "name": "url",
+          "placeholder": "Repository URL",
+          "type": "text",
+          "required": true
+        }
+      ]
+    },
+    {
       "name": "open-repository",
       "title": "Open Git Repository",
       "description": "Open a Git repository management interface",

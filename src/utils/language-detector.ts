@@ -53,8 +53,8 @@ function getExtension(filePath: string): string | undefined {
 }
 
 export async function detectRepositoryLanguages(repositoryPath: string): Promise<LanguageStats[]> {
-    const manager = new GitManager(repositoryPath);
-    const trackedFiles = await manager.getTrackedFilePaths();
+    const gitManager = new GitManager(repositoryPath);
+    const trackedFiles = await gitManager.getTrackedFilePaths();
 
     let totalFiles = trackedFiles.length;
     if (totalFiles === 0) return [];

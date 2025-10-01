@@ -29,11 +29,13 @@ import {
   ConflictState,
   MergeMode,
   PatchScope,
+  RepositoryCloningProcess,
+  RepositoryCloningState,
 } from "../types";
 import * as path from "path";
 import { promises as fs } from "fs";
 import { showFailureToast } from "@raycast/utils";
-import { execSync } from "child_process";
+import { exec, execSync } from "child_process";
 
 /**
  * Manager for Git operations within a repository.
@@ -75,6 +77,17 @@ export class GitManager {
    */
   get repoName(): string {
     return this.repoPath.split("/").pop() || "Unknown Repository";
+  }
+
+  static validateDirectory(repoPath: string) {
+    if (!existsSync(repoPath)) {
+      throw new Error(`Directory does not exist: ${repoPath}`);
+    }
+
+    const gitPath = path.join(repoPath, ".git");
+    if (!existsSync(gitPath)) {
+      throw new Error(`Not a Git repository: ${repoPath}`);
+    }
   }
 
   /**
@@ -1416,5 +1429,139 @@ __REBASE_TODO__
     }
 
     await this.git.applyPatch(patchFilePath, ["--binary", "--allow-binary-replacement", "--3way"]);
+  }
+
+  /**
+   * Starts repository cloning as a detached background process using init + fetch approach.
+   * Initialization (git init, add remote) is performed via simple-git; the long-running fetch
+   * with progress runs in a detached bash script so the Raycast process is not blocked.
+   */
+  static async startCloneRepository(url: string, targetPath: string): Promise<RepositoryCloningProcess> {
+    if (!existsSync(targetPath)) {
+      await fs.mkdir(targetPath, { recursive: true });
+    }
+
+    // Prepare simple-git instance bound to repo directory
+    let gitManager = new GitManager(targetPath);
+
+    // Initialize repository and add remote using simple-git
+    await gitManager.initRepository(url);
+
+    // Create temp tracking directory and files outside of the repo dir
+    const tempDir = await fs.mkdtemp(join(tmpdir(), "raycast-git-clone-"));
+    // const tempDir = await join("/Users/ernest0n/Downloads", "raycast-git-clone");
+    await fs.mkdir(tempDir, { recursive: true });
+
+    const stderrPath = join(tempDir, ".git-clone-stderr.log");
+    const pidPath = join(tempDir, ".git-clone-pid.tmp");
+    const exitCodePath = join(tempDir, ".git-clone-exit.tmp");
+    const scriptPath = join(tempDir, ".git-clone-script.zsh");
+
+    await fs.writeFile(stderrPath, "");
+    await fs.writeFile(pidPath, "");
+
+    let envPath = process.env.PATH || "";
+    const preferences = getPreferenceValues<Preferences>();
+    if (preferences.environmentPath === "homebrew") {
+      const pathEnv = execSync("echo $PATH").toString().trim();
+      envPath = `/opt/homebrew/bin:/opt/homebrew/sbin:${pathEnv}`;
+    }
+
+    // Detached bash script: fetch with progress, set default branch, checkout
+    const bashScript = `#!/bin/zsh
+
+echo $$ > "${pidPath}"
+export PATH="${envPath}"
+cd "${targetPath}"
+
+# Fetch with progress (shallow to speed up initial clone)
+git fetch --depth 1 --progress origin 2> "${stderrPath}"
+
+# Set default remote HEAD
+git remote set-head origin -a 2>> "${stderrPath}"
+
+# Detect default branch name (e.g., origin/main)
+default_branch=$(git rev-parse --abbrev-ref origin/HEAD)
+
+if [ -n "$default_branch" ]; then
+  git checkout -b "$default_branch" "$default_branch" 2>> "${stderrPath}"
+fi
+
+echo $? > "${exitCodePath}"
+rm -f "${scriptPath}"
+`;
+
+    await fs.writeFile(scriptPath, bashScript, { encoding: "utf-8" });
+    // Set executable permissions for the script: 0o755 means rwxr-xr-x (owner can read/write/execute, group and others can read/execute)
+    chmodSync(scriptPath, 0o755);
+
+    // Run script detached so it survives the parent process
+    exec(
+      `nohup "${scriptPath}" > /dev/null 2>&1 &`,
+      { shell: "/bin/zsh" }
+    );
+
+    return { url, stderrPath, pidPath, exitCodePath, scriptPath };
+  }
+
+  /**
+   * Initializes a repository and adds a remote.
+   */
+  async initRepository(url: string): Promise<void> {
+    await this.git.init();
+    await this.git.addRemote("origin", url);
+  }
+
+  /**
+   * Gets the progress of the cloning process.
+   */
+  getClonningState(cloningProcess: RepositoryCloningProcess): RepositoryCloningState | undefined {
+    if (!existsSync(cloningProcess.pidPath)) {
+      return undefined;
+    }
+
+    const pid = parseInt(readFileSync(cloningProcess.pidPath, "utf8").trim(), 10);
+    const output = readFileSync(cloningProcess.stderrPath, "utf8")
+      .replace(/\r/g, '\n')
+      .split('\n')
+      .filter(Boolean)
+      .pop()
+      || "";
+    const exitCode = existsSync(cloningProcess.exitCodePath) ? parseInt(readFileSync(cloningProcess.exitCodePath, "utf8").trim(), 10) : undefined;
+
+    return {
+      pid,
+      output: output.trim(),
+      exitCode,
+    };
+  }
+
+  /**
+   * Cleans up the cloning process.
+   */
+  cleanupCloningProcess(cloningProcess: RepositoryCloningProcess): void {
+    if (existsSync(cloningProcess.stderrPath)) {
+      rmSync(cloningProcess.stderrPath);
+    }
+    if (existsSync(cloningProcess.pidPath)) {
+      rmSync(cloningProcess.pidPath);
+    }
+    if (existsSync(cloningProcess.exitCodePath)) {
+      rmSync(cloningProcess.exitCodePath);
+    }
+    if (existsSync(cloningProcess.scriptPath)) {
+      rmSync(cloningProcess.scriptPath);
+    }
+  }
+
+  /**
+   * Kills the cloning process.
+   */
+  async killCloningProcess(cloningProcess: RepositoryCloningProcess): Promise<void> {
+    const progress = this.getClonningState(cloningProcess);
+    if (!progress) return;
+
+    // Kill the cloning process and all its children
+    exec(`pkill -TERM -P ${progress.pid}; kill -TERM ${progress.pid};`);
   }
 }

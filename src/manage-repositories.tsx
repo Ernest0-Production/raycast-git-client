@@ -2,21 +2,72 @@ import { ActionPanel, Action, Icon, List, confirmAlert, Alert, showToast, Toast,
 import { useMemo, useState } from "react";
 import { useRepositoriesList } from "./hooks/useRepositoriesList";
 import { RepositoryDirectoryActions } from "./components/actions/RepositoryDirectoryActions";
-import { validateGitRepository } from "./utils/validation";
 import OpenRepository from "./open-repository";
-import { Repository } from "./types";
+import { Repository, RepositoryCloningState, RepositoryCloningProcess } from "./types";
 import { RepositoriesView, useRepositoriesView } from "./hooks/useRepositoriesView";
 import { useGitRemotes } from "./hooks/useGitRemotes";
 import { RemoteHostIcon } from "./components/icons/RemoteHostIcons";
 import { useGitRepository } from "./hooks/useGitRepository";
 import { RemoteOpenPullRequestAction } from "./components/actions/RemoteHostActions";
+import { GitManager } from "./utils/git-manager";
+import { useInterval } from "./hooks/useInterval";
+import { promises as fs } from "fs";
 
 export default function ManageRepositories() {
-  const { repositories, addRepository, visitRepository, removeRepository } = useRepositoriesList();
-  const { currentView, setCurrentView, displayedRepositories, lastVisitedRepository } = useRepositoriesView(repositories);
-  const [selectedRepositoryItem, setSelectedRepositoryItem] = useState<string | undefined>(undefined);
+  const {
+    repositories: allRepositories,
+    addRepository,
+    visitRepository,
+    removeRepository,
+    updateCloningState,
+  } = useRepositoriesList();
+  // Separate cloning repositories from regular ones
+  const cloningRepositories = useMemo(() => allRepositories.filter((repo) => repo.cloning), [allRepositories]);
+  const currentRepositories = useMemo(() => allRepositories.filter((repo) => !repo.cloning), [allRepositories]);
 
-  const handleRemoveRepository = async (repoName: string, repoPath: string) => {
+  // Use view hook only for regular repositories
+  const {
+    currentView: displayView,
+    setCurrentView: setDisplayView,
+    displayedRepositories
+  } = useRepositoriesView(currentRepositories);
+
+  const groupActions = (
+    <ActionPanel.Section title="View">
+      <ActionPanel.Submenu title="Sort by" icon={Icon.NumberList}>
+        <Action
+          title="Visit Date"
+          icon={displayView.order === "visit-date" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Clock}
+          onAction={() => setDisplayView({ ...displayView, order: "visit-date" })}
+        />
+        <Action
+          title="Alphabetically"
+          icon={displayView.order === "alphabetical" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Lowercase}
+          onAction={() => setDisplayView({ ...displayView, order: "alphabetical" })}
+        />
+      </ActionPanel.Submenu>
+
+      <ActionPanel.Submenu title="Group by" icon={Icon.List}>
+        <Action
+          title="None"
+          icon={displayView.group === "none" ? { source: Icon.Checkmark, tintColor: Color.Green } : undefined}
+          onAction={() => setDisplayView({ ...displayView, group: "none" })}
+        />
+        <Action
+          title="Language"
+          icon={displayView.group === "language" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Code}
+          onAction={() => setDisplayView({ ...displayView, group: "language" })}
+        />
+        <Action
+          title="Directory"
+          icon={displayView.group === "parent" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Folder}
+          onAction={() => setDisplayView({ ...displayView, group: "parent" })}
+        />
+      </ActionPanel.Submenu>
+    </ActionPanel.Section>
+  )
+
+  const handleRemove = async (repoName: string, repoPath: string) => {
     const confirmed = await confirmAlert({
       title: "Remove from recent?",
       message: `Are you sure you want to remove "${repoName}" from the recent repositories list?`,
@@ -36,29 +87,13 @@ export default function ManageRepositories() {
     }
   };
 
-  const repositoryItemId = (repoId: string, groupTitle?: string) => {
-    let groupTitleToUse = groupTitle;
-
-    if (!groupTitle) {
-      const group = displayedRepositories.find((group) => group.repositories.some((repo) => repo.id === repoId));
-      groupTitleToUse = group?.groupTitle;
-    }
-
-    return `${groupTitleToUse}-${repoId}`;
+  const handleKillClone = async (repoPath: string) => {
+    await removeRepository(repoPath)
   };
 
   return (
     <List
       searchBarPlaceholder="Search by name, path"
-      selectedItemId={selectedRepositoryItem}
-      onSelectionChange={(id) => {
-        if (!selectedRepositoryItem && id) {
-          console.log("initial auto select");
-          setSelectedRepositoryItem(repositoryItemId(lastVisitedRepository.id));
-        } else {
-          setSelectedRepositoryItem(id || undefined);
-        }
-      }}
       actions={
         <ActionPanel>
           <Action.Push
@@ -67,13 +102,32 @@ export default function ManageRepositories() {
             icon={Icon.Plus}
             shortcut={{ modifiers: ["cmd"], key: "n" }}
           />
+          {groupActions}
         </ActionPanel>
       }
     >
-      {repositories.length === 0 ? (
+      {/* Cloning Repositories Section */}
+      {cloningRepositories.length > 0 && (
+        <List.Section title="Cloning in background">
+          {cloningRepositories.map((repo) => (
+            <CloningRepositoryListItem
+              key={repo.id}
+              repo={repo}
+              groupActions={groupActions}
+              onFinish={() => updateCloningState(repo.path, undefined)}
+              onKill={() => handleKillClone(repo.path)}
+              onRetry={(cloningProcess) => updateCloningState(repo.path, cloningProcess)}
+              onOpen={() => visitRepository(repo.path)}
+              onRemove={() => removeRepository(repo.path)}
+            />
+          ))}
+        </List.Section>
+      )}
+
+      {currentRepositories.length === 0 && cloningRepositories.length === 0 ? (
         <List.EmptyView
           title="No recent repositories"
-          description="Open a Git repository via the 'Open Git Repository' command or add one using the 'Add Repository' action"
+          description="Add new repositories using the 'Add Repository' action"
           icon={`git-project.svg`}
         />
       ) : (
@@ -81,14 +135,12 @@ export default function ManageRepositories() {
           <List.Section key={group.groupTitle} title={group.groupTitle}>
             {group.repositories.map((repo) => (
               <RepositoryListItem
-                key={repositoryItemId(repo.id, group.groupTitle)}
-                id={repositoryItemId(repo.id, group.groupTitle)}
+                key={repo.id}
                 repo={repo}
                 onOpen={() => visitRepository(repo.path)}
-                onRemove={() => handleRemoveRepository(repo.name, repo.path)}
+                onRemove={() => handleRemove(repo.name, repo.path)}
                 onAddRepository={addRepository}
-                selectedView={currentView}
-                onViewChange={setCurrentView}
+                groupActions={groupActions}
               />
             ))}
           </List.Section>
@@ -99,23 +151,19 @@ export default function ManageRepositories() {
 }
 
 function RepositoryListItem({
-  id,
   repo,
   onOpen,
   onRemove,
   onAddRepository,
-  selectedView,
-  onViewChange,
+  groupActions,
 }: {
-  id: string;
   repo: Repository;
   onOpen: () => void;
   onRemove: () => void;
   onAddRepository: (repoPath: string) => void;
-  selectedView: RepositoriesView;
-  onViewChange: (view: RepositoriesView) => void;
+  groupActions: React.ReactNode;
 }) {
-  const { data: gitManager } = useGitRepository(repo.path);
+  const { gitManager } = useGitRepository(repo.path);
   if (!gitManager) return null;
   const { data: remotes } = useGitRemotes(gitManager);
 
@@ -143,7 +191,7 @@ function RepositoryListItem({
 
   return (
     <List.Item
-      id={id}
+      id={repo.id}
       key={repo.id}
       icon={icon}
       title={repo.name}
@@ -192,38 +240,7 @@ function RepositoryListItem({
             </ActionPanel.Section>
           ))}
 
-          <ActionPanel.Section title="View">
-            <ActionPanel.Submenu title="Sort by" icon={Icon.NumberList}>
-              <Action
-                title="Visit Date"
-                icon={selectedView.order === "visit-date" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Clock}
-                onAction={() => onViewChange({ ...selectedView, order: "visit-date" })}
-              />
-              <Action
-                title="Alphabetically"
-                icon={selectedView.order === "alphabetical" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Lowercase}
-                onAction={() => onViewChange({ ...selectedView, order: "alphabetical" })}
-              />
-            </ActionPanel.Submenu>
-
-            <ActionPanel.Submenu title="Group by" icon={Icon.List}>
-              <Action
-                title="None"
-                icon={selectedView.group === "none" ? { source: Icon.Checkmark, tintColor: Color.Green } : undefined}
-                onAction={() => onViewChange({ ...selectedView, group: "none" })}
-              />
-              <Action
-                title="Language"
-                icon={selectedView.group === "language" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Code}
-                onAction={() => onViewChange({ ...selectedView, group: "language" })}
-              />
-              <Action
-                title="Directory"
-                icon={selectedView.group === "parent" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Folder}
-                onAction={() => onViewChange({ ...selectedView, group: "parent" })}
-              />
-            </ActionPanel.Submenu>
-          </ActionPanel.Section>
+          {groupActions}
 
           <ActionPanel.Section title="List">
             <Action.Push
@@ -244,15 +261,16 @@ function AddRepositoryForm({ onAddRepository }: { onAddRepository: (repoPath: st
   const [repositoryPaths, setRepositoryPaths] = useState<string[]>([]);
 
   // Compute validation errors for multiple repositories
-  const validateMultipleRepositories = (paths: string[]): string | undefined => {
+  const validateRepositories = (paths: string[]): string | undefined => {
     if (paths.length === 0) {
       return "Required";
     }
 
     const invalidRepos: string[] = [];
     paths.forEach((path) => {
-      const validation = validateGitRepository(path);
-      if (!validation.isValid) {
+      try {
+        GitManager.validateDirectory(path);
+      } catch (error) {
         const repoName = path.split("/").pop() || path;
         invalidRepos.push(repoName);
       }
@@ -297,12 +315,148 @@ function AddRepositoryForm({ onAddRepository }: { onAddRepository: (repoPath: st
         id="repositoryPath"
         title="Select Git Repository"
         value={repositoryPaths}
-        error={validateMultipleRepositories(repositoryPaths)}
+        error={validateRepositories(repositoryPaths)}
         onChange={setRepositoryPaths}
         allowMultipleSelection={true}
         canChooseDirectories
         canChooseFiles={false}
       />
     </Form>
+  );
+}
+
+function CloningRepositoryListItem({
+  repo,
+  groupActions,
+  onFinish,
+  onKill,
+  onRetry,
+  onRemove,
+  onOpen,
+}: {
+  repo: Repository;
+  groupActions: React.ReactNode;
+  onFinish: () => void;
+  onKill: () => void;
+  onRetry: (cloningProcess: RepositoryCloningProcess) => void;
+  onOpen: () => void;
+  onRemove: () => void;
+}) {
+  if (repo.cloning === undefined) return undefined;
+
+  const { gitManager } = useGitRepository(repo.path);
+  if (!gitManager) return undefined;
+
+  const progressState = useInterval<RepositoryCloningState | undefined>(500, () => {
+    const progressState = gitManager.getClonningState(repo.cloning!);
+
+    if (progressState?.exitCode === 0) {
+      gitManager.cleanupCloningProcess(repo.cloning!);
+      onFinish();
+    }
+
+    return progressState;
+  });
+
+  const icon = (() => {
+    if (progressState?.exitCode !== undefined && progressState?.exitCode !== 0) {
+      return { source: Icon.XMarkCircle, tintColor: Color.Red };
+    }
+
+    return { source: Icon.CircleProgress25, tintColor: Color.Blue };
+  })()
+
+  const accessories: List.Item.Accessory[] = (() => {
+    if (progressState && progressState.exitCode !== undefined && progressState.exitCode !== 0) {
+      return [{
+        text: { value: "Failed to Clone", color: Color.Red },
+        tooltip: `${progressState.exitCode}: ${progressState.output}`,
+      }];
+    } else if (progressState && progressState.output.length > 0) {
+      // Still cloning
+      return [{
+        text: { value: progressState.output, color: Color.SecondaryText },
+      }];
+    } else {
+      return [{
+        text: { value: "Prepare to clone...", color: Color.SecondaryText },
+      }];
+    }
+  })()
+
+  const handleKill = async () => {
+    const confirmed = await confirmAlert({
+      title: "Kill Clone Process",
+      message: `Are you sure you want to stop cloning "${repo.name}"?`,
+      primaryAction: {
+        title: "Kill",
+        style: Alert.ActionStyle.Destructive,
+      },
+    });
+
+    if (confirmed) {
+      await gitManager.killCloningProcess(repo.cloning!);
+      fs.rm(repo.path, { recursive: true, force: true });
+      onKill();
+    }
+  }
+
+  const handleRetry = async () => {
+    await fs.rm(repo.path, { recursive: true, force: true });
+    gitManager.cleanupCloningProcess(repo.cloning!);
+
+    const cloningProcess = await GitManager.startCloneRepository(repo.cloning!.url, repo.path);
+    onRetry(cloningProcess);
+  }
+
+  return (
+    <List.Item
+      id={repo.id}
+      icon={icon}
+      title={repo.name}
+      accessories={accessories}
+      actions={
+        <ActionPanel>
+          {progressState && progressState.exitCode !== undefined && progressState.exitCode !== 0 ? (
+            <>
+              <Action.Open
+                title="Show Logs"
+                icon={Icon.Document}
+                target={repo.cloning!.stderrPath}
+              />
+              <Action
+                title="Retry Clone"
+                icon={Icon.Repeat}
+                onAction={handleRetry}
+                shortcut={{ modifiers: ["cmd"], key: "r" }}
+              />
+              <Action
+                title="Remove from List"
+                icon={Icon.Trash}
+                style={Action.Style.Destructive}
+                onAction={onRemove}
+                shortcut={{ modifiers: ["ctrl"], key: "x" }}
+              />
+            </>
+          ) : (
+            <>
+              <Action
+                title="Kill Process"
+                icon={Icon.Stop}
+                style={Action.Style.Destructive}
+                onAction={handleKill}
+              />
+            </>
+          )}
+
+          <Action.CopyToClipboard
+            title="Copy Clone URL"
+            content={repo.cloning!.url}
+          />
+          <RepositoryDirectoryActions repositoryPath={repo.path} onOpen={onOpen} />
+          {groupActions}
+        </ActionPanel>
+      }
+    />
   );
 }
