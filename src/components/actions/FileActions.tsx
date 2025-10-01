@@ -56,8 +56,6 @@ export function FileUnstageAction({ file, gitManager, onRefresh }: FileActionPro
  * Action for discarding changes to a file.
  */
 export function FileDiscardAction({ file, gitManager, onRefresh }: FileActionProps) {
-  if (!existsSync(file.path)) return null;
-
   const handleDiscardChanges = async () => {
     const confirmed = await confirmAlert({
       title: "Discard changes",
