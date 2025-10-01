@@ -163,7 +163,10 @@ function FileListItem({
         <List.Item
             id={filePath}
             title={fileName}
-            subtitle={filePath}
+            subtitle={{
+                value: filePath,
+                tooltip: filePath
+            }}
             icon={existsSync(absolutePath) ? { fileIcon: absolutePath } : undefined}
             quickLook={existsSync(absolutePath) ? { path: absolutePath, name: absolutePath } : undefined}
             actions={

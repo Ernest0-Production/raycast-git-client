@@ -158,7 +158,10 @@ function RemoteListItem({
     <List.Item
       key={remote.name}
       title={remote.name}
-      subtitle={`${remote.fetchUrl}`}
+      subtitle={{
+        value: remote.fetchUrl,
+        tooltip: remote.fetchUrl
+      }}
       icon={RemoteHostIcon(remote.provider)}
       accessories={accessories}
       actions={

@@ -486,6 +486,7 @@ function CommitListItem({
                   onRefresh={onRefresh}
                   pagination={pagination}
                   onMoveToCommit={onMoveToCommit}
+                  remotesHosts={remotesHosts}
                 />
               }
             />

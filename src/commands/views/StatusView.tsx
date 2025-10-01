@@ -239,7 +239,10 @@ function FileListItem({
     <List.Item
       id={fileId}
       title={file.path.split("/").pop() || file.path}
-      subtitle={isShowingDetail ? undefined : file.relativePath}
+      subtitle={isShowingDetail ? undefined : {
+        value: file.relativePath,
+        tooltip: file.relativePath
+      }}
       icon={FileStatusIcon(file)}
       keywords={[file.path, file.oldPath].filter((keyword): keyword is string => Boolean(keyword))}
       detail={

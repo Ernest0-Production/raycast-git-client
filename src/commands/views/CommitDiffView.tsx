@@ -2,6 +2,7 @@ import { ActionPanel, Action, List, Icon, Color, showToast, Toast } from "@rayca
 import { useGitDiff } from "../../hooks/useGitDiff";
 import { GitManager } from "../../utils/git-manager";
 import { Commit, CommitFileChange, ListPagination } from "../../types";
+import { RemotesHosts } from "../../hooks/useGitRemotes";
 import {
   FileOpenAction,
   FileOpenWithAction,
@@ -24,9 +25,10 @@ interface CommitDiffViewProps {
   commits: Commit[];
   pagination?: ListPagination;
   onMoveToCommit: (commitHash: string) => void;
+  remotesHosts: RemotesHosts;
 }
 
-export function CommitDiffView({ index, gitManager, navigationActions, onRefresh, commits, onMoveToCommit, pagination }: CommitDiffViewProps) {
+export function CommitDiffView({ index, gitManager, navigationActions, onRefresh, commits, onMoveToCommit, pagination, remotesHosts }: CommitDiffViewProps) {
   const [currentIndex, setCurrentIndex] = useState(index);
   const [isShowingDetail, setIsShowingDetail] = useState(false);
 
@@ -79,6 +81,7 @@ export function CommitDiffView({ index, gitManager, navigationActions, onRefresh
       onMoveToCommit={switchToCommit}
       isShowingDetail={isShowingDetail}
       setIsShowingDetail={setIsShowingDetail}
+      remotesHosts={remotesHosts}
     />
   );
 }
@@ -91,6 +94,7 @@ function SpecificCommitDiffView({
   onMoveToCommit,
   isShowingDetail,
   setIsShowingDetail,
+  remotesHosts,
 }: {
   commit: Commit,
   gitManager: GitManager,
@@ -99,6 +103,7 @@ function SpecificCommitDiffView({
   onMoveToCommit: (direction: ("parent" | "child")) => void
   isShowingDetail: boolean,
   setIsShowingDetail: (isShowingDetail: boolean) => void
+  remotesHosts: RemotesHosts,
 }) {
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
   const { data: statsMap, isLoading } = usePromise(
@@ -154,6 +159,7 @@ function SpecificCommitDiffView({
               statsMap={statsMap}
               onRefresh={onRefresh}
               onMoveToCommit={onMoveToCommit}
+              remotesHosts={remotesHosts}
             />
           ))}
         </List.Section>
@@ -173,6 +179,7 @@ interface FileListItemProps {
   onRefresh: () => void;
   onMoveToCommit: (direction: ("parent" | "child")) => void;
   navigationActions: React.ReactNode;
+  remotesHosts: RemotesHosts;
 }
 
 function FileListItem({
@@ -186,6 +193,7 @@ function FileListItem({
   onRefresh,
   onMoveToCommit,
   navigationActions,
+  remotesHosts,
 }: FileListItemProps) {
   // Create a unique identifier for each file item
   const fileId = `${file.path}-${commit.hash}`;
@@ -220,7 +228,10 @@ function FileListItem({
     <List.Item
       id={fileId}
       title={file.path.split("/").pop() || file.path}
-      subtitle={isShowingDetail ? undefined : file.path}
+      subtitle={isShowingDetail ? undefined : {
+        value: file.path,
+        tooltip: file.path
+      }}
       icon={CommitFileIcon(file)}
       accessories={accessories}
       keywords={[file.path, file.oldPath].filter((keyword): keyword is string => Boolean(keyword))}
@@ -249,6 +260,7 @@ function FileListItem({
             <FileHistoryAction
               filePath={absolutePath}
               gitManager={gitManager}
+              remotesHosts={remotesHosts}
               onRefresh={onRefresh}
             />
             <FileRestoreAction

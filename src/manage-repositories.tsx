@@ -195,7 +195,10 @@ function RepositoryListItem({
       key={repo.id}
       icon={icon}
       title={repo.name}
-      subtitle={repo.path}
+      subtitle={{
+        value: repo.path,
+        tooltip: repo.path
+      }}
       keywords={[
         repo.path,
         ...(repo.languageStats?.map((lang) => lang.name) || [])

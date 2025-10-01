@@ -56,6 +56,13 @@ export class GitManager {
       }
     });
 
+    try {
+      const output = execSync(`eval "$(ssh-agent -s)"; /usr/bin/ssh-add -l 2>/dev/null || echo ""`);
+      console.log("output", output.toString().trim());
+    } catch (error) {
+      console.warn("error", error instanceof Error ? error.message : "Unknown error");
+    }
+
     const preferences = getPreferenceValues<Preferences>();
     if (preferences.environmentPath === "homebrew") {
       const path = execSync("echo $PATH").toString().trim();
