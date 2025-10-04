@@ -138,9 +138,9 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
           shortcut={{ modifiers: ["cmd"], key: "4" }}
         />
         <Action
-          title="Go to Files History"
+          title="Go to Files"
           onAction={() => setCurrentView("files")}
-          icon={Icon.Document}
+          icon={Icon.Folder}
           shortcut={{ modifiers: ["cmd"], key: "5" }}
         />
         <Action

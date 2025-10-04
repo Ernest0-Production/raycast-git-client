@@ -72,24 +72,6 @@
       "description": "The external git client to use for git commands (e.g. 'GitKraken')"
     },
     {
-      "name": "environmentPath",
-      "required": true,
-      "type": "dropdown",
-      "title": "Environment PATH",
-      "description": "Specifies the PATH environment variable for Git operations. 'Parent Process + homebrew' is useful if you have Git LFS installed via Homebrew.",
-      "default": "parent",
-      "data": [
-        {
-          "title": "Parent Process",
-          "value": "parent"
-        },
-        {
-          "title": "Parent Process + homebrew",
-          "value": "homebrew"
-        }
-      ]
-    },
-    {
       "name": "commitsPerPage",
       "required": false,
       "type": "textfield",

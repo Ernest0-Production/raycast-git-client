@@ -36,7 +36,7 @@ import * as path from "path";
 import { promises as fs } from "fs";
 import { showFailureToast } from "@raycast/utils";
 import { exec } from "child_process";
-import { getEnvironmentVariables } from "./environment-utils";
+import { shellEnvironmentVariables } from "./environment-utils";
 
 /**
  * Manager for Git operations within a repository.
@@ -57,19 +57,10 @@ export class GitManager {
       }
     });
 
-    // try {
-    //   const output = execSync(`eval "$(ssh-agent -s)"; /usr/bin/ssh-add -l 2>/dev/null || echo ""`);
-    //   console.log("output", output.toString().trim());
-    // } catch (error) {
-    //   console.warn("error", error instanceof Error ? error.message : "Unknown error");
-    // }
 
-    const envVars = getEnvironmentVariables();
-    if (envVars) {
-      for (const [key, value] of Object.entries(envVars)) {
-        this.git = this.git.env(key, value);
-      }
-    }
+    // for (const [key, value] of Object.entries(shellEnvironmentVariables)) {
+    this.git = this.git.env(shellEnvironmentVariables);
+    // }
 
     // Global logging of all git commands for debugging
     this.setupGlobalLogging();
@@ -1463,14 +1454,11 @@ __REBASE_TODO__
     await fs.writeFile(stderrPath, "");
     await fs.writeFile(pidPath, "");
 
-    const envVars = getEnvironmentVariables();
-    let envPath = envVars?.PATH || process.env.PATH || "";
-
     // Detached bash script: fetch with progress, set default branch, checkout
     const bashScript = `#!/bin/zsh
 
 echo $$ > "${pidPath}"
-export PATH="${envPath}"
+export PATH="${shellEnvironmentVariables.PATH}"
 cd "${targetPath}"
 
 # Fetch with progress (shallow to speed up initial clone)
