@@ -35,7 +35,8 @@ import {
 import * as path from "path";
 import { promises as fs } from "fs";
 import { showFailureToast } from "@raycast/utils";
-import { exec, execSync } from "child_process";
+import { exec } from "child_process";
+import { getEnvironmentVariables } from "./environment-utils";
 
 /**
  * Manager for Git operations within a repository.
@@ -56,20 +57,18 @@ export class GitManager {
       }
     });
 
-    try {
-      const output = execSync(`eval "$(ssh-agent -s)"; /usr/bin/ssh-add -l 2>/dev/null || echo ""`);
-      console.log("output", output.toString().trim());
-    } catch (error) {
-      console.warn("error", error instanceof Error ? error.message : "Unknown error");
-    }
+    // try {
+    //   const output = execSync(`eval "$(ssh-agent -s)"; /usr/bin/ssh-add -l 2>/dev/null || echo ""`);
+    //   console.log("output", output.toString().trim());
+    // } catch (error) {
+    //   console.warn("error", error instanceof Error ? error.message : "Unknown error");
+    // }
 
-    const preferences = getPreferenceValues<Preferences>();
-    if (preferences.environmentPath === "homebrew") {
-      const path = execSync("echo $PATH").toString().trim();
-      this.git = this.git.env(
-        "PATH",
-        `/opt/homebrew/bin:/opt/homebrew/sbin:${path}`,
-      );
+    const envVars = getEnvironmentVariables();
+    if (envVars) {
+      for (const [key, value] of Object.entries(envVars)) {
+        this.git = this.git.env(key, value);
+      }
     }
 
     // Global logging of all git commands for debugging
@@ -1464,12 +1463,8 @@ __REBASE_TODO__
     await fs.writeFile(stderrPath, "");
     await fs.writeFile(pidPath, "");
 
-    let envPath = process.env.PATH || "";
-    const preferences = getPreferenceValues<Preferences>();
-    if (preferences.environmentPath === "homebrew") {
-      const pathEnv = execSync("echo $PATH").toString().trim();
-      envPath = `/opt/homebrew/bin:/opt/homebrew/sbin:${pathEnv}`;
-    }
+    const envVars = getEnvironmentVariables();
+    let envPath = envVars?.PATH || process.env.PATH || "";
 
     // Detached bash script: fetch with progress, set default branch, checkout
     const bashScript = `#!/bin/zsh
