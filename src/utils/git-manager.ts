@@ -1,15 +1,4 @@
-import {
-  CleanOptions,
-  DiffNameStatus,
-  DiffResult,
-  DiffResultBinaryFile,
-  DiffResultNameStatusFile,
-  DiffResultTextFile,
-  FileStatusResult,
-  ResetMode,
-  simpleGit,
-  SimpleGit,
-} from "simple-git";
+import { CleanOptions, DiffNameStatus, DiffResult, DiffResultBinaryFile, DiffResultNameStatusFile, DiffResultTextFile, FileStatusResult, ResetMode, simpleGit, SimpleGit } from "simple-git";
 import { showToast, Toast, getPreferenceValues, Alert, confirmAlert } from "@raycast/api";
 import { join } from "path";
 import { readFileSync, writeFileSync, mkdtempSync, chmodSync, rmSync, existsSync } from "fs";
