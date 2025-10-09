@@ -4,12 +4,27 @@ import { confirmAlert } from "@raycast/api";
 import { Commit, FileStatus } from "../../types";
 import { CommitMessageForm } from "../../commands/views/CommitMessageView";
 import { existsSync } from "fs";
+import { basename } from "path";
 
 /**
  * Action for staging a file.
  */
 export function FileStageAction(context: RepositoryContext & { file: FileStatus }) {
+    const isConflicted = context.file.type === "conflicted";
+
     const handleStageFile = async () => {
+        if (isConflicted) {
+            const confirmed = await confirmAlert({
+                title: "Mark as Resolved",
+                message: `Are you sure you want to mark "${basename(context.file.path)}" as resolved?`,
+                primaryAction: {
+                    title: "Mark as Resolved"
+                },
+            });
+
+            if (!confirmed) return;
+        }
+
         try {
             await context.gitManager.stageFile(context.file.relativePath);
             context.status.revalidate();
@@ -20,9 +35,9 @@ export function FileStageAction(context: RepositoryContext & { file: FileStatus 
 
     return (
         <Action
-            title={context.file.type === "conflicted" ? "Mark as Resolved" : "Stage"}
+            title={isConflicted ? "Mark as Resolved" : "Stage"}
             onAction={handleStageFile}
-            icon={context.file.type === "conflicted" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Plus}
+            icon={isConflicted ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Plus}
         />
     );
 }
@@ -60,7 +75,7 @@ export function FileDiscardAction(context: RepositoryContext & { file: FileStatu
     const handleDiscardChanges = async () => {
         const confirmed = await confirmAlert({
             title: "Discard changes",
-            message: `Are you sure you want to discard changes in file "${context.file.path.split("/").pop()}"? This action cannot be undone.`,
+            message: `Are you sure you want to discard changes in file "${basename(context.file.path)}"? This action cannot be undone.`,
             primaryAction: {
                 title: "Discard changes",
                 style: Alert.ActionStyle.Destructive,
@@ -95,7 +110,7 @@ export function FileRestoreAction(context: RepositoryContext & { filePath: strin
     const handleRestore = async () => {
         const confirmed = await confirmAlert({
             title: context.before ? "Restore File to Before Commit" : "Restore File to This Commit",
-            message: `Are you sure you want to restore '${context.filePath.split("/").pop()}' to commit ${context.commit}? This will modify the working tree`,
+            message: `Are you sure you want to restore '${basename(context.filePath)}' to commit ${context.commit}? This will modify the working tree`,
             primaryAction: {
                 title: "Restore",
                 style: Alert.ActionStyle.Destructive

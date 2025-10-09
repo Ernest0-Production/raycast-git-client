@@ -2,7 +2,7 @@ import { Action, ActionPanel, Icon, List, Toast, showToast } from "@raycast/api"
 import { useCachedState, usePromise } from "@raycast/utils";
 import { FileManagerActions } from "../../components/actions/FileActions";
 import { FileHistoryAction } from "./FileHistoryView";
-import { join } from "path";
+import { basename, join } from "path";
 import { useMemo, useState } from "react";
 import { existsSync } from "fs";
 import { search, sortKind } from "fast-fuzzy";
@@ -30,7 +30,7 @@ export default function FilesView(context: RepositoryContext & NavigationContext
         // Fuzzy search using fast-fuzzy
         setIsSearching(true);
         const results = search(query, filePaths, {
-            keySelector: (filePath) => filePath.split("/").pop() || filePath,
+            keySelector: (filePath) => basename(filePath),
             sortBy: sortKind.bestMatch,
             useDamerau: true,
             ignoreCase: true
@@ -144,13 +144,12 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
     onOpen?: () => void;
     onClearRecent: () => void;
 }) {
-    const fileName = useMemo(() => context.filePath.split("/").pop() || context.filePath, [context.filePath]);
     const absolutePath = join(context.gitManager.repoPath, context.filePath);
 
     return (
         <List.Item
             id={context.filePath}
-            title={fileName}
+            title={basename(context.filePath)}
             subtitle={{
                 value: context.filePath,
                 tooltip: context.filePath
@@ -159,7 +158,7 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
             quickLook={existsSync(absolutePath) ? { path: absolutePath, name: absolutePath } : undefined}
             actions={
                 <ActionPanel>
-                    <ActionPanel.Section title={fileName}>
+                    <ActionPanel.Section title={basename(context.filePath)}>
                         <FileHistoryAction
                             {...context}
                             filePath={absolutePath}

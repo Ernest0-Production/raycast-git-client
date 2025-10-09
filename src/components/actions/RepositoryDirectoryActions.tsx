@@ -1,7 +1,7 @@
 import { Action, ActionPanel, Icon, getPreferenceValues, getApplications, open, confirmAlert, Alert, Application } from "@raycast/api";
-import { useEffect, useMemo, useState } from "react";
 import { useCachedState, usePromise } from "@raycast/utils";
 import { Preferences } from "../../types";
+import { basename } from "path";
 
 interface RepositoryDirectoryActionsProps {
   /** Path to the repository directory */
@@ -45,7 +45,7 @@ export function RepositoryDirectoryActions({ repositoryPath, onOpen }: Repositor
   }
 
   return (
-    <ActionPanel.Section title={repositoryPath.split("/").pop() || repositoryPath}>
+    <ActionPanel.Section title={basename(repositoryPath)}>
       {defaultApp ? (
         <Action.Open
           key={defaultApp.bundleId || defaultApp.path}

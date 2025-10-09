@@ -6,7 +6,7 @@ import { CommitFileIcon } from "../../components/icons/StatusIcons";
 import { useState, useMemo } from "react";
 import { usePromise } from "@raycast/utils";
 import { existsSync } from "fs";
-import { join } from "path";
+import { basename, join } from "path";
 import { RepositoryContext, NavigationContext } from "../../open-repository";
 import { WorkspaceNavigationActions } from "../../components/actions/WorkspaceNavigationActions";
 import { FileRestoreAction } from "../../components/actions/StatusActions";
@@ -169,7 +169,7 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
   return (
     <List.Item
       id={fileId}
-      title={context.file.path.split("/").pop() || context.file.path}
+      title={basename(context.file.path)}
       subtitle={context.toggleController.isShowingDetail ? undefined : {
         value: context.file.path,
         tooltip: context.file.path
@@ -188,7 +188,7 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
       quickLook={fileExists ? { path: absolutePath, name: context.file.path } : undefined}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title={context.file.path.split("/").pop()}>
+          <ActionPanel.Section title={basename(context.file.path)}>
             <ToggleDetailAction controller={context.toggleController} />
             <FileManagerActions filePath={absolutePath} />
             <FileHistoryAction

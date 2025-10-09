@@ -6,7 +6,7 @@ import { useGitDiff } from "../../hooks/useGitDiff";
 import { FileManagerActions } from "../../components/actions/FileActions";
 import { FileRestoreAction } from "../../components/actions/StatusActions";
 import { CommitFileIcon } from "../../components/icons/StatusIcons";
-import { join } from "path";
+import { basename, join } from "path";
 import { CommitCopyAuthorAction, CommitCopyHashAction, CommitCopyMessageAction } from "../../components/actions/CommitActions";
 import { existsSync } from "fs";
 import { RemoteOpenCommitAction } from "../../components/actions/RemoteActions";
@@ -47,8 +47,6 @@ export default function FileHistoryView(context: RepositoryContext & {
         [context.filePath, context.gitManager.repoPath],
     );
 
-    const fileName = useMemo(() => context.filePath.split("/").pop() || context.filePath, [context.filePath]);
-
     return (
         <List
             isLoading={isLoading}
@@ -76,7 +74,7 @@ export default function FileHistoryView(context: RepositoryContext & {
             ) : !commits || commits.length === 0 ? (
                 <List.EmptyView title="No history" description="No commits have modified this file." icon={Icon.Document} />
             ) : (
-                <List.Section title={fileName} subtitle={`${commits.length} commits`}>
+                <List.Section title={basename(context.filePath)} subtitle={`${commits.length} commits`}>
                     {commits.map((commit) => (
                         <CommitListItem
                             {...context}
@@ -168,7 +166,7 @@ function CommitListItem(context: RepositoryContext & {
                         />
                     )}
 
-                    <ActionPanel.Section title={context.file.path.split("/").pop()}>
+                    <ActionPanel.Section title={basename(context.file.path)}>
                         <FileManagerActions filePath={absolutePath} />
                         <FileRestoreAction filePath={absolutePath} before={false} {...context} />
                         <FileRestoreAction filePath={absolutePath} before={true} {...context} />

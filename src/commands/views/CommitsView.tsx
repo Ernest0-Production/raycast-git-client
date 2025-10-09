@@ -1,27 +1,12 @@
 import { ActionPanel, List, Icon, Action, Color, Image } from "@raycast/api";
-import { getFavicon, useCachedState } from "@raycast/utils";
-import {
-  CommitCheckoutAction,
-  CommitCherryPickAction,
-  CommitRevertAction,
-  CommitResetAction,
-  CommitCopyHashAction,
-  CommitCopyShortHashAction,
-  CommitCopyAuthorAction,
-  CommitCopyAuthorEmailAction,
-  CommitCopyMessageAction,
-  CommitInteractiveRebaseAction,
-  CommitPatchCreateAction,
-} from "../../components/actions/CommitActions";
+import { getFavicon } from "@raycast/utils";
+import { CommitCheckoutAction, CommitCherryPickAction, CommitRevertAction, CommitResetAction, CommitCopyHashAction, CommitCopyShortHashAction, CommitCopyAuthorAction, CommitCopyAuthorEmailAction, CommitCopyMessageAction, CommitInteractiveRebaseAction, CommitPatchCreateAction } from "../../components/actions/CommitActions";
 import { TagCreateAction, TagRemoveAction, TagCopyNameAction } from "../../components/actions/TagActions";
 import { BranchCopyNameAction, BranchPushAction, BranchPushForceAction } from "../../components/actions/BranchActions";
 import { CommitDetailsView } from "./CommitDetailsView";
-import {
-  useIssueTracker,
-  replaceUrlPatternsWithLinks,
-} from "../../hooks/useIssueTracker";
+import { useIssueTracker, replaceUrlPatternsWithLinks } from "../../hooks/useIssueTracker";
 import "../../utils/date-utils";
-import { Branch, BranchesState, Commit, IssueTrackerConfig } from "../../types";
+import { Branch, Commit, IssueTrackerConfig } from "../../types";
 import { useMemo, useState } from "react";
 import { CommitMessageForm } from "./CommitMessageView";
 import { RemoteHostIcon } from "../../components/icons/RemoteHostIcons";
@@ -29,6 +14,7 @@ import { RemoteFetchAction, RemoteOpenCommitAction, RemotePullAction } from "../
 import { RepositoryContext, NavigationContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../../components/actions/WorkspaceNavigationActions";
 import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../../components/actions/ToggleDetailAction";
+import { basename } from "path";
 
 export function CommitsView(context: RepositoryContext & NavigationContext) {
   const toggleDetailController = useToggleDetail("Commits-Detail", "Detail", false);
@@ -264,7 +250,7 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
         ...context.commit.author.split(" "),
         context.commit.authorEmail,
         ...context.commit.tags,
-        ...(context.commit.changedFiles?.map((f) => f.path.split("/").pop()) || []),
+        ...(context.commit.changedFiles?.map((fileChanges) => basename(fileChanges.path)) || []),
       ].filter((keyword): keyword is string => Boolean(keyword))}
       detail={
         context.toggleDetailController.isShowingDetail ? (

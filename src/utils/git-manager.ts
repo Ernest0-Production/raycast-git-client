@@ -1,27 +1,9 @@
 import { CleanOptions, DiffNameStatus, DiffResult, DiffResultBinaryFile, DiffResultNameStatusFile, DiffResultTextFile, FileStatusResult, ResetMode, simpleGit, SimpleGit } from "simple-git";
 import { showToast, Toast, getPreferenceValues, Alert, confirmAlert } from "@raycast/api";
-import { join } from "path";
 import { readFileSync, writeFileSync, mkdtempSync, chmodSync, rmSync, existsSync } from "fs";
 import { tmpdir } from "os";
-import {
-  Branch,
-  FileStatus,
-  Commit,
-  Stash,
-  BranchesState,
-  DetachedHead,
-  CommitFileChange,
-  Preferences,
-  RebasePlanItem,
-  FileChangeStats,
-  StatusState,
-  ConflictState,
-  MergeMode,
-  PatchScope,
-  RepositoryCloningProcess,
-  RepositoryCloningState,
-} from "../types";
-import * as path from "path";
+import { Branch, FileStatus, Commit, Stash, BranchesState, DetachedHead, CommitFileChange, Preferences, RebasePlanItem, FileChangeStats, StatusState, ConflictState, MergeMode, PatchScope, RepositoryCloningProcess, RepositoryCloningState } from "../types";
+import { basename, join } from "path";
 import { promises as fs } from "fs";
 import { showFailureToast } from "@raycast/utils";
 import { exec } from "child_process";
@@ -59,7 +41,7 @@ export class GitManager {
    * Gets the repository name from the path.
    */
   get repoName(): string {
-    return this.repoPath.split("/").pop() || "Unknown Repository";
+    return basename(this.repoPath) || "Unknown Repository";
   }
 
   static validateDirectory(repoPath: string) {
@@ -67,7 +49,7 @@ export class GitManager {
       throw new Error(`Directory does not exist: ${repoPath}`);
     }
 
-    const gitPath = path.join(repoPath, ".git");
+    const gitPath = join(repoPath, ".git");
     if (!existsSync(gitPath)) {
       throw new Error(`Not a Git repository: ${repoPath}`);
     }
@@ -149,7 +131,7 @@ export class GitManager {
 
     let currentBranchName = summary.current;
     if (summary.current && summary.current.startsWith("(no")) {
-      const headNamePath = path.join(this.repoPath, ".git", "rebase-merge", "head-name");
+      const headNamePath = join(this.repoPath, ".git", "rebase-merge", "head-name");
       const headNameContent = await fs.readFile(headNamePath, "utf-8");
       currentBranchName = headNameContent.trim().replace(/^refs\/heads\//, "");
     }
@@ -269,19 +251,19 @@ export class GitManager {
       files.push(...fileEntries);
     }
 
-    const rebaseMergePath = path.join(this.repoPath, ".git", "rebase-merge");
-    const mergeHeadPath = path.join(this.repoPath, ".git", "MERGE_HEAD");
-    const squashMessagePath = path.join(this.repoPath, ".git", "SQUASH_MSG");
+    const rebaseMergePath = join(this.repoPath, ".git", "rebase-merge");
+    const mergeHeadPath = join(this.repoPath, ".git", "MERGE_HEAD");
+    const squashMessagePath = join(this.repoPath, ".git", "SQUASH_MSG");
 
     let conflict: ConflictState | undefined;
 
     if (existsSync(rebaseMergePath)) {
       const msgNumContent = await fs.readFile(
-        path.join(rebaseMergePath, "msgnum"),
+        join(rebaseMergePath, "msgnum"),
         "utf-8"
       );
       const endContent = await fs.readFile(
-        path.join(rebaseMergePath, "end"),
+        join(rebaseMergePath, "end"),
         "utf-8"
       );
 

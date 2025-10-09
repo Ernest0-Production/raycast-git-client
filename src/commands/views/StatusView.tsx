@@ -12,6 +12,7 @@ import { PatchApplyAction, PatchCreateAction } from "../../components/actions/Pa
 import { CommitAction, ConflictAbortAction, FileDiscardAction, FileDiscardAllAction, FileStageAction, FileStageAllAction, FileUnstageAction, FileUnstageAllAction } from "../../components/actions/StatusActions";
 import { FileHistoryAction } from "./FileHistoryView";
 import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../../components/actions/ToggleDetailAction";
+import { basename } from "path";
 
 export function StatusView(context: RepositoryContext & NavigationContext) {
   const toggleController = useToggleDetail("Status Diff", "Changes", false);
@@ -146,7 +147,7 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
   return (
     <List.Item
       id={fileId}
-      title={context.file.path.split("/").pop() || context.file.path}
+      title={basename(context.file.path)}
       subtitle={context.toggleController.isShowingDetail ? undefined : {
         value: context.file.relativePath,
         tooltip: context.file.relativePath
@@ -161,7 +162,7 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
       quickLook={existsSync(context.file.path) ? { path: context.file.path, name: context.file.relativePath } : undefined}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title={context.file.path.split("/").pop()}>
+          <ActionPanel.Section title={basename(context.file.path)}>
             {/* Actions for staged files */}
             {context.file.status === "staged" && (
               <>

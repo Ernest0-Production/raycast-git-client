@@ -37,16 +37,16 @@ export function WorkspaceNavigationDropdown(context: NavigationContext) {
                 icon={Icon.Network}
             />
             <List.Dropdown.Item
-                title="Files"
-                value="files"
-                keywords={["history", "ls-files", "workspace", "project"]}
-                icon={Icon.Clock}
-            />
-            <List.Dropdown.Item
                 title="Stashes"
                 value="stashes"
                 keywords={["bookmark"]}
                 icon={Icon.Bookmark}
+            />
+            <List.Dropdown.Item
+                title="Files"
+                value="files"
+                keywords={["history", "ls-files", "workspace", "project"]}
+                icon={Icon.Clock}
             />
         </List.Dropdown>
     );
@@ -81,15 +81,15 @@ export function WorkspaceNavigationActions(context: NavigationContext & Reposito
                     shortcut={{ modifiers: ["cmd"], key: "4" }}
                 />
                 <Action
-                    title="Go to Files"
-                    onAction={() => context.navigateTo("files")}
-                    icon={Icon.Folder}
-                    shortcut={{ modifiers: ["cmd"], key: "5" }}
-                />
-                <Action
                     title="Go to Stash"
                     onAction={() => context.navigateTo("stashes")}
                     icon={Icon.Bookmark}
+                    shortcut={{ modifiers: ["cmd"], key: "5" }}
+                />
+                <Action
+                    title="Go to Files"
+                    onAction={() => context.navigateTo("files")}
+                    icon={Icon.Folder}
                     shortcut={{ modifiers: ["cmd"], key: "0" }}
                 />
             </ActionPanel.Section>
@@ -108,12 +108,12 @@ export function WorkspaceNavigationActions(context: NavigationContext & Reposito
                     <RemoteOpenPullRequestAction remote={context.remotes.data[remote]} />
 
                     {/* Remote create pull request actions */}
-                    {/* {context.branches.data.currentBranch && (
+                    {context.branches.data.currentBranch && (
                         <RemoteCreatePullRequestAction
                             branch={context.branches.data.currentBranch?.name}
                             remote={context.remotes.data[remote]}
                         />
-                    )} */}
+                    )}
                 </ActionPanel.Section>
             ))}
         </>

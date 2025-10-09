@@ -12,6 +12,7 @@ import { RemoteOpenPullRequestAction } from "./components/actions/RemoteActions"
 import { GitManager } from "./utils/git-manager";
 import { useInterval } from "./hooks/useInterval";
 import { promises as fs } from "fs";
+import { basename } from "path";
 
 export default function ManageRepositories() {
   const {
@@ -274,7 +275,7 @@ function AddRepositoryForm({ onAddRepository }: { onAddRepository: (repoPath: st
       try {
         GitManager.validateDirectory(path);
       } catch (error) {
-        const repoName = path.split("/").pop() || path;
+        const repoName = basename(path);
         invalidRepos.push(repoName);
       }
     });
@@ -284,7 +285,7 @@ function AddRepositoryForm({ onAddRepository }: { onAddRepository: (repoPath: st
 
   const handleSubmit = async (values: { repositoryPath: string[] }) => {
     for (const repoPath of values.repositoryPath) {
-      const repoName = repoPath.split("/").pop() || repoPath;
+      const repoName = basename(repoPath);
 
       onAddRepository(repoPath);
 

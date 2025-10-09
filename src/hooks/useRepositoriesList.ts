@@ -4,6 +4,7 @@ import { Repository, RepositoryCloningProcess } from "../types";
 import { detectRepositoryLanguages } from "../utils/language-detector";
 import { resolveTildePath } from "../utils/path-utils";
 import { GitManager } from "../utils/git-manager";
+import { basename } from "path";
 
 /**
  * Hook for managing the list of repositories.
@@ -40,7 +41,7 @@ export function useRepositoriesList() {
 
         const newRepo: Repository = {
           id: Buffer.from(resolvedPath).toString("base64"),
-          name: resolvedPath.split("/").pop() || resolvedPath,
+          name: basename(resolvedPath),
           path: resolvedPath,
           lastOpenedAt: Date.now(),
           languageStats: stats,
