@@ -1,6 +1,6 @@
 import { Action, ActionPanel, Icon, List, Toast, showToast } from "@raycast/api";
 import { useCachedState, usePromise } from "@raycast/utils";
-import { FileCopyPathAction, FileOpenAction, FileOpenWithAction, FileQuickLookAction } from "../../components/actions/FileActions";
+import { FileManagerActions } from "../../components/actions/FileActions";
 import { FileHistoryAction } from "./FileHistoryView";
 import { join } from "path";
 import { useMemo, useState } from "react";
@@ -165,16 +165,7 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
                             filePath={absolutePath}
                             onOpen={context.onOpen}
                         />
-                        <FileOpenAction
-                            filePath={absolutePath}
-                            onOpen={context.onOpen}
-                        />
-                        <FileOpenWithAction
-                            filePath={absolutePath}
-                            onOpen={context.onOpen}
-                        />
-                        <FileQuickLookAction filePath={absolutePath} />
-                        <FileCopyPathAction filePath={absolutePath} />
+                        <FileManagerActions filePath={absolutePath} />
                     </ActionPanel.Section>
 
                     <SharedActionsSection {...context} />

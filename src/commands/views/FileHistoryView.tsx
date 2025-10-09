@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { usePromise } from "@raycast/utils";
 import { Commit, CommitFileChange } from "../../types";
 import { useGitDiff } from "../../hooks/useGitDiff";
-import { FileCopyPathAction, FileOpenAction, FileOpenWithAction, FileQuickLookAction } from "../../components/actions/FileActions";
+import { FileManagerActions } from "../../components/actions/FileActions";
 import { FileRestoreAction } from "../../components/actions/StatusActions";
 import { CommitFileIcon } from "../../components/icons/StatusIcons";
 import { join } from "path";
@@ -169,10 +169,7 @@ function CommitListItem(context: RepositoryContext & {
                     )}
 
                     <ActionPanel.Section title={context.file.path.split("/").pop()}>
-                        <FileOpenAction filePath={absolutePath} />
-                        <FileOpenWithAction filePath={absolutePath} />
-                        <FileCopyPathAction filePath={absolutePath} />
-                        <FileQuickLookAction filePath={absolutePath} />
+                        <FileManagerActions filePath={absolutePath} />
                         <FileRestoreAction filePath={absolutePath} before={false} {...context} />
                         <FileRestoreAction filePath={absolutePath} before={true} {...context} />
                     </ActionPanel.Section>

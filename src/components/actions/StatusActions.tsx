@@ -3,6 +3,7 @@ import { RepositoryContext } from "../../open-repository";
 import { confirmAlert } from "@raycast/api";
 import { Commit, FileStatus } from "../../types";
 import { CommitMessageForm } from "../../commands/views/CommitMessageView";
+import { existsSync } from "fs";
 
 /**
  * Action for staging a file.
@@ -46,6 +47,16 @@ export function FileUnstageAction(context: RepositoryContext & { file: FileStatu
  * Action for discarding changes to a file.
  */
 export function FileDiscardAction(context: RepositoryContext & { file: FileStatus }) {
+    if (context.file.type === "added" && existsSync(context.file.path)) {
+        return (
+            <Action.Trash
+                shortcut={{ modifiers: ["ctrl"], key: "x" }}
+                paths={[context.file.path]}
+                onTrash={context.status.revalidate}
+            />
+        )
+    }
+
     const handleDiscardChanges = async () => {
         const confirmed = await confirmAlert({
             title: "Discard changes",

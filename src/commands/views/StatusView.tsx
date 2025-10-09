@@ -1,6 +1,6 @@
 import { ActionPanel, Action, List, Icon } from "@raycast/api";
 import { useGitDiff } from "../../hooks/useGitDiff";
-import { FileOpenAction, FileOpenWithAction, FileCopyPathAction, FileMoveToTrashAction, FileQuickLookAction, } from "../../components/actions/FileActions";
+import { FileManagerActions } from "../../components/actions/FileActions";
 import { FileStatusIcon } from "../../components/icons/StatusIcons";
 import { StashCreateAction } from "../../components/actions/StashActions";
 import { FileStatus } from "../../types";
@@ -135,12 +135,12 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
   const fileId = `${context.file.relativePath}-${context.file.status}`;
 
   // Only load diff if this file is selected and detail view is showing
-  const shouldLoadDiff = context.toggleController.isShowingDetail && context.selectedFilePath === fileId;
+  const isFocused = context.toggleController.isShowingDetail && context.selectedFilePath === fileId;
 
   const { diff, isLoading } = useGitDiff({
     gitManager: context.gitManager,
     options: { file: context.file.relativePath, status: context.file.status },
-    execute: shouldLoadDiff,
+    execute: isFocused,
   });
 
   return (
@@ -167,10 +167,7 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
               <>
                 <FileUnstageAction {...context} />
                 <ToggleDetailAction controller={context.toggleController} />
-                <FileOpenAction filePath={context.file.path} />
-                <FileOpenWithAction filePath={context.file.path} />
-                <FileQuickLookAction filePath={context.file.path} />
-                <FileCopyPathAction filePath={context.file.path} />
+                <FileManagerActions filePath={context.file.path} />
               </>
             )}
 
@@ -179,16 +176,8 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
               <>
                 <FileStageAction {...context} />
                 <ToggleDetailAction controller={context.toggleController} />
-                <FileOpenAction filePath={context.file.path} />
-                <FileOpenWithAction filePath={context.file.path} />
-                <FileQuickLookAction filePath={context.file.path} />
-                <FileCopyPathAction filePath={context.file.path} />
-                <FileMoveToTrashAction
-                  filePath={context.file.path}
-                  isAddedFile={context.file.type === "added"}
-                  {...context}
-                />
-                {context.file.type !== "conflicted" && context.file.type !== "added" && (
+                <FileManagerActions filePath={context.file.path} />
+                {context.file.type !== "conflicted" && (
                   <FileDiscardAction {...context} />
                 )}
               </>

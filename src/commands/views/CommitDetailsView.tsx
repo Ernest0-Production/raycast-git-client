@@ -1,12 +1,7 @@
 import { ActionPanel, Action, List, Icon, Color, showToast, Toast } from "@raycast/api";
 import { useGitDiff } from "../../hooks/useGitDiff";
 import { Commit, CommitFileChange, ListPagination } from "../../types";
-import {
-  FileOpenAction,
-  FileOpenWithAction,
-  FileCopyPathAction,
-  FileQuickLookAction
-} from "../../components/actions/FileActions";
+import { FileManagerActions } from "../../components/actions/FileActions";
 import { CommitFileIcon } from "../../components/icons/StatusIcons";
 import { useState, useMemo } from "react";
 import { usePromise } from "@raycast/utils";
@@ -195,10 +190,7 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
         <ActionPanel>
           <ActionPanel.Section title={context.file.path.split("/").pop()}>
             <ToggleDetailAction controller={context.toggleController} />
-            <FileOpenAction filePath={absolutePath} />
-            <FileOpenWithAction filePath={absolutePath} />
-            <FileCopyPathAction filePath={absolutePath} />
-            <FileQuickLookAction filePath={absolutePath} />
+            <FileManagerActions filePath={absolutePath} />
             <FileHistoryAction
               filePath={absolutePath}
               {...context}
