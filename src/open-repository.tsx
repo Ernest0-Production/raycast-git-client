@@ -1,4 +1,4 @@
-import { Action, ActionPanel, Icon, List } from "@raycast/api";
+import { Icon, List } from "@raycast/api";
 import { useCachedState } from "@raycast/utils";
 import { useGitRepository } from "./hooks/useGitRepository";
 import { useRepositoriesList } from "./hooks/useRepositoriesList";
@@ -7,20 +7,66 @@ import { StatusView } from "./commands/views/StatusView";
 import { CommitsView } from "./commands/views/CommitsView";
 import { StashesView } from "./commands/views/StashesView";
 import FilesView from "./commands/views/FilesView";
-import { useEffect, useMemo } from "react";
-import { RepositoryDirectoryActions } from "./components/actions/RepositoryDirectoryActions";
+import { useEffect } from "react";
 import { useGitBranches } from "./hooks/useGitBranches";
-import { useCommitsBranchFilter } from "./hooks/useCommitsBranchFilter";
 import { useGitCommits } from "./hooks/useGitCommits";
 import { useGitStash } from "./hooks/useGitStash";
 import { useGitStatus } from "./hooks/useGitStatus";
-import { GitView, FileStatus } from "./types";
+import { GitView, BranchesState, StatusState, Stash, Commit, ListPagination } from "./types";
 import { useGitRemotes } from "./hooks/useGitRemotes";
-import { RemoteCreatePullRequestAction, RemoteOpenPullRequestAction } from "./components/actions/RemoteHostActions";
 import RemotesView from "./commands/views/RemotesView";
+import { Branch, Remote } from "./types";
+import { GitManager } from "./utils/git-manager";
 
 interface Arguments {
   path: string;
+}
+
+export type BranchFilter =
+  { kind: 'all' } |
+  { kind: 'current' } |
+  { kind: 'branch', value: Pick<Branch, 'name' | 'type' | 'remote'> }
+
+export type RepositoryContext = {
+  gitManager: GitManager;
+  remotes: {
+    data: Record<string, Remote>;
+    isLoading: boolean;
+    revalidate: () => void;
+  };
+  branches: {
+    data: BranchesState;
+    isLoading: boolean;
+    error: Error | undefined;
+    revalidate: () => void;
+  };
+  commits: {
+    data: Commit[];
+    selectedBranch?: Branch;
+    filter: BranchFilter;
+    isLoading: boolean;
+    error: Error | undefined;
+    pagination: ListPagination | undefined;
+    setFilter: (filter: BranchFilter) => void;
+    revalidate: () => void;
+  };
+  stashes: {
+    data: Stash[];
+    isLoading: boolean;
+    error: Error | undefined;
+    revalidate: () => void;
+  };
+  status: {
+    data: StatusState;
+    isLoading: boolean;
+    error: Error | undefined;
+    revalidate: () => void;
+  };
+};
+
+export type NavigationContext = {
+  currentView: GitView;
+  navigateTo: (destination: GitView) => void;
 }
 
 export default function OpenRepository({ arguments: args }: { arguments: Arguments }) {
@@ -53,230 +99,49 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
     );
   }
 
-  const { data: remotes, revalidate: revalidateRemotes } = useGitRemotes(gitManager);
-
   // Shared data hooks lifted to the top-level to persist across view switches
-  const {
-    data: branchesState,
-    isLoading: branchesIsLoading,
-    error: branchesError,
-    revalidate: revalidateBranches,
-  } = useGitBranches(gitManager);
+  const remotesContext = useGitRemotes(gitManager);
+  const branchesContext = useGitBranches(gitManager);
+  const commitsContext = useGitCommits(gitManager, branchesContext.data);
+  const stashesContext = useGitStash(gitManager);
+  const statusContext = useGitStatus(gitManager);
 
-  const {
-    branchFilter,
-    selectedBranch,
-    setBranchFilter,
-  } = useCommitsBranchFilter(gitManager.repoPath, branchesState);
-
-  const selectedSourceName = useMemo(() => {
-    if (!selectedBranch) {
-      return undefined;
-    }
-    if ('name' in selectedBranch) {
-      switch (selectedBranch.type) {
-        case 'local':
-        case 'current':
-          return selectedBranch.name;
-        case 'remote':
-          return `${selectedBranch.remote}/${selectedBranch.name}`;
-      }
-    }
-    if ('commitHash' in selectedBranch) {
-      return selectedBranch.commitHash;
-    }
-    return undefined;
-  }, [selectedBranch]);
-
-  const {
-    isLoading: commitsIsLoading,
-    data: commits,
-    error: commitsError,
-    revalidate: revalidateCommits,
-    pagination,
-  } = useGitCommits(
+  const rootContext: RepositoryContext & NavigationContext = {
     gitManager,
-    selectedSourceName,
-    branchesState !== undefined
-  );
-
-  const { stashes, isLoading: stashesIsLoading, revalidate: revalidateStashes } = useGitStash(gitManager);
-
-  const {
-    data: status,
-    isLoading: statusIsLoading,
-    error: statusError,
-    revalidate: revalidateStatus,
-  } = useGitStatus(gitManager);
-
-  // Navigation actions for all views
-  const navigationActions = (
-    <>
-      <ActionPanel.Section title="Navigation">
-        <Action
-          title="Go to Status"
-          onAction={() => setCurrentView("status")}
-          icon={Icon.NewDocument}
-          shortcut={{ modifiers: ["cmd"], key: "1" }}
-        />
-        <Action
-          title="Go to Commits"
-          onAction={() => setCurrentView("commits")}
-          icon={`git-commit.svg`}
-          shortcut={{ modifiers: ["cmd"], key: "2" }}
-        />
-        <Action
-          title="Go to Branches"
-          onAction={() => setCurrentView("branches")}
-          icon={`git-branch.svg`}
-          shortcut={{ modifiers: ["cmd"], key: "3" }}
-        />
-        <Action
-          title="Go to Remotes"
-          onAction={() => setCurrentView("remotes")}
-          icon={Icon.Network}
-          shortcut={{ modifiers: ["cmd"], key: "4" }}
-        />
-        <Action
-          title="Go to Files"
-          onAction={() => setCurrentView("files")}
-          icon={Icon.Folder}
-          shortcut={{ modifiers: ["cmd"], key: "5" }}
-        />
-        <Action
-          title="Go to Stash"
-          onAction={() => setCurrentView("stashes")}
-          icon={Icon.Bookmark}
-          shortcut={{ modifiers: ["cmd"], key: "6" }}
-        />
-      </ActionPanel.Section>
-      <RepositoryDirectoryActions repositoryPath={gitManager.repoPath} />
-      {remotes && Object.keys(remotes).map((remote) => (
-        <ActionPanel.Section
-          key={remote}
-          title={`${remote} • ${remotes[remote].organizationName}/${remotes[remote].repositoryName}`}
-        >
-          <RemoteOpenPullRequestAction remote={remotes[remote]} />
-          {branchesState?.currentBranch && (
-            <RemoteCreatePullRequestAction
-              branch={branchesState.currentBranch.name}
-              remote={remotes[remote]}
-            />
-          )}
-        </ActionPanel.Section>
-      ))}
-    </>
-  );
-
-  // View selector dropdown for all views
-  const viewSelectorDropdown = (
-    <List.Dropdown
-      tooltip="Select View"
-      value={currentView}
-      onChange={(newValue: string) => setCurrentView(newValue as GitView)}
-    >
-      <List.Dropdown.Item title="Status" value="status" keywords={["diff", "changes", "state", "workspace", "patch"]} icon={Icon.NewDocument} />
-      <List.Dropdown.Item title="Commits" value="commits" keywords={["log", "history"]} icon={`git-commit.svg`} />
-      <List.Dropdown.Item title="Branches" value="branches" keywords={["graph", "remote"]} icon={`git-branch.svg`} />
-      <List.Dropdown.Item title="Remotes" value="remotes" keywords={["origin"]} icon={Icon.Network} />
-      <List.Dropdown.Item title="Files" value="files" keywords={["history", "ls-files", "workspace", "project"]} icon={Icon.Clock} />
-      <List.Dropdown.Item title="Stashes" value="stashes" keywords={["bookmark"]} icon={Icon.Bookmark} />
-    </List.Dropdown>
-  );
+    remotes: remotesContext,
+    branches: branchesContext,
+    commits: commitsContext,
+    stashes: stashesContext,
+    status: statusContext,
+    currentView,
+    navigateTo: setCurrentView,
+  };
 
   // Render the corresponding view
   switch (currentView) {
     case "status":
       return (
-        <StatusView
-          gitManager={gitManager}
-          currentBranch={branchesState?.currentBranch}
-          navigationActions={navigationActions}
-          viewDropdown={viewSelectorDropdown}
-          onNavigateToCommits={() => setCurrentView("commits")}
-          status={status}
-          isLoading={statusIsLoading}
-          error={statusError}
-          revalidateStatus={revalidateStatus}
-          revalidateCommits={revalidateCommits}
-          revalidateBranches={revalidateBranches}
-          remotesHosts={remotes ?? {}}
-        />
+        <StatusView {...rootContext} />
       );
     case "commits":
       return (
-        <CommitsView
-          gitManager={gitManager}
-          navigationActions={navigationActions}
-          viewDropdown={viewSelectorDropdown}
-          // Branch context
-          branchesState={branchesState}
-          // Filter state
-          branchFilter={branchFilter}
-          selectedBranch={selectedBranch}
-          setBranchFilter={setBranchFilter}
-          // Commits data
-          isLoading={commitsIsLoading}
-          commits={commits}
-          error={commitsError}
-          revalidateCommits={revalidateCommits}
-          revalidateStatus={revalidateStatus}
-          revalidateBranches={revalidateBranches}
-          navigateTo={setCurrentView}
-          pagination={pagination}
-          remotesHosts={remotes ?? {}}
-        />
+        <CommitsView {...rootContext} />
       );
     case "branches":
       return (
-        <BranchesView
-          gitManager={gitManager}
-          navigationActions={navigationActions}
-          viewDropdown={viewSelectorDropdown}
-          branchesState={branchesState}
-          isLoading={branchesIsLoading}
-          error={branchesError}
-          revalidateBranches={revalidateBranches}
-          hasConflicts={status?.files?.some((file: FileStatus) => file.type === "conflicted")}
-          hasUncommittedChanges={status?.files?.length !== 0}
-          revalidateStatus={revalidateStatus}
-          navigateTo={setCurrentView}
-          remotesHosts={remotes ?? {}}
-        />
+        <BranchesView {...rootContext} />
       );
     case "remotes":
       return (
-        <RemotesView
-          gitManager={gitManager}
-          navigationActions={navigationActions}
-          viewDropdown={viewSelectorDropdown}
-          remoteHosts={remotes ?? {}}
-          onRevalidateRemotes={revalidateRemotes}
-        />
+        <RemotesView {...rootContext} />
       );
     case "files":
       return (
-        <FilesView
-          gitManager={gitManager}
-          navigationActions={navigationActions}
-          viewDropdown={viewSelectorDropdown}
-          remotesHosts={remotes ?? {}}
-          onRefresh={() => {
-            revalidateStatus();
-          }}
-        />
+        <FilesView {...rootContext} />
       );
     case "stashes":
       return (
-        <StashesView
-          gitManager={gitManager}
-          navigationActions={navigationActions}
-          viewDropdown={viewSelectorDropdown}
-          onNavigateToStatus={() => setCurrentView("status")}
-          stashes={stashes}
-          isLoading={stashesIsLoading}
-          revalidate={revalidateStashes}
-        />
+        <StashesView {...rootContext} />
       );
     default:
       setCurrentView("branches");

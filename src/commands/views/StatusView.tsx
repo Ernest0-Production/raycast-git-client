@@ -1,85 +1,32 @@
 import { ActionPanel, Action, List, Icon } from "@raycast/api";
 import { useGitDiff } from "../../hooks/useGitDiff";
-import {
-  FileStageAction,
-  FileUnstageAction,
-  FileDiscardAction,
-  FileOpenAction,
-  FileOpenWithAction,
-  FileCopyPathAction,
-  FileMoveToTrashAction,
-  FileStageAllAction,
-  FileUnstageAllAction,
-  FileDiscardAllAction,
-  FileQuickLookAction,
-  FileRefreshStatusAction,
-  FileCommitAction,
-  FileConflictAbortAction,
-  FileHistoryAction,
-  CreatePatchAction,
-  ApplyPatchAction,
-} from "../../components/actions/FileActions";
+import { FileOpenAction, FileOpenWithAction, FileCopyPathAction, FileMoveToTrashAction, FileQuickLookAction, } from "../../components/actions/FileActions";
 import { FileStatusIcon } from "../../components/icons/StatusIcons";
-import { CreateStashAction } from "../../components/actions/StashActions";
-import { GitManager } from "../../utils/git-manager";
-import { Branch, FileStatus, StatusState } from "../../types";
+import { StashCreateAction } from "../../components/actions/StashActions";
+import { FileStatus } from "../../types";
 import { useMemo, useState } from "react";
 import { existsSync } from "fs";
-import { RemotesHosts } from "../../hooks/useGitRemotes";
+import { NavigationContext, RepositoryContext } from "../../open-repository";
+import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../../components/actions/WorkspaceNavigationActions";
+import { PatchApplyAction, PatchCreateAction } from "../../components/actions/PatchActions";
+import { CommitAction, ConflictAbortAction, FileDiscardAction, FileDiscardAllAction, FileStageAction, FileStageAllAction, FileUnstageAction, FileUnstageAllAction } from "../../components/actions/StatusActions";
+import { FileHistoryAction } from "./FileHistoryView";
+import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../../components/actions/ToggleDetailAction";
 
-interface StatusViewProps {
-  gitManager: GitManager;
-  currentBranch?: Branch;
-  navigationActions: React.ReactNode;
-  viewDropdown: React.ReactElement<any>;
-  onNavigateToCommits?: () => void;
-  status?: StatusState;
-  isLoading: boolean;
-  error?: Error;
-  revalidateStatus: () => void | Promise<unknown>;
-  revalidateCommits: () => void | Promise<unknown>;
-  revalidateBranches: () => void | Promise<unknown>;
-  remotesHosts: RemotesHosts;
-}
-
-export function StatusView({
-  gitManager,
-  currentBranch,
-  navigationActions,
-  viewDropdown,
-  onNavigateToCommits,
-  status, isLoading,
-  error,
-  revalidateStatus,
-  revalidateCommits,
-  revalidateBranches,
-  remotesHosts,
-}: StatusViewProps) {
-  const [isShowingDetail, setIsShowingDetail] = useState(false);
+export function StatusView(context: RepositoryContext & NavigationContext) {
+  const toggleController = useToggleDetail("Status Diff", "Changes", false);
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
 
-  // Combined callback for commit actions: refresh data and navigate
-  const refreshAndNavigateToCommits = () => {
-    revalidateStatus();
-    revalidateBranches();
-    revalidateCommits();
-    onNavigateToCommits?.();
-  };
-
-  const toggleDetail = () => {
-    setIsShowingDetail(!isShowingDetail);
-  };
-
-  const stagedFiles = status?.files ? status.files.filter((f) => f.status === "staged") : [];
-  const unstagedFiles = status?.files ? status.files.filter((f) => f.status === "unstaged" || f.status === "untracked") : [];
+  const stagedFiles = context.status.data?.files ? context.status.data.files.filter((f) => f.status === "staged") : [];
+  const unstagedFiles = context.status.data?.files ? context.status.data.files.filter((f) => f.status === "unstaged" || f.status === "untracked") : [];
 
   const navigationTitle = useMemo(() => {
-    if (status?.conflict) {
-      switch (status.conflict.type) {
+    if (context.status.data?.conflict) {
+      switch (context.status.data.conflict.type) {
         case "rebase":
-          return `⚠️ Rebase Conflict (${status.conflict.current}/${status.conflict.total})`;
+          return `⚠️ Rebase Conflict (${context.status.data.conflict.current}/${context.status.data.conflict.total})`;
         case "merge":
-          return `⚠️ Merge Conflict (${status.conflict.current}/${status.conflict.total})`;
+          return `⚠️ Merge Conflict (${context.status.data.conflict.current}/${context.status.data.conflict.total})`;
         case "squash":
           return `Squashing Commit`;
         default:
@@ -88,64 +35,61 @@ export function StatusView({
     } else {
       return "Repository Status";
     }
-  }, [status?.conflict]);
+  }, [context.status.data?.conflict]);
 
   return (
     <List
-      isLoading={isLoading}
+      isLoading={context.status.isLoading}
       navigationTitle={navigationTitle}
       searchBarPlaceholder="Search files by name, path..."
       onSelectionChange={(id) => setSelectedFilePath(id)}
       filtering={{ keepSectionOrder: true }}
-      isShowingDetail={isShowingDetail}
-      searchBarAccessory={viewDropdown}
+      isShowingDetail={toggleController.isShowingDetail}
+      searchBarAccessory={
+        WorkspaceNavigationDropdown(context)
+      }
       actions={
         <ActionPanel>
-          {status && currentBranch && (
-            <FileCommitAction
-              status={status}
-              gitManager={gitManager}
-              currentBranch={currentBranch}
-              remotesHosts={remotesHosts}
-              onFinish={refreshAndNavigateToCommits} />
+          {context.status.data && context.branches.data.currentBranch && (
+            <CommitAction {...context} />
           )}
 
           <ActionPanel.Section>
-            <ToggleDetailAction isShowingDetail={isShowingDetail} onToggleDetail={toggleDetail} />
+            <ToggleDetailAction controller={toggleController} />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="Workspace">
-            <ApplyPatchAction gitManager={gitManager} onRefresh={revalidateStatus} />
-            <FileRefreshStatusAction onRefresh={revalidateStatus} />
+          <ActionPanel.Section title="Patch">
+            <PatchApplyAction {...context} />
           </ActionPanel.Section>
 
-          {status && (
-            <FileConflictAbortAction
-              status={status}
-              gitManager={gitManager}
-              onRefresh={revalidateStatus}
-            />
+          {context.status.data && (
+            <ConflictAbortAction {...context} />
           )}
-          {navigationActions}
+          <SharedActionsSection {...context} />
         </ActionPanel>
       }
     >
-      {error ? (
+      {context.status.error ? (
         <List.EmptyView
           title="Error loading status"
-          description={error.message}
+          description={context.status.error.message}
           icon={Icon.ExclamationMark}
           actions={
             <ActionPanel>
-              <Action title="Retry" onAction={revalidateStatus} icon={Icon.ArrowClockwise} />
+              <SharedActionsSection {...context} />
             </ActionPanel>
           }
         />
-      ) : !status?.files || status.files.length === 0 ? (
+      ) : !context.status.data?.files || context.status.data.files.length === 0 ? (
         <List.EmptyView
           title="No changes"
           description="No changes in the repository. The working directory is clean."
           icon={Icon.NewDocument}
+          actions={
+            <ActionPanel>
+              <SharedActionsSection {...context} />
+            </ActionPanel>
+          }
         />
       ) : (
         <>
@@ -155,16 +99,9 @@ export function StatusView({
                 <FileListItem
                   key={file.path}
                   file={file}
-                  status={status}
-                  currentBranch={currentBranch}
-                  gitManager={gitManager}
-                  onRefresh={revalidateStatus}
-                  navigationActions={navigationActions}
-                  isShowingDetail={isShowingDetail}
-                  onToggleDetail={toggleDetail}
+                  toggleController={toggleController}
                   selectedFilePath={selectedFilePath}
-                  remotesHosts={remotesHosts}
-                  onCommitSuccess={refreshAndNavigateToCommits}
+                  {...context}
                 />
               ))}
             </List.Section>
@@ -176,16 +113,9 @@ export function StatusView({
                 <FileListItem
                   key={file.path}
                   file={file}
-                  status={status}
-                  currentBranch={currentBranch}
-                  gitManager={gitManager}
-                  onRefresh={revalidateStatus}
-                  navigationActions={navigationActions}
-                  isShowingDetail={isShowingDetail}
-                  onToggleDetail={toggleDetail}
+                  toggleController={toggleController}
                   selectedFilePath={selectedFilePath}
-                  remotesHosts={remotesHosts}
-                  onCommitSuccess={refreshAndNavigateToCommits}
+                  {...context}
                 />
               ))}
             </List.Section>
@@ -196,141 +126,115 @@ export function StatusView({
   );
 }
 
-interface FileListItemProps {
+function FileListItem(context: NavigationContext & RepositoryContext & {
   file: FileStatus;
-  status: StatusState;
-  currentBranch?: Branch;
-  gitManager: GitManager;
-  onRefresh: () => void;
-  navigationActions: React.ReactNode;
-  isShowingDetail: boolean;
-  onToggleDetail: () => void;
   selectedFilePath: string | null;
-  onCommitSuccess: () => void;
-  remotesHosts: RemotesHosts;
-}
-
-function FileListItem({
-  file,
-  status,
-  currentBranch,
-  gitManager,
-  onRefresh,
-  navigationActions,
-  isShowingDetail,
-  onToggleDetail,
-  selectedFilePath,
-  onCommitSuccess,
-  remotesHosts,
-}: FileListItemProps) {
+  toggleController: ToggleDetailController;
+}) {
   // Create a unique identifier for each file item
-  const fileId = `${file.relativePath}-${file.status}`;
+  const fileId = `${context.file.relativePath}-${context.file.status}`;
 
   // Only load diff if this file is selected and detail view is showing
-  const shouldLoadDiff = isShowingDetail && selectedFilePath === fileId;
+  const shouldLoadDiff = context.toggleController.isShowingDetail && context.selectedFilePath === fileId;
 
   const { diff, isLoading } = useGitDiff({
-    gitManager,
-    options: { file: file.relativePath, status: file.status },
+    gitManager: context.gitManager,
+    options: { file: context.file.relativePath, status: context.file.status },
     execute: shouldLoadDiff,
   });
 
   return (
     <List.Item
       id={fileId}
-      title={file.path.split("/").pop() || file.path}
-      subtitle={isShowingDetail ? undefined : {
-        value: file.relativePath,
-        tooltip: file.relativePath
+      title={context.file.path.split("/").pop() || context.file.path}
+      subtitle={context.toggleController.isShowingDetail ? undefined : {
+        value: context.file.relativePath,
+        tooltip: context.file.relativePath
       }}
-      icon={FileStatusIcon(file)}
-      keywords={[file.path, file.oldPath].filter((keyword): keyword is string => Boolean(keyword))}
+      icon={FileStatusIcon(context.file)}
+      keywords={[context.file.path, context.file.oldPath].filter((keyword): keyword is string => Boolean(keyword))}
       detail={
-        isShowingDetail ? (
-          <List.Item.Detail isLoading={isLoading} markdown={`${file.relativePath}:\n\n${diff ?? ""}`} metadata />
+        context.toggleController.isShowingDetail ? (
+          <List.Item.Detail isLoading={isLoading} markdown={`${context.file.relativePath}:\n\n${diff ?? ""}`} metadata />
         ) : undefined
       }
-      quickLook={existsSync(file.path) ? { path: file.path, name: file.relativePath } : undefined}
+      quickLook={existsSync(context.file.path) ? { path: context.file.path, name: context.file.relativePath } : undefined}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title={file.path.split("/").pop()}>
+          <ActionPanel.Section title={context.file.path.split("/").pop()}>
             {/* Actions for staged files */}
-            {file.status === "staged" && (
+            {context.file.status === "staged" && (
               <>
-                <FileUnstageAction file={file} gitManager={gitManager} onRefresh={onRefresh} />
-                <ToggleDetailAction isShowingDetail={isShowingDetail} onToggleDetail={onToggleDetail} />
-                <FileOpenAction filePath={file.path} />
-                <FileOpenWithAction filePath={file.path} />
-                <FileQuickLookAction filePath={file.path} />
-                <FileCopyPathAction filePath={file.path} />
+                <FileUnstageAction {...context} />
+                <ToggleDetailAction controller={context.toggleController} />
+                <FileOpenAction filePath={context.file.path} />
+                <FileOpenWithAction filePath={context.file.path} />
+                <FileQuickLookAction filePath={context.file.path} />
+                <FileCopyPathAction filePath={context.file.path} />
               </>
             )}
 
             {/* Actions for unstaged/untracked files */}
-            {(file.status === "unstaged" || file.status === "untracked") && (
+            {(context.file.status === "unstaged" || context.file.status === "untracked") && (
               <>
-                <FileStageAction file={file} gitManager={gitManager} onRefresh={onRefresh} />
-                <ToggleDetailAction isShowingDetail={isShowingDetail} onToggleDetail={onToggleDetail} />
-                <FileOpenAction filePath={file.path} />
-                <FileOpenWithAction filePath={file.path} />
-                <FileQuickLookAction filePath={file.path} />
-                <FileCopyPathAction filePath={file.path} />
+                <FileStageAction {...context} />
+                <ToggleDetailAction controller={context.toggleController} />
+                <FileOpenAction filePath={context.file.path} />
+                <FileOpenWithAction filePath={context.file.path} />
+                <FileQuickLookAction filePath={context.file.path} />
+                <FileCopyPathAction filePath={context.file.path} />
                 <FileMoveToTrashAction
-                  filePath={file.path}
-                  isAddedFile={file.type === "added"}
-                  onRefresh={onRefresh}
+                  filePath={context.file.path}
+                  isAddedFile={context.file.type === "added"}
+                  {...context}
                 />
-                {file.type !== "conflicted" && file.type !== "added" && (
-                  <FileDiscardAction file={file} gitManager={gitManager} onRefresh={onRefresh} />
+                {context.file.type !== "conflicted" && context.file.type !== "added" && (
+                  <FileDiscardAction {...context} />
                 )}
               </>
             )}
             <FileHistoryAction
-              filePath={file.path}
-              gitManager={gitManager}
-              remotesHosts={remotesHosts}
-              onRefresh={onRefresh}
+              filePath={context.file.path}
+              {...context}
             />
           </ActionPanel.Section>
 
           <ActionPanel.Section>
-            {currentBranch && (
-              <FileCommitAction
-                status={status}
-                currentBranch={currentBranch}
-                gitManager={gitManager}
-                onContinue={onCommitSuccess}
-                onFinish={onCommitSuccess}
-                remotesHosts={remotesHosts}
-              />
+            {context.branches.data.currentBranch && (
+              <CommitAction {...context} />
             )}
-            <FileConflictAbortAction status={status} gitManager={gitManager} onRefresh={onRefresh} />
-            <FileStageAllAction gitManager={gitManager} onRefresh={onRefresh} />
-            <FileUnstageAllAction gitManager={gitManager} onRefresh={onRefresh} />
-            <FileDiscardAllAction gitManager={gitManager} onRefresh={onRefresh} />
+            <ConflictAbortAction {...context} />
+            <FileStageAllAction {...context} />
+            <FileUnstageAllAction {...context} />
+            <FileDiscardAllAction {...context} />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="Workspace">
-            <CreateStashAction gitManager={gitManager} onRefresh={onRefresh} />
-            <CreatePatchAction gitManager={gitManager} />
-            <ApplyPatchAction gitManager={gitManager} onRefresh={onRefresh} />
-            <FileRefreshStatusAction onRefresh={onRefresh} />
+          <ActionPanel.Section title="Patch">
+            <StashCreateAction {...context} />
+            <PatchCreateAction {...context} />
+            <PatchApplyAction {...context} />
           </ActionPanel.Section>
 
-          {navigationActions}
+          <SharedActionsSection {...context} />
         </ActionPanel>
       }
     />
   );
 }
 
-function ToggleDetailAction({ isShowingDetail, onToggleDetail }: { isShowingDetail: boolean, onToggleDetail: () => void }) {
+function SharedActionsSection(context: RepositoryContext & NavigationContext) {
   return (
-    <Action
-      title={isShowingDetail ? "Hide Changes" : "Show Changes"}
-      icon={Icon.AppWindowSidebarLeft}
-      onAction={onToggleDetail}
-      shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
-    />
+    <>
+      <ActionPanel.Section title="Workspace">
+        <Action
+          title="Refresh"
+          onAction={context.status.revalidate}
+          icon={Icon.ArrowClockwise}
+          shortcut={{ modifiers: ["cmd"], key: "r" }}
+        />
+      </ActionPanel.Section>
+
+      <WorkspaceNavigationActions {...context} />
+    </>
   );
 }

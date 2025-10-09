@@ -1,5 +1,4 @@
-import { GitManager } from "../../utils/git-manager";
-import { Branch, Preferences } from "../../types";
+import { Preferences } from "../../types";
 import { showFailureToast, useCachedState } from "@raycast/utils";
 import { useEffect, useMemo, useState } from "react";
 import { showToast, Toast, getPreferenceValues, confirmAlert, environment, useNavigation, Color } from "@raycast/api";
@@ -7,42 +6,31 @@ import { AI } from "@raycast/api";
 import { Action, ActionPanel, Form, Icon, Alert } from "@raycast/api";
 import { AiPromptPreset, useAiPromptPresets } from "../../hooks/useAiPromptPresets";
 import { AiMessagePresetEditorForm } from "../../manage-ai-message-prompts";
-import { RemotesHosts } from "../../hooks/useGitRemotes";
 import { RemoteHostIcon } from "../../components/icons/RemoteHostIcons";
+import { RepositoryContext } from "../../open-repository";
 
 /**
  * Form for creating a commit with AI generation support.
  */
-export function CommitMessageForm({
-  currentBranch,
-  amendOnly = false,
-  gitManager,
-  remotesHosts,
-  onFinish }: {
-    currentBranch: Branch;
-    amendOnly?: boolean;
-    gitManager: GitManager;
-    remotesHosts?: RemotesHosts;
-    onFinish: () => void
-  }) {
+export function CommitMessageForm(context: RepositoryContext & { amendOnly?: boolean; }) {
   const preferences = getPreferenceValues<Preferences>();
 
   // Use useState for autoGenerateCommitMessage mode, and useCachedState for amendOnly mode
   const [draftMessage, setDraftMessage] = preferences.autoGenerateCommitMessage
     ? useState("")
-    : useCachedState(`commit-draft-${gitManager.repoPath}`, "");
+    : useCachedState(`commit-draft-${context.gitManager.repoPath}`, "");
 
   // Use useState for amendOnly mode, and useCachedState for autoGenerateCommitMessage mode
-  const [amend, setAmend] = amendOnly
+  const [amend, setAmend] = context.amendOnly
     ? useState(true)
-    : useCachedState(`commit-amend-${gitManager.repoPath}`, false);
+    : useCachedState(`commit-amend-${context.gitManager.repoPath}`, false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { pop } = useNavigation();
   const { presets } = useAiPromptPresets();
 
   useEffect(() => {
-    if (preferences.autoGenerateCommitMessage && !amendOnly) {
+    if (preferences.autoGenerateCommitMessage && !context.amendOnly) {
       generateCommitMessage(presets[0]);
     }
   }, []);
@@ -51,7 +39,7 @@ export function CommitMessageForm({
   const handleAmendChange = async (newAmendValue: boolean) => {
     let lastCommit = null;
     if (newAmendValue) {
-      lastCommit = await gitManager.getLastCommit()
+      lastCommit = await context.gitManager.getLastCommit()
     }
 
     setAmend(newAmendValue);
@@ -71,14 +59,15 @@ export function CommitMessageForm({
   };
 
   const generateCommitMessage = async (presetPrompt: AiPromptPreset) => {
+    const gitManager = context.gitManager;
     try {
       setIsGenerating(true);
 
       // Get staged changes diff
-      const diff = await gitManager.getDiff();
+      const diff = await context.gitManager.getDiff();
       let lastCommit = null;
       if (amend) {
-        lastCommit = await gitManager.getLastCommit()
+        lastCommit = await context.gitManager.getLastCommit()
       }
 
       // Form a more structured and readable prompt for AI generation of commit message using selected preset
@@ -97,7 +86,7 @@ export function CommitMessageForm({
         );
       }
 
-      if (!amendOnly) {
+      if (!context.amendOnly) {
         promptParts.push(
           "--------------------",
           "GIT DIFF:",
@@ -157,7 +146,7 @@ export function CommitMessageForm({
     try {
       setIsSubmitting(true);
       // Commit changes
-      await gitManager.commit(draftMessage.trim(), amend);
+      await context.gitManager.commit(draftMessage.trim(), amend);
     } catch (error) {
       // Git error is already shown by GitManager
       return
@@ -167,14 +156,16 @@ export function CommitMessageForm({
 
     // Push if requested
     if (push && remote) {
-      try { await gitManager.push(forcePush, currentBranch, remote); }
+      try { await context.gitManager.push(forcePush, context.branches.data.currentBranch!, remote); }
       // Git error is already shown by GitManager
       catch (error) { }
     }
     // Clear draft after successful commit
     clearDraft();
     pop();
-    onFinish();
+    context.status.revalidate();
+    context.branches.revalidate();
+    context.commits.revalidate();
   };
 
   return (
@@ -193,13 +184,13 @@ export function CommitMessageForm({
               amend={amend}
               forcePush={false}
               handleCommit={(remote) => handleCommit(true, false, remote)}
-              remotesHosts={remotesHosts}
+              {...context}
             />
             <CommitAndPushAction
               amend={amend}
               forcePush={true}
               handleCommit={(remote) => handleCommit(true, true, remote)}
-              remotesHosts={remotesHosts}
+              {...context}
             />
           </ActionPanel.Section>
 
@@ -255,7 +246,7 @@ export function CommitMessageForm({
         value={draftMessage}
         error={draftMessage.length > 0 ? undefined : "Required"}
         onChange={setDraftMessage}
-        info={!amendOnly ? "Draft is automatically saved and will be cleared after successful commit" : undefined}
+        info={!context.amendOnly ? "Draft is automatically saved and will be cleared after successful commit" : undefined}
       />
       <Form.Checkbox
         id="amend"
@@ -267,41 +258,35 @@ export function CommitMessageForm({
   );
 }
 
-function CommitAndPushAction({
-  amend,
-  forcePush,
-  handleCommit,
-  remotesHosts,
-}: {
+function CommitAndPushAction(context: RepositoryContext & {
   amend: boolean;
   forcePush: boolean;
   handleCommit: (remote: string) => void;
-  remotesHosts?: RemotesHosts;
 }) {
-  if (!remotesHosts || Object.keys(remotesHosts).length === 0) {
+  if (!context.remotes.data || Object.keys(context.remotes.data).length === 0) {
     return undefined;
   }
 
   const title = useMemo(() => {
-    if (amend && forcePush) {
+    if (context.amend && context.forcePush) {
       return "Amend and Force Push";
-    } else if (amend) {
+    } else if (context.amend) {
       return "Amend and Push";
-    } else if (forcePush) {
+    } else if (context.forcePush) {
       return "Force Push";
     } else {
       return "Push";
     }
-  }, [amend, forcePush]);
+  }, [context.amend, context.forcePush]);
 
-  if (Object.keys(remotesHosts).length === 1) {
+  if (Object.keys(context.remotes.data).length === 1) {
     return (
       <Action
         title={title}
-        onAction={() => handleCommit(Object.keys(remotesHosts)[0])}
-        icon={forcePush ? Icon.ExclamationMark : Icon.Upload}
-        style={forcePush ? Action.Style.Destructive : undefined}
-        shortcut={forcePush
+        onAction={() => context.handleCommit(Object.keys(context.remotes.data)[0])}
+        icon={context.forcePush ? Icon.ExclamationMark : Icon.Upload}
+        style={context.forcePush ? Action.Style.Destructive : undefined}
+        shortcut={context.forcePush
           ? { modifiers: ["cmd", "opt", "shift"], key: "enter" }
           : { modifiers: ["cmd", "shift"], key: "enter" }}
       />
@@ -311,17 +296,17 @@ function CommitAndPushAction({
   return (
     <ActionPanel.Submenu
       title={`${title} to`}
-      icon={forcePush ? Icon.ExclamationMark : Icon.Upload}
-      shortcut={forcePush
+      icon={context.forcePush ? Icon.ExclamationMark : Icon.Upload}
+      shortcut={context.forcePush
         ? { modifiers: ["cmd", "opt", "shift"], key: "enter" }
         : { modifiers: ["cmd", "shift"], key: "enter" }}
     >
-      {Object.keys(remotesHosts).map((remote) => (
+      {Object.keys(context.remotes.data).map((remote) => (
         <Action
           key={`${remote}:commit-and-push`}
           title={remote}
-          icon={RemoteHostIcon(remotesHosts[remote].provider)}
-          onAction={() => handleCommit(remote)}
+          icon={RemoteHostIcon(context.remotes.data[remote].provider)}
+          onAction={() => context.handleCommit(remote)}
         />
       ))}
     </ActionPanel.Submenu>

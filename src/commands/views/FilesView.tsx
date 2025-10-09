@@ -1,33 +1,26 @@
 import { Action, ActionPanel, Icon, List, Toast, showToast } from "@raycast/api";
 import { useCachedState, usePromise } from "@raycast/utils";
-import { GitManager } from "../../utils/git-manager";
-import { FileCopyPathAction, FileHistoryAction, FileOpenAction, FileOpenWithAction, FileQuickLookAction } from "../../components/actions/FileActions";
+import { FileCopyPathAction, FileOpenAction, FileOpenWithAction, FileQuickLookAction } from "../../components/actions/FileActions";
+import { FileHistoryAction } from "./FileHistoryView";
 import { join } from "path";
 import { useMemo, useState } from "react";
 import { existsSync } from "fs";
 import { search, sortKind } from "fast-fuzzy";
-import { RemotesHosts } from "../../hooks/useGitRemotes";
-
-interface FilesViewProps {
-    gitManager: GitManager;
-    navigationActions: React.ReactNode;
-    viewDropdown: React.ReactElement<any>;
-    remotesHosts: RemotesHosts;
-    onRefresh: () => void;
-}
+import { NavigationContext, RepositoryContext } from "../../open-repository";
+import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../../components/actions/WorkspaceNavigationActions";
 
 const MAX_RESULTS = 60;
 
-export default function FilesView({ gitManager, navigationActions, viewDropdown, remotesHosts, onRefresh }: FilesViewProps) {
+export default function FilesView(context: RepositoryContext & NavigationContext) {
     const [searchText, setSearchText] = useState("");
     const [isSearching, setIsSearching] = useState(false);
-    const [recentFiles, setRecentFiles] = useCachedState<string[]>(`recent-files-${gitManager.repoPath}`, []);
+    const [recentFiles, setRecentFiles] = useCachedState<string[]>(`recent-files-${context.gitManager.repoPath}`, []);
 
     const { data: filePaths, isLoading: isLoadingRepositoryContent } = usePromise(
         async (repoPath) => {
-            return await gitManager.getTrackedFilePaths();
+            return await context.gitManager.getTrackedFilePaths();
         },
-        [gitManager.repoPath],
+        [context.gitManager.repoPath],
     );
     const searchResult = useMemo(() => {
         if (!filePaths) return [] as string[];
@@ -63,21 +56,15 @@ export default function FilesView({ gitManager, navigationActions, viewDropdown,
             isLoading={isLoadingRepositoryContent || isSearching}
             navigationTitle="Repository Files"
             searchBarPlaceholder="Search files by name, path..."
-            searchBarAccessory={viewDropdown}
+            searchBarAccessory={WorkspaceNavigationDropdown(context)}
             onSearchTextChange={setSearchText}
             searchText={searchText}
             actions={
                 <ActionPanel>
-                    {navigationActions}
-                    <ActionPanel.Section title="Recent">
-                        <Action
-                            title="Clear Recent Files"
-                            icon={Icon.Trash}
-                            style={Action.Style.Destructive}
-                            shortcut={{ modifiers: ["cmd", "ctrl"], key: "x" }}
-                            onAction={handleClearRecent}
-                        />
-                    </ActionPanel.Section>
+                    <SharedActionsSection
+                        onClearRecent={handleClearRecent}
+                        {...context}
+                    />
                 </ActionPanel>
             }
         >
@@ -86,7 +73,12 @@ export default function FilesView({ gitManager, navigationActions, viewDropdown,
                     title="No tracked files"
                     description="Repository has no tracked files."
                     icon={Icon.Document}
-                    actions={<ActionPanel>{navigationActions}</ActionPanel>}
+                    actions={<ActionPanel>
+                        <SharedActionsSection
+                            onClearRecent={handleClearRecent}
+                            {...context}
+                        />
+                    </ActionPanel>}
                 />
             ) : (
                 <>
@@ -99,11 +91,9 @@ export default function FilesView({ gitManager, navigationActions, viewDropdown,
                                         <FileListItem
                                             key={`recent:${filePath}`}
                                             filePath={filePath}
-                                            gitManager={gitManager}
-                                            navigationActions={navigationActions}
-                                            onRefresh={onRefresh}
                                             onOpen={() => handleAddRecent(filePath)}
-                                            remotesHosts={remotesHosts}
+                                            onClearRecent={handleClearRecent}
+                                            {...context}
                                         />
                                     ))}
                             </List.Section>
@@ -112,7 +102,12 @@ export default function FilesView({ gitManager, navigationActions, viewDropdown,
                                 title="Start typing to search files"
                                 description="Type to search tracked files using fuzzy match"
                                 icon={Icon.MagnifyingGlass}
-                                actions={<ActionPanel>{navigationActions}</ActionPanel>}
+                                actions={<ActionPanel>
+                                    <SharedActionsSection
+                                        onClearRecent={handleClearRecent}
+                                        {...context}
+                                    />
+                                </ActionPanel>}
                             />
                         )
                     ) : searchResult.length === 0 ? (
@@ -120,18 +115,21 @@ export default function FilesView({ gitManager, navigationActions, viewDropdown,
                             title="No results"
                             description="Try different search terms."
                             icon={Icon.MagnifyingGlass}
-                            actions={<ActionPanel>{navigationActions}</ActionPanel>}
+                            actions={<ActionPanel>
+                                <SharedActionsSection
+                                    onClearRecent={handleClearRecent}
+                                    {...context}
+                                />
+                            </ActionPanel>}
                         />
                     ) : (
                         searchResult.map((filePath: string) => (
                             <FileListItem
                                 key={filePath}
                                 filePath={filePath}
-                                gitManager={gitManager}
-                                navigationActions={navigationActions}
-                                onRefresh={onRefresh}
                                 onOpen={() => handleAddRecent(filePath)}
-                                remotesHosts={remotesHosts}
+                                onClearRecent={handleClearRecent}
+                                {...context}
                             />
                         ))
                     )}
@@ -141,31 +139,21 @@ export default function FilesView({ gitManager, navigationActions, viewDropdown,
     );
 }
 
-function FileListItem({
-    filePath,
-    gitManager,
-    navigationActions,
-    onRefresh,
-    onOpen,
-    remotesHosts,
-}: {
+function FileListItem(context: RepositoryContext & NavigationContext & {
     filePath: string;
-    gitManager: GitManager;
-    navigationActions: React.ReactNode;
-    onRefresh: () => void;
     onOpen?: () => void;
-    remotesHosts: RemotesHosts;
+    onClearRecent: () => void;
 }) {
-    const fileName = useMemo(() => filePath.split("/").pop() || filePath, [filePath]);
-    const absolutePath = join(gitManager.repoPath, filePath);
+    const fileName = useMemo(() => context.filePath.split("/").pop() || context.filePath, [context.filePath]);
+    const absolutePath = join(context.gitManager.repoPath, context.filePath);
 
     return (
         <List.Item
-            id={filePath}
+            id={context.filePath}
             title={fileName}
             subtitle={{
-                value: filePath,
-                tooltip: filePath
+                value: context.filePath,
+                tooltip: context.filePath
             }}
             icon={existsSync(absolutePath) ? { fileIcon: absolutePath } : undefined}
             quickLook={existsSync(absolutePath) ? { path: absolutePath, name: absolutePath } : undefined}
@@ -173,29 +161,44 @@ function FileListItem({
                 <ActionPanel>
                     <ActionPanel.Section title={fileName}>
                         <FileHistoryAction
+                            {...context}
                             filePath={absolutePath}
-                            gitManager={gitManager}
-                            remotesHosts={remotesHosts}
-                            onRefresh={onRefresh}
-                            onOpen={onOpen}
+                            onOpen={context.onOpen}
                         />
                         <FileOpenAction
                             filePath={absolutePath}
-                            onOpen={onOpen}
+                            onOpen={context.onOpen}
                         />
                         <FileOpenWithAction
                             filePath={absolutePath}
-                            onOpen={onOpen}
+                            onOpen={context.onOpen}
                         />
                         <FileQuickLookAction filePath={absolutePath} />
                         <FileCopyPathAction filePath={absolutePath} />
                     </ActionPanel.Section>
 
-                    {navigationActions}
+                    <SharedActionsSection {...context} />
                 </ActionPanel>
             }
         />
     );
 }
 
-
+function SharedActionsSection(context: RepositoryContext & NavigationContext & {
+    onClearRecent: () => void
+}) {
+    return (
+        <>
+            <ActionPanel.Section title="Recent">
+                <Action
+                    title="Clear Recent Files"
+                    icon={Icon.Trash}
+                    style={Action.Style.Destructive}
+                    shortcut={{ modifiers: ["cmd", "ctrl"], key: "x" }}
+                    onAction={context.onClearRecent}
+                />
+            </ActionPanel.Section>
+            <WorkspaceNavigationActions {...context} />
+        </>
+    );
+}

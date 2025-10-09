@@ -1,28 +1,22 @@
 import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast, Form, useNavigation, clearSearchBar, Color } from "@raycast/api";
 import { useState } from "react";
-import { GitManager } from "../../utils/git-manager";
 import { Branch, MergeMode } from "../../types";
 import { usePromise } from "@raycast/utils";
 import InteractiveRebaseEditorView from "../../commands/views/InteractiveRebaseEditorView";
 import { RemotesHosts } from "../../hooks/useGitRemotes";
 import { RemoteHostIcon } from "../icons/RemoteHostIcons";
-
-interface BranchActionProps {
-  branch: Branch;
-  gitManager: GitManager;
-  onRefresh: (error?: Error) => void;
-}
+import { NavigationContext, RepositoryContext } from "../../open-repository";
 
 /**
  * Unified action for checking out a branch (local or remote).
  */
-export function BranchCkeckoutAction({ branch, gitManager, onRefresh }: BranchActionProps) {
+export function BranchCkeckoutAction(context: RepositoryContext & NavigationContext & { branch: Branch }) {
   const handleCheckout = async () => {
-    const isRemote = branch.type === "remote";
+    const isRemote = context.branch.type === "remote";
 
     const confirmed = await confirmAlert({
       title: "Checkout branch",
-      message: `Are you sure you want to checkout ${isRemote ? "remote " : ""}branch "${branch.name}"?`,
+      message: `Are you sure you want to checkout ${isRemote ? "remote " : ""}branch "${context.branch.name}"?`,
       primaryAction: {
         title: "Checkout",
         style: Alert.ActionStyle.Default,
@@ -32,14 +26,17 @@ export function BranchCkeckoutAction({ branch, gitManager, onRefresh }: BranchAc
     if (confirmed) {
       try {
         if (isRemote) {
-          await gitManager.checkoutRemoteBranch(branch.name, branch.upstream!);
+          await context.gitManager.checkoutRemoteBranch(context.branch.name, context.branch.upstream!);
         } else {
-          await gitManager.checkoutLocalBranch(branch.name);
+          await context.gitManager.checkoutLocalBranch(context.branch.name);
         }
         clearSearchBar();
-        onRefresh();
+        context.branches.revalidate();
+        context.status.revalidate();
       } catch (error) {
-        onRefresh(error as Error);
+        context.branches.revalidate();
+        context.status.revalidate();
+        context.navigateTo("status");
       }
     }
   };
@@ -56,11 +53,11 @@ export function BranchCkeckoutAction({ branch, gitManager, onRefresh }: BranchAc
 /**
  * Action for deleting a branch.
  */
-export function BranchDeleteAction({ branch, gitManager, onRefresh }: BranchActionProps) {
+export function BranchDeleteAction(context: RepositoryContext & { branch: Branch }) {
   const handleDeleteBranch = async () => {
     const confirmed = await confirmAlert({
       title: "Delete",
-      message: `Are you sure you want to delete branch "${branch.name}"?`,
+      message: `Are you sure you want to delete branch "${context.branch.name}"?`,
       primaryAction: {
         title: "Delete",
         style: Alert.ActionStyle.Destructive,
@@ -69,11 +66,11 @@ export function BranchDeleteAction({ branch, gitManager, onRefresh }: BranchActi
 
     if (confirmed) {
       try {
-        if (branch.type === "local") {
-          if (branch.upstream && !branch.isGone) {
+        if (context.branch.type === "local") {
+          if (context.branch.upstream && !context.branch.isGone) {
             const confirmed = await confirmAlert({
               title: "Delete remote branch",
-              message: `Also delete remote branch "${branch.upstream}"?`,
+              message: `Also delete remote branch "${context.branch.upstream}"?`,
               primaryAction: {
                 title: "Delete",
                 style: Alert.ActionStyle.Destructive,
@@ -89,16 +86,17 @@ export function BranchDeleteAction({ branch, gitManager, onRefresh }: BranchActi
                 },
               });
               if (summaryConfirm) {
-                await gitManager.deleteUpstreamBranch(branch.upstream);
+                await context.gitManager.deleteUpstreamBranch(context.branch.upstream);
               }
             }
           }
-          await gitManager.deleteBranch(branch.name);
-        } else if (branch.remote) {
-          await gitManager.deleteRemoteBranch(branch.remote, branch.name);
+          await context.gitManager.deleteBranch(context.branch.name);
+        } else if (context.branch.remote) {
+          await context.gitManager.deleteRemoteBranch(context.branch.remote, context.branch.name);
         }
 
-        onRefresh();
+        context.branches.revalidate();
+        context.status.revalidate();
       } catch (error) {
         // Git error is already shown by GitManager
       }
@@ -132,25 +130,26 @@ export function BranchCopyNameAction({ branch }: { branch: string }) {
 /**
  * Action for pushing the current branch.
  */
-export function BranchPushAction({ branch, gitManager, remotesHosts, onRefresh }: BranchActionProps & { remotesHosts?: RemotesHosts }) {
+export function BranchPushAction(context: RepositoryContext & { branch: Branch }) {
   const handlePushToRemote = async (remote: string) => {
     try {
-      await gitManager.push(false, branch, remote);
-      onRefresh();
+      await context.gitManager.push(false, context.branch, remote);
+      context.branches.revalidate();
+      context.status.revalidate();
     } catch {
       // Git error is already shown by GitManager
     }
   };
 
-  if (!remotesHosts || Object.keys(remotesHosts).length === 0) {
+  if (!context.remotes.data || Object.keys(context.remotes.data).length === 0) {
     return undefined;
   }
 
-  if (Object.keys(remotesHosts).length === 1) {
+  if (Object.keys(context.remotes.data).length === 1) {
     return (
       <Action
         title="Push"
-        onAction={() => handlePushToRemote(Object.keys(remotesHosts)[0])}
+        onAction={() => handlePushToRemote(Object.keys(context.remotes.data)[0])}
         icon={`git-push.svg`}
         shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
       />
@@ -159,11 +158,11 @@ export function BranchPushAction({ branch, gitManager, remotesHosts, onRefresh }
 
   return (
     <ActionPanel.Submenu title="Push to" icon={`git-push.svg`} shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}>
-      {Object.keys(remotesHosts).map((remote) => (
+      {Object.keys(context.remotes.data).map((remote) => (
         <Action
           key={`${remote}:push`}
           title={remote}
-          icon={RemoteHostIcon(remotesHosts[remote].provider)}
+          icon={RemoteHostIcon(context.remotes.data[remote].provider)}
           onAction={() => handlePushToRemote(remote)}
         />
       ))}
@@ -171,7 +170,7 @@ export function BranchPushAction({ branch, gitManager, remotesHosts, onRefresh }
   );
 }
 
-export function BranchPushForceAction({ branch, gitManager, remotesHosts, onRefresh }: BranchActionProps & { remotesHosts?: RemotesHosts }) {
+export function BranchPushForceAction(context: RepositoryContext & { branch: Branch }) {
   const handleForcePushToRemote = async (remote: string) => {
     const confirmed = await confirmAlert({
       title: "Push Force",
@@ -184,22 +183,23 @@ export function BranchPushForceAction({ branch, gitManager, remotesHosts, onRefr
 
     if (!confirmed) return;
     try {
-      await gitManager.push(true, branch, remote);
-      onRefresh();
+      await context.gitManager.push(true, context.branch, remote);
+      context.branches.revalidate();
+      context.status.revalidate();
     } catch {
       // Git error is already shown by GitManager
     }
   };
 
-  if (!remotesHosts || Object.keys(remotesHosts).length === 0) {
+  if (!context.remotes.data || Object.keys(context.remotes.data).length === 0) {
     return undefined;
   }
 
-  if (Object.keys(remotesHosts).length === 1) {
+  if (Object.keys(context.remotes.data).length === 1) {
     return (
       <Action
         title="Force Push"
-        onAction={() => handleForcePushToRemote(Object.keys(remotesHosts)[0])}
+        onAction={() => handleForcePushToRemote(Object.keys(context.remotes.data)[0])}
         icon={{ source: `git-push.svg`, tintColor: Color.Red }}
         shortcut={{ modifiers: ["cmd", "shift", "opt"], key: "p" }}
         style={Action.Style.Destructive}
@@ -213,11 +213,11 @@ export function BranchPushForceAction({ branch, gitManager, remotesHosts, onRefr
       icon={{ source: `git-push.svg`, tintColor: Color.Red }}
       shortcut={{ modifiers: ["cmd", "shift", "opt"], key: "p" }}
     >
-      {Object.keys(remotesHosts).map((remote) => (
+      {Object.keys(context.remotes.data).map((remote) => (
         <Action
           key={`${remote}:force-push`}
           title={remote}
-          icon={RemoteHostIcon(remotesHosts[remote].provider)}
+          icon={RemoteHostIcon(context.remotes.data[remote].provider)}
           onAction={() => handleForcePushToRemote(remote)}
           style={Action.Style.Destructive}
         />
@@ -229,11 +229,11 @@ export function BranchPushForceAction({ branch, gitManager, remotesHosts, onRefr
 /**
  * Action for merging a branch into the current branch.
  */
-export function BranchMergeAction({ branch, gitManager, onRefresh }: BranchActionProps) {
+export function BranchMergeAction(context: RepositoryContext & NavigationContext & { branch: Branch }) {
   const handleMergeBranch = async (mode: MergeMode) => {
     const confirmed = await confirmAlert({
       title: "Merge branch",
-      message: `Are you sure you want to merge branch "${branch.name}" into the current branch?`,
+      message: `Are you sure you want to merge branch "${context.branch.name}" into the current branch?`,
       primaryAction: {
         title: "Merge",
         style: Alert.ActionStyle.Default,
@@ -242,10 +242,13 @@ export function BranchMergeAction({ branch, gitManager, onRefresh }: BranchActio
 
     if (confirmed) {
       try {
-        await gitManager.mergeBranch(branch.name, mode);
-        onRefresh();
+        await context.gitManager.mergeBranch(context.branch.name, mode);
+        context.branches.revalidate();
+        context.status.revalidate();
       } catch (error) {
-        onRefresh(error as Error);
+        context.branches.revalidate();
+        context.status.revalidate();
+        context.navigateTo("status");
       }
     }
   };
@@ -278,11 +281,11 @@ export function BranchMergeAction({ branch, gitManager, onRefresh }: BranchActio
 /**
  * Action for rebasing the current branch onto another branch.
  */
-export function BranchRebaseAction({ branch, gitManager, onRefresh }: BranchActionProps) {
+export function BranchRebaseAction(context: RepositoryContext & NavigationContext & { branch: Branch }) {
   const handleRebaseBranch = async () => {
     const confirmed = await confirmAlert({
       title: "Rebase branch",
-      message: `Are you sure you want to rebase the current branch onto "${branch.name}"?`,
+      message: `Are you sure you want to rebase the current branch onto "${context.branch.name}"?`,
       primaryAction: {
         title: "Rebase",
         style: Alert.ActionStyle.Default,
@@ -291,10 +294,13 @@ export function BranchRebaseAction({ branch, gitManager, onRefresh }: BranchActi
 
     if (confirmed) {
       try {
-        await gitManager.rebase(branch.name);
-        onRefresh();
+        await context.gitManager.rebase(context.branch.name);
+        context.branches.revalidate();
+        context.status.revalidate();
       } catch (error) {
-        onRefresh(error as Error);
+        context.branches.revalidate();
+        context.status.revalidate();
+        context.navigateTo("status");
       }
     }
   };
@@ -312,16 +318,15 @@ export function BranchRebaseAction({ branch, gitManager, onRefresh }: BranchActi
 /**
  * Action to open Interactive Rebase Editor starting from selected branch.
  */
-export function BranchInteractiveRebaseAction({ branch, gitManager, onRefresh }: BranchActionProps) {
+export function BranchInteractiveRebaseAction(context: RepositoryContext & NavigationContext & { branch: Branch }) {
   return (
     <Action.Push
       title="Interactive Rebase from Here"
       icon={`arrow-rebase.svg`}
       target={
         <InteractiveRebaseEditorView
-          gitManager={gitManager}
-          startFromCommit={branch.name}
-          onFinish={onRefresh}
+          {...context}
+          startFromCommit={context.branch.name}
         />
       }
       shortcut={{ modifiers: ["cmd", "shift", "opt"], key: "e" }}
@@ -330,91 +335,13 @@ export function BranchInteractiveRebaseAction({ branch, gitManager, onRefresh }:
 }
 
 /**
- * Global fetch action that can be reused across different views.
- */
-export function FetchAction({ gitManager, remotesHosts, onRefresh }: { gitManager: GitManager; remotesHosts?: RemotesHosts; onRefresh: () => void }) {
-  const handleFetch = async (remote?: string) => {
-    try {
-      await gitManager.fetch(remote);
-      onRefresh();
-    } catch (error) {
-      // Git error is already shown by GitManager
-    }
-  };
-
-  if (!remotesHosts || Object.keys(remotesHosts).length === 0) {
-    return undefined;
-  }
-
-  if (Object.keys(remotesHosts).length === 1) {
-
-    return (
-      <Action
-        title="Fetch"
-        onAction={() => handleFetch(undefined)}
-        icon={`git-fetch.svg`}
-        shortcut={{ modifiers: ["cmd", "shift"], key: "f" }}
-      />
-    );
-  }
-
-  return (
-    <ActionPanel.Submenu title="Fetch" icon={`git-fetch.svg`} shortcut={{ modifiers: ["cmd", "shift"], key: "f" }}>
-      <Action
-        title="Fetch All"
-        onAction={() => handleFetch(undefined)}
-        icon={`git-fetch.svg`}
-      />
-      {Object.keys(remotesHosts).map((remote) => (
-        <Action
-          key={`${remote}:fetch`}
-          title={remote}
-          icon={RemoteHostIcon(remotesHosts[remote].provider)}
-          onAction={() => handleFetch(remote)}
-        />
-      ))}
-    </ActionPanel.Submenu>
-  );
-}
-
-/**
- * Global pull action that can be reused across different views.
- */
-export function PullAction({ gitManager, onRefresh }: { gitManager: GitManager; onRefresh: (error?: Error) => void }) {
-  const handlePullRebase = async () => {
-    try {
-      await gitManager.pull(true);
-      onRefresh();
-    } catch (error) {
-      onRefresh(error as Error);
-    }
-  };
-
-  const handlePullMerge = async () => {
-    try {
-      await gitManager.pull(false);
-      onRefresh();
-    } catch (error) {
-      onRefresh(error as Error);
-    }
-  };
-
-  return (
-    <ActionPanel.Submenu title="Pull" icon={Icon.ArrowDown} shortcut={{ modifiers: ["cmd", "shift"], key: "l" }}>
-      <Action title="Rebase" icon={`arrow-rebase.svg`} onAction={handlePullRebase} />
-      <Action title="Merge" icon={`git-merge.svg`} onAction={handlePullMerge} />
-    </ActionPanel.Submenu>
-  );
-}
-
-/**
  * Additional actions for creating a new branch.
  */
-export function CreateBranchAction({ gitManager, onRefresh }: { gitManager: GitManager; onRefresh: () => void }) {
+export function BranchCreateAction(context: RepositoryContext) {
   return (
     <Action.Push
       title="Create Branch"
-      target={<CreateBranchForm gitManager={gitManager} onRefresh={onRefresh} />}
+      target={<BranchCreateForm {...context} />}
       icon={Icon.Plus}
       shortcut={{ modifiers: ["cmd"], key: "n" }}
     />
@@ -424,28 +351,29 @@ export function CreateBranchAction({ gitManager, onRefresh }: { gitManager: GitM
 /**
  * Action for renaming a branch.
  */
-export function BranchRenameAction({ branch, gitManager, onRefresh }: BranchActionProps) {
+export function BranchRenameAction(context: RepositoryContext & NavigationContext & { branch: Branch }) {
   return (
     <Action.Push
       title="Rename"
-      target={<RenameBranchForm branch={branch} gitManager={gitManager} onRefresh={onRefresh} />}
+      target={<BranchRenameForm {...context} />}
       icon={Icon.Pencil}
       shortcut={{ modifiers: ["cmd"], key: "e" }}
     />
   );
 }
 
-function CreateBranchForm({ gitManager, onRefresh }: { gitManager: GitManager; onRefresh: () => void }) {
+function BranchCreateForm(context: RepositoryContext) {
   const { pop } = useNavigation();
   const [branchName, setBranchName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { data: currentBranch } = usePromise(async () => await gitManager.getCurrentBranch(), []);
+  const { data: currentBranch } = usePromise(async () => await context.branches.data.currentBranch, []);
 
   const handleSubmit = async (values: { branchName: string }) => {
     setIsLoading(true);
     try {
-      await gitManager.createBranch(values.branchName);
-      onRefresh();
+      await context.gitManager.createBranch(values.branchName);
+      context.branches.revalidate();
+      context.status.revalidate();
       pop();
     } catch (error) {
       // Git error is already shown by GitManager
@@ -476,9 +404,9 @@ function CreateBranchForm({ gitManager, onRefresh }: { gitManager: GitManager; o
   );
 }
 
-function RenameBranchForm({ branch, gitManager, onRefresh }: { branch: Branch; gitManager: GitManager; onRefresh: () => void }) {
+function BranchRenameForm(context: RepositoryContext & { branch: Branch }) {
   const { pop } = useNavigation();
-  const [newBranchName, setNewBranchName] = useState(branch.name);
+  const [newBranchName, setNewBranchName] = useState(context.branch.name);
   const [renameRemote, setRenameRemote] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -486,14 +414,15 @@ function RenameBranchForm({ branch, gitManager, onRefresh }: { branch: Branch; g
     setIsLoading(true);
 
     try {
-      await gitManager.renameBranch(values.newBranchName, branch.name, renameRemote ? branch.upstream : undefined);
+      await context.gitManager.renameBranch(values.newBranchName, context.branch.name, renameRemote ? context.branch.upstream : undefined);
 
       await showToast({
         style: Toast.Style.Success,
         title: "Branch renamed successfully"
       });
 
-      onRefresh();
+      context.branches.revalidate();
+      context.status.revalidate();
       pop();
     } catch (error) {
       // Git error is already shown by GitManager
@@ -520,10 +449,10 @@ function RenameBranchForm({ branch, gitManager, onRefresh }: { branch: Branch; g
         onChange={(value) => setNewBranchName(value.replace(/ /g, "-"))}
       />
 
-      {branch.upstream && (
+      {context.branch.upstream && (
         <Form.Checkbox
           id="renameRemote"
-          label={`Rename remote branch '${branch.upstream}'`}
+          label={`Rename remote branch '${context.branch.upstream}'`}
           value={renameRemote}
           onChange={setRenameRemote}
           info="This will delete the old remote branch and push the new one"

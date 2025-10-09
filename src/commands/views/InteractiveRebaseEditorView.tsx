@@ -1,19 +1,13 @@
 import { Action, ActionPanel, Alert, Color, Form, Icon, List, Toast, confirmAlert, showToast, useNavigation } from "@raycast/api";
 import { useEffect, useState } from "react";
-import { GitManager } from "../../utils/git-manager";
 import { Commit, RebaseAction, RebasePlanItem } from "../../types";
-
-interface InteractiveRebaseEditorViewProps {
-    gitManager: GitManager;
-    startFromCommit: string;
-    onFinish: (error?: Error) => void;
-}
+import { NavigationContext, RepositoryContext } from "../../open-repository";
 
 /**
  * Interactive rebase editor view.
  * Displays commits from the selected commit to HEAD and allows setting actions and reordering.
  */
-export default function InteractiveRebaseEditorView({ gitManager, startFromCommit, onFinish }: InteractiveRebaseEditorViewProps) {
+export default function InteractiveRebaseEditorView(context: RepositoryContext & NavigationContext & { startFromCommit: string }) {
     const { pop } = useNavigation();
     const [isLoading, setIsLoading] = useState(true);
     const [commits, setCommits] = useState<Commit[]>([]);
@@ -23,7 +17,7 @@ export default function InteractiveRebaseEditorView({ gitManager, startFromCommi
         (async () => {
             try {
                 setIsLoading(true);
-                const list = await gitManager.getCommitsSince(startFromCommit);
+                const list = await context.gitManager.getCommitsSince(context.startFromCommit);
                 setCommits(list);
 
                 // Default plan: pick all
@@ -38,7 +32,7 @@ export default function InteractiveRebaseEditorView({ gitManager, startFromCommi
                 setIsLoading(false);
             }
         })();
-    }, [gitManager, startFromCommit]);
+    }, [context.gitManager, context.startFromCommit]);
 
     const setAction = (hash: string, action: RebaseAction, newMessage?: string) => {
         setPlan((prev) => ({ ...prev, [hash]: { ...prev[hash], action, newMessage } }));
@@ -73,13 +67,16 @@ export default function InteractiveRebaseEditorView({ gitManager, startFromCommi
             setIsLoading(true);
             await showToast({ style: Toast.Style.Animated, title: "Rebasing..." });
             const planList: RebasePlanItem[] = commits.map((c) => plan[c.hash]);
-            await gitManager.interactiveRebase(startFromCommit, planList);
+            await context.gitManager.interactiveRebase(context.startFromCommit, planList);
             await showToast({ style: Toast.Style.Success, title: "Rebase completed" });
-            onFinish();
+            context.branches.revalidate();
+            context.status.revalidate();
             pop();
         } catch (error) {
             pop();
-            onFinish(error as Error);
+            context.branches.revalidate();
+            context.status.revalidate();
+            context.navigateTo("status");
         } finally {
             setIsLoading(false);
         }

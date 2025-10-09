@@ -8,7 +8,6 @@ import { resolveTildePath } from "../utils/path-utils";
  * Supports tilde (~) paths.
  */
 export function useGitRepository(repositoryPath: string): { gitManager: GitManager | undefined; error: Error | undefined } {
-  // Synchronous validation and GitManager creation
   return useMemo(() => {
     try {
       GitManager.validateDirectory(repositoryPath);

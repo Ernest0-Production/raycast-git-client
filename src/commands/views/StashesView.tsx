@@ -1,56 +1,43 @@
 import { ActionPanel, Action, List, Icon } from "@raycast/api";
-import { StashApplyAction, StashDropAction, CreateStashAction } from "../../components/actions/StashActions";
+import { StashApplyAction, StashDropAction } from "../../components/actions/StashActions";
 import { GitManager } from "../../utils/git-manager";
 import "../../utils/date-utils";
 import { Stash } from "../../types";
 import { getAvatarIcon } from "@raycast/utils";
+import { RepositoryContext, NavigationContext } from "../../open-repository";
+import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../../components/actions/WorkspaceNavigationActions";
 
-interface StashesViewProps {
-  gitManager: GitManager;
-  navigationActions: React.ReactNode;
-  viewDropdown: React.ReactElement<any>;
-  onNavigateToStatus?: () => void;
-  stashes?: Stash[];
-  isLoading: boolean;
-  revalidate: () => void | Promise<unknown>;
-}
-
-export function StashesView({
-  gitManager,
-  navigationActions,
-  viewDropdown,
-  onNavigateToStatus,
-  stashes,
-  isLoading,
-  revalidate
-}: StashesViewProps) {
-
+export function StashesView(context: RepositoryContext & NavigationContext) {
   return (
     <List
-      isLoading={isLoading}
+      isLoading={context.stashes.isLoading}
       navigationTitle="Repository Stashes"
       searchBarPlaceholder="Search stashes by message, author..."
-      searchBarAccessory={viewDropdown}
+      searchBarAccessory={WorkspaceNavigationDropdown(context)}
       actions={
         <ActionPanel>
-          <Action title="Refresh Stash" onAction={revalidate} icon={Icon.ArrowClockwise} />
-
-          {navigationActions}
+          <SharedActionsSection {...context} />
         </ActionPanel>
       }
     >
-      {!stashes || stashes.length === 0 ? (
-        <List.EmptyView title="No stashes" description="No saved changes in the stash." icon={Icon.Bookmark} />
+      {!context.stashes.data || context.stashes.data.length === 0 ? (
+        <List.EmptyView
+          title="No stashes"
+          description="No saved changes in the stash."
+          icon={Icon.Bookmark}
+          actions={
+            <ActionPanel>
+              <SharedActionsSection {...context} />
+            </ActionPanel>
+          }
+        />
       ) : (
-        stashes.map((stash, index) => (
+        context.stashes.data.map((stash, index) => (
           <StashListItem
             key={index}
             stash={stash}
             index={index}
-            gitManager={gitManager}
-            onRefresh={revalidate}
-            navigationActions={navigationActions}
-            onNavigateToStatus={onNavigateToStatus}
+            {...context}
           />
         ))
       )}
@@ -58,50 +45,40 @@ export function StashesView({
   );
 }
 
-function StashListItem({
-  stash,
-  index,
-  gitManager,
-  onRefresh,
-  navigationActions,
-  onNavigateToStatus,
-}: {
+function StashListItem(context: RepositoryContext & NavigationContext & {
   stash: Stash;
   index: number;
-  gitManager: GitManager;
-  onRefresh: () => void;
-  navigationActions: React.ReactNode;
-  onNavigateToStatus?: () => void;
 }) {
   return (
     <List.Item
-      title={stash.message}
-      icon={{ source: getAvatarIcon(stash.author), tooltip: stash.author }}
-      subtitle={{ value: stash.author, tooltip: stash.authorEmail }}
-      accessories={[{ text: stash.date.toRelativeDateString(), tooltip: stash.date.toRelativeDateString() }]}
-      keywords={[stash.hash, stash.author, stash.authorEmail].filter(Boolean)}
+      title={context.stash.message}
+      icon={{ source: getAvatarIcon(context.stash.author), tooltip: context.stash.author }}
+      subtitle={{ value: context.stash.author, tooltip: context.stash.authorEmail }}
+      accessories={[{ text: context.stash.date.toRelativeDateString(), tooltip: context.stash.date.toRelativeDateString() }]}
+      keywords={[context.stash.hash, context.stash.author, context.stash.authorEmail].filter(Boolean)}
       actions={
         <ActionPanel>
           <ActionPanel.Section>
-            <StashApplyAction
-              stash={stash}
-              index={index}
-              gitManager={gitManager}
-              onRefresh={onRefresh}
-              onNavigateToStatus={onNavigateToStatus}
-            />
+            <StashApplyAction {...context} />
+            <StashDropAction {...context} />
           </ActionPanel.Section>
 
-          <StashDropAction
-            stash={stash}
-            index={index}
-            gitManager={gitManager}
-            onRefresh={onRefresh}
-          />
-
-          {navigationActions}
+          <SharedActionsSection {...context} />
         </ActionPanel>
       }
     />
   );
+}
+
+function SharedActionsSection(context: RepositoryContext & NavigationContext) {
+  return (
+    <>
+      <Action title="Refresh Stash"
+        onAction={context.stashes.revalidate}
+        icon={Icon.ArrowClockwise}
+        shortcut={{ modifiers: ["cmd"], key: "r" }}
+      />
+      <WorkspaceNavigationActions {...context} />
+    </>
+  )
 }

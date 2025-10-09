@@ -1,10 +1,10 @@
 import { ActionPanel, Action, Icon, List, Form, useNavigation, confirmAlert, Alert } from "@raycast/api";
 import { useState } from "react";
-import { UrlTrackerConfig } from "./types";
-import { useUrlTracker } from "./hooks/useUrlTracker";
+import { IssueTrackerConfig } from "./types";
+import { useIssueTracker } from "./hooks/useIssueTracker";
 
 export default function ConfigureUrlTrackers() {
-    const { configs, deleteConfig } = useUrlTracker();
+    const { configs, deleteConfig } = useIssueTracker();
 
     return (
         <List
@@ -36,7 +36,7 @@ function RuleListItem({
     config,
     onDelete
 }: {
-    config: UrlTrackerConfig;
+    config: IssueTrackerConfig;
     onDelete: (id: string) => void;
 }) {
     const handleDelete = async () => {
@@ -88,9 +88,9 @@ function RuleListItem({
     );
 }
 
-function UrlTrackerEditorForm({ initialConfig }: { initialConfig?: UrlTrackerConfig }) {
+function UrlTrackerEditorForm({ initialConfig }: { initialConfig?: IssueTrackerConfig }) {
     const { pop } = useNavigation();
-    const { addConfig, updateConfig, validateConfig } = useUrlTracker();
+    const { addConfig, updateConfig, validateConfig } = useIssueTracker();
 
     const [title, setTitle] = useState(initialConfig?.title ?? "");
     const [regex, setRegex] = useState(initialConfig?.regex ?? "");

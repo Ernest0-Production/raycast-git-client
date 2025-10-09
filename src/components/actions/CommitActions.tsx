@@ -1,23 +1,17 @@
 import { ActionPanel, Action, Icon, confirmAlert, Alert, clearSearchBar, useNavigation, Clipboard, Form } from "@raycast/api";
-import { GitManager } from "../../utils/git-manager";
 import { Commit } from "../../types";
 import InteractiveRebaseEditorView from "../../commands/views/InteractiveRebaseEditorView";
 import { ResetMode } from "simple-git";
 import { useCachedState } from "@raycast/utils";
 import { existsSync } from "fs";
-
-interface CommitActionProps {
-  commit: Commit;
-  gitManager: GitManager;
-  onRefresh: (error?: Error) => void;
-}
+import { NavigationContext, RepositoryContext } from "../../open-repository";
 
 /**
  * Action for checking out a commit.
  */
-export function CommitCheckoutAction({ commit, gitManager, onRefresh }: CommitActionProps) {
+export function CommitCheckoutAction(context: RepositoryContext & NavigationContext & { commit: Commit }) {
   const handleCheckoutCommit = async () => {
-    const targetName = commit.localBranches.length > 0 ? commit.localBranches[0] : commit.shortHash;
+    const targetName = context.commit.localBranches.length > 0 ? context.commit.localBranches[0] : context.commit.shortHash;
 
     const confirmed = await confirmAlert({
       title: "Checkout commit",
@@ -30,12 +24,13 @@ export function CommitCheckoutAction({ commit, gitManager, onRefresh }: CommitAc
 
     if (confirmed) {
       try {
-        await gitManager.checkoutCommit(targetName);
+        await context.gitManager.checkoutCommit(targetName);
         clearSearchBar();
       } catch (error) {
         // Git error is already shown by GitManager
       } finally {
-        onRefresh();
+        context.branches.revalidate();
+        context.status.revalidate();
       }
     }
   };
@@ -50,11 +45,11 @@ export function CommitCheckoutAction({ commit, gitManager, onRefresh }: CommitAc
 /**
  * Action for cherry-picking a commit.
  */
-export function CommitCherryPickAction({ commit, gitManager, onRefresh }: CommitActionProps) {
+export function CommitCherryPickAction(context: RepositoryContext & NavigationContext & { commit: Commit }) {
   const handleCherryPick = async () => {
     const confirmed = await confirmAlert({
       title: "Cherry-pick commit",
-      message: `Are you sure you want to cherry-pick commit '${commit.shortHash}'? This will create a new commit that undoes the changes.`,
+      message: `Are you sure you want to cherry-pick commit '${context.commit.shortHash}'? This will create a new commit that undoes the changes.`,
       primaryAction: {
         title: "Cherry-pick",
         style: Alert.ActionStyle.Default,
@@ -63,10 +58,13 @@ export function CommitCherryPickAction({ commit, gitManager, onRefresh }: Commit
 
     if (confirmed) {
       try {
-        await gitManager.cherryPick(commit.hash);
-        onRefresh();
+        await context.gitManager.cherryPick(context.commit.hash);
+        context.commits.revalidate();
+        context.status.revalidate();
       } catch (error) {
-        onRefresh(error as Error);
+        context.commits.revalidate();
+        context.status.revalidate();
+        context.navigateTo("status");
       }
     }
   };
@@ -81,11 +79,11 @@ export function CommitCherryPickAction({ commit, gitManager, onRefresh }: Commit
 /**
  * Action for reverting a commit.
  */
-export function CommitRevertAction({ commit, gitManager, onRefresh }: CommitActionProps) {
+export function CommitRevertAction(context: RepositoryContext & NavigationContext & { commit: Commit }) {
   const handleRevert = async () => {
     const confirmed = await confirmAlert({
       title: "Revert commit",
-      message: `Are you sure you want to revert commit '${commit.message}'? This will create a new commit that undoes the changes.`,
+      message: `Are you sure you want to revert commit '${context.commit.message}'? This will create a new commit that undoes the changes.`,
       primaryAction: {
         title: "Revert",
         style: Alert.ActionStyle.Default,
@@ -94,10 +92,13 @@ export function CommitRevertAction({ commit, gitManager, onRefresh }: CommitActi
 
     if (confirmed) {
       try {
-        await gitManager.revert(commit.hash);
-        onRefresh();
+        await context.gitManager.revert(context.commit.hash);
+        context.commits.revalidate();
+        context.status.revalidate();
       } catch (error) {
-        onRefresh(error as Error);
+        context.commits.revalidate();
+        context.status.revalidate();
+        context.navigateTo("status");
       }
     }
   };
@@ -114,11 +115,11 @@ export function CommitRevertAction({ commit, gitManager, onRefresh }: CommitActi
 /**
  * Action submenu for resetting to a commit.
  */
-export function CommitResetAction({ commit, gitManager, onRefresh }: CommitActionProps) {
+export function CommitResetAction(context: RepositoryContext & NavigationContext & { commit: Commit }) {
   const handleReset = async (mode: ResetMode) => {
     const confirmed = await confirmAlert({
       title: "Reset to commit",
-      message: `Are you sure you want to reset to commit "${commit.shortHash}"? This action cannot be undone.`,
+      message: `Are you sure you want to reset to commit "${context.commit.shortHash}"? This action cannot be undone.`,
       primaryAction: {
         title: "Reset",
         style: Alert.ActionStyle.Destructive,
@@ -127,10 +128,13 @@ export function CommitResetAction({ commit, gitManager, onRefresh }: CommitActio
 
     if (confirmed) {
       try {
-        await gitManager.reset(commit.hash, mode);
-        onRefresh();
+        await context.gitManager.reset(context.commit.hash, mode);
+        context.commits.revalidate();
+        context.status.revalidate();
       } catch (error) {
-        onRefresh(error as Error);
+        context.commits.revalidate();
+        context.status.revalidate();
+        context.navigateTo("status");
       }
     }
   };
@@ -157,16 +161,15 @@ export function CommitResetAction({ commit, gitManager, onRefresh }: CommitActio
 /**
  * Action to open Interactive Rebase Editor starting from selected commit.
  */
-export function CommitInteractiveRebaseAction({ commit, gitManager, onRefresh }: CommitActionProps) {
+export function CommitInteractiveRebaseAction(context: RepositoryContext & NavigationContext & { commit: Commit }) {
   return (
     <Action.Push
       title="Interactive Rebase from Here"
       icon={`arrow-rebase.svg`}
       target={
         <InteractiveRebaseEditorView
-          gitManager={gitManager}
-          startFromCommit={commit.hash}
-          onFinish={onRefresh}
+          startFromCommit={context.commit.hash}
+          {...context}
         />
       }
       shortcut={{ modifiers: ["cmd"], key: "e" }}
@@ -177,22 +180,18 @@ export function CommitInteractiveRebaseAction({ commit, gitManager, onRefresh }:
 /**
  * Action to save a commit as a patch.
  */
-export function CommitCreatePatchAction({ commit, gitManager }: { commit: Commit, gitManager: GitManager }) {
+export function CommitPatchCreateAction(context: RepositoryContext & NavigationContext & { commit: Commit }) {
   return (
     <Action.Push
       title="Save as Patch"
       icon={`patch.svg`}
       shortcut={{ modifiers: ["cmd", "shift"], key: "s" }}
-      target={
-        <CreatePatchForm
-          commit={commit}
-          gitManager={gitManager}
-        />}
+      target={PatchCreateForm(context)}
     />
   );
 }
 
-function CreatePatchForm({ gitManager, commit }: { gitManager: GitManager, commit: Commit }) {
+function PatchCreateForm(context: RepositoryContext & NavigationContext & { commit: Commit }) {
   const { pop } = useNavigation();
   const [directoryPath, setDirectoryPath] = useCachedState<string[]>(`patches-directory`, []);
 
@@ -210,7 +209,7 @@ function CreatePatchForm({ gitManager, commit }: { gitManager: GitManager, commi
 
   const handleSubmit = async (values: { directoryPath: string[] }) => {
     try {
-      const patchPath = await gitManager.createPatchFromCommit(commit.hash, values.directoryPath[0]);
+      const patchPath = await context.gitManager.createPatchFromCommit(context.commit.hash, values.directoryPath[0]);
       await Clipboard.copy(patchPath);
       pop();
     } catch (error) {

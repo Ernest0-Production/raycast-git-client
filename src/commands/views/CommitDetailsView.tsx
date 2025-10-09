@@ -1,0 +1,242 @@
+import { ActionPanel, Action, List, Icon, Color, showToast, Toast } from "@raycast/api";
+import { useGitDiff } from "../../hooks/useGitDiff";
+import { Commit, CommitFileChange, ListPagination } from "../../types";
+import {
+  FileOpenAction,
+  FileOpenWithAction,
+  FileCopyPathAction,
+  FileQuickLookAction
+} from "../../components/actions/FileActions";
+import { CommitFileIcon } from "../../components/icons/StatusIcons";
+import { useState, useMemo } from "react";
+import { usePromise } from "@raycast/utils";
+import { existsSync } from "fs";
+import { join } from "path";
+import { RepositoryContext, NavigationContext } from "../../open-repository";
+import { WorkspaceNavigationActions } from "../../components/actions/WorkspaceNavigationActions";
+import { FileRestoreAction } from "../../components/actions/StatusActions";
+import { FileHistoryAction } from "./FileHistoryView";
+import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../../components/actions/ToggleDetailAction";
+
+export function CommitDetailsView(context: RepositoryContext & NavigationContext & {
+  index: number,
+  onMoveToCommit: (commitHash: string) => void,
+  pagination?: ListPagination,
+}) {
+  const [currentIndex, setCurrentIndex] = useState(context.index);
+  const toggleController = useToggleDetail("Commit Details", "Diff", false);
+
+  const switchToCommit = async (direction: ("parent" | "child")) => {
+    let nextIndex = currentIndex;
+    switch (direction) {
+      case "parent":
+        nextIndex = currentIndex + 1;
+        break;
+      case "child":
+        nextIndex = currentIndex - 1;
+        break;
+    }
+
+    if (nextIndex < 0) {
+      showToast({
+        style: Toast.Style.Failure,
+        title: "No more commits",
+        message: "This is the last commit in the repository.",
+      });
+      return;
+    }
+
+    if (nextIndex >= context.commits.data.length) {
+      context.commits.pagination?.onLoadMore()
+
+      if (!context.commits.pagination?.hasMore) {
+        showToast({
+          style: Toast.Style.Failure,
+          title: "No more commits",
+          message: "This is the last commit in the repository.",
+        });
+        return;
+      }
+
+      switchToCommit(direction);
+      return;
+    }
+
+    setCurrentIndex(nextIndex);
+    context.onMoveToCommit(context.commits.data[nextIndex].hash);
+  };
+
+  return (
+    <ConcreteCommitView
+      {...context}
+      commit={context.commits.data[currentIndex]}
+      toggleController={toggleController}
+      onMoveToCommit={switchToCommit}
+    />
+  );
+}
+
+function ConcreteCommitView(context: RepositoryContext & NavigationContext & {
+  commit: Commit,
+  onMoveToCommit: (direction: ("parent" | "child")) => void
+  toggleController: ToggleDetailController
+}) {
+  const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
+  const { data: statsMap, isLoading } = usePromise(
+    async (repoPath, commitHash) => {
+      return await context.gitManager.getCommitFileStats(commitHash);
+    },
+    [context.gitManager.repoPath, context.commit.hash]
+  );
+
+  return (
+    <List
+      navigationTitle="Commit Changes"
+      searchBarPlaceholder="Search files by name, path..."
+      onSelectionChange={(id) => setSelectedFilePath(id)}
+      filtering={{ keepSectionOrder: true }}
+      isShowingDetail={context.toggleController.isShowingDetail}
+      isLoading={isLoading}
+      actions={
+        <ActionPanel>
+          <ToggleDetailAction controller={context.toggleController} />
+          <CommitNavigationActions onMoveToCommit={context.onMoveToCommit} />
+          <WorkspaceNavigationActions {...context} />
+        </ActionPanel>
+      }
+    >
+      {!context.commit.changedFiles || context.commit.changedFiles.length === 0 ? (
+        <List.EmptyView
+          title="No file changes"
+          description="This commit has no file changes."
+          icon={Icon.Document}
+          actions={
+            <ActionPanel>
+              <CommitNavigationActions onMoveToCommit={context.onMoveToCommit} />
+              <WorkspaceNavigationActions {...context} />
+            </ActionPanel>
+          }
+        />
+      ) : (
+        <List.Section title={context.commit.message}>
+          {context.commit.changedFiles.map((file) => (
+            <FileListItem
+              key={file.path}
+              file={file}
+              selectedFilePath={selectedFilePath}
+              statsMap={statsMap}
+              {...context}
+            />
+          ))}
+        </List.Section>
+      )}
+    </List>
+  );
+}
+
+function FileListItem(context: RepositoryContext & NavigationContext & {
+  file: CommitFileChange;
+  commit: Commit;
+  statsMap: Record<string, { insertions: number; deletions: number }> | undefined;
+  toggleController: ToggleDetailController;
+  selectedFilePath: string | null;
+  onMoveToCommit: (direction: ("parent" | "child")) => void;
+}) {
+  // Create a unique identifier for each file item
+  const fileId = `${context.file.path}-${context.commit.hash}`;
+
+  // Only load diff if this file is selected and detail view is showing
+  const shouldLoadDiff = context.toggleController.isShowingDetail && context.selectedFilePath === fileId;
+
+  const { diff, isLoading, error } = useGitDiff({
+    gitManager: context.gitManager,
+    options: { file: context.file.path, commitHash: context.commit.hash },
+    execute: shouldLoadDiff,
+  });
+
+  const absolutePath = join(context.gitManager.repoPath, context.file.path);
+  const fileExists = existsSync(absolutePath);
+
+  const accessories = useMemo(() => {
+    const accessories: List.Item.Accessory[] = [];
+    const stats = context.statsMap?.[context.file.path];
+    if (stats) {
+      if (stats.insertions > 0) {
+        accessories.push({ tag: { value: `+${stats.insertions}`, color: Color.Green }, tooltip: "Insertions" });
+      }
+      if (stats.deletions > 0) {
+        accessories.push({ tag: { value: `-${stats.deletions}`, color: Color.Red }, tooltip: "Deletions" });
+      }
+    }
+    return accessories;
+  }, [context.statsMap, context.file.path]);
+
+  return (
+    <List.Item
+      id={fileId}
+      title={context.file.path.split("/").pop() || context.file.path}
+      subtitle={context.toggleController.isShowingDetail ? undefined : {
+        value: context.file.path,
+        tooltip: context.file.path
+      }}
+      icon={CommitFileIcon(context.file)}
+      accessories={accessories}
+      keywords={[context.file.path, context.file.oldPath].filter((keyword): keyword is string => Boolean(keyword))}
+      detail={
+        context.toggleController.isShowingDetail ? (
+          <List.Item.Detail
+            isLoading={isLoading}
+            markdown={`${context.file.path}:\n\n${error ? `Error loading diff: ${error.message}` : (diff ?? "")}`}
+          />
+        ) : undefined
+      }
+      quickLook={fileExists ? { path: absolutePath, name: context.file.path } : undefined}
+      actions={
+        <ActionPanel>
+          <ActionPanel.Section title={context.file.path.split("/").pop()}>
+            <ToggleDetailAction controller={context.toggleController} />
+            <FileOpenAction filePath={absolutePath} />
+            <FileOpenWithAction filePath={absolutePath} />
+            <FileCopyPathAction filePath={absolutePath} />
+            <FileQuickLookAction filePath={absolutePath} />
+            <FileHistoryAction
+              filePath={absolutePath}
+              {...context}
+            />
+            <FileRestoreAction
+              filePath={absolutePath}
+              before={false}
+              {...context}
+            />
+            <FileRestoreAction
+              before={true}
+              filePath={absolutePath}
+              {...context}
+            />
+          </ActionPanel.Section>
+          <CommitNavigationActions onMoveToCommit={context.onMoveToCommit} />
+          <WorkspaceNavigationActions {...context} />
+        </ActionPanel>
+      }
+    />
+  );
+}
+
+function CommitNavigationActions({ onMoveToCommit }: { onMoveToCommit: (direction: ("parent" | "child")) => void }) {
+  return (
+    <ActionPanel.Section title="History">
+      <Action
+        title="Move to Child Commit"
+        icon={Icon.ChevronUp}
+        onAction={() => onMoveToCommit("child")}
+        shortcut={{ modifiers: ["cmd"], key: "]" }}
+      />
+      <Action
+        title="Move to Parent Commit"
+        icon={Icon.ChevronDown}
+        onAction={() => onMoveToCommit("parent")}
+        shortcut={{ modifiers: ["cmd"], key: "[" }}
+      />
+    </ActionPanel.Section>
+  );
+}

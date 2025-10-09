@@ -1,48 +1,38 @@
-import { ActionPanel, Action, Icon, showToast, Toast, confirmAlert, Alert, Form, useNavigation } from "@raycast/api";
+import { ActionPanel, Action, Icon, confirmAlert, Alert, Form, useNavigation } from "@raycast/api";
 import { useState } from "react";
 import { Stash } from "../../types";
-import { GitManager } from "../../utils/git-manager";
-
-interface StashActionProps {
-  stash: Stash;
-  index: number;
-  gitManager: GitManager;
-  onRefresh: () => void;
-  onNavigateToStatus?: () => void;
-}
+import { NavigationContext, RepositoryContext } from "../../open-repository";
 
 /**
  * Action for applying a stash.
  */
-export function StashApplyAction({ stash, index, gitManager, onRefresh, onNavigateToStatus }: StashActionProps) {
+export function StashApplyAction(context: RepositoryContext & NavigationContext & { stash: Stash, index: number }) {
   const handleApply = async () => {
     if (
       await confirmAlert({
         title: "Apply Stash?",
-        message: `Are you sure you want to apply "${stash.message}"?`,
+        message: `Are you sure you want to apply "${context.stash.message}"?`,
         primaryAction: { title: "Apply", style: Alert.ActionStyle.Default },
       })
     ) {
       try {
-        await gitManager.applyStash(index);
-        onRefresh();
+        await context.gitManager.applyStash(context.index);
+        context.status.revalidate();
 
         // Ask if user wants to drop the applied stash
         if (
           await confirmAlert({
             title: "Drop Applied Stash?",
-            message: `Stash "${stash.message}" has been applied. Do you want to drop it?`,
+            message: `Stash "${context.stash.message}" has been applied. Do you want to drop it?`,
             primaryAction: { title: "Drop", style: Alert.ActionStyle.Destructive },
           })
         ) {
-          await gitManager.dropStash(index);
-          onRefresh();
+          await context.gitManager.dropStash(context.index);
+          context.stashes.revalidate();
         }
 
         // Automatically switch to StatusView after applying stash
-        if (onNavigateToStatus) {
-          onNavigateToStatus();
-        }
+        context.navigateTo("status");
       } catch (error) {
         // Git error is already shown by GitManager
       }
@@ -55,18 +45,18 @@ export function StashApplyAction({ stash, index, gitManager, onRefresh, onNaviga
 /**
  * Action for dropping a stash.
  */
-export function StashDropAction({ stash, index, gitManager, onRefresh }: StashActionProps) {
+export function StashDropAction(context: RepositoryContext & NavigationContext & { stash: Stash, index: number }) {
   const handleDrop = async () => {
     if (
       await confirmAlert({
         title: "Drop Stash?",
-        message: `Are you sure you want to drop "${stash.message}"? This action cannot be undone.`,
+        message: `Are you sure you want to drop "${context.stash.message}"? This action cannot be undone.`,
         primaryAction: { title: "Drop", style: Alert.ActionStyle.Destructive },
       })
     ) {
       try {
-        await gitManager.dropStash(index);
-        onRefresh();
+        await context.gitManager.dropStash(context.index);
+        context.stashes.revalidate();
       } catch (error) {
         // Git error is already shown by GitManager
       }
@@ -84,36 +74,25 @@ export function StashDropAction({ stash, index, gitManager, onRefresh }: StashAc
   );
 }
 
-interface CreateStashActionProps {
-  gitManager: GitManager;
-  onRefresh: () => void;
-}
-
-export function CreateStashAction({ gitManager, onRefresh }: CreateStashActionProps) {
+export function StashCreateAction(context: RepositoryContext) {
   return (
     <Action.Push
       title={"Stash Changes"}
       icon={Icon.Bookmark}
-      target={<CreateStashForm gitManager={gitManager} onRefresh={onRefresh} />}
+      target={<StashCreateForm {...context} />}
       shortcut={{ modifiers: ["cmd"], key: "s" }}
     />
   );
 }
 
-function CreateStashForm({
-  gitManager,
-  onRefresh
-}: {
-  gitManager: GitManager;
-  onRefresh: () => void;
-}) {
-  const [message, setMessage] = useState("");
+function StashCreateForm(context: RepositoryContext) {
   const { pop } = useNavigation();
+  const [message, setMessage] = useState("");
 
   const handleSubmit = async (values: { message: string }) => {
     try {
-      await gitManager.stash(values.message);
-      onRefresh();
+      await context.gitManager.stash(values.message);
+      context.stashes.revalidate();
       pop();
     } catch (error) {
       // Git error is already shown by GitManager

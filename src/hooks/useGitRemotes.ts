@@ -2,6 +2,7 @@ import { useCachedPromise } from "@raycast/utils";
 import { GitManager } from "../utils/git-manager";
 import { Remote } from "../types";
 import { remoteHostParser } from "../utils/remote-host-parser";
+import { RepositoryContext } from "../open-repository";
 
 export type RemotesHosts = Record<string, Remote>;
 
@@ -10,10 +11,13 @@ export type RemotesHosts = Record<string, Remote>;
  * Returns a dictionary keyed by remote name.
  * Repository path is included in cache dependencies to ensure separate cache per repository.
  */
-export function useGitRemotes(gitManager: GitManager): { data: RemotesHosts; isLoading: boolean; revalidate: () => void | Promise<unknown> } {
+export function useGitRemotes(gitManager: GitManager): RepositoryContext["remotes"] {
   const { data: remotes = [], isLoading, revalidate } = useCachedPromise(
     async (repoPath: string) => gitManager.getRemotes(),
-    [gitManager.repoPath]
+    [gitManager.repoPath],
+    {
+      initialData: []
+    }
   );
 
   const remotesRecords = remotes.reduce<RemotesHosts>((dictionary, remote) => {
@@ -56,4 +60,3 @@ function detectRemoteProtocol(url: string): "ssh" | "http" {
 
   return "http";
 }
-

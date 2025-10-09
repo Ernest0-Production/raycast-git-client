@@ -1,36 +1,24 @@
-import { Action, ActionPanel, Alert, Color, Icon, List, confirmAlert, showToast, Toast, Form, useNavigation } from "@raycast/api";
-import { GitManager } from "../../utils/git-manager";
+import { Action, ActionPanel, Color, Icon, List } from "@raycast/api";
 import { Remote } from "../../types";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { RemoteHostIcon } from "../../components/icons/RemoteHostIcons";
 import { usePromise } from "@raycast/utils";
-
-interface RemotesViewProps {
-  gitManager: GitManager;
-  navigationActions: React.ReactNode;
-  viewDropdown: React.ReactElement<any>;
-  remoteHosts: Record<string, Remote>;
-  onRevalidateRemotes: () => void;
-}
+import { NavigationContext, RepositoryContext } from "../../open-repository";
+import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../../components/actions/WorkspaceNavigationActions";
+import { RemoteAddAction, RemoteCopyUrlActions, RemoteDeleteAction, RemoteEditAction } from "../../components/actions/RemoteActions";
 
 type RemoteConnectivity = {
   reachable: boolean,
   reason?: string
 };
 
-export default function RemotesView({
-  gitManager,
-  navigationActions,
-  viewDropdown,
-  remoteHosts,
-  onRevalidateRemotes
-}: RemotesViewProps) {
+export default function RemotesView(context: RepositoryContext & NavigationContext) {
   const { data: connectivity, isLoading: isChecking, revalidate: revalidateConnectivity } = usePromise(
     async (repoPath: string, remoteHosts: string[]) => {
       const entries = await Promise.all(
         remoteHosts.map(async (name) => {
           try {
-            await gitManager.checkRemoteConnectivity(name);
+            await context.gitManager.checkRemoteConnectivity(name);
             return [name, { reachable: true }] as const;
           } catch (error) {
             return [name, { reachable: false, reason: error instanceof Error ? error.message : "Unknown error" }] as const;
@@ -40,38 +28,22 @@ export default function RemotesView({
 
       return Object.fromEntries(entries) as Record<string, RemoteConnectivity>;
     },
-    [gitManager.repoPath, Object.keys(remoteHosts).map(name => name)]
+    [context.gitManager.repoPath, Object.keys(context.remotes.data).map(name => name)]
   );
 
-  const items: Remote[] = useMemo(() => Object.values(remoteHosts), [remoteHosts]);
+  const items: Remote[] = useMemo(() => Object.values(context.remotes.data), [context.remotes.data]);
 
   return (
     <List
       isLoading={isChecking}
       navigationTitle="Repository Remotes"
-      searchBarAccessory={viewDropdown}
+      searchBarAccessory={WorkspaceNavigationDropdown(context)}
       actions={
         <ActionPanel>
-          <ActionPanel.Section>
-            <Action.Push
-              title="Add Remote"
-              icon={Icon.Plus}
-              shortcut={{ modifiers: ["cmd"], key: "n" }}
-              target={
-                <RemoteEditorForm
-                  gitManager={gitManager}
-                  onCreated={onRevalidateRemotes}
-                />
-              }
-            />
-            <Action
-              title="Check Again"
-              onAction={revalidateConnectivity}
-              icon={Icon.ArrowClockwise}
-              shortcut={{ modifiers: ["cmd"], key: "r" }}
-            />
-          </ActionPanel.Section>
-          {navigationActions}
+          <SharedActionsSection
+            onCheckAgain={revalidateConnectivity}
+            {...context}
+          />
         </ActionPanel>
       }
     >
@@ -80,18 +52,24 @@ export default function RemotesView({
           title="No remotes"
           description="This repository has no remote configured."
           icon={Icon.Network}
+          actions={
+            <ActionPanel>
+              <SharedActionsSection
+                onCheckAgain={revalidateConnectivity}
+                {...context}
+              />
+            </ActionPanel>
+          }
         />
       ) : (
         items.map((remote: Remote) => (
           <RemoteListItem
             key={remote.name}
             remote={remote}
+            {...context}
             connectivity={connectivity?.[remote.name]}
             isLoading={isChecking}
-            gitManager={gitManager}
-            onRevalidate={onRevalidateRemotes}
             onCheckAgain={revalidateConnectivity}
-            navigationActions={navigationActions}
           />
         ))
       )}
@@ -99,217 +77,78 @@ export default function RemotesView({
   );
 }
 
-function RemoteListItem({
-  remote,
-  connectivity,
-  isLoading,
-  gitManager,
-  onRevalidate,
-  onCheckAgain,
-  navigationActions
-}: {
+function RemoteListItem(context: RepositoryContext & NavigationContext & {
   remote: Remote;
   connectivity?: RemoteConnectivity;
   isLoading: boolean;
-  gitManager: GitManager;
-  onRevalidate: () => void;
   onCheckAgain: () => void;
-  navigationActions: React.ReactNode
 }) {
   const accessories: List.Item.Accessory[] = useMemo(() => {
     const result = [];
-    if (isLoading) {
+    if (context.isLoading) {
       result.push({
         text: { value: "Checking Connectivity...", color: Color.SecondaryText },
       });
-    } else if (connectivity) {
+    } else if (context.connectivity) {
       result.push({
-        tag: { value: connectivity.reachable ? "Online" : "Offline", color: connectivity.reachable ? Color.Green : Color.Red },
+        tag: { value: context.connectivity.reachable ? "Online" : "Offline", color: context.connectivity.reachable ? Color.Green : Color.Red },
         icon: Icon.Dot,
-        tooltip: connectivity.reachable ? "Connection established via ls-remote" : connectivity.reason,
+        tooltip: context.connectivity.reachable ? "Connection established via ls-remote" : context.connectivity.reason,
       });
     }
 
     return result;
-  }, [connectivity, isLoading]);
-
-  const handleRemoveRemote = async () => {
-    const confirmed = await confirmAlert({
-      title: "Remove Remote",
-      message: `Are you sure you want to remove remote '${remote.name}'?`,
-      primaryAction: {
-        title: "Remove",
-        style: Alert.ActionStyle.Destructive
-      },
-    });
-
-    if (!confirmed) return;
-
-    try {
-      await gitManager.removeRemote(remote.name);
-      await showToast({ style: Toast.Style.Success, title: `Remote '${remote.name}' removed` });
-      await onRevalidate();
-    } catch {
-      // error toast shown by manager
-    }
-  }
+  }, [context.connectivity, context.isLoading]);
 
   return (
     <List.Item
-      key={remote.name}
-      title={remote.name}
+      key={context.remote.name}
+      title={context.remote.name}
       subtitle={{
-        value: remote.fetchUrl,
-        tooltip: remote.fetchUrl
+        value: context.remote.fetchUrl,
+        tooltip: context.remote.fetchUrl
       }}
-      icon={RemoteHostIcon(remote.provider)}
+      icon={RemoteHostIcon(context.remote.provider)}
       accessories={accessories}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title={remote.name}>
+          <ActionPanel.Section title={context.remote.name}>
             <Action.OpenInBrowser
               title="Open in Browser"
-              url={remote.fetchUrl}
+              url={context.remote.fetchUrl}
               icon={Icon.Link}
             />
-            <Action.Push
-              title="Edit Remote"
-              icon={Icon.Pencil}
-              shortcut={{ modifiers: ["cmd"], key: "e" }}
-              target={
-                <RemoteEditorForm
-                  gitManager={gitManager}
-                  onCreated={onRevalidate}
-                  initialRemote={remote}
-                />
-              }
+            <RemoteEditAction
+              initialRemote={context.remote}
+              {...context}
             />
-            <Action.CopyToClipboard
-              title="Copy Fetch URL"
-              content={remote.fetchUrl || remote.pushUrl}
-              icon={Icon.Clipboard}
+
+            <RemoteCopyUrlActions
+              remote={context.remote}
             />
-            <Action.CopyToClipboard
-              title="Copy Push URL"
-              content={remote.pushUrl}
-              icon={Icon.Clipboard}
-            />
-            <Action
-              title="Remove Remote"
-              icon={Icon.Trash}
-              style={Action.Style.Destructive}
-              onAction={handleRemoveRemote}
-              shortcut={{ modifiers: ["ctrl"], key: "x" }}
-            />
+            <RemoteDeleteAction {...context} />
           </ActionPanel.Section>
-          <Action.Push
-            title="Add New Remote"
-            icon={Icon.Plus}
-            shortcut={{ modifiers: ["cmd"], key: "n" }}
-            target={
-              <RemoteEditorForm
-                gitManager={gitManager}
-                onCreated={onRevalidate} />
-            }
-          />
-          <Action
-            title="Check Again"
-            onAction={onCheckAgain}
-            icon={Icon.ArrowClockwise}
-            shortcut={{ modifiers: ["cmd"], key: "r" }}
-          />
-          {navigationActions}
+          <SharedActionsSection {...context} />
         </ActionPanel>
       }
     />
   );
 }
 
-function RemoteEditorForm({
-  initialRemote,
-  gitManager,
-  onCreated
-}: {
-  initialRemote?: Remote;
-  gitManager: GitManager;
-  onCreated: () => void | Promise<unknown>;
+
+function SharedActionsSection(context: RepositoryContext & NavigationContext & {
+  onCheckAgain: () => void;
 }) {
-  const { pop } = useNavigation();
-  const [name, setName] = useState(initialRemote?.name ?? "");
-  const [fetchUrl, setFetchUrl] = useState(initialRemote?.fetchUrl ?? "");
-  const [pushUrl, setPushUrl] = useState(initialRemote?.pushUrl ?? "");
-
-  const validateGitUrl = (url: string): string | undefined => {
-    if (!url.trim()) return undefined;
-
-    // Check SSH format (git@github.com:username/repo.git)
-    const sshPattern = /^(?:ssh:\/\/)?(?:[^@]+@)?[^:]+:[^\/]+\/.*\.git$/;
-
-    // Check HTTP/HTTPS format (https://github.com/username/repo.git)
-    const httpPattern = /^https?:\/\/(?:.*@)?[^\/]+\/.*(?:\.git)?$/;
-
-    if (sshPattern.test(url) || httpPattern.test(url)) {
-      return undefined;
-    }
-
-    return "Incorrect SSH or HTTP format";
-  };
-
-  const handleSubmit = async (values: { name: string; fetchUrl: string; pushUrl: string }) => {
-    try {
-      if (initialRemote) {
-        await gitManager.updateRemote(name.trim(), fetchUrl.trim(), pushUrl.trim());
-      } else {
-        await gitManager.addRemote(name.trim(), fetchUrl.trim(), pushUrl.trim());
-      }
-      await onCreated();
-      pop();
-    } catch (_error) {
-      // Errors are handled globally in GitManager
-    } finally {
-    }
-  };
-
   return (
-    <Form
-      navigationTitle={initialRemote ? "Edit Remote" : "Add Remote"}
-      actions={
-        <ActionPanel>
-          <Action.SubmitForm
-            title={initialRemote ? "Save Changes" : "Create Remote"}
-            onSubmit={handleSubmit}
-          />
-        </ActionPanel>
-      }
-    >
-      <Form.TextField
-        id="name"
-        title="Name"
-        placeholder="origin"
-        value={name}
-        onChange={setName}
-        error={name.trim().length === 0 ? "Required" : undefined}
+    <>
+      <RemoteAddAction {...context} />
+      <Action
+        title="Check Again"
+        onAction={context.onCheckAgain}
+        icon={Icon.ArrowClockwise}
+        shortcut={{ modifiers: ["cmd"], key: "r" }}
       />
-      <Form.TextField
-        id="fetchUrl"
-        title="Fetch URL"
-        placeholder="git@github.com:org/repo.git or https://github.com/org/repo.git"
-        value={fetchUrl}
-        onChange={setFetchUrl}
-        error={fetchUrl.trim().length === 0 ? "Required" : validateGitUrl(fetchUrl)}
-      />
-
-      <Form.TextField
-        id="pushUrl"
-        title="Push URL"
-        placeholder="git@github.com:org/repo.git or https://github.com/org/repo.git"
-        value={pushUrl}
-        error={pushUrl.trim().length === 0 ? undefined : validateGitUrl(pushUrl)}
-        info={"Optional"}
-
-        onChange={setPushUrl}
-      />
-    </Form>
+      <WorkspaceNavigationActions {...context} />
+    </>
   );
 }
-

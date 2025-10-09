@@ -1,15 +1,15 @@
 import { useCachedState } from "@raycast/utils";
-import { UrlTrackerConfig } from "../types";
+import { IssueTrackerConfig } from "../types";
 import { nanoid } from "nanoid";
 
 /**
  * Hook to manage URL tracker configurations (global across the extension).
  */
-export function useUrlTracker() {
-    const [configs, setConfigs] = useCachedState<UrlTrackerConfig[]>("url-tracker-configs", []);
+export function useIssueTracker() {
+    const [configs, setConfigs] = useCachedState<IssueTrackerConfig[]>("url-tracker-configs", []);
 
     const addConfig = (title: string, regex: string, urlPlaceholder: string) => {
-        const newConfig: UrlTrackerConfig = {
+        const newConfig: IssueTrackerConfig = {
             id: nanoid(),
             title: title.trim(),
             regex: regex.trim(),
@@ -83,7 +83,7 @@ export function useUrlTracker() {
 /**
  * Replaces URL patterns in text with markdown links using provided configurations.
  */
-export function replaceUrlPatternsWithLinks(text: string, configs: UrlTrackerConfig[]): string {
+export function replaceUrlPatternsWithLinks(text: string, configs: IssueTrackerConfig[]): string {
     let result = text;
 
     for (const config of configs) {

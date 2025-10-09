@@ -6,155 +6,99 @@ import {
   BranchMergeAction,
   BranchRebaseAction,
   BranchRenameAction,
-  CreateBranchAction,
-  FetchAction,
-  PullAction,
+  BranchCreateAction,
   BranchCopyNameAction,
   BranchInteractiveRebaseAction,
   BranchPushForceAction,
 } from "../../components/actions/BranchActions";
-import { GitManager } from "../../utils/git-manager";
-import { Branch, DetachedHead, BranchesState, GitView } from "../../types";
+import { Branch, DetachedHead } from "../../types";
 import { useMemo } from "react";
-import { RemotesHosts } from "../../hooks/useGitRemotes";
 import { RemoteHostIcon } from "../../components/icons/RemoteHostIcons";
+import { NavigationContext, RepositoryContext } from "../../open-repository";
+import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../../components/actions/WorkspaceNavigationActions";
+import { RemoteFetchAction, RemotePullAction } from "../../components/actions/RemoteActions";
 
-interface BranchesViewProps {
-  gitManager: GitManager;
-  navigationActions: React.ReactNode;
-  viewDropdown: React.ReactElement<any>;
-  branchesState?: BranchesState;
-  isLoading: boolean;
-  error?: Error;
-  revalidateBranches: () => void | Promise<unknown>;
-  hasConflicts?: boolean;
-  hasUncommittedChanges?: boolean;
-  revalidateStatus: () => void | Promise<unknown>;
-  navigateTo: (destination: GitView) => void;
-  remotesHosts: RemotesHosts;
-}
-
-export function BranchesView({
-  gitManager,
-  navigationActions,
-  viewDropdown,
-  branchesState,
-  isLoading,
-  error,
-  revalidateBranches,
-  hasConflicts,
-  hasUncommittedChanges,
-  revalidateStatus,
-  navigateTo,
-  remotesHosts
-}: BranchesViewProps) {
-
-  const revalidateAll = (error?: Error) => {
-    revalidateBranches();
-    revalidateStatus();
-    if (error) {
-      navigateTo("status");
-    }
-  };
-
+export function BranchesView(context: RepositoryContext & NavigationContext) {
   return (
     <List
-      isLoading={isLoading}
+      isLoading={context.branches.isLoading}
       navigationTitle="Repository Branches"
       searchBarPlaceholder="Search branches by name..."
-      searchBarAccessory={viewDropdown}
+      searchBarAccessory={WorkspaceNavigationDropdown(context)}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title="Branches">
-            <Action title="Refresh Branch List" onAction={revalidateBranches} icon={Icon.ArrowClockwise} />
-            <CreateBranchAction gitManager={gitManager} onRefresh={revalidateAll} />
-            <FetchAction gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={revalidateAll} />
-          </ActionPanel.Section>
-
-          {navigationActions}
+          <SharedActionsSection {...context} />
         </ActionPanel>
       }
     >
-      {error ? (
+      {context.branches.error ? (
         <List.EmptyView
           title="Error loading branches"
-          description={error.message}
+          description={context.branches.error.message}
           icon={Icon.ExclamationMark}
           actions={
             <ActionPanel>
-              <Action title="Retry" onAction={revalidateAll} icon={Icon.ArrowClockwise} />
+              <SharedActionsSection {...context} />
             </ActionPanel>
           }
         />
-      ) : !branchesState ||
-        (!branchesState.currentBranch && !branchesState.detachedHead) ? (
+      ) : !context.branches.data ||
+        (!context.branches.data.currentBranch && !context.branches.data.detachedHead) ? (
         <List.EmptyView
           title="No branches"
-          description="No branches found in the repository. It might be an empty repository or there are access issues."
+          description="No branches found in the repository."
           icon={`git-branch.svg`}
+          actions={
+            <ActionPanel>
+              <SharedActionsSection {...context} />
+            </ActionPanel>
+          }
         />
       ) : (
         <>
           {/* Current Branch Section */}
-          {branchesState.currentBranch && (
+          {context.branches.data.currentBranch && (
             <List.Section title="Current Branch">
               <BranchListItem
-                key={branchesState.currentBranch.displayName}
-                branch={branchesState.currentBranch}
-                gitManager={gitManager}
-                onRefresh={revalidateAll}
-                navigationActions={navigationActions}
-                hasConflicts={hasConflicts}
-                hasUncommittedChanges={hasUncommittedChanges}
-                remotesHosts={remotesHosts}
+                key={context.branches.data.currentBranch.displayName}
+                branch={context.branches.data.currentBranch}
+                {...context}
               />
             </List.Section>
           )}
 
           {/* Detached HEAD Section */}
-          {branchesState.detachedHead && (
+          {context.branches.data.detachedHead && (
             <List.Section title="Detached HEAD">
               <DetachedHeadListItem
-                detachedHead={branchesState.detachedHead}
-                gitManager={gitManager}
-                onRefresh={revalidateAll}
-                navigationActions={navigationActions}
-                hasConflicts={hasConflicts}
-                hasUncommittedChanges={hasUncommittedChanges}
-                remotesHosts={remotesHosts}
+                key={context.branches.data.detachedHead.shortCommitHash}
+                detachedHead={context.branches.data.detachedHead}
+                {...context}
               />
             </List.Section>
           )}
 
           {/* Local Branches Section */}
-          {branchesState.localBranches.length > 0 && (
+          {context.branches.data.localBranches.length > 0 && (
             <List.Section title="Local Branches">
-              {branchesState.localBranches.map((branch) => (
+              {context.branches.data.localBranches.map((branch) => (
                 <BranchListItem
                   key={branch.displayName}
                   branch={branch}
-                  gitManager={gitManager}
-                  onRefresh={revalidateAll}
-                  navigationActions={navigationActions}
-                  hasUncommittedChanges={hasUncommittedChanges}
-                  remotesHosts={remotesHosts}
+                  {...context}
                 />
               ))}
             </List.Section>
           )}
 
           {/* Remote Branches Sections */}
-          {Object.entries(branchesState.remoteBranches).map(([remoteName, remoteBranches]) => (
-            <List.Section key={remoteName} title={`${remoteName} • ${remotesHosts[remoteName]?.organizationName}/${remotesHosts[remoteName]?.repositoryName}`}>
+          {Object.entries(context.branches.data.remoteBranches).map(([remoteName, remoteBranches]) => (
+            <List.Section key={remoteName} title={`${remoteName} • ${context.remotes.data[remoteName]?.organizationName}/${context.remotes.data[remoteName]?.repositoryName}`}>
               {remoteBranches.map((branch) => (
                 <BranchListItem
                   key={branch.displayName}
                   branch={branch}
-                  gitManager={gitManager}
-                  onRefresh={revalidateAll}
-                  navigationActions={navigationActions}
-                  hasUncommittedChanges={hasUncommittedChanges}
-                  remotesHosts={remotesHosts}
+                  {...context}
                 />
               ))}
             </List.Section>
@@ -165,28 +109,18 @@ export function BranchesView({
   );
 }
 
-function BranchListItem({
-  branch,
-  gitManager,
-  onRefresh,
-  navigationActions,
-  hasConflicts,
-  hasUncommittedChanges,
-  remotesHosts,
-}: {
-  branch: Branch;
-  gitManager: GitManager;
-  onRefresh: () => void;
-  navigationActions: React.ReactNode;
-  hasConflicts?: boolean;
-  hasUncommittedChanges?: boolean;
-  remotesHosts: RemotesHosts;
-}) {
+function BranchListItem(context: RepositoryContext & NavigationContext & { branch: Branch }) {
+  const hasConflicts = context.branch.type === "current"
+    && context.status.data?.files?.some((file) => file.type === "conflicted");
+
+  const hasUncommittedChanges = context.branch.type === "current"
+    && context.status.data?.files?.length !== 0;
+
   const accessories: List.Item.Accessory[] = useMemo(() => {
     const result = [];
 
     // Add conflict warning indicator for current branch
-    if (branch.type === "current" && hasConflicts) {
+    if (context.branch.type === "current" && hasConflicts) {
       result.push({
         tag: { value: "Conflicts", color: Color.Red },
         icon: Icon.ExclamationMark,
@@ -195,7 +129,7 @@ function BranchListItem({
     }
 
     // Add uncommitted changes indicator for current branch
-    if (branch.type === "current" && hasUncommittedChanges && !hasConflicts) {
+    if (context.branch.type === "current" && hasUncommittedChanges && !hasConflicts) {
       result.push({
         tag: { value: "Uncommitted", color: Color.Orange },
         icon: Icon.Document,
@@ -204,122 +138,104 @@ function BranchListItem({
     }
 
     // Add ahead/behind indicators
-    if (branch.ahead || branch.behind) {
+    if (context.branch.ahead || context.branch.behind) {
       const parts = [];
-      if (branch.ahead) parts.push(`${branch.ahead} ↑`);
-      if (branch.behind) parts.push(`${branch.behind} ↓`);
+      if (context.branch.ahead) parts.push(`${context.branch.ahead} ↑`);
+      if (context.branch.behind) parts.push(`${context.branch.behind} ↓`);
       result.push({
         text: parts.join(" "),
         tooltip: [
-          branch.ahead ? `↑ ahead by ${branch.ahead} commits` : null,
-          branch.behind ? `↓ behind by ${branch.behind} commits` : null,
+          context.branch.ahead ? `↑ ahead by ${context.branch.ahead} commits` : null,
+          context.branch.behind ? `↓ behind by ${context.branch.behind} commits` : null,
         ]
           .filter(Boolean)
           .join("\n"),
       });
     }
 
-    if ((branch.type === "local" || branch.type === "current") && branch.upstream) {
+    if ((context.branch.type === "local" || context.branch.type === "current") && context.branch.upstream) {
       result.push({
         tag: {
-          value: branch.upstream,
-          color: branch.isGone ? Color.Yellow : Color.SecondaryText,
+          value: context.branch.upstream,
+          color: context.branch.isGone ? Color.Yellow : Color.SecondaryText,
         },
-        tooltip: branch.isGone ? "Upstream was removed from remote" : "Tracked upstream",
-        icon: branch.isGone ? Icon.ExclamationMark : RemoteHostIcon(remotesHosts[branch.upstream!.split("/")[0]]?.provider)
+        tooltip: context.branch.isGone ? "Upstream was removed from remote" : "Tracked upstream",
+        icon: context.branch.isGone ? Icon.ExclamationMark : RemoteHostIcon(context.remotes.data[context.branch.upstream!.split("/")[0]]?.provider)
       });
     }
 
     return result;
-  }, [branch, hasConflicts, hasUncommittedChanges]);
+  }, [context.branch, hasConflicts, hasUncommittedChanges]);
 
   // Determine icon based on branch type
   const icon: Image.ImageLike = useMemo(() => {
-    if (branch.type === "current") {
+    if (context.branch.type === "current") {
       return { source: Icon.Dot, tintColor: Color.Green };
-    } else if (branch.type === "remote") {
-      return RemoteHostIcon(remotesHosts[branch.remote!]?.provider);
+    } else if (context.branch.type === "remote") {
+      return RemoteHostIcon(context.remotes.data[context.branch.remote!]?.provider);
     } else {
       return { source: Icon.Dot, tintColor: Color.SecondaryText };
     }
-  }, [branch.type]);
+  }, [context.branch.type]);
 
   return (
     <List.Item
-      key={branch.name}
-      title={branch.displayName}
+      key={context.branch.name}
+      title={context.branch.displayName}
       icon={icon}
       accessories={accessories}
-      keywords={[branch.upstream, branch.remote].filter((keyword): keyword is string => Boolean(keyword))}
+      keywords={[context.branch.upstream, context.branch.remote].filter((keyword): keyword is string => Boolean(keyword))}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title={branch.displayName}>
+          <ActionPanel.Section title={context.branch.displayName}>
             {/* Actions for current branch */}
-            {branch.type === "current" && (
+            {context.branch.type === "current" && (
               <>
-                <PullAction gitManager={gitManager} onRefresh={onRefresh} />
-                <BranchPushAction branch={branch} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
-                <BranchPushForceAction branch={branch} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
-                <BranchRenameAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
-                <BranchCopyNameAction branch={branch.displayName} />
+                <RemotePullAction {...context} />
+                <BranchPushAction {...context} />
+                <BranchPushForceAction {...context} />
+                <BranchRenameAction {...context} />
+                <BranchCopyNameAction branch={context.branch.displayName} />
               </>
             )}
 
             {/* Actions for local branches */}
-            {branch.type === "local" && (
+            {context.branch.type === "local" && (
               <>
-                <BranchCkeckoutAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
-                <BranchPushAction branch={branch} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
-                <BranchPushForceAction branch={branch} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
-                <BranchRebaseAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
-                <BranchMergeAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
-                <BranchRenameAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
-                <BranchCopyNameAction branch={branch.displayName} />
-                <BranchDeleteAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
-                <BranchInteractiveRebaseAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchCkeckoutAction {...context} />
+                <BranchPushAction {...context} />
+                <BranchPushForceAction {...context} />
+                <BranchRebaseAction {...context} />
+                <BranchMergeAction {...context} />
+                <BranchRenameAction {...context} />
+                <BranchCopyNameAction branch={context.branch.displayName} />
+                <BranchDeleteAction {...context} />
+                <BranchInteractiveRebaseAction {...context} />
               </>
             )}
 
             {/* Actions for remote branches */}
-            {branch.type === "remote" && (
+            {context.branch.type === "remote" && (
               <>
-                <BranchCkeckoutAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
-                <BranchPushAction branch={branch} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
-                <BranchCopyNameAction branch={branch.displayName} />
-                <BranchDeleteAction branch={branch} gitManager={gitManager} onRefresh={onRefresh} />
+                <BranchCkeckoutAction {...context} />
+                <BranchPushAction {...context} />
+                <BranchCopyNameAction branch={context.branch.displayName} />
+                <BranchDeleteAction {...context} />
               </>
             )}
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="Branches">
-            <CreateBranchAction gitManager={gitManager} onRefresh={onRefresh} />
-            <FetchAction gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
-          </ActionPanel.Section>
-
-          {navigationActions}
+          <SharedActionsSection {...context} />
         </ActionPanel>
       }
     />
   );
 }
 
-function DetachedHeadListItem({
-  detachedHead,
-  gitManager,
-  onRefresh,
-  navigationActions,
-  hasConflicts,
-  hasUncommittedChanges,
-  remotesHosts,
-}: {
-  detachedHead: DetachedHead;
-  gitManager: GitManager;
-  onRefresh: () => void;
-  navigationActions: React.ReactNode;
-  hasConflicts?: boolean;
-  hasUncommittedChanges?: boolean;
-  remotesHosts: RemotesHosts;
-}) {
+function DetachedHeadListItem(context: RepositoryContext & NavigationContext & { detachedHead: DetachedHead }) {
+  const hasConflicts = context.status.data?.files?.some((file) => file.type === "conflicted");
+  const hasUncommittedChanges = context.status.data?.files?.length !== 0;
+
   const accessories = useMemo(() => {
     const result = [];
 
@@ -339,26 +255,39 @@ function DetachedHeadListItem({
       });
     }
     return result;
-  }, [detachedHead, hasUncommittedChanges, hasConflicts]);
+  }, [context.detachedHead, hasUncommittedChanges, hasConflicts]);
 
   return (
     <List.Item
-      key={detachedHead.shortCommitHash}
-      title={`HEAD (${detachedHead.shortCommitHash})`}
-      subtitle={detachedHead.commitMessage}
+      key={context.detachedHead.shortCommitHash}
+      title={`HEAD (${context.detachedHead.shortCommitHash})`}
+      subtitle={context.detachedHead.commitMessage}
       icon={{ source: Icon.Anchor }}
       accessories={accessories}
-      keywords={[detachedHead.commitHash]}
+      keywords={[context.detachedHead.commitHash]}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title="Branches">
-            <CreateBranchAction gitManager={gitManager} onRefresh={onRefresh} />
-            <FetchAction gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
-          </ActionPanel.Section>
-
-          {navigationActions}
+          <SharedActionsSection {...context} />
         </ActionPanel>
       }
     />
+  );
+}
+
+function SharedActionsSection(context: RepositoryContext & NavigationContext) {
+  return (
+    <>
+      <ActionPanel.Section title="Branches">
+        <BranchCreateAction {...context} />
+        <RemoteFetchAction {...context} />
+        <Action
+          title="Refresh"
+          icon={Icon.ArrowClockwise}
+          onAction={context.branches.revalidate}
+          shortcut={{ modifiers: ["cmd"], key: "r" }}
+        />
+      </ActionPanel.Section>
+      <WorkspaceNavigationActions {...context} />
+    </>
   );
 }

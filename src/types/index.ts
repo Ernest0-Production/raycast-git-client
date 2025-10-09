@@ -24,7 +24,7 @@ export interface Preferences {
 /**
  * Configuration for URL tracking feature.
  */
-export interface UrlTrackerConfig {
+export interface IssueTrackerConfig {
   /** Unique identifier for the configuration. */
   id: string;
   /** Title of the URL tracker (e.g., "Jira Ticket", "GitHub Issue"). */

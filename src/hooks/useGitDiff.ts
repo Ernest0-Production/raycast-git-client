@@ -42,10 +42,7 @@ export function useGitDiff({ gitManager, options, execute = true }: UseGitDiffPr
     },
     [file, commitHash, status, gitManager.repoPath],
     {
-      execute,
-      onError: (error) => {
-        console.error("Failed to fetch diff:", error);
-      },
+      execute
     },
   );
 

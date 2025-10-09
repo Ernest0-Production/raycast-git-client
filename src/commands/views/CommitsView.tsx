@@ -11,203 +11,85 @@ import {
   CommitCopyAuthorEmailAction,
   CommitCopyMessageAction,
   CommitInteractiveRebaseAction,
-  CommitCreatePatchAction,
+  CommitPatchCreateAction,
 } from "../../components/actions/CommitActions";
 import { TagCreateAction, TagRemoveAction, TagCopyNameAction } from "../../components/actions/TagActions";
-import { BranchCopyNameAction, BranchPushAction, BranchPushForceAction, FetchAction, PullAction } from "../../components/actions/BranchActions";
-import { CommitDiffView } from "./CommitDiffView";
+import { BranchCopyNameAction, BranchPushAction, BranchPushForceAction } from "../../components/actions/BranchActions";
+import { CommitDetailsView } from "./CommitDetailsView";
 import {
-  CommitBranchFilterAction,
-  getBranchFilterDisplayName,
-} from "../../components/actions/CommitBranchFilterActions";
-import { GitManager } from "../../utils/git-manager";
-import {
-  useUrlTracker,
+  useIssueTracker,
   replaceUrlPatternsWithLinks,
-} from "../../hooks/useUrlTracker";
+} from "../../hooks/useIssueTracker";
 import "../../utils/date-utils";
-import { Commit, UrlTrackerConfig, BranchesState, Branch, DetachedHead, GitView, ListPagination } from "../../types";
+import { Branch, BranchesState, Commit, IssueTrackerConfig } from "../../types";
 import { useMemo, useState } from "react";
 import { CommitMessageForm } from "./CommitMessageView";
-import { RemotesHosts } from "../../hooks/useGitRemotes";
 import { RemoteHostIcon } from "../../components/icons/RemoteHostIcons";
-import { RemoteOpenCommitAction } from "../../components/actions/RemoteHostActions";
+import { RemoteFetchAction, RemoteOpenCommitAction, RemotePullAction } from "../../components/actions/RemoteActions";
+import { RepositoryContext, NavigationContext } from "../../open-repository";
+import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../../components/actions/WorkspaceNavigationActions";
+import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../../components/actions/ToggleDetailAction";
 
-interface CommitsViewProps {
-  gitManager: GitManager;
-  navigationActions: React.ReactNode;
-  viewDropdown: React.ReactElement<any>;
-  // Branch context
-  branchesState?: BranchesState;
-  // Filter state
-  branchFilter: string;
-  selectedBranch?: Branch | DetachedHead;
-  setBranchFilter: (branchName: string) => void;
-  // Commits data
-  isLoading: boolean;
-  commits?: Commit[];
-  error?: Error;
-  revalidateCommits: () => void;
-  revalidateStatus: () => void;
-  revalidateBranches: () => void;
-  pagination?: ListPagination;
-  navigateTo: (destination: GitView) => void;
-  remotesHosts: RemotesHosts;
-}
-
-export function CommitsView({
-  gitManager,
-  navigationActions,
-  viewDropdown,
-  branchesState,
-  branchFilter,
-  selectedBranch,
-  setBranchFilter,
-  isLoading,
-  commits,
-  error,
-  revalidateCommits,
-  revalidateStatus,
-  revalidateBranches,
-  pagination,
-  navigateTo,
-  remotesHosts,
-}: CommitsViewProps) {
-  const [isShowingDetail, setIsShowingDetail] = useState(false);
-  const [isShowingMetadata, setIsShowingMetadata] = useCachedState("commits-metadata-visible", true);
+export function CommitsView(context: RepositoryContext & NavigationContext) {
+  const toggleDetailController = useToggleDetail("Commits-Detail", "Detail", false);
+  const toggleMetadataController = useToggleDetail("Commits-Metadata", "Metadata", true);
   const [selectedCommitId, setSelectedCommitId] = useState<string | null>(null);
 
   // Load URL tracker configurations once for the entire view
-  const { configs: urlTrackerConfigs, findUrls } = useUrlTracker();
+  const { configs: IssueTrackerConfigs, findUrls } = useIssueTracker();
 
   // Get current filter display name for List.Section title
-  const currentFilterDisplayName = getBranchFilterDisplayName(branchFilter, branchesState);
-
-  const toggleDetail = () => {
-    setIsShowingDetail(!isShowingDetail);
-  };
-
-  const toggleMetadata = () => {
-    setIsShowingMetadata(!isShowingMetadata);
-  };
-
-  const revalidateAll = (error?: Error) => {
-    revalidateCommits();
-    revalidateStatus();
-    revalidateBranches();
-    if (error) {
-      navigateTo("status");
-    }
-  };
+  const currentFilterDisplayName = getBranchFilterDisplayName(context);
 
   return (
     <List
-      isLoading={isLoading}
-      pagination={pagination}
+      isLoading={context.commits.isLoading}
+      pagination={context.commits.pagination}
       navigationTitle="Repository Commits"
       searchBarPlaceholder="Search commits by message, sha, author, tags, files..."
       selectedItemId={selectedCommitId || undefined}
-      isShowingDetail={isShowingDetail}
-      searchBarAccessory={viewDropdown}
+      isShowingDetail={toggleDetailController.isShowingDetail}
+      searchBarAccessory={WorkspaceNavigationDropdown(context)}
       actions={
         <ActionPanel>
-          <ActionPanel.Section>
-            {pagination?.hasMore && (
-              <Action
-                title="Load More Commits"
-                onAction={pagination?.onLoadMore}
-                icon={Icon.ArrowDown}
-                shortcut={{ modifiers: ["cmd", "opt"], key: "arrowDown" }}
-              />
-            )}
-            <Action
-              title="Refresh History"
-              onAction={revalidateAll}
-              icon={Icon.ArrowClockwise}
-              shortcut={{ modifiers: ["cmd"], key: "r" }}
-            />
-          </ActionPanel.Section>
-          <ActionPanel.Section title="Branch">
-            <PullAction gitManager={gitManager} onRefresh={revalidateAll} />
-            {branchesState?.currentBranch && branchesState.currentBranch.type === "current" && (
-              <>
-                <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={revalidateAll} />
-                <BranchPushForceAction branch={branchesState.currentBranch} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={revalidateAll} />
-              </>
-            )}
-            <FetchAction gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={revalidateAll} />
-            {branchFilter && branchesState && (
-              <CommitBranchFilterAction
-                branchFilter={branchFilter}
-                updateSelectedBranch={setBranchFilter}
-                branchesState={branchesState}
-                remotesHosts={remotesHosts}
-              />
-            )}
-          </ActionPanel.Section>
-
-          <ActionPanel.Section>
-            <Action
-              title={isShowingDetail ? "Hide Detail" : "Show Detail"}
-              icon={Icon.AppWindowSidebarLeft}
-              onAction={toggleDetail}
-              shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
-            />
-            {isShowingDetail && (
-              <Action
-                title={isShowingMetadata ? "Hide Metadata" : "Show Metadata"}
-                icon={Icon.Info}
-                onAction={toggleMetadata}
-                shortcut={{ modifiers: ["shift", "cmd"], key: "i" }}
-              />
-            )}
-          </ActionPanel.Section>
-
-          {navigationActions}
+          <SharedActionsSection
+            toggleDetailController={toggleDetailController}
+            toggleMetadataController={toggleMetadataController}
+            {...context}
+          />
         </ActionPanel>
       }
     >
-      {error ? (
+      {context.commits.error ? (
         <List.EmptyView
           title="Error loading commits"
-          description={error.message}
+          description={context.commits.error.message}
           icon={Icon.ExclamationMark}
           actions={
             <ActionPanel>
-              <Action title="Retry"
-                onAction={revalidateAll}
-                icon={Icon.ArrowClockwise}
+              <SharedActionsSection
+                toggleDetailController={toggleDetailController}
+                toggleMetadataController={toggleMetadataController}
+                {...context}
               />
             </ActionPanel>
           }
         />
-      ) : !commits || commits.length === 0 ? (
+      ) : !context.commits.data || context.commits.data.length === 0 ? (
         <List.EmptyView title="No commits" description="No commits in this branch." icon={`git-commit.svg`} />
       ) : (
         <List.Section title={currentFilterDisplayName}>
-          {commits.map((commit, index) => (
+          {context.commits.data.map((commit, index) => (
             <CommitListItem
               key={commit.hash}
               commit={commit}
               index={index}
-              gitManager={gitManager}
-              onRefresh={revalidateAll}
-              navigationActions={navigationActions}
-              isShowingDetail={isShowingDetail}
-              isShowingMetadata={isShowingMetadata}
-              onToggleDetail={toggleDetail}
-              onToggleMetadata={toggleMetadata}
-              urlTrackerConfigs={urlTrackerConfigs}
+              toggleDetailController={toggleDetailController}
+              toggleMetadataController={toggleMetadataController}
+              issueTrackerConfigs={IssueTrackerConfigs}
               findUrls={findUrls}
-              isAllBranchesFilter={selectedBranch === undefined}
-              selectedBranch={selectedBranch}
-              branchFilter={branchFilter}
-              updateSelectedBranch={setBranchFilter}
-              branchesState={branchesState}
               onMoveToCommit={setSelectedCommitId}
-              commits={commits}
-              pagination={pagination}
-              remotesHosts={remotesHosts}
+              {...context}
             />
           ))}
         </List.Section>
@@ -216,67 +98,31 @@ export function CommitsView({
   );
 }
 
-interface CommitListItemProps {
+function CommitListItem(context: NavigationContext & RepositoryContext & {
   commit: Commit;
   index: number;
-  gitManager: GitManager;
-  onRefresh: (error?: Error) => void;
-  navigationActions: React.ReactNode;
-  isShowingDetail: boolean;
-  onToggleDetail: () => void;
-  isShowingMetadata: boolean;
-  onToggleMetadata: () => void;
-  urlTrackerConfigs: UrlTrackerConfig[];
-  findUrls: (text: string) => Array<{ title: string; url: string }>;
-  isAllBranchesFilter: boolean;
-  selectedBranch?: Branch | DetachedHead;
-  branchFilter: string;
-  updateSelectedBranch: (branchName: string) => void;
-  branchesState?: BranchesState;
+  toggleDetailController: ToggleDetailController;
+  toggleMetadataController: ToggleDetailController;
+  issueTrackerConfigs: IssueTrackerConfig[];
+  findUrls: (message: string) => { title: string; url: string }[];
   onMoveToCommit: (commitHash: string) => void;
-  commits: Commit[];
-  pagination?: ListPagination;
-  remotesHosts: RemotesHosts;
-}
-
-function CommitListItem({
-  commit,
-  index,
-  gitManager,
-  onRefresh,
-  navigationActions,
-  isShowingDetail,
-  onToggleDetail,
-  isShowingMetadata,
-  onToggleMetadata,
-  urlTrackerConfigs,
-  findUrls,
-  isAllBranchesFilter,
-  selectedBranch,
-  branchFilter,
-  updateSelectedBranch,
-  branchesState,
-  onMoveToCommit,
-  commits,
-  pagination,
-  remotesHosts,
-}: CommitListItemProps) {
+}) {
   const icon = useMemo(() => {
-    if (selectedBranch && 'type' in selectedBranch && selectedBranch.ahead) {
-      if (selectedBranch.ahead > index) {
+    if (context.commits.selectedBranch && 'type' in context.commits.selectedBranch && context.commits.selectedBranch.ahead) {
+      if (context.commits.selectedBranch.ahead > context.index) {
         return { source: Icon.Dot, tintColor: Color.Orange, tooltip: "Unpushed" };
       }
     }
     return undefined;
-  }, [selectedBranch, index]);
+  }, [context.commits.selectedBranch, context.index]);
 
   const commitUrls = useMemo(() => {
-    return findUrls(commit.message);
-  }, [commit.hash, commit.message]);
+    return context.findUrls(context.commit.message);
+  }, [context.commit.hash, context.commit.message]);
 
-  const formatCommitDetail = (commit: Commit, urlTrackerConfigs: UrlTrackerConfig[]): string => {
+  const formatCommitDetail = (commit: Commit, IssueTrackerConfigs: IssueTrackerConfig[]): string => {
     // 1. Commit title (## heading) with URL patterns replaced by links
-    const commitMessageWithLinks = replaceUrlPatternsWithLinks(commit.message, urlTrackerConfigs);
+    const commitMessageWithLinks = replaceUrlPatternsWithLinks(commit.message, IssueTrackerConfigs);
     let detail = `### ${commitMessageWithLinks}\n\n`;
 
     // 2. Rest of commit description (if exists)
@@ -320,21 +166,21 @@ function CommitListItem({
 
   // Prepare accessories based on filter and detail view state
   const accessories = useMemo(() => {
-    if (isShowingDetail) {
+    if (context.toggleDetailController.isShowingDetail) {
       return undefined;
     }
 
     const accessoryItems = [];
 
     // Handle tags - show maximum 1 tag
-    if (commit.tags.length > 0) {
-      let title = commit.tags[0];
+    if (context.commit.tags.length > 0) {
+      let title = context.commit.tags[0];
       let tooltip: string | undefined = undefined;
 
       // Add remaining tags to remainingRefs
-      if (commit.tags.length > 1) {
-        title += ` (+${commit.tags.length - 1})`;
-        tooltip = commit.tags.slice(1).join("\n");
+      if (context.commit.tags.length > 1) {
+        title += ` (+${context.commit.tags.length - 1})`;
+        tooltip = context.commit.tags.slice(1).join("\n");
       }
 
       accessoryItems.push({
@@ -345,16 +191,16 @@ function CommitListItem({
     }
 
     // Handle branches only when All branches filter is selected - show maximum 1 branch
-    if (isAllBranchesFilter) {
+    if (context.commits.filter.kind === 'all') {
       let title: string | undefined = undefined;
       let tooltip: string | undefined = undefined;
       let color: Color = Color.SecondaryText;
       let icon: Image.ImageLike = Icon.Dot;
 
-      const allCommitBranches = commit.localBranches.concat(commit.remoteBranches);
+      const allCommitBranches = context.commit.localBranches.concat(context.commit.remoteBranches);
 
-      if (commit.currentBranchName) {
-        title = commit.currentBranchName;
+      if (context.commit.currentBranchName) {
+        title = context.commit.currentBranchName;
         color = Color.Green;
         if (allCommitBranches.length > 0) {
           title += ` (+${allCommitBranches.length})`;
@@ -368,11 +214,11 @@ function CommitListItem({
           tooltip = allCommitBranches.slice(1).join("\n");
         }
 
-        if (commit.localBranches.length > 0) {
+        if (context.commit.localBranches.length > 0) {
           icon = Icon.Dot;
-        } else if (commit.remoteBranches.length > 0) {
-          const remoteName = commit.remoteBranches[0].split("/")[0];
-          icon = RemoteHostIcon(remotesHosts[remoteName]?.provider);
+        } else if (context.commit.remoteBranches.length > 0) {
+          const remoteName = context.commit.remoteBranches[0].split("/")[0];
+          icon = RemoteHostIcon(context.remotes.data[remoteName]?.provider);
         }
       }
 
@@ -386,55 +232,55 @@ function CommitListItem({
     }
 
     accessoryItems.push({
-      text: { value: commit.author },
-      tooltip: commit.authorEmail,
+      text: { value: context.commit.author },
+      tooltip: context.commit.authorEmail,
     });
 
     accessoryItems.push({
-      text: commit.date.toRelativeDateString(),
-      tooltip: Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(commit.date),
+      text: context.commit.date.toRelativeDateString(),
+      tooltip: Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(context.commit.date),
     });
 
     return accessoryItems;
   }, [
-    isShowingDetail,
-    isAllBranchesFilter,
-    commit.tags,
-    commit.localBranches,
-    commit.remoteBranches,
-    commit.currentBranchName,
+    context.toggleDetailController.isShowingDetail,
+    context.commits.filter.kind,
+    context.commit.tags,
+    context.commit.localBranches,
+    context.commit.remoteBranches,
+    context.commit.currentBranchName,
   ]);
 
   return (
     <List.Item
-      id={commit.hash}
-      title={commit.message}
+      id={context.commit.hash}
+      title={context.commit.message}
       icon={icon}
       accessories={accessories}
       keywords={[
-        commit.hash,
-        commit.shortHash,
-        commit.body,
-        ...commit.author.split(" "),
-        commit.authorEmail,
-        ...commit.tags,
-        ...(commit.changedFiles?.map((f) => f.path.split("/").pop()) || []),
+        context.commit.hash,
+        context.commit.shortHash,
+        context.commit.body,
+        ...context.commit.author.split(" "),
+        context.commit.authorEmail,
+        ...context.commit.tags,
+        ...(context.commit.changedFiles?.map((f) => f.path.split("/").pop()) || []),
       ].filter((keyword): keyword is string => Boolean(keyword))}
       detail={
-        isShowingDetail ? (
+        context.toggleDetailController.isShowingDetail ? (
           <List.Item.Detail
-            markdown={formatCommitDetail(commit, urlTrackerConfigs)}
+            markdown={formatCommitDetail(context.commit, context.issueTrackerConfigs)}
             metadata={
-              isShowingMetadata ? (
+              context.toggleMetadataController.isShowingDetail ? (
                 <List.Item.Detail.Metadata>
-                  <List.Item.Detail.Metadata.Label title="Author" text={commit.author} />
-                  <List.Item.Detail.Metadata.Label title="Email" text={commit.authorEmail} />
-                  <List.Item.Detail.Metadata.Label title="Date" text={commit.date.toLocaleString()} />
-                  <List.Item.Detail.Metadata.Label title="Hash" text={commit.hash} />
+                  <List.Item.Detail.Metadata.Label title="Author" text={context.commit.author} />
+                  <List.Item.Detail.Metadata.Label title="Email" text={context.commit.authorEmail} />
+                  <List.Item.Detail.Metadata.Label title="Date" text={context.commit.date.toLocaleString()} />
+                  <List.Item.Detail.Metadata.Label title="Hash" text={context.commit.hash} />
                   {/* Tags as TagList */}
-                  {commit.tags.length > 0 && (
+                  {context.commit.tags.length > 0 && (
                     <List.Item.Detail.Metadata.TagList title="Tags">
-                      {commit.tags.map((tag) => (
+                      {context.commit.tags.map((tag) => (
                         <List.Item.Detail.Metadata.TagList.Item
                           key={tag}
                           icon={Icon.Tag}
@@ -445,9 +291,9 @@ function CommitListItem({
                     </List.Item.Detail.Metadata.TagList>
                   )}
                   {/* Branches as TagList */}
-                  {(commit.localBranches.length > 0 || commit.remoteBranches.length > 0) && (
+                  {(context.commit.localBranches.length > 0 || context.commit.remoteBranches.length > 0) && (
                     <List.Item.Detail.Metadata.TagList title="Branches">
-                      {commit.localBranches.map((branch) => (
+                      {context.commit.localBranches.map((branch) => (
                         <List.Item.Detail.Metadata.TagList.Item
                           key={branch}
                           icon={Icon.Dot}
@@ -455,10 +301,10 @@ function CommitListItem({
                           color={Color.SecondaryText}
                         />
                       ))}
-                      {commit.remoteBranches.map((branch) => (
+                      {context.commit.remoteBranches.map((branch) => (
                         <List.Item.Detail.Metadata.TagList.Item
                           key={branch}
-                          icon={RemoteHostIcon(remotesHosts[branch.split("/")[0]]?.provider)}
+                          icon={RemoteHostIcon(context.remotes.data[branch.split("/")[0]]?.provider)}
                           text={branch}
                           color={Color.SecondaryText}
                         />
@@ -478,24 +324,18 @@ function CommitListItem({
               title="View Commit Files"
               icon={Icon.Document}
               target={
-                <CommitDiffView
-                  index={index}
-                  commits={commits}
-                  gitManager={gitManager}
-                  navigationActions={navigationActions}
-                  onRefresh={onRefresh}
-                  pagination={pagination}
-                  onMoveToCommit={onMoveToCommit}
-                  remotesHosts={remotesHosts}
+                <CommitDetailsView
+                  pagination={context.commits.pagination}
+                  {...context}
                 />
               }
             />
-            <CommitCheckoutAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
-            <CommitCherryPickAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
-            <CommitRevertAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
-            <CommitResetAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
-            <CommitInteractiveRebaseAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} />
-            <CommitCreatePatchAction commit={commit} gitManager={gitManager} />
+            <CommitCheckoutAction {...context} />
+            <CommitCherryPickAction {...context} />
+            <CommitRevertAction {...context} />
+            <CommitResetAction {...context} />
+            <CommitInteractiveRebaseAction {...context} />
+            <CommitPatchCreateAction {...context} />
             {commitUrls.map((urlInfo: { title: string; url: string }, index: number) => (
               <Action.OpenInBrowser
                 key={`${urlInfo.title}-${index}`}
@@ -505,104 +345,258 @@ function CommitListItem({
                 shortcut={index === 0 ? { modifiers: ["cmd"], key: "l" } : undefined}
               />
             ))}
-            <CommitCopyHashAction commit={commit} />
-            <CommitCopyMessageAction commit={commit} />
-            <CommitCopyShortHashAction commit={commit} />
-            <CommitCopyAuthorAction commit={commit} />
-            <CommitCopyAuthorEmailAction commit={commit} />
-            {commit.currentBranchName && branchesState?.currentBranch &&
+            <CommitCopyHashAction {...context} />
+            <CommitCopyMessageAction {...context} />
+            <CommitCopyShortHashAction {...context} />
+            <CommitCopyAuthorAction {...context} />
+            <CommitCopyAuthorEmailAction {...context} />
+            {context.commit.currentBranchName && context.branches.data.currentBranch &&
               <Action.Push
                 title="Reword Commit Message"
                 icon={Icon.Message}
-                target={
-                  <CommitMessageForm
-                    currentBranch={branchesState.currentBranch}
-                    amendOnly={true}
-                    gitManager={gitManager}
-                    remotesHosts={remotesHosts}
-                    onFinish={onRefresh}
-                  />}
+                target={<CommitMessageForm amendOnly={true} {...context} />}
                 shortcut={{ modifiers: ["cmd", "shift"], key: "a" }}
               />
             }
-            {Object.keys(remotesHosts).map((remote) => (
+            {Object.keys(context.remotes.data).map((remote) => (
               <RemoteOpenCommitAction
                 key={`${remote}-open-commit`}
-                remote={remotesHosts[remote]}
-                commit={commit.hash}
+                remote={context.remotes.data[remote]}
+                commit={context.commit.hash}
               />
             ))}
           </ActionPanel.Section>
 
-          {commit.tags.map((tag) => (
+          {context.commit.tags.map((tag) => (
             <ActionPanel.Section key={`tag-${tag}`} title={`Tag '${tag}'`}>
               <TagCopyNameAction key={`copy-${tag}`} tagName={tag} />
-              <TagRemoveAction key={`remove-${tag}`} tagName={tag} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
+              <TagRemoveAction key={`remove-${tag}`} tagName={tag} {...context} />
             </ActionPanel.Section>
           ))}
           <ActionPanel.Section>
-            <TagCreateAction commit={commit} gitManager={gitManager} onRefresh={onRefresh} remotesHosts={remotesHosts} />
+            <TagCreateAction {...context} />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="Branch">
-            {branchesState && (
-              <CommitBranchFilterAction
-                branchFilter={branchFilter}
-                updateSelectedBranch={updateSelectedBranch}
-                branchesState={branchesState}
-                remotesHosts={remotesHosts}
-              />
-            )}
-            <PullAction gitManager={gitManager} onRefresh={onRefresh} />
-            {branchesState?.currentBranch && branchesState.currentBranch.type === "current" && (
-              <>
-                <BranchPushAction branch={branchesState.currentBranch} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
-                <BranchPushForceAction branch={branchesState.currentBranch} gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
-              </>
-            )}
-            <FetchAction gitManager={gitManager} remotesHosts={remotesHosts} onRefresh={onRefresh} />
-            {selectedBranch && 'name' in selectedBranch &&
-              <BranchCopyNameAction branch={selectedBranch.displayName} />
-            }
-          </ActionPanel.Section>
-
-          <ActionPanel.Section>
-            {pagination?.hasMore && (
-              <Action
-                title="Load More Commits"
-                onAction={pagination?.onLoadMore}
-                icon={Icon.ArrowDown}
-                shortcut={{ modifiers: ["cmd", "opt"], key: "arrowDown" }}
-              />
-            )}
-            <Action
-              title="Refresh History"
-              onAction={onRefresh}
-              icon={Icon.ArrowClockwise}
-              shortcut={{ modifiers: ["cmd"], key: "r" }}
-            />
-          </ActionPanel.Section>
-
-          <ActionPanel.Section>
-            <Action
-              title={isShowingDetail ? "Hide Detail" : "Show Detail"}
-              icon={Icon.AppWindowSidebarLeft}
-              onAction={onToggleDetail}
-              shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
-            />
-            {isShowingDetail && (
-              <Action
-                title={isShowingMetadata ? "Hide Metadata" : "Show Metadata"}
-                icon={Icon.Info}
-                onAction={onToggleMetadata}
-                shortcut={{ modifiers: ["shift", "cmd"], key: "i" }}
-              />
-            )}
-          </ActionPanel.Section>
-
-          {navigationActions}
+          <SharedActionsSection {...context} />
         </ ActionPanel>
       }
+    />
+  );
+}
+
+/**
+ * Helper function to get display name for the current filter
+ */
+function getBranchFilterDisplayName(context: RepositoryContext & NavigationContext): string | undefined {
+  if (context.commits.filter.kind === 'all') {
+    return undefined;
+  }
+
+  if (context.commits.filter.kind === 'current') {
+    if (context.branches.data.detachedHead) {
+      return `Commits on HEAD '${context.branches.data.detachedHead.shortCommitHash}'`;
+    }
+    if (context.branches.data.currentBranch) {
+      const aheadBehindInfo = getAheadBehindInfo(context.branches.data.currentBranch);
+      return `Filtered by '${context.branches.data.currentBranch.name}' branch ${aheadBehindInfo ? ` • ${aheadBehindInfo}` : ""}`;
+    }
+    return undefined;
+  }
+  if (context.commits.filter.kind === 'branch') {
+    const branchFilter = context.commits.filter as { kind: 'branch', value: Pick<Branch, 'name' | 'type' | 'remote'> };
+
+    switch (branchFilter.value.type) {
+      case 'local':
+        const localBranch = context.branches.data.localBranches.find((branch) => branch.name === branchFilter.value.name);
+        if (localBranch) {
+          const aheadBehindInfo = getAheadBehindInfo(localBranch);
+          return `Filtered by '${localBranch.name}' branch ${aheadBehindInfo ? ` • ${aheadBehindInfo}` : ""}`;
+        }
+        break;
+
+      case 'remote':
+        const remoteBranch = context.branches.data.remoteBranches[branchFilter.value.remote!].find((branch) => branch.name === branchFilter.value.name);
+        if (remoteBranch) {
+          const aheadBehindInfo = getAheadBehindInfo(remoteBranch);
+          return `Filtered by '${remoteBranch.name}' branch ${aheadBehindInfo ? ` • ${aheadBehindInfo}` : ""}`;
+        }
+        break;
+    }
+    return `Filtered by '${branchFilter.value.name}' branch`;
+  }
+
+  return undefined;
+}
+
+function getAheadBehindInfo(branch: Branch): string | undefined {
+  const parts = [];
+  if (branch.ahead) parts.push(`↑ ${branch.ahead} ahead`);
+  if (branch.behind) parts.push(`↓ ${branch.behind} behind`);
+
+  if (parts.length > 0) return parts.join(" • ");
+  return undefined;
+}
+
+function SharedActionsSection(context: RepositoryContext & NavigationContext & {
+  toggleDetailController: ToggleDetailController;
+  toggleMetadataController: ToggleDetailController;
+}) {
+  return (
+    <>
+      <ActionPanel.Section>
+        {context.commits.pagination?.hasMore && (
+          <Action
+            title="Load More Commits"
+            onAction={context.commits.pagination.onLoadMore}
+            icon={Icon.ArrowDown}
+            shortcut={{ modifiers: ["cmd", "opt"], key: "arrowDown" }}
+          />
+        )}
+        <Action
+          title="Refresh History"
+          onAction={() => {
+            context.branches.revalidate();
+            context.commits.revalidate();
+          }}
+          icon={Icon.ArrowClockwise}
+          shortcut={{ modifiers: ["cmd"], key: "r" }}
+        />
+      </ActionPanel.Section>
+
+      <ActionPanel.Section title="Branch">
+        <RemotePullAction {...context} />
+        {context.branches.data.currentBranch && context.branches.data.currentBranch.type === "current" && (
+          <>
+            <BranchPushAction
+              branch={context.branches.data.currentBranch}
+              {...context}
+            />
+            <BranchPushForceAction
+              branch={context.branches.data.currentBranch}
+              {...context}
+            />
+          </>
+        )}
+        {context.commits.filter.kind === 'branch' && 'value' in context.commits.filter && 'name' in context.commits.filter.value &&
+          <BranchCopyNameAction branch={context.commits.filter.value.name} />
+        }
+        <RemoteFetchAction {...context} />
+        {context.commits.filter && context.branches.data && (
+          <CommitBranchFilterAction {...context} />
+        )}
+      </ActionPanel.Section>
+
+      <ActionPanel.Section>
+        <ToggleDetailAction controller={context.toggleDetailController} />
+        {context.toggleDetailController.isShowingDetail && (
+          <ToggleDetailAction
+            controller={context.toggleMetadataController}
+            shortcut={{ modifiers: ["shift", "cmd"], key: "i" }}
+          />
+        )}
+      </ActionPanel.Section>
+
+      <WorkspaceNavigationActions {...context} />
+    </>
+  )
+}
+
+/**
+ * Action submenu for filtering commits by branch.
+ * Shows same structure as dropdown but in ActionPanel.Submenu format.
+ */
+function CommitBranchFilterAction(context: RepositoryContext) {
+  return (
+    <ActionPanel.Submenu title="Filter by Branch" icon={Icon.Filter} shortcut={{ modifiers: ["cmd"], key: "f" }}>
+      <ActionPanel.Section>
+        <Action
+          title="All Branches"
+          icon={context.commits.filter.kind === 'all' ? Icon.Checkmark : Icon.List}
+          autoFocus={context.commits.filter.kind === 'all'}
+          onAction={() => context.commits.setFilter({ kind: 'all' })}
+        />
+      </ActionPanel.Section>
+
+      {/* Current Branch / Detached HEAD Section */}
+      <ActionPanel.Section title={context.branches.data.detachedHead ? "Detached HEAD" : "Current Branch"}>
+        {context.branches.data.detachedHead && (
+          <Action
+            title={`HEAD (${context.branches.data.detachedHead.shortCommitHash})`}
+            icon={context.commits.filter.kind === 'current' ? Icon.Checkmark : Icon.Anchor}
+            autoFocus={context.commits.filter.kind === 'current'}
+            onAction={() => context.commits.setFilter({ kind: 'current' })}
+          />
+        )}
+        {context.branches.data.currentBranch && (
+          <Action
+            title={context.branches.data.currentBranch.displayName}
+            icon={{ source: context.commits.filter.kind === 'current' ? Icon.Checkmark : Icon.Dot, tintColor: Color.Green }}
+            autoFocus={context.commits.filter.kind === 'current'}
+            onAction={() => context.commits.setFilter({ kind: 'current' })}
+          />
+        )}
+      </ActionPanel.Section>
+
+      {/* Local Branches Section */}
+      {context.branches.data.localBranches.length > 0 && (
+        <ActionPanel.Section title="Local Branches">
+          {context.branches.data.localBranches.map((branch) => (
+            <BranchFilterAction
+              key={branch.displayName}
+              branch={branch}
+              {...context}
+            />
+          ))}
+        </ActionPanel.Section>
+      )}
+
+      {/* Remote Branches Sections */}
+      {Object.entries(context.branches.data.remoteBranches).map(([remoteName, branches]) => (
+        <ActionPanel.Section key={remoteName} title={`Remote: ${remoteName}`}>
+          {branches.map((branch) => (
+            <BranchFilterAction
+              key={branch.displayName}
+              branch={branch}
+              {...context}
+            />
+          ))}
+        </ActionPanel.Section>
+      ))}
+    </ActionPanel.Submenu>
+  );
+}
+
+function BranchFilterAction(context: RepositoryContext & { branch: Branch }) {
+  const branchValue = context.branch.displayName;
+  const isSelected = context.commits.filter.kind === branchValue;
+
+  const icon: Image.ImageLike = useMemo(() => {
+    let baseIcon: Image.ImageLike = Icon.Dot;
+    switch (context.branch.type) {
+      case "remote":
+        baseIcon = RemoteHostIcon(context.remotes.data[context.branch.remote!]?.provider);
+        break;
+      case "local":
+        baseIcon = Icon.Dot;
+        break;
+    }
+
+    return isSelected ? Icon.Checkmark : baseIcon;
+  }, [isSelected]);
+
+  return (
+    <Action
+      title={branchValue}
+      icon={icon}
+      autoFocus={isSelected}
+      onAction={() => context.commits.setFilter({
+        kind: 'branch',
+        value: {
+          name: branchValue,
+          type: context.branch.type,
+          remote: context.branch.remote
+        }
+      })}
     />
   );
 }

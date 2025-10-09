@@ -1,40 +1,53 @@
-import { Action, ActionPanel, Alert, Color, Icon, List, confirmAlert } from "@raycast/api";
+import { Action, ActionPanel, Icon, List } from "@raycast/api";
 import { useMemo, useState } from "react";
-import { useCachedState, usePromise } from "@raycast/utils";
-import { GitManager } from "../../utils/git-manager";
+import { usePromise } from "@raycast/utils";
 import { Commit, CommitFileChange } from "../../types";
 import { useGitDiff } from "../../hooks/useGitDiff";
-import { FileCopyPathAction, FileOpenAction, FileOpenWithAction, FileQuickLookAction, FileRestoreAction } from "../../components/actions/FileActions";
+import { FileCopyPathAction, FileOpenAction, FileOpenWithAction, FileQuickLookAction } from "../../components/actions/FileActions";
+import { FileRestoreAction } from "../../components/actions/StatusActions";
 import { CommitFileIcon } from "../../components/icons/StatusIcons";
 import { join } from "path";
 import { CommitCopyAuthorAction, CommitCopyHashAction, CommitCopyMessageAction } from "../../components/actions/CommitActions";
 import { existsSync } from "fs";
-import { RemotesHosts } from "../../hooks/useGitRemotes";
-import { RemoteOpenCommitAction } from "../../components/actions/RemoteHostActions";
+import { RemoteOpenCommitAction } from "../../components/actions/RemoteActions";
+import { RepositoryContext } from "../../open-repository";
+import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../../components/actions/ToggleDetailAction";
 
-interface FileHistoryViewProps {
-    gitManager: GitManager;
-    filePath: string;
-    remotesHosts: RemotesHosts;
-    onRefresh: () => void;
+export function FileHistoryAction(context: RepositoryContext & {
+    filePath: string,
+    onOpen?: () => void
+}) {
+    if (!existsSync(context.filePath)) return null;
+
+    return (
+        <Action.Push
+            title="Show File History"
+            icon={Icon.Clock}
+            onPush={context.onOpen}
+            target={
+                <FileHistoryView {...context} />
+            }
+            shortcut={{ modifiers: ["cmd", "shift"], key: "h" }}
+        />
+    );
 }
 
-export default function FileHistoryView({ gitManager, filePath, remotesHosts, onRefresh }: FileHistoryViewProps) {
-    const [isShowingDetail, setIsShowingDetail] = useState(false);
-    const [isShowingMetadata, setIsShowingMetadata] = useCachedState("commits-metadata-visible", true);
+export default function FileHistoryView(context: RepositoryContext & {
+    filePath: string,
+    onOpen?: () => void
+}) {
+    const toggleDetailController = useToggleDetail("FileHistory-Detail", "Detail", false);
+    const toggleMetadataController = useToggleDetail("FileHistory-Metadata", "Metadata", true);
     const [selectedCommitId, setSelectedCommitId] = useState<string | null>(null);
 
-    const { data: commits, isLoading, revalidate, error } = usePromise(
+    const { data: commits, isLoading, revalidate: revalidateHistory, error } = usePromise(
         async (filePath, repoPath) => {
-            return await gitManager.getFileHistory(filePath);
+            return await context.gitManager.getFileHistory(filePath);
         },
-        [filePath, gitManager.repoPath],
+        [context.filePath, context.gitManager.repoPath],
     );
 
-    const fileName = useMemo(() => filePath.split("/").pop() || filePath, [filePath]);
-
-    const toggleDetail = () => setIsShowingDetail(!isShowingDetail);
-    const toggleMetadata = () => setIsShowingMetadata(!isShowingMetadata);
+    const fileName = useMemo(() => context.filePath.split("/").pop() || context.filePath, [context.filePath]);
 
     return (
         <List
@@ -42,15 +55,10 @@ export default function FileHistoryView({ gitManager, filePath, remotesHosts, on
             navigationTitle={`File History`}
             searchBarPlaceholder="Search commits by message, sha, author..."
             onSelectionChange={setSelectedCommitId}
-            isShowingDetail={isShowingDetail}
+            isShowingDetail={toggleDetailController.isShowingDetail}
             actions={
                 <ActionPanel>
-                    <Action
-                        title="Refresh"
-                        onAction={revalidate}
-                        icon={Icon.ArrowClockwise}
-                        shortcut={{ modifiers: ["cmd"], key: "r" }}
-                    />
+                    <RefreshHistoryAction revalidate={revalidateHistory} />
                 </ActionPanel>
             }
         >
@@ -61,12 +69,7 @@ export default function FileHistoryView({ gitManager, filePath, remotesHosts, on
                     icon={Icon.ExclamationMark}
                     actions={
                         <ActionPanel>
-                            <Action
-                                title="Refresh"
-                                onAction={revalidate}
-                                icon={Icon.ArrowClockwise}
-                                shortcut={{ modifiers: ["cmd"], key: "r" }}
-                            />
+                            <RefreshHistoryAction revalidate={revalidateHistory} />
                         </ActionPanel>
                     }
                 />
@@ -76,17 +79,14 @@ export default function FileHistoryView({ gitManager, filePath, remotesHosts, on
                 <List.Section title={fileName} subtitle={`${commits.length} commits`}>
                     {commits.map((commit) => (
                         <CommitListItem
+                            {...context}
                             key={commit.hash}
                             commit={commit}
                             file={commit.changedFiles![0]}
-                            gitManager={gitManager}
-                            isShowingDetail={isShowingDetail}
-                            onToggleDetail={toggleDetail}
+                            toggleDetailController={toggleDetailController}
+                            toggleMetadataController={toggleMetadataController}
                             selectedCommitId={selectedCommitId}
-                            isShowingMetadata={isShowingMetadata}
-                            onToggleMetadata={toggleMetadata}
-                            onRefresh={onRefresh}
-                            remotesHosts={remotesHosts}
+                            onRevalidateHistory={revalidateHistory}
                         />
                     ))}
                 </List.Section>
@@ -95,78 +95,61 @@ export default function FileHistoryView({ gitManager, filePath, remotesHosts, on
     );
 }
 
-interface CommitFileListItemProps {
-    file: CommitFileChange;
-    commit: Commit;
-    isShowingMetadata: boolean;
-    onToggleMetadata: () => void;
-    gitManager: GitManager;
-    isShowingDetail: boolean;
-    onToggleDetail: () => void;
-    selectedCommitId: string | null;
-    onRefresh: () => void;
-    remotesHosts: RemotesHosts;
-}
-
-function CommitListItem({
-    file,
-    commit,
-    isShowingMetadata,
-    onToggleMetadata,
-    gitManager,
-    isShowingDetail,
-    onToggleDetail,
-    selectedCommitId,
-    onRefresh,
-    remotesHosts,
-}: CommitFileListItemProps) {
+function CommitListItem(context: RepositoryContext & {
+    file: CommitFileChange,
+    commit: Commit,
+    selectedCommitId: string | null,
+    onRevalidateHistory: () => void,
+    toggleDetailController: ToggleDetailController,
+    toggleMetadataController: ToggleDetailController
+}) {
     // Only load diff if this commit is selected and detail is visible
-    const shouldLoadDiff = isShowingDetail && selectedCommitId === commit.hash;
+    const shouldLoadDiff = context.toggleDetailController.isShowingDetail && context.selectedCommitId === context.commit.hash;
 
     const { diff, isLoading, error } = useGitDiff({
-        gitManager,
-        options: { file: file.path, commitHash: commit.hash },
+        gitManager: context.gitManager,
+        options: { file: context.file.path, commitHash: context.commit.hash },
         execute: shouldLoadDiff,
     });
 
     const accessories = useMemo(() => {
-        if (isShowingDetail) {
+        if (context.toggleDetailController.isShowingDetail) {
             return undefined;
         }
 
         return [
-            { text: { value: commit.author }, tooltip: commit.authorEmail },
-            { text: commit.date.toRelativeDateString() },
+            { text: { value: context.commit.author }, tooltip: context.commit.authorEmail },
+            { text: context.commit.date.toRelativeDateString() },
         ];
-    }, [commit.author, commit.authorEmail, commit.date, isShowingDetail]);
+    }, [context.commit.author, context.commit.authorEmail, context.commit.date, context.toggleDetailController.isShowingDetail]);
 
-    const absolutePath = join(gitManager.repoPath, file.path);
+    const absolutePath = join(context.gitManager.repoPath, context.file.path);
     const fileExists = existsSync(absolutePath);
 
     return (
         <List.Item
-            id={commit.hash}
-            title={commit.message}
-            icon={CommitFileIcon(file)}
+            id={context.commit.hash}
+            title={context.commit.message}
+            icon={CommitFileIcon(context.file)}
             accessories={accessories}
             keywords={[
-                commit.hash,
-                commit.shortHash,
-                commit.author,
-                commit.authorEmail
+                context.commit.hash,
+                context.commit.shortHash,
+                context.commit.author,
+                context.commit.authorEmail
             ]}
             detail={
-                isShowingDetail ? (
+                context.toggleDetailController.isShowingDetail ? (
                     <List.Item.Detail
                         isLoading={isLoading}
-                        markdown={`${file.path}:\n\n${error ? `Error loading diff: ${error.message}` : (diff ?? "")}`}
+                        markdown={`${context.file.path}:\n\n${error ? `Error loading diff: ${error.message}` : (diff ?? "")}`}
                         metadata={
-                            isShowingMetadata ? (
+                            context.toggleMetadataController.isShowingDetail ? (
                                 <List.Item.Detail.Metadata>
-                                    <List.Item.Detail.Metadata.Label title="Author" text={commit.author} />
-                                    <List.Item.Detail.Metadata.Label title="Email" text={commit.authorEmail} />
-                                    <List.Item.Detail.Metadata.Label title="Date" text={commit.date.toLocaleString()} />
-                                    <List.Item.Detail.Metadata.Label title="Hash" text={commit.hash} />
+                                    <List.Item.Detail.Metadata.Label title="Author" text={context.commit.author} />
+                                    <List.Item.Detail.Metadata.Label title="Email" text={context.commit.authorEmail} />
+                                    <List.Item.Detail.Metadata.Label title="Date" text={context.commit.date.toLocaleString()} />
+                                    <List.Item.Detail.Metadata.Label title="Hash" text={context.commit.hash} />
                                 </List.Item.Detail.Metadata>
                             ) : undefined
                         }
@@ -176,62 +159,51 @@ function CommitListItem({
             quickLook={fileExists ? { path: absolutePath, name: absolutePath } : undefined}
             actions={
                 <ActionPanel>
-                    <Action
-                        title={isShowingDetail ? "Hide Diff" : "Show Diff"}
-                        icon={Icon.AppWindowSidebarLeft}
-                        onAction={onToggleDetail}
-                        shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
-                    />
-                    {isShowingDetail && (
-                        <Action
-                            title={isShowingMetadata ? "Hide Metadata" : "Show Metadata"}
-                            icon={Icon.Info}
-                            onAction={onToggleMetadata}
+                    <ToggleDetailAction controller={context.toggleDetailController} />
+
+                    {context.toggleDetailController.isShowingDetail && (
+                        <ToggleDetailAction
+                            controller={context.toggleMetadataController}
                             shortcut={{ modifiers: ["shift", "cmd"], key: "i" }}
                         />
                     )}
 
-                    <ActionPanel.Section title={file.path.split("/").pop()}>
+                    <ActionPanel.Section title={context.file.path.split("/").pop()}>
                         <FileOpenAction filePath={absolutePath} />
                         <FileOpenWithAction filePath={absolutePath} />
                         <FileCopyPathAction filePath={absolutePath} />
                         <FileQuickLookAction filePath={absolutePath} />
-                        <FileRestoreAction
-                            filePath={absolutePath}
-                            commit={commit.hash}
-                            gitManager={gitManager}
-                            onRefresh={onRefresh}
-                        />
-                        <FileRestoreAction
-                            filePath={absolutePath}
-                            before={true}
-                            commit={commit.hash}
-                            gitManager={gitManager}
-                            onRefresh={onRefresh}
-                        />
+                        <FileRestoreAction filePath={absolutePath} before={false} {...context} />
+                        <FileRestoreAction filePath={absolutePath} before={true} {...context} />
                     </ActionPanel.Section>
 
                     <ActionPanel.Section title="Commit">
-                        <CommitCopyMessageAction commit={commit} />
-                        <CommitCopyAuthorAction commit={commit} />
-                        <CommitCopyHashAction commit={commit} />
-                        {Object.keys(remotesHosts).map((remote) => (
+                        <CommitCopyMessageAction commit={context.commit} />
+                        <CommitCopyAuthorAction commit={context.commit} />
+                        <CommitCopyHashAction commit={context.commit} />
+                        {Object.keys(context.remotes.data).map((remote) => (
                             <RemoteOpenCommitAction
                                 key={`${remote}-open-commit`}
-                                remote={remotesHosts[remote]}
-                                commit={commit.hash}
+                                remote={context.remotes.data[remote]}
+                                commit={context.commit.hash}
                             />
                         ))}
                     </ActionPanel.Section>
 
-                    <Action
-                        title="Refresh"
-                        onAction={onRefresh}
-                        icon={Icon.ArrowClockwise}
-                        shortcut={{ modifiers: ["cmd"], key: "r" }}
-                    />
+                    <RefreshHistoryAction revalidate={context.onRevalidateHistory} />
                 </ActionPanel>
             }
         />
     );
+}
+
+function RefreshHistoryAction({ revalidate }: { revalidate: () => void }) {
+    return (
+        <Action
+            title="Refresh"
+            onAction={revalidate}
+            icon={Icon.ArrowClockwise}
+            shortcut={{ modifiers: ["cmd"], key: "r" }}
+        />
+    )
 }
