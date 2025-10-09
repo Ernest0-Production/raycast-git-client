@@ -2,7 +2,7 @@ import { useCachedPromise, useCachedState } from "@raycast/utils";
 import { GitManager } from "../utils/git-manager";
 import { BranchFilter, RepositoryContext } from "../open-repository";
 import { Branch, BranchesState, DetachedHead } from "../types";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 
 /**
  * Hook for fetching the commit history of a Git repository.

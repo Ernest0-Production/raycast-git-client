@@ -12,7 +12,7 @@ import { useGitBranches } from "./hooks/useGitBranches";
 import { useGitCommits } from "./hooks/useGitCommits";
 import { useGitStash } from "./hooks/useGitStash";
 import { useGitStatus } from "./hooks/useGitStatus";
-import { GitView, BranchesState, StatusState, Stash, Commit, ListPagination } from "./types";
+import { GitView, BranchesState, StatusState, Stash, Commit, ListPagination, DetachedHead } from "./types";
 import { useGitRemotes } from "./hooks/useGitRemotes";
 import RemotesView from "./commands/views/RemotesView";
 import { Branch, Remote } from "./types";
@@ -42,7 +42,7 @@ export type RepositoryContext = {
   };
   commits: {
     data: Commit[];
-    selectedBranch?: Branch;
+    selectedBranch: Branch | DetachedHead | undefined;
     filter: BranchFilter;
     isLoading: boolean;
     error: Error | undefined;

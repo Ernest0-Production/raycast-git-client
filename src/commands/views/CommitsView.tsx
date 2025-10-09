@@ -24,9 +24,6 @@ export function CommitsView(context: RepositoryContext & NavigationContext) {
   // Load URL tracker configurations once for the entire view
   const { configs: IssueTrackerConfigs, findUrls } = useIssueTracker();
 
-  // Get current filter display name for List.Section title
-  const currentFilterDisplayName = getBranchFilterDisplayName(context);
-
   return (
     <List
       isLoading={context.commits.isLoading}
@@ -64,7 +61,7 @@ export function CommitsView(context: RepositoryContext & NavigationContext) {
       ) : !context.commits.data || context.commits.data.length === 0 ? (
         <List.EmptyView title="No commits" description="No commits in this branch." icon={`git-commit.svg`} />
       ) : (
-        <List.Section title={currentFilterDisplayName}>
+        <List.Section title={getBranchFilterDisplayName(context)}>
           {context.commits.data.map((commit, index) => (
             <CommitListItem
               key={commit.hash}
@@ -374,52 +371,20 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
  * Helper function to get display name for the current filter
  */
 function getBranchFilterDisplayName(context: RepositoryContext & NavigationContext): string | undefined {
-  if (context.commits.filter.kind === 'all') {
+  if (!context.commits.selectedBranch) {
     return undefined;
   }
 
-  if (context.commits.filter.kind === 'current') {
-    if (context.branches.data.detachedHead) {
-      return `Commits on HEAD '${context.branches.data.detachedHead.shortCommitHash}'`;
-    }
-    if (context.branches.data.currentBranch) {
-      const aheadBehindInfo = getAheadBehindInfo(context.branches.data.currentBranch);
-      return `Filtered by '${context.branches.data.currentBranch.name}' branch ${aheadBehindInfo ? ` • ${aheadBehindInfo}` : ""}`;
-    }
-    return undefined;
+  if ('commitHash' in context.commits.selectedBranch) {
+    return `Commits on HEAD '${context.commits.selectedBranch.shortCommitHash}'`;
   }
-  if (context.commits.filter.kind === 'branch') {
-    const branchFilter = context.commits.filter as { kind: 'branch', value: Pick<Branch, 'name' | 'type' | 'remote'> };
+  if ('displayName' in context.commits.selectedBranch) {
+    const parts = [];
+    if (context.commits.selectedBranch.ahead) parts.push(`↑ ${context.commits.selectedBranch.ahead} ahead`);
+    if (context.commits.selectedBranch.behind) parts.push(`↓ ${context.commits.selectedBranch.behind} behind`);
 
-    switch (branchFilter.value.type) {
-      case 'local':
-        const localBranch = context.branches.data.localBranches.find((branch) => branch.name === branchFilter.value.name);
-        if (localBranch) {
-          const aheadBehindInfo = getAheadBehindInfo(localBranch);
-          return `Filtered by '${localBranch.name}' branch ${aheadBehindInfo ? ` • ${aheadBehindInfo}` : ""}`;
-        }
-        break;
-
-      case 'remote':
-        const remoteBranch = context.branches.data.remoteBranches[branchFilter.value.remote!].find((branch) => branch.name === branchFilter.value.name);
-        if (remoteBranch) {
-          const aheadBehindInfo = getAheadBehindInfo(remoteBranch);
-          return `Filtered by '${remoteBranch.name}' branch ${aheadBehindInfo ? ` • ${aheadBehindInfo}` : ""}`;
-        }
-        break;
-    }
-    return `Filtered by '${branchFilter.value.name}' branch`;
+    return `Filtered by '${context.commits.selectedBranch.displayName}' branch ${parts.length > 0 ? ` • ${parts.join(" • ")}` : ""}`;
   }
-
-  return undefined;
-}
-
-function getAheadBehindInfo(branch: Branch): string | undefined {
-  const parts = [];
-  if (branch.ahead) parts.push(`↑ ${branch.ahead} ahead`);
-  if (branch.behind) parts.push(`↓ ${branch.behind} behind`);
-
-  if (parts.length > 0) return parts.join(" • ");
   return undefined;
 }
 
@@ -553,8 +518,9 @@ function CommitBranchFilterAction(context: RepositoryContext) {
 }
 
 function BranchFilterAction(context: RepositoryContext & { branch: Branch }) {
-  const branchValue = context.branch.displayName;
-  const isSelected = context.commits.filter.kind === branchValue;
+  const isSelected = context.commits.selectedBranch
+    && 'displayName' in context.commits.selectedBranch
+    && context.commits.selectedBranch?.displayName === context.branch.displayName;
 
   const icon: Image.ImageLike = useMemo(() => {
     let baseIcon: Image.ImageLike = Icon.Dot;
@@ -572,16 +538,12 @@ function BranchFilterAction(context: RepositoryContext & { branch: Branch }) {
 
   return (
     <Action
-      title={branchValue}
+      title={context.branch.displayName}
       icon={icon}
       autoFocus={isSelected}
       onAction={() => context.commits.setFilter({
         kind: 'branch',
-        value: {
-          name: branchValue,
-          type: context.branch.type,
-          remote: context.branch.remote
-        }
+        value: context.branch
       })}
     />
   );
