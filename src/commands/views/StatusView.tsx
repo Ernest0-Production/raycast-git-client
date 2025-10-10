@@ -95,8 +95,8 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
                 />
               </ActionPanel.Section>
 
-              <WorkspaceNavigationActions {...context} />
               <ToggleDetailAction controller={toggleController} />
+              <WorkspaceNavigationActions {...context} />
             </ActionPanel>
           }
         />
@@ -114,6 +114,14 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
                 shortcut={{ modifiers: ["cmd"], key: "r" }}
               />
               <ToggleDetailAction controller={toggleController} />
+
+              <ActionPanel.Section title="Patch">
+                <PatchApplyAction {...context} />
+              </ActionPanel.Section>
+
+              {context.status.data && (
+                <ConflictAbortAction {...context} />
+              )}
 
               <WorkspaceNavigationActions {...context} />
             </ActionPanel>
