@@ -66,7 +66,16 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
           {context.status.data && (
             <ConflictAbortAction {...context} />
           )}
-          <SharedActionsSection {...context} />
+          <ActionPanel.Section title="Workspace">
+            <Action
+              title="Refresh"
+              onAction={context.status.revalidate}
+              icon={Icon.ArrowClockwise}
+              shortcut={{ modifiers: ["cmd"], key: "r" }}
+            />
+          </ActionPanel.Section>
+
+          <WorkspaceNavigationActions {...context} />
         </ActionPanel>
       }
     >
@@ -77,7 +86,16 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
           icon={Icon.ExclamationMark}
           actions={
             <ActionPanel>
-              <SharedActionsSection {...context} />
+              <ActionPanel.Section title="Workspace">
+                <Action
+                  title="Refresh"
+                  onAction={context.status.revalidate}
+                  icon={Icon.ArrowClockwise}
+                  shortcut={{ modifiers: ["cmd"], key: "r" }}
+                />
+              </ActionPanel.Section>
+
+              <WorkspaceNavigationActions {...context} />
               <ToggleDetailAction controller={toggleController} />
             </ActionPanel>
           }
@@ -89,7 +107,15 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
           icon={Icon.NewDocument}
           actions={
             <ActionPanel>
-              <SharedActionsSection {...context} />
+              <Action
+                title="Refresh"
+                onAction={context.status.revalidate}
+                icon={Icon.ArrowClockwise}
+                shortcut={{ modifiers: ["cmd"], key: "r" }}
+              />
+              <ToggleDetailAction controller={toggleController} />
+
+              <WorkspaceNavigationActions {...context} />
             </ActionPanel>
           }
         />
@@ -206,26 +232,18 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
             <PatchApplyAction {...context} />
           </ActionPanel.Section>
 
-          <SharedActionsSection {...context} />
+          <ActionPanel.Section title="Workspace">
+            <Action
+              title="Refresh"
+              onAction={context.status.revalidate}
+              icon={Icon.ArrowClockwise}
+              shortcut={{ modifiers: ["cmd"], key: "r" }}
+            />
+          </ActionPanel.Section>
+
+          <WorkspaceNavigationActions {...context} />
         </ActionPanel>
       }
     />
-  );
-}
-
-function SharedActionsSection(context: RepositoryContext & NavigationContext) {
-  return (
-    <>
-      <ActionPanel.Section title="Workspace">
-        <Action
-          title="Refresh"
-          onAction={context.status.revalidate}
-          icon={Icon.ArrowClockwise}
-          shortcut={{ modifiers: ["cmd"], key: "r" }}
-        />
-      </ActionPanel.Section>
-
-      <WorkspaceNavigationActions {...context} />
-    </>
   );
 }
