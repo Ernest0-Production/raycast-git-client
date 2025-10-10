@@ -25,11 +25,6 @@ export function BranchesView(context: RepositoryContext & NavigationContext) {
       navigationTitle="Repository Branches"
       searchBarPlaceholder="Search branches by name..."
       searchBarAccessory={WorkspaceNavigationDropdown(context)}
-      actions={
-        <ActionPanel>
-          <SharedActionsSection {...context} />
-        </ActionPanel>
-      }
     >
       {context.branches.error ? (
         <List.EmptyView
@@ -38,7 +33,17 @@ export function BranchesView(context: RepositoryContext & NavigationContext) {
           icon={Icon.ExclamationMark}
           actions={
             <ActionPanel>
-              <SharedActionsSection {...context} />
+              <ActionPanel.Section title="Branches">
+                <Action
+                  title="Refresh"
+                  icon={Icon.ArrowClockwise}
+                  onAction={context.branches.revalidate}
+                  shortcut={{ modifiers: ["cmd"], key: "r" }}
+                />
+                <BranchCreateAction {...context} />
+                <RemoteFetchAction {...context} />
+              </ActionPanel.Section>
+              <WorkspaceNavigationActions {...context} />
             </ActionPanel>
           }
         />
@@ -50,7 +55,17 @@ export function BranchesView(context: RepositoryContext & NavigationContext) {
           icon={`git-branch.svg`}
           actions={
             <ActionPanel>
-              <SharedActionsSection {...context} />
+              <ActionPanel.Section title="Branches">
+                <BranchCreateAction {...context} />
+                <RemoteFetchAction {...context} />
+                <Action
+                  title="Refresh"
+                  icon={Icon.ArrowClockwise}
+                  onAction={context.branches.revalidate}
+                  shortcut={{ modifiers: ["cmd"], key: "r" }}
+                />
+              </ActionPanel.Section>
+              <WorkspaceNavigationActions {...context} />
             </ActionPanel>
           }
         />
@@ -225,7 +240,17 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
             )}
           </ActionPanel.Section>
 
-          <SharedActionsSection {...context} />
+          <ActionPanel.Section title="Branches">
+            <BranchCreateAction {...context} />
+            <RemoteFetchAction {...context} />
+            <Action
+              title="Refresh"
+              icon={Icon.ArrowClockwise}
+              onAction={context.branches.revalidate}
+              shortcut={{ modifiers: ["cmd"], key: "r" }}
+            />
+          </ActionPanel.Section>
+          <WorkspaceNavigationActions {...context} />
         </ActionPanel>
       }
     />
@@ -267,27 +292,19 @@ function DetachedHeadListItem(context: RepositoryContext & NavigationContext & {
       keywords={[context.detachedHead.commitHash]}
       actions={
         <ActionPanel>
-          <SharedActionsSection {...context} />
+          <ActionPanel.Section title="Branches">
+            <BranchCreateAction {...context} />
+            <RemoteFetchAction {...context} />
+            <Action
+              title="Refresh"
+              icon={Icon.ArrowClockwise}
+              onAction={context.branches.revalidate}
+              shortcut={{ modifiers: ["cmd"], key: "r" }}
+            />
+          </ActionPanel.Section>
+          <WorkspaceNavigationActions {...context} />
         </ActionPanel>
       }
     />
-  );
-}
-
-function SharedActionsSection(context: RepositoryContext & NavigationContext) {
-  return (
-    <>
-      <ActionPanel.Section title="Branches">
-        <BranchCreateAction {...context} />
-        <RemoteFetchAction {...context} />
-        <Action
-          title="Refresh"
-          icon={Icon.ArrowClockwise}
-          onAction={context.branches.revalidate}
-          shortcut={{ modifiers: ["cmd"], key: "r" }}
-        />
-      </ActionPanel.Section>
-      <WorkspaceNavigationActions {...context} />
-    </>
   );
 }

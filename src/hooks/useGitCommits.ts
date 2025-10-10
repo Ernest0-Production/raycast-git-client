@@ -49,7 +49,7 @@ export function useGitCommits(
   }, [branchFilter, branchesState]);
 
   const commitsPromise = useCachedPromise(
-    (repoPath: string, branchFilter: BranchFilter) => async (options: { page: number }) => {
+    (repoPath: string, branchFilter: BranchFilter, selectedBranch?: Branch, detachedHead?: DetachedHead) => async (options: { page: number }) => {
       const selectedSourceName = evaluateBranchName(branchFilter, branchesState!);
       const commits = await gitManager.getCommits(selectedSourceName, options.page);
 
@@ -58,7 +58,7 @@ export function useGitCommits(
         hasMore: commits.length > 0
       };
     },
-    [gitManager.repoPath, branchFilter], // Include both repository path and branch for proper cache isolation
+    [gitManager.repoPath, branchFilter, branchesState?.currentBranch, branchesState?.detachedHead], // Include both repository path and branch for proper cache isolation
     {
       execute: branchesState !== undefined,
       initialData: []

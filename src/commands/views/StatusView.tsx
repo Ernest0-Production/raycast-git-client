@@ -78,6 +78,7 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
           actions={
             <ActionPanel>
               <SharedActionsSection {...context} />
+              <ToggleDetailAction controller={toggleController} />
             </ActionPanel>
           }
         />

@@ -33,9 +33,11 @@ export function BranchCkeckoutAction(context: RepositoryContext & NavigationCont
         clearSearchBar();
         context.branches.revalidate();
         context.status.revalidate();
+        context.commits.revalidate();
       } catch (error) {
         context.branches.revalidate();
         context.status.revalidate();
+        context.commits.revalidate();
         context.navigateTo("status");
       }
     }

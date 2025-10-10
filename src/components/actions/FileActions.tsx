@@ -27,7 +27,7 @@ export function FileManagerActions({ filePath, onOpen }: { filePath: string, onO
       <Action.CopyToClipboard
         title="Copy File Path"
         content={filePath}
-        shortcut={{ modifiers: ["cmd", "shift"], key: "," }}
+        shortcut={{ modifiers: ["cmd", "opt"], key: "," }}
       />
     </>
   );
