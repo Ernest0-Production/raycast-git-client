@@ -1,7 +1,8 @@
 import { Action, Icon, confirmAlert, Alert, ActionPanel, useNavigation, showToast, Toast, Form } from "@raycast/api";
 import { Commit } from "../../types";
+import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { RemoteHostIcon } from "../icons/RemoteHostIcons";
-import { RepositoryContext } from "../../open-repository";
+import { CommitDetailsByRefView } from "../../commands/views/CommitDetailsView";
 import { useState } from "react";
 
 /**
@@ -57,6 +58,7 @@ export function TagRemoveAction(context: RepositoryContext & { tagName: string }
 
       await context.gitManager.deleteTag(context.tagName);
       context.commits.revalidate();
+      context.tags?.revalidate();
     } catch (error) {
       // Git error is already shown by GitManager
     }
@@ -104,6 +106,138 @@ export function TagCopyNameAction({ tagName }: { tagName: string }) {
     title={`Copy Tag Name '${tagName}'`}
     content={tagName} icon={Icon.Clipboard}
   />;
+}
+
+/**
+ * Action for checking out a tag. If remoteName provided, fetches the tag first.
+ */
+export function TagCheckoutAction(context: RepositoryContext & NavigationContext & { tagName: string; remoteName?: string }) {
+  const handleCheckout = async () => {
+    const confirmed = await confirmAlert({
+      title: "Checkout tag",
+      message: `Are you sure you want to checkout tag "${context.tagName}"${context.remoteName ? ` from ${context.remoteName}` : ""}?`,
+      primaryAction: { title: "Checkout", style: Alert.ActionStyle.Default },
+    });
+    if (!confirmed) return;
+    try {
+      if (context.remoteName) {
+        await context.gitManager.fetchTag(context.remoteName, context.tagName);
+      }
+      await context.gitManager.checkoutTag(context.tagName);
+      context.branches.revalidate();
+      context.status.revalidate();
+      context.commits.revalidate();
+      context.navigateTo("status");
+    } catch (error) {
+      // Git error already displayed by GitManager
+    }
+  };
+
+  return (
+    <Action title="Checkout" onAction={handleCheckout} icon={`arrow-checkout.svg`} />
+  );
+}
+
+/**
+ * Action for pushing a tag to remote(s).
+ */
+export function TagPushAction(context: RepositoryContext & { tagName: string }) {
+  const handlePush = async (remote: string) => {
+    try {
+      await context.gitManager.pushTag(context.tagName, remote);
+      context.tags?.revalidate();
+    } catch (error) {
+      // Git error already displayed by GitManager
+    }
+  };
+
+  const remotes = Object.keys(context.remotes.data || {});
+  if (remotes.length === 0) return undefined;
+  if (remotes.length === 1) {
+    return (
+      <Action title="Push Tag" icon={Icon.Upload} onAction={() => handlePush(remotes[0])} />
+    );
+  }
+  return (
+    <ActionPanel.Submenu title="Push Tag to" icon={Icon.Upload}>
+      {remotes.map((remote) => (
+        <Action
+          key={`${remote}:push-tag`}
+          title={remote}
+          icon={RemoteHostIcon(context.remotes.data[remote].provider)}
+          onAction={() => handlePush(remote)}
+        />
+      ))}
+    </ActionPanel.Submenu>
+  );
+}
+
+/**
+ * Action for renaming a local tag with optional remote propagation.
+ */
+export function TagRenameAction(context: RepositoryContext & { tagName: string }) {
+  return (
+    <Action.Push title="Rename Tag" icon={Icon.Pencil} target={<TagRenameForm {...context} />} />
+  );
+}
+
+function TagRenameForm(context: RepositoryContext & { tagName: string }) {
+  const { pop } = useNavigation();
+  const [newName, setNewName] = useState(context.tagName);
+  const [isLoading, setIsLoading] = useState(false);
+  const remoteNames = Object.keys(context.remotes.data || {});
+  const [pushToRemotes, setPushToRemotes] = useState<Record<string, boolean>>({});
+
+  const handleSubmit = async () => {
+    setIsLoading(true);
+    try {
+      await context.gitManager.renameTag(context.tagName, newName);
+      for (const remote of remoteNames) {
+        if (pushToRemotes[remote]) {
+          await context.gitManager.pushTag(newName, remote);
+          await context.gitManager.pushTag(context.tagName, remote, true);
+        }
+      }
+      context.tags?.revalidate();
+      context.commits.revalidate();
+      pop();
+    } catch (error) {
+      // Git error already displayed by GitManager
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Form
+      navigationTitle={`Rename Tag '${context.tagName}'`}
+      isLoading={isLoading}
+      actions={<ActionPanel><Action title="Rename Tag" onAction={handleSubmit} /></ActionPanel>}
+    >
+      <Form.TextField id="newTagName" title="New Tag Name" value={newName} onChange={setNewName} placeholder="v1.0.1" />
+      {remoteNames.length > 0 && (
+        <Form.Description text="Select remotes to push new tag and delete old" />
+      )}
+      {remoteNames.map((remote) => (
+        <Form.Checkbox
+          key={`rename-remote-${remote}`}
+          id={`rename-remote-${remote}`}
+          label={`Update on ${remote}`}
+          value={!!pushToRemotes[remote]}
+          onChange={(val) => setPushToRemotes((prev) => ({ ...prev, [remote]: val }))}
+        />
+      ))}
+    </Form>
+  );
+}
+
+/**
+ * Action to open commit details for a tag.
+ */
+export function TagOpenCommitAction(context: RepositoryContext & NavigationContext & { tagName: string }) {
+  return (
+    <Action.Push title="View Tagged Commit" icon={Icon.Document} target={<CommitDetailsByRefView refName={context.tagName} {...context} />} />
+  );
 }
 
 function TagCreateForm(context: RepositoryContext & { commit: Commit }) {

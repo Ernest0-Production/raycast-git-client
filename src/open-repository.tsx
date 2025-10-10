@@ -12,9 +12,11 @@ import { useGitBranches } from "./hooks/useGitBranches";
 import { useGitCommits } from "./hooks/useGitCommits";
 import { useGitStash } from "./hooks/useGitStash";
 import { useGitStatus } from "./hooks/useGitStatus";
-import { GitView, BranchesState, StatusState, Stash, Commit, ListPagination, DetachedHead } from "./types";
+import { GitView, BranchesState, StatusState, Stash, Commit, ListPagination, DetachedHead, TagsState } from "./types";
 import { useGitRemotes } from "./hooks/useGitRemotes";
 import RemotesView from "./commands/views/RemotesView";
+import { useGitTags } from "./hooks/useGitTags";
+import TagsView from "./commands/views/TagsView";
 import { Branch, Remote } from "./types";
 import { GitManager } from "./utils/git-manager";
 
@@ -62,6 +64,12 @@ export type RepositoryContext = {
     error: Error | undefined;
     revalidate: () => void;
   };
+  tags: {
+    data: TagsState;
+    isLoading: boolean;
+    error: Error | undefined;
+    revalidate: () => void;
+  }
 };
 
 export type NavigationContext = {
@@ -105,6 +113,7 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
   const commitsContext = useGitCommits(gitManager, branchesContext.data);
   const stashesContext = useGitStash(gitManager);
   const statusContext = useGitStatus(gitManager);
+  const tagsContext = useGitTags(gitManager);
 
   const rootContext: RepositoryContext & NavigationContext = {
     gitManager,
@@ -113,6 +122,7 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
     commits: commitsContext,
     stashes: stashesContext,
     status: statusContext,
+    tags: tagsContext,
     currentView,
     navigateTo: setCurrentView,
   };
@@ -134,6 +144,10 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
     case "remotes":
       return (
         <RemotesView {...rootContext} />
+      );
+    case "tags":
+      return (
+        <TagsView {...rootContext} />
       );
     case "files":
       return (

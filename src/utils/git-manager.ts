@@ -2,7 +2,7 @@ import { CleanOptions, DiffNameStatus, DiffResult, DiffResultBinaryFile, DiffRes
 import { showToast, Toast, getPreferenceValues, Alert, confirmAlert } from "@raycast/api";
 import { readFileSync, writeFileSync, mkdtempSync, chmodSync, rmSync, existsSync } from "fs";
 import { tmpdir } from "os";
-import { Branch, FileStatus, Commit, Stash, BranchesState, DetachedHead, CommitFileChange, Preferences, RebasePlanItem, FileChangeStats, StatusState, ConflictState, MergeMode, PatchScope, RepositoryCloningProcess, RepositoryCloningState } from "../types";
+import { Branch, FileStatus, Commit, Stash, BranchesState, DetachedHead, CommitFileChange, Preferences, RebasePlanItem, FileChangeStats, StatusState, ConflictState, MergeMode, PatchScope, RepositoryCloningProcess, RepositoryCloningState, Tag } from "../types";
 import { basename, join } from "path";
 import { promises as fs } from "fs";
 import { showFailureToast } from "@raycast/utils";
@@ -1051,6 +1051,111 @@ __REBASE_TODO__
   }
 
   /**
+   * Returns detailed list of local tags with commit hashes and optional messages.
+   */
+  async getLocalTagsDetailed(): Promise<Tag[]> {
+    const tags = await this.git.tags();
+    const result: Tag[] = [];
+
+    await Promise.all(
+      tags.all.map(async (name) => {
+        try {
+          const commitHash = (await this.git.raw(["rev-list", "-n", "1", name])).trim();
+          let message: string | undefined = undefined;
+          try {
+            // subject of annotated tag or commit message if lightweight
+            message = (await this.git.raw(["show", "-s", "--format=%s", name])).trim();
+          } catch {
+            // ignore
+          }
+          result.push({ name, commitHash, message });
+        } catch {
+          // ignore broken tag
+        }
+      })
+    );
+
+    // keep stable order by name
+    return result.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  /**
+   * Lists remote tags for a given remote using `git ls-remote --tags`.
+   */
+  async getRemoteTags(remote: string): Promise<Tag[]> {
+    const output = await this.git.listRemote(["--tags", remote]);
+    const lines = output.trim().split(/\r?\n/).filter(Boolean);
+
+    // Prefer ^{} dereferenced commit hashes when present
+    const derefMap = new Map<string, string>();
+    const directMap = new Map<string, string>();
+
+    for (const line of lines) {
+      const [hash, ref] = line.split(/\s+/);
+      if (!hash || !ref) continue;
+      const match = ref.match(/^refs\/tags\/(.+?)(\^\{\})?$/);
+      if (!match) continue;
+      const tagName = match[1];
+      const isDeref = Boolean(match[2]);
+      if (isDeref) {
+        derefMap.set(tagName, hash);
+      } else {
+        directMap.set(tagName, hash);
+      }
+    }
+
+    const names = new Set<string>([...derefMap.keys(), ...directMap.keys()]);
+    const result: Tag[] = [];
+    for (const name of names) {
+      const commitHash = derefMap.get(name) || directMap.get(name);
+      if (!commitHash) continue;
+      result.push({ name, commitHash });
+    }
+    return result.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  /**
+   * Renames a local tag by creating a new one pointing to the same commit, then deleting the old.
+   */
+  async renameTag(oldName: string, newName: string): Promise<void> {
+    const commitHash = (await this.git.raw(["rev-list", "-n", "1", oldName])).trim();
+    await this.git.raw(["tag", newName, commitHash]);
+    await this.git.raw(["tag", "-d", oldName]);
+  }
+
+  /**
+   * Checks out a tag (detached HEAD).
+   */
+  async checkoutTag(tagName: string): Promise<void> {
+    await this.git.checkout([tagName]);
+  }
+
+  /**
+   * Returns a single commit by ref (hash, tag or branch).
+   */
+  async getCommitByRef(ref: string): Promise<Commit | null> {
+    const log = await this.git.log(["--max-count=1", "--name-status", "--decorate=full", ref]);
+    const commit = log.latest;
+    if (!commit) return null;
+    const changedFiles = this.parseCommitChangedFiles(commit.diff!);
+    const parsedRefs = this.parseCommitRefs(commit.refs);
+    return {
+      hash: commit.hash,
+      shortHash: commit.hash.substring(0, 7),
+      message: commit.message,
+      body: commit.body,
+      author: commit.author_name,
+      authorEmail: commit.author_email,
+      date: new Date(commit.date),
+      localBranches: parsedRefs.localBranches,
+      remoteBranches: parsedRefs.remoteBranches,
+      tags: parsedRefs.tags,
+      currentBranchName: parsedRefs.currentBranchName,
+      changedFiles,
+    };
+  }
+
+  /**
    * Gets the absolute path to a file.
    */
   private getAbsolutePath(relativePath: string): string {
@@ -1208,6 +1313,13 @@ __REBASE_TODO__
       // Push specific tag to remote
       await this.git.push(remote, tagName);
     }
+  }
+
+  /**
+   * Fetches a single tag from remote without updating local branches.
+   */
+  async fetchTag(remote: string, tagName: string): Promise<void> {
+    await this.git.fetch([remote, `refs/tags/${tagName}:refs/tags/${tagName}`]);
   }
 
   /**

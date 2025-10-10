@@ -71,6 +71,28 @@ export function CommitDetailsView(context: RepositoryContext & NavigationContext
   );
 }
 
+export function CommitDetailsByRefView(context: RepositoryContext & NavigationContext & { refName: string }) {
+  const toggleController = useToggleDetail("Commit Details", "Diff", false);
+  const { data: commit, isLoading } = usePromise(async (ref: string) => await context.gitManager.getCommitByRef(ref), [context.refName]);
+
+  if (!commit) {
+    return (
+      <List isLoading={isLoading} navigationTitle={`Commit ${context.refName}`}>
+        <List.EmptyView title="Loading commit" icon={Icon.Hourglass} />
+      </List>
+    );
+  }
+
+  return (
+    <ConcreteCommitView
+      {...context}
+      commit={commit}
+      toggleController={toggleController}
+      onMoveToCommit={() => {}}
+    />
+  );
+}
+
 function ConcreteCommitView(context: RepositoryContext & NavigationContext & {
   commit: Commit,
   onMoveToCommit: (direction: ("parent" | "child")) => void

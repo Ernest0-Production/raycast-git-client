@@ -31,6 +31,12 @@ export function WorkspaceNavigationDropdown(context: NavigationContext) {
                 icon={`git-branch.svg`}
             />
             <List.Dropdown.Item
+                title="Tags"
+                value="tags"
+                keywords={["releases", "annotations"]}
+                icon={Icon.Tag}
+            />
+            <List.Dropdown.Item
                 title="Remotes"
                 value="remotes"
                 keywords={["origin"]}
@@ -85,6 +91,12 @@ export function WorkspaceNavigationActions(context: NavigationContext & Reposito
                     onAction={() => context.navigateTo("stashes")}
                     icon={Icon.Bookmark}
                     shortcut={{ modifiers: ["cmd"], key: "5" }}
+                />
+                <Action
+                    title="Go to Tags"
+                    onAction={() => context.navigateTo("tags")}
+                    icon={Icon.Tag}
+                    shortcut={{ modifiers: ["cmd"], key: "6" }}
                 />
                 <Action
                     title="Go to Files"

@@ -1,0 +1,94 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.detectRepositoryLanguages = detectRepositoryLanguages;
+const api_1 = require("@raycast/api");
+const git_manager_1 = require("./git-manager");
+const MAIN_LANGUAGE_PERCENTAGE = 70;
+const LANGUAGES_COLORS = {
+    JavaScript: "https://api.iconify.design/vscode-icons/file-type-js-official.svg",
+    TypeScript: "https://api.iconify.design/vscode-icons/file-type-typescript-official.svg",
+    Python: "https://api.iconify.design/vscode-icons/file-type-python.svg",
+    Java: "https://api.iconify.design/skill-icons/java-light.svg",
+    "C#": { source: "https://api.iconify.design/teenyicons/c-sharp-solid.svg", tintColor: api_1.Color.Purple },
+    Ruby: { source: "https://api.iconify.design/openmoji/ruby.svg" },
+    PHP: { source: "https://api.iconify.design/akar-icons/php-fill.svg", tintColor: api_1.Color.Blue },
+    Go: "https://api.iconify.design/vscode-icons/file-type-go-gopher.svg",
+    Swift: "https://api.iconify.design/vscode-icons/file-type-swift.svg",
+    Kotlin: "https://api.iconify.design/material-icon-theme/kotlin.svg",
+};
+const LANGUAGE_EXTENSION = {
+    ts: "TypeScript",
+    tsx: "TypeScript",
+    js: "JavaScript",
+    jsx: "JavaScript",
+    mjs: "JavaScript",
+    cjs: "JavaScript",
+    py: "Python",
+    java: "Java",
+    cs: "C#",
+    cpp: "C++",
+    cxx: "C++",
+    cc: "C++",
+    hpp: "C++",
+    hh: "C++",
+    h: "Objective-C",
+    m: "Objective-C",
+    hxx: "C++",
+    c: "C",
+    rb: "Ruby",
+    php: "PHP",
+    go: "Go",
+    swift: "Swift",
+    kt: "Kotlin",
+    kts: "Kotlin",
+};
+function getExtension(filePath) {
+    const lastSlash = filePath.lastIndexOf("/");
+    const fileName = lastSlash >= 0 ? filePath.slice(lastSlash + 1) : filePath;
+    const lastDot = fileName.lastIndexOf(".");
+    if (lastDot <= 0)
+        return undefined;
+    return fileName.slice(lastDot + 1).toLowerCase();
+}
+async function detectRepositoryLanguages(repositoryPath) {
+    const gitManager = new git_manager_1.GitManager(repositoryPath);
+    const trackedFiles = await gitManager.getTrackedFilePaths();
+    let totalFiles = trackedFiles.length;
+    if (totalFiles === 0)
+        return [];
+    const languageFilesCounter = {};
+    for (const relativePath of trackedFiles) {
+        const extension = getExtension(relativePath);
+        if (!extension) {
+            totalFiles--;
+            continue;
+        }
+        const language = LANGUAGE_EXTENSION[extension];
+        if (!language) {
+            totalFiles--;
+            continue;
+        }
+        languageFilesCounter[language] = (languageFilesCounter[language] || 0) + 1;
+    }
+    if (Object.keys(languageFilesCounter).length === 0)
+        return [];
+    const sortedLanguages = Object.entries(languageFilesCounter)
+        .map(([name, count]) => ({
+        name,
+        percentage: (count / totalFiles) * 100,
+        color: LANGUAGES_COLORS[name],
+    }))
+        .sort((a, b) => b.percentage - a.percentage);
+    if (sortedLanguages[0] && sortedLanguages[0].percentage >= MAIN_LANGUAGE_PERCENTAGE) {
+        return [sortedLanguages[0]];
+    }
+    const primaryLanguages = [];
+    let sum = 0;
+    for (const lang of sortedLanguages) {
+        primaryLanguages.push(lang);
+        sum += lang.percentage;
+        if (sum >= MAIN_LANGUAGE_PERCENTAGE)
+            break;
+    }
+    return primaryLanguages;
+}
