@@ -235,10 +235,11 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Patch">
-            <StashCreateAction {...context} />
             <PatchCreateAction {...context} />
             <PatchApplyAction {...context} />
           </ActionPanel.Section>
+
+          <StashCreateAction {...context} />
 
           <ActionPanel.Section title="Workspace">
             <Action

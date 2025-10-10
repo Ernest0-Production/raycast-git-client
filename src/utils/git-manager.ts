@@ -993,14 +993,23 @@ __REBASE_TODO__
   }
 
   /**
-   * Creates a stash with an optional message.
+   * Creates a stash with an optional message and scope flags.
    */
-  async stash(message?: string): Promise<void> {
-    if (message) {
-      await this.git.stash(["push", "-m", message]);
-    } else {
-      await this.git.stash();
+  async stash(message: string, scope?: PatchScope): Promise<void> {
+    const args: string[] = [];
+
+    if (scope === PatchScope.STAGED) {
+      args.push("--staged");
     }
+
+    if (scope === PatchScope.UNSTAGED) {
+      args.push("--keep-index");
+      args.push("--include-untracked");
+    }
+
+    args.push("-m", message);
+
+    await this.git.stash(["push", ...args]);
   }
 
   /**

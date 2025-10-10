@@ -1,6 +1,6 @@
 import { ActionPanel, Action, Icon, confirmAlert, Alert, Form, useNavigation } from "@raycast/api";
 import { useState } from "react";
-import { Stash } from "../../types";
+import { PatchScope, Stash } from "../../types";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 
 /**
@@ -76,22 +76,34 @@ export function StashDropAction(context: RepositoryContext & NavigationContext &
 
 export function StashCreateAction(context: RepositoryContext) {
   return (
-    <Action.Push
-      title={"Stash Changes"}
+    <ActionPanel.Submenu
+      title="Create Stash"
       icon={Icon.Bookmark}
-      target={<StashCreateForm {...context} />}
       shortcut={{ modifiers: ["cmd"], key: "s" }}
-    />
+    >
+      <Action.Push
+        title="All Changes"
+        target={<StashCreateForm scope={PatchScope.ALL} {...context} />}
+      />
+      <Action.Push
+        title="Only Staged"
+        target={<StashCreateForm scope={PatchScope.STAGED} {...context} />}
+      />
+      <Action.Push
+        title="Only Unstaged"
+        target={<StashCreateForm scope={PatchScope.UNSTAGED} {...context} />}
+      />
+    </ActionPanel.Submenu>
   );
 }
 
-function StashCreateForm(context: RepositoryContext) {
+function StashCreateForm(context: RepositoryContext & { scope: PatchScope }) {
   const { pop } = useNavigation();
   const [message, setMessage] = useState("");
 
   const handleSubmit = async (values: { message: string }) => {
     try {
-      await context.gitManager.stash(values.message);
+      await context.gitManager.stash(values.message, context.scope);
       context.stashes.revalidate();
       pop();
     } catch (error) {
@@ -99,13 +111,12 @@ function StashCreateForm(context: RepositoryContext) {
     }
   };
 
-
   return (
     <Form
-      navigationTitle={"Stash Changes"}
+      navigationTitle={"Create Stash"}
       actions={
         <ActionPanel>
-          <Action.SubmitForm title={"Stash Changes"} onSubmit={handleSubmit} />
+          <Action.SubmitForm title={"Create Stash"} onSubmit={handleSubmit} />
         </ActionPanel>
       }
     >
