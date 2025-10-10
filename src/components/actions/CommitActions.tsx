@@ -1,10 +1,11 @@
-import { ActionPanel, Action, Icon, confirmAlert, Alert, clearSearchBar, useNavigation, Clipboard, Form } from "@raycast/api";
+import { ActionPanel, Action, Icon, confirmAlert, Alert, clearSearchBar, useNavigation, Clipboard, Form, Color } from "@raycast/api";
 import { Commit } from "../../types";
 import InteractiveRebaseEditorView from "../../commands/views/InteractiveRebaseEditorView";
 import { ResetMode } from "simple-git";
 import { useCachedState } from "@raycast/utils";
 import { existsSync } from "fs";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
+import { CommitMessageForm } from "../../commands/views/CommitMessageView";
 
 /**
  * Action for checking out a commit.
@@ -40,6 +41,20 @@ export function CommitCheckoutAction(context: RepositoryContext & NavigationCont
     onAction={handleCheckoutCommit}
     icon={`arrow-checkout.svg`}
   />;
+}
+
+/**
+ * Action for rewording a commit message.
+ */
+export function CommitRewordAction(context: RepositoryContext & NavigationContext & { commit: Commit }) {
+  return (
+    <Action.Push
+      title="Reword Message"
+      icon={{ source: Icon.Message, tintColor: Color.Yellow }}
+      target={<CommitMessageForm amendOnly={true} {...context} />}
+      shortcut={{ modifiers: ["cmd", "shift"], key: "a" }}
+    />
+  );
 }
 
 /**
@@ -86,7 +101,7 @@ export function CommitRevertAction(context: RepositoryContext & NavigationContex
       message: `Are you sure you want to revert commit '${context.commit.message}'? This will create a new commit that undoes the changes.`,
       primaryAction: {
         title: "Revert",
-        style: Alert.ActionStyle.Default,
+        style: Alert.ActionStyle.Destructive,
       },
     });
 
@@ -107,7 +122,9 @@ export function CommitRevertAction(context: RepositoryContext & NavigationContex
     <Action
       title="Revert Commit"
       onAction={handleRevert}
+      style={Action.Style.Destructive}
       icon={Icon.ArrowCounterClockwise}
+      shortcut={{ modifiers: ["cmd", "shift"], key: "z" }}
     />
   );
 }
@@ -165,7 +182,7 @@ export function CommitInteractiveRebaseAction(context: RepositoryContext & Navig
   return (
     <Action.Push
       title="Interactive Rebase from Here"
-      icon={`arrow-rebase.svg`}
+      icon={{ source: `arrow-rebase.svg`, tintColor: Color.Blue }}
       target={
         <InteractiveRebaseEditorView
           startFromCommit={context.commit.hash}
@@ -185,7 +202,7 @@ export function CommitPatchCreateAction(context: RepositoryContext & NavigationC
     <Action.Push
       title="Save as Patch"
       icon={`patch.svg`}
-      shortcut={{ modifiers: ["cmd", "shift"], key: "s" }}
+      shortcut={{ modifiers: ["cmd"], key: "s" }}
       target={PatchCreateForm(context)}
     />
   );
@@ -241,51 +258,32 @@ function PatchCreateForm(context: RepositoryContext & NavigationContext & { comm
 }
 
 /**
- * Action for copying commit hash to clipboard.
+ * Action for copying commit info to clipboard.
  */
-export function CommitCopyHashAction({ commit }: { commit: Commit }) {
+export function CommitCopyInfoActions({ commit }: { commit: Commit }) {
   return (
-    <Action.CopyToClipboard
-      title="Copy Commit Hash"
-      content={commit.hash}
-      shortcut={{ modifiers: ["cmd"], key: "c" }}
-    />
+    <>
+      <Action.CopyToClipboard
+        title="Copy Commit Hash"
+        content={commit.hash}
+        shortcut={{ modifiers: ["cmd"], key: "c" }}
+      />
+      <Action.CopyToClipboard
+        title="Copy Short Hash"
+        content={commit.shortHash}
+      />
+      <Action.CopyToClipboard
+        title="Copy Commit Message"
+        content={commit.message}
+      />
+      <Action.CopyToClipboard
+        title="Copy Author Name"
+        content={commit.author}
+      />
+      <Action.CopyToClipboard
+        title="Copy Author Email"
+        content={commit.authorEmail}
+      />
+    </>
   );
-}
-
-export function CommitCopyMessageAction({ commit }: { commit: Commit }) {
-  return <Action.CopyToClipboard
-    title="Copy Commit Message"
-    content={commit.message}
-  />;
-}
-
-/**
- * Action for copying short commit hash to clipboard.
- */
-export function CommitCopyShortHashAction({ commit }: { commit: Commit }) {
-  return <Action.CopyToClipboard
-    title="Copy Short Hash"
-    content={commit.shortHash}
-  />;
-}
-
-/**
- * Action for copying commit author to clipboard.
- */
-export function CommitCopyAuthorAction({ commit }: { commit: Commit }) {
-  return <Action.CopyToClipboard
-    title="Copy Author Name"
-    content={commit.author}
-  />;
-}
-
-/**
- * Action for copying commit author email to clipboard.
- */
-export function CommitCopyAuthorEmailAction({ commit }: { commit: Commit }) {
-  return <Action.CopyToClipboard
-    title="Copy Author Email"
-    content={commit.authorEmail}
-  />;
 }

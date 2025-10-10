@@ -286,6 +286,9 @@ export enum MergeMode {
   NO_COMMIT = "no-commit",
 }
 
+/**
+ * Represents the scope of a patch.
+ */
 export enum PatchScope {
   ALL = "all",
   STAGED = "staged",

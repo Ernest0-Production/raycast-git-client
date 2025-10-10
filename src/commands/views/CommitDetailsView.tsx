@@ -1,6 +1,6 @@
 import { ActionPanel, Action, List, Icon, Color, showToast, Toast } from "@raycast/api";
 import { useGitDiff } from "../../hooks/useGitDiff";
-import { Commit, CommitFileChange, ListPagination } from "../../types";
+import { Commit, CommitFileChange } from "../../types";
 import { FileManagerActions } from "../../components/actions/FileActions";
 import { CommitFileIcon } from "../../components/icons/StatusIcons";
 import { useState, useMemo } from "react";
@@ -15,8 +15,7 @@ import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../
 
 export function CommitDetailsView(context: RepositoryContext & NavigationContext & {
   index: number,
-  onMoveToCommit: (commitHash: string) => void,
-  pagination?: ListPagination,
+  onMoveToCommit: (commitHash: string) => void
 }) {
   const [currentIndex, setCurrentIndex] = useState(context.index);
   const toggleController = useToggleDetail("Commit Details", "Diff", false);
@@ -71,9 +70,9 @@ export function CommitDetailsView(context: RepositoryContext & NavigationContext
   );
 }
 
-function ConcreteCommitView(context: RepositoryContext & NavigationContext & {
+export function ConcreteCommitView(context: RepositoryContext & NavigationContext & {
   commit: Commit,
-  onMoveToCommit: (direction: ("parent" | "child")) => void
+  onMoveToCommit?: (direction: ("parent" | "child")) => void
   toggleController: ToggleDetailController
 }) {
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
@@ -95,7 +94,9 @@ function ConcreteCommitView(context: RepositoryContext & NavigationContext & {
       actions={
         <ActionPanel>
           <ToggleDetailAction controller={context.toggleController} />
-          <CommitNavigationActions onMoveToCommit={context.onMoveToCommit} />
+          {context.onMoveToCommit && (
+            <CommitNavigationActions onMoveToCommit={context.onMoveToCommit} />
+          )}
           <WorkspaceNavigationActions {...context} />
         </ActionPanel>
       }
@@ -107,7 +108,9 @@ function ConcreteCommitView(context: RepositoryContext & NavigationContext & {
           icon={Icon.Document}
           actions={
             <ActionPanel>
-              <CommitNavigationActions onMoveToCommit={context.onMoveToCommit} />
+              {context.onMoveToCommit && (
+                <CommitNavigationActions onMoveToCommit={context.onMoveToCommit} />
+              )}
               <WorkspaceNavigationActions {...context} />
             </ActionPanel>
           }
@@ -135,7 +138,7 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
   statsMap: Record<string, { insertions: number; deletions: number }> | undefined;
   toggleController: ToggleDetailController;
   selectedFilePath: string | null;
-  onMoveToCommit: (direction: ("parent" | "child")) => void;
+  onMoveToCommit?: (direction: ("parent" | "child")) => void;
 }) {
   // Create a unique identifier for each file item
   const fileId = `${context.file.path}-${context.commit.hash}`;
@@ -206,7 +209,9 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
               {...context}
             />
           </ActionPanel.Section>
-          <CommitNavigationActions onMoveToCommit={context.onMoveToCommit} />
+          {context.onMoveToCommit && (
+            <CommitNavigationActions onMoveToCommit={context.onMoveToCommit} />
+          )}
           <WorkspaceNavigationActions {...context} />
         </ActionPanel>
       }

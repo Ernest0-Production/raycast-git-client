@@ -7,7 +7,7 @@ import { FileManagerActions } from "../../components/actions/FileActions";
 import { FileRestoreAction } from "../../components/actions/StatusActions";
 import { CommitFileIcon } from "../../components/icons/StatusIcons";
 import { basename, join } from "path";
-import { CommitCopyAuthorAction, CommitCopyHashAction, CommitCopyMessageAction } from "../../components/actions/CommitActions";
+import { CommitCopyInfoActions } from "../../components/actions/CommitActions";
 import { existsSync } from "fs";
 import { RemoteOpenCommitAction } from "../../components/actions/RemoteActions";
 import { RepositoryContext } from "../../open-repository";
@@ -173,9 +173,7 @@ function CommitListItem(context: RepositoryContext & {
                     </ActionPanel.Section>
 
                     <ActionPanel.Section title="Commit">
-                        <CommitCopyMessageAction commit={context.commit} />
-                        <CommitCopyAuthorAction commit={context.commit} />
-                        <CommitCopyHashAction commit={context.commit} />
+                        <CommitCopyInfoActions commit={context.commit} />
                         {Object.keys(context.remotes.data).map((remote) => (
                             <RemoteOpenCommitAction
                                 key={`${remote}-open-commit`}

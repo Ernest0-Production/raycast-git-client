@@ -1,6 +1,6 @@
 import { ActionPanel, List, Icon, Action, Color, Image } from "@raycast/api";
 import { getFavicon } from "@raycast/utils";
-import { CommitCheckoutAction, CommitCherryPickAction, CommitRevertAction, CommitResetAction, CommitCopyHashAction, CommitCopyShortHashAction, CommitCopyAuthorAction, CommitCopyAuthorEmailAction, CommitCopyMessageAction, CommitInteractiveRebaseAction, CommitPatchCreateAction } from "../../components/actions/CommitActions";
+import { CommitCheckoutAction, CommitCherryPickAction, CommitRevertAction, CommitResetAction, CommitInteractiveRebaseAction, CommitPatchCreateAction, CommitCopyInfoActions, CommitRewordAction } from "../../components/actions/CommitActions";
 import { TagCreateAction, TagRemoveAction, TagCopyNameAction } from "../../components/actions/TagActions";
 import { BranchCopyNameAction, BranchPushAction, BranchPushForceAction } from "../../components/actions/BranchActions";
 import { CommitDetailsView } from "./CommitDetailsView";
@@ -8,7 +8,6 @@ import { useIssueTracker, replaceUrlPatternsWithLinks } from "../../hooks/useIss
 import "../../utils/date-utils";
 import { Branch, Commit, IssueTrackerConfig } from "../../types";
 import { useMemo, useState } from "react";
-import { CommitMessageForm } from "./CommitMessageView";
 import { RemoteHostIcon } from "../../components/icons/RemoteHostIcons";
 import { RemoteFetchAction, RemoteOpenCommitAction, RemotePullAction } from "../../components/actions/RemoteActions";
 import { RepositoryContext, NavigationContext } from "../../open-repository";
@@ -304,21 +303,24 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
         <ActionPanel>
           <ActionPanel.Section title="Commit">
             <Action.Push
-              title="View Commit Files"
+              title="Show Changes"
               icon={Icon.Document}
-              target={
-                <CommitDetailsView
-                  pagination={context.commits.pagination}
-                  {...context}
-                />
-              }
+              target={<CommitDetailsView {...context} />}
             />
-            <CommitCheckoutAction {...context} />
+            {context.commit.currentBranchName && context.branches.data.currentBranch &&
+              <CommitRewordAction {...context} />
+            }
+            {!context.commit.currentBranchName &&
+              <CommitCheckoutAction {...context} />
+            }
             <CommitCherryPickAction {...context} />
-            <CommitRevertAction {...context} />
             <CommitResetAction {...context} />
+            <CommitRevertAction {...context} />
             <CommitInteractiveRebaseAction {...context} />
             <CommitPatchCreateAction {...context} />
+          </ActionPanel.Section>
+
+          <ActionPanel.Section title="Attached Links">
             {commitUrls.map((urlInfo: { title: string; url: string }, index: number) => (
               <Action.OpenInBrowser
                 key={`${urlInfo.title}-${index}`}
@@ -328,27 +330,15 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
                 shortcut={index === 0 ? { modifiers: ["cmd"], key: "l" } : undefined}
               />
             ))}
-            <CommitCopyHashAction {...context} />
-            <CommitCopyMessageAction {...context} />
-            <CommitCopyShortHashAction {...context} />
-            <CommitCopyAuthorAction {...context} />
-            <CommitCopyAuthorEmailAction {...context} />
-            {context.commit.currentBranchName && context.branches.data.currentBranch &&
-              <Action.Push
-                title="Reword Commit Message"
-                icon={Icon.Message}
-                target={<CommitMessageForm amendOnly={true} {...context} />}
-                shortcut={{ modifiers: ["cmd", "shift"], key: "a" }}
-              />
-            }
-            {Object.keys(context.remotes.data).map((remote) => (
-              <RemoteOpenCommitAction
-                key={`${remote}-open-commit`}
-                remote={context.remotes.data[remote]}
-                commit={context.commit.hash}
-              />
-            ))}
           </ActionPanel.Section>
+
+          {Object.keys(context.remotes.data).map((remote) => (
+            <RemoteOpenCommitAction
+              key={`${remote}-open-commit`}
+              remote={context.remotes.data[remote]}
+              commit={context.commit.hash}
+            />
+          ))}
 
           {context.commit.tags.map((tag) => (
             <ActionPanel.Section key={`tag-${tag}`} title={`Tag '${tag}'`}>
@@ -359,6 +349,8 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
           <ActionPanel.Section>
             <TagCreateAction {...context} />
           </ActionPanel.Section>
+
+          <CommitCopyInfoActions {...context} />
 
           <SharedActionsSection {...context} />
         </ ActionPanel>
@@ -395,26 +387,19 @@ function SharedActionsSection(context: RepositoryContext & NavigationContext & {
   return (
     <>
       <ActionPanel.Section>
-        {context.commits.pagination?.hasMore && (
-          <Action
-            title="Load More Commits"
-            onAction={context.commits.pagination.onLoadMore}
-            icon={Icon.ArrowDown}
-            shortcut={{ modifiers: ["cmd", "opt"], key: "arrowDown" }}
+        <ToggleDetailAction controller={context.toggleDetailController} />
+        {context.toggleDetailController.isShowingDetail && (
+          <ToggleDetailAction
+            controller={context.toggleMetadataController}
+            shortcut={{ modifiers: ["shift", "cmd"], key: "i" }}
           />
         )}
-        <Action
-          title="Refresh History"
-          onAction={() => {
-            context.branches.revalidate();
-            context.commits.revalidate();
-          }}
-          icon={Icon.ArrowClockwise}
-          shortcut={{ modifiers: ["cmd"], key: "r" }}
-        />
+        {context.commits.filter && context.branches.data && (
+          <CommitBranchFilterAction {...context} />
+        )}
       </ActionPanel.Section>
 
-      <ActionPanel.Section title="Branch">
+      <ActionPanel.Section title="History">
         <RemotePullAction {...context} />
         {context.branches.data.currentBranch && context.branches.data.currentBranch.type === "current" && (
           <>
@@ -432,19 +417,26 @@ function SharedActionsSection(context: RepositoryContext & NavigationContext & {
           <BranchCopyNameAction branch={context.commits.filter.value.name} />
         }
         <RemoteFetchAction {...context} />
-        {context.commits.filter && context.branches.data && (
-          <CommitBranchFilterAction {...context} />
-        )}
       </ActionPanel.Section>
 
       <ActionPanel.Section>
-        <ToggleDetailAction controller={context.toggleDetailController} />
-        {context.toggleDetailController.isShowingDetail && (
-          <ToggleDetailAction
-            controller={context.toggleMetadataController}
-            shortcut={{ modifiers: ["shift", "cmd"], key: "i" }}
+        {context.commits.pagination?.hasMore && (
+          <Action
+            title="Load More Commits"
+            onAction={context.commits.pagination.onLoadMore}
+            icon={Icon.ArrowDown}
+            shortcut={{ modifiers: ["cmd", "opt"], key: "arrowDown" }}
           />
         )}
+        <Action
+          title="Refresh"
+          onAction={() => {
+            context.branches.revalidate();
+            context.commits.revalidate();
+          }}
+          icon={Icon.ArrowClockwise}
+          shortcut={{ modifiers: ["cmd"], key: "r" }}
+        />
       </ActionPanel.Section>
 
       <WorkspaceNavigationActions {...context} />

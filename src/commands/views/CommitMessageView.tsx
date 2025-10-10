@@ -1,4 +1,4 @@
-import { Preferences } from "../../types";
+import { Commit, Preferences } from "../../types";
 import { showFailureToast, useCachedState } from "@raycast/utils";
 import { useEffect, useMemo, useState } from "react";
 import { showToast, Toast, getPreferenceValues, confirmAlert, environment, useNavigation, Color } from "@raycast/api";
@@ -12,16 +12,18 @@ import { RepositoryContext } from "../../open-repository";
 /**
  * Form for creating a commit with AI generation support.
  */
-export function CommitMessageForm(context: RepositoryContext & { amendOnly?: boolean; }) {
+export function CommitMessageForm(context: RepositoryContext & { commit?: Commit; }) {
   const preferences = getPreferenceValues<Preferences>();
 
   // Use useState for autoGenerateCommitMessage mode, and useCachedState for amendOnly mode
-  const [draftMessage, setDraftMessage] = preferences.autoGenerateCommitMessage
-    ? useState("")
-    : useCachedState(`commit-draft-${context.gitManager.repoPath}`, "");
+  const [draftMessage, setDraftMessage] = context.commit ?
+    useState(context.commit.message + "\n\n" + context.commit.body) :
+    preferences.autoGenerateCommitMessage
+      ? useState("")
+      : useCachedState(`commit-draft-${context.gitManager.repoPath}`, "");
 
   // Use useState for amendOnly mode, and useCachedState for autoGenerateCommitMessage mode
-  const [amend, setAmend] = context.amendOnly
+  const [amend, setAmend] = context.commit
     ? useState(true)
     : useCachedState(`commit-amend-${context.gitManager.repoPath}`, false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -30,7 +32,7 @@ export function CommitMessageForm(context: RepositoryContext & { amendOnly?: boo
   const { presets } = useAiPromptPresets();
 
   useEffect(() => {
-    if (preferences.autoGenerateCommitMessage && !context.amendOnly) {
+    if (preferences.autoGenerateCommitMessage && !context.commit) {
       generateCommitMessage(presets[0]);
     }
   }, []);
@@ -86,7 +88,7 @@ export function CommitMessageForm(context: RepositoryContext & { amendOnly?: boo
         );
       }
 
-      if (!context.amendOnly) {
+      if (!context.commit) {
         promptParts.push(
           "--------------------",
           "GIT DIFF:",
@@ -246,14 +248,16 @@ export function CommitMessageForm(context: RepositoryContext & { amendOnly?: boo
         value={draftMessage}
         error={draftMessage.length > 0 ? undefined : "Required"}
         onChange={setDraftMessage}
-        info={!context.amendOnly ? "Draft is automatically saved and will be cleared after successful commit" : undefined}
+        info={!context.commit ? "Draft is automatically saved and will be cleared after successful commit" : undefined}
       />
-      <Form.Checkbox
-        id="amend"
-        label="Amend"
-        value={amend}
-        onChange={handleAmendChange}
-      />
+      {!context.commit &&
+        <Form.Checkbox
+          id="amend"
+          label="Amend"
+          value={amend}
+          onChange={handleAmendChange}
+        />
+      }
     </Form>
   );
 }
