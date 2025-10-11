@@ -1,8 +1,10 @@
 import { Action, Icon, confirmAlert, Alert, ActionPanel, useNavigation, showToast, Toast, Form } from "@raycast/api";
 import { Commit } from "../../types";
 import { RemoteHostIcon } from "../icons/RemoteHostIcons";
-import { RepositoryContext } from "../../open-repository";
+import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { useState } from "react";
+import { usePromise } from "@raycast/utils";
+import { CommitDetailsView } from "../../commands/views/CommitDetailsView";
 
 /**
  * Action for creating a tag on a commit.
@@ -57,6 +59,9 @@ export function TagRemoveAction(context: RepositoryContext & { tagName: string }
 
       await context.gitManager.deleteTag(context.tagName);
       context.commits.revalidate();
+      // Refresh tags list if available in context
+      // @ts-expect-error optional tags context
+      context.tags?.revalidate?.();
     } catch (error) {
       // Git error is already shown by GitManager
     }
@@ -104,6 +109,143 @@ export function TagCopyNameAction({ tagName }: { tagName: string }) {
     title={`Copy Tag Name '${tagName}'`}
     content={tagName} icon={Icon.Clipboard}
   />;
+}
+
+/**
+ * Action for checking out a tag (detached HEAD).
+ */
+export function TagCheckoutAction(context: RepositoryContext & NavigationContext & { tagName: string }) {
+  const handleCheckout = async () => {
+    const confirmed = await confirmAlert({
+      title: "Checkout Tag",
+      message: `Are you sure you want to checkout tag "${context.tagName}"? This will put HEAD into detached state.`,
+      primaryAction: { title: "Checkout", style: Alert.ActionStyle.Default },
+    });
+    if (!confirmed) return;
+
+    try {
+      await context.gitManager.checkoutTag(context.tagName);
+      context.status.revalidate();
+      context.branches.revalidate();
+      context.commits.revalidate();
+      context.navigateTo("status");
+    } catch (error) {
+      // handled by GitManager
+    }
+  };
+
+  return (
+    <Action title="Checkout Tag" icon={Icon.ArrowDown} onAction={handleCheckout} />
+  );
+}
+
+/**
+ * Action for pushing a tag to remote.
+ */
+export function TagPushAction(context: RepositoryContext & { tagName: string }) {
+  const handlePush = async (remote: string) => {
+    try {
+      await context.gitManager.pushTag(context.tagName, remote);
+      // @ts-expect-error optional tags context
+      context.tags?.revalidate?.();
+    } catch (error) {
+      // handled by GitManager
+    }
+  };
+
+  if (!context.remotes.data || Object.keys(context.remotes.data).length === 0) {
+    return null;
+  }
+
+  if (Object.keys(context.remotes.data).length === 1) {
+    return (
+      <Action title="Push Tag" icon={Icon.Upload} onAction={() => handlePush(Object.keys(context.remotes.data)[0])} />
+    );
+  }
+
+  return (
+    <ActionPanel.Submenu title="Push Tag to" icon={Icon.Upload}>
+      {Object.keys(context.remotes.data).map((remote) => (
+        <Action
+          key={`${remote}:push-tag`}
+          title={remote}
+          icon={RemoteHostIcon(context.remotes.data[remote].provider)}
+          onAction={() => handlePush(remote)}
+        />
+      ))}
+    </ActionPanel.Submenu>
+  );
+}
+
+/**
+ * Action for renaming a tag.
+ */
+export function TagRenameAction(context: RepositoryContext & { tagName: string }) {
+  return (
+    <Action.Push title="Rename Tag" icon={Icon.Pencil} target={<TagRenameForm {...context} />} />
+  );
+}
+
+function TagRenameForm(context: RepositoryContext & { tagName: string }) {
+  const { pop } = useNavigation();
+  const [newName, setNewName] = useState(context.tagName);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const onSubmit = async (values: { newName: string }) => {
+    setIsLoading(true);
+    try {
+      await context.gitManager.renameTag(context.tagName, values.newName.trim());
+      context.commits.revalidate();
+      // @ts-expect-error optional tags context
+      context.tags?.revalidate?.();
+      pop();
+    } catch (error) {
+      // handled by GitManager
+    }
+    setIsLoading(false);
+  };
+
+  return (
+    <Form
+      navigationTitle={`Rename Tag '${context.tagName}'`}
+      isLoading={isLoading}
+      actions={<ActionPanel><Action.SubmitForm title="Rename" onSubmit={onSubmit} /></ActionPanel>}
+    >
+      <Form.TextField id="newName" title="New Name" value={newName} onChange={setNewName} placeholder="vX.Y.Z" />
+    </Form>
+  );
+}
+
+/**
+ * Action to open commit details for the tag's commit
+ */
+export function TagOpenCommitAction(context: RepositoryContext & NavigationContext & { commitHash: string }) {
+  const { data: commit, isLoading } = usePromise(async (hash: string) => {
+    return await context.gitManager.getCommitByHash(hash);
+  }, [context.commitHash]);
+
+  return (
+    <Action.Push
+      title="View Commit"
+      icon={Icon.Document}
+      target={
+        commit ? (
+          <CommitDetailsView
+            {...context}
+            index={0}
+            onMoveToCommit={() => {}}
+            commits={{
+              ...context.commits,
+              data: [commit],
+              pagination: undefined,
+            }}
+          />
+        ) : (
+          <List isLoading={isLoading} navigationTitle="Commit Details"><List.EmptyView title="Loading commit..." /></List>
+        )
+      }
+    />
+  );
 }
 
 function TagCreateForm(context: RepositoryContext & { commit: Commit }) {

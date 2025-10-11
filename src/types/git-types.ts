@@ -244,6 +244,16 @@ export interface Tag {
 }
 
 /**
+ * Represents tags grouped by location.
+ */
+export interface TagsState {
+  /** Local tags in the repository. */
+  local: Tag[];
+  /** Remote tags grouped by remote name. */
+  remotes: Record<string, Tag[]>;
+}
+
+/**
  * Represents per-file change statistics (insertions/deletions).
  */
 export interface FileChangeStats {

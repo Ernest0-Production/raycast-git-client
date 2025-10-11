@@ -48,6 +48,12 @@ export function WorkspaceNavigationDropdown(context: NavigationContext) {
                 keywords={["history", "ls-files", "workspace", "project"]}
                 icon={Icon.Clock}
             />
+            <List.Dropdown.Item
+                title="Tags"
+                value="tags"
+                keywords={["release", "refs/tags"]}
+                icon={Icon.Tag}
+            />
         </List.Dropdown>
     );
 }
@@ -91,6 +97,11 @@ export function WorkspaceNavigationActions(context: NavigationContext & Reposito
                     onAction={() => context.navigateTo("files")}
                     icon={Icon.Folder}
                     shortcut={{ modifiers: ["cmd"], key: "0" }}
+                />
+                <Action
+                    title="Go to Tags"
+                    onAction={() => context.navigateTo("tags")}
+                    icon={Icon.Tag}
                 />
             </ActionPanel.Section>
 

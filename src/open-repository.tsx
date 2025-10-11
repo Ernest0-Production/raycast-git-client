@@ -15,6 +15,7 @@ import { useGitStatus } from "./hooks/useGitStatus";
 import { GitView, BranchesState, StatusState, Stash, Commit, ListPagination, DetachedHead } from "./types";
 import { useGitRemotes } from "./hooks/useGitRemotes";
 import RemotesView from "./commands/views/RemotesView";
+import TagsView from "./commands/views/TagsView";
 import { Branch, Remote } from "./types";
 import { GitManager } from "./utils/git-manager";
 
@@ -142,6 +143,10 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
     case "stashes":
       return (
         <StashesView {...rootContext} />
+      );
+    case "tags":
+      return (
+        <TagsView {...rootContext} />
       );
     default:
       setCurrentView("branches");
