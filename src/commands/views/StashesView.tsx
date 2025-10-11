@@ -1,6 +1,5 @@
 import { ActionPanel, Action, List, Icon } from "@raycast/api";
-import { StashApplyAction, StashDropAction } from "../../components/actions/StashActions";
-import { GitManager } from "../../utils/git-manager";
+import { StashApplyAction, StashDropAction, StashRenameAction } from "../../components/actions/StashActions";
 import "../../utils/date-utils";
 import { Stash } from "../../types";
 import { getAvatarIcon } from "@raycast/utils";
@@ -16,7 +15,12 @@ export function StashesView(context: RepositoryContext & NavigationContext) {
       searchBarAccessory={WorkspaceNavigationDropdown(context)}
       actions={
         <ActionPanel>
-          <SharedActionsSection {...context} />
+          <Action title="Refresh"
+            onAction={context.stashes.revalidate}
+            icon={Icon.ArrowClockwise}
+            shortcut={{ modifiers: ["cmd"], key: "r" }}
+          />
+          <WorkspaceNavigationActions {...context} />
         </ActionPanel>
       }
     >
@@ -27,7 +31,12 @@ export function StashesView(context: RepositoryContext & NavigationContext) {
           icon={Icon.Bookmark}
           actions={
             <ActionPanel>
-              <SharedActionsSection {...context} />
+              <Action title="Refresh"
+                onAction={context.stashes.revalidate}
+                icon={Icon.ArrowClockwise}
+                shortcut={{ modifiers: ["cmd"], key: "r" }}
+              />
+              <WorkspaceNavigationActions {...context} />
             </ActionPanel>
           }
         />
@@ -53,32 +62,27 @@ function StashListItem(context: RepositoryContext & NavigationContext & {
     <List.Item
       title={context.stash.message}
       icon={{ source: getAvatarIcon(context.stash.author), tooltip: context.stash.author }}
-      subtitle={{ value: context.stash.author, tooltip: context.stash.authorEmail }}
-      accessories={[{ text: context.stash.date.toRelativeDateString(), tooltip: context.stash.date.toRelativeDateString() }]}
+      accessories={[
+        { text: context.stash.author, tooltip: context.stash.authorEmail },
+        { text: context.stash.date.toRelativeDateString(), tooltip: context.stash.date.toRelativeDateString() }
+      ]}
       keywords={[context.stash.hash, context.stash.author, context.stash.authorEmail].filter(Boolean)}
       actions={
         <ActionPanel>
           <ActionPanel.Section>
             <StashApplyAction {...context} />
+            <StashRenameAction {...context} />
             <StashDropAction {...context} />
           </ActionPanel.Section>
 
-          <SharedActionsSection {...context} />
+          <Action title="Refresh"
+            onAction={context.stashes.revalidate}
+            icon={Icon.ArrowClockwise}
+            shortcut={{ modifiers: ["cmd"], key: "r" }}
+          />
+          <WorkspaceNavigationActions {...context} />
         </ActionPanel>
       }
     />
   );
-}
-
-function SharedActionsSection(context: RepositoryContext & NavigationContext) {
-  return (
-    <>
-      <Action title="Refresh Stash"
-        onAction={context.stashes.revalidate}
-        icon={Icon.ArrowClockwise}
-        shortcut={{ modifiers: ["cmd"], key: "r" }}
-      />
-      <WorkspaceNavigationActions {...context} />
-    </>
-  )
 }

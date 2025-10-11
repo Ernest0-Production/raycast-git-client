@@ -1037,15 +1037,46 @@ __REBASE_TODO__
    * Gets a list of all stashes.
    */
   async getStashes(): Promise<Stash[]> {
-    const stashList = await this.git.stashList();
+    const stashList = await this.git.raw(["reflog", "show", "refs/stash", "--date=iso-strict", "--format='òòòòòò %H ò %ad ò %gs ò %gd ò %gN ò %gE òò'"]);
 
-    return stashList.all.map((stash) => ({
-      message: stash.message.replace(/^On [^:]+: /, ""),
-      hash: stash.hash,
-      date: new Date(stash.date),
-      author: stash.author_name,
-      authorEmail: stash.author_email,
-    }));
+    return stashList.trim()
+      .split("\n")
+      .map((rawLine) => {
+        const regex = /^'òòòòòò (?<hash>[0-9a-f]+) ò (?<date>[^ò]+) ò (?<message>[^ò]+) ò stash@\{[^}]+\} ò (?<author>[^ò]+) ò (?<authorEmail>[^ò]+) òò'$/;
+        const stash = rawLine.trim().match(regex);
+
+        if (!stash || !stash?.groups) {
+          return undefined;
+        }
+
+        return {
+          message: stash.groups.message,
+          hash: stash.groups.hash,
+          date: new Date(stash.groups.date),
+          author: stash.groups.author,
+          authorEmail: stash.groups.authorEmail,
+        } as Stash;
+      })
+      .filter((stash) => stash !== undefined);
+  }
+
+  /**
+   * Renames a stash entry by index using drop -> store flow.
+   * The implementation follows the technique described here:
+   * - obtain the stash commit hash
+   * - drop the stash reference
+   * - store it back with a new message
+   */
+  async renameStash(
+    index: number,
+    stash: Stash,
+    newMessage: string
+  ): Promise<void> {
+    // Drop original stash reference
+    await this.git.stash(["drop", `stash@{${index}}`]);
+
+    // Store back with the new message
+    await this.git.stash(["store", "-m", newMessage, stash.hash]);
   }
 
   /**

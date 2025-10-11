@@ -132,3 +132,56 @@ function StashCreateForm(context: RepositoryContext & { scope: PatchScope }) {
     </Form>
   );
 }
+
+/**
+ * Action for renaming a stash.
+ */
+export function StashRenameAction(context: RepositoryContext & NavigationContext & { stash: Stash, index: number }) {
+  return (
+    <Action.Push
+      title="Rename Stash"
+      icon={Icon.Pencil}
+      shortcut={{ modifiers: ["cmd"], key: "e" }}
+      target={<StashRenameForm {...context} />}
+    />
+  );
+}
+
+function StashRenameForm(context: RepositoryContext & NavigationContext & { stash: Stash; index: number }) {
+  const { pop } = useNavigation();
+  const [newName, setNewName] = useState(context.stash.message);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (values: { newName: string }) => {
+    setIsLoading(true);
+    try {
+      await context.gitManager.renameStash(context.index, context.stash, values.newName);
+      context.stashes.revalidate();
+      pop();
+    } catch (error) {
+      // Git error is already shown by GitManager
+    }
+    setIsLoading(false);
+  };
+
+  return (
+    <Form
+      navigationTitle="Rename Stash"
+      isLoading={isLoading}
+      actions={
+        <ActionPanel>
+          <Action.SubmitForm title="Rename Stash" onSubmit={handleSubmit} />
+        </ActionPanel>
+      }
+    >
+      <Form.TextField
+        id="newName"
+        title="Stash Name"
+        placeholder="New stash name"
+        error={newName.trim().length === 0 ? "Required" : undefined}
+        value={newName}
+        onChange={setNewName}
+      />
+    </Form>
+  );
+}

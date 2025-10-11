@@ -12,8 +12,9 @@ import { RepositoryContext } from "../open-repository";
 export function useGitStash(gitManager: GitManager): RepositoryContext["stashes"] {
   return useCachedPromise(
     async (repoPath: string) => {
-      const stashList = await gitManager.getStashes();
-      return stashList;
+      const stashes = await gitManager.getStashes();
+      return stashes;
+
     },
     [gitManager.repoPath], // Include repository path for separate cache per repository
     {
