@@ -102,50 +102,6 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
     return context.findUrls(context.commit.message);
   }, [context.commit.hash, context.commit.message]);
 
-  const formatCommitDetail = (commit: Commit, IssueTrackerConfigs: IssueTrackerConfig[]): string => {
-    // 1. Commit title (## heading) with URL patterns replaced by links
-    const commitMessageWithLinks = replaceUrlPatternsWithLinks(commit.message, IssueTrackerConfigs);
-    let detail = `### ${commitMessageWithLinks}\n\n`;
-
-    // 2. Rest of commit description (if exists)
-    if (commit.body && commit.body.trim()) {
-      detail += "---\n\n";
-
-      // Format commit body for markdown:
-      // 1. Split by double newlines to preserve paragraphs
-      // 2. Within each paragraph, replace single newlines with markdown line breaks (two spaces + newline)
-      // 3. Escape markdown characters that should not be interpreted as formatting
-      const formatBodyForMarkdown = (text: string): string => {
-        return (
-          text
-            .trim()
-            // Split into paragraphs (separated by empty lines)
-            .split(/\n\s*\n/)
-            .map((paragraph) => {
-              // Within each paragraph, convert single newlines to markdown line breaks
-              return paragraph
-                .trim()
-                .split("\n")
-                .map((line) => {
-                  // Escape markdown special characters
-                  const escapedLine = line.trim().replace(/[_#>+|~!]/g, "\\$&");
-                  return escapedLine;
-                })
-                .filter((line) => line.length > 0)
-                .join("  \n"); // Two spaces + newline = markdown line break
-            })
-            .filter((paragraph) => paragraph.length > 0)
-            .join("\n\n")
-        ); // Double newline = paragraph break in markdown
-      };
-
-      const formattedBody = formatBodyForMarkdown(commit.body);
-      detail += `${formattedBody}\n\n`;
-    }
-
-    return detail;
-  };
-
   // Prepare accessories based on filter and detail view state
   const accessories = useMemo(() => {
     if (context.toggleDetailController.isShowingDetail) {
@@ -233,6 +189,10 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
     context.commit.currentBranchName,
   ]);
 
+  const commitBodyMarkdown = useMemo(() => {
+    return markdownifyCommitBody(context.commit, context.issueTrackerConfigs);
+  }, [context.commit, context.issueTrackerConfigs]);
+
   return (
     <List.Item
       id={context.commit.hash}
@@ -251,7 +211,7 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
       detail={
         context.toggleDetailController.isShowingDetail ? (
           <List.Item.Detail
-            markdown={formatCommitDetail(context.commit, context.issueTrackerConfigs)}
+            markdown={commitBodyMarkdown}
             metadata={
               context.toggleMetadataController.isShowingDetail ? (
                 <List.Item.Detail.Metadata>
@@ -330,15 +290,16 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
                 shortcut={index === 0 ? { modifiers: ["cmd"], key: "l" } : undefined}
               />
             ))}
+
+            {Object.keys(context.remotes.data).map((remote) => (
+              <RemoteOpenCommitAction
+                key={`${remote}-open-commit`}
+                remote={context.remotes.data[remote]}
+                commit={context.commit.hash}
+              />
+            ))}
           </ActionPanel.Section>
 
-          {Object.keys(context.remotes.data).map((remote) => (
-            <RemoteOpenCommitAction
-              key={`${remote}-open-commit`}
-              remote={context.remotes.data[remote]}
-              commit={context.commit.hash}
-            />
-          ))}
 
           {context.commit.tags.map((tag) => (
             <ActionPanel.Section key={`tag-${tag}`} title={`Tag '${tag}'`}>
@@ -353,7 +314,7 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
           <CommitCopyInfoActions {...context} />
 
           <SharedActionsSection {...context} />
-        </ ActionPanel>
+        </ActionPanel>
       }
     />
   );
@@ -539,4 +500,43 @@ function BranchFilterAction(context: RepositoryContext & { branch: Branch }) {
       })}
     />
   );
+}
+
+function markdownifyCommitBody(commit: Commit, issueTrackerConfigs: IssueTrackerConfig[]): string {
+  // 1. Commit title (## heading) with URL patterns replaced by links
+  const commitMessageWithLinks = replaceUrlPatternsWithLinks(commit.message, issueTrackerConfigs);
+  let detail = `## ${commitMessageWithLinks}\n\n`;
+
+  // 2. Rest of commit description (if exists)
+  if (commit.body && commit.body.trim()) {
+    detail += "\n\n";
+
+    // Format commit body for markdown:
+    // 1. Split by double newlines to preserve paragraphs
+    // 2. Within each paragraph, replace single newlines with markdown line breaks (two spaces + newline)
+    // 3. Escape markdown characters that should not be interpreted as formatting
+    const formattedBody = commit.body
+      .trim()
+      // Split into paragraphs (separated by empty lines)
+      .split(/\n\s*\n/)
+      .map((paragraph) => {
+        // Within each paragraph, convert single newlines to markdown line breaks
+        return paragraph
+          .trim()
+          .split("\n")
+          .map((line) => {
+            // Escape markdown special characters
+            const escapedLine = line.trim().replace(/[_#>+|~!]/g, "\\$&");
+            return escapedLine;
+          })
+          .filter((line) => line.length > 0)
+          .join("  \n"); // Two spaces + newline = markdown line break
+      })
+      .filter((paragraph) => paragraph.length > 0)
+      .join("\n\n")
+
+    detail += `${formattedBody}\n\n`;
+  }
+
+  return detail;
 }
