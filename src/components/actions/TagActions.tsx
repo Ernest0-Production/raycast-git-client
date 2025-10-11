@@ -10,7 +10,7 @@ import { useState } from "react";
 export function TagCreateAction(context: RepositoryContext & { commit: Commit }) {
   return (
     <Action.Push
-      title="Create Tag"
+      title="Create New Tag"
       target={<TagCreateForm {...context} />}
       icon={Icon.Plus}
       shortcut={{ modifiers: ["cmd", "opt"], key: "t" }}
@@ -24,10 +24,10 @@ export function TagCreateAction(context: RepositoryContext & { commit: Commit })
 export function TagRemoveAction(context: RepositoryContext & { tagName: string }) {
   const handleRemoveTag = async (remote?: string) => {
     const confirmed = await confirmAlert({
-      title: "Push tag deletion to remote?",
-      message: `Are you sure you want to push tag deletion to remote?`,
+      title: "Remove tag",
+      message: `Are you sure you want to remove tag "${context.tagName}"?`,
       primaryAction: {
-        title: "Push",
+        title: "Remove",
         style: Alert.ActionStyle.Destructive,
       },
     });
@@ -41,10 +41,10 @@ export function TagRemoveAction(context: RepositoryContext & { tagName: string }
 
       if (Object.keys(context.remotes.data).length === 1) {
         const confirmed = await confirmAlert({
-          title: "Remove tag",
-          message: `Are you sure you want to remove tag "${context.tagName}"?`,
+          title: "Delete remote tag",
+          message: `Also delete remote tag "${context.tagName}"?`,
           primaryAction: {
-            title: "Remove",
+            title: "Delete",
             style: Alert.ActionStyle.Destructive,
           },
         });

@@ -77,6 +77,9 @@ export function BranchDeleteAction(context: RepositoryContext & { branch: Branch
                 title: "Delete",
                 style: Alert.ActionStyle.Destructive,
               },
+              dismissAction: {
+                title: "Only Local",
+              },
             });
             if (confirmed) {
               const summaryConfirm = await confirmAlert({
