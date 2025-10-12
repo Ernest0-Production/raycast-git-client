@@ -241,16 +241,10 @@ export interface Tag {
   commitHash: string;
   /** The date the tag was created. */
   date?: Date;
-}
-
-/**
- * Represents tags grouped by location.
- */
-export interface TagsState {
-  /** Local tags in the repository. */
-  local: Tag[];
-  /** Remote tags grouped by remote name. */
-  remotes: Record<string, Tag[]>;
+  /** The author of the tag. */
+  author?: string;
+  /** The author's email. */
+  authorEmail?: string;
 }
 
 /**

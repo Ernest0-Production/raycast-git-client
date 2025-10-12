@@ -12,12 +12,13 @@ import { useGitBranches } from "./hooks/useGitBranches";
 import { useGitCommits } from "./hooks/useGitCommits";
 import { useGitStash } from "./hooks/useGitStash";
 import { useGitStatus } from "./hooks/useGitStatus";
-import { GitView, BranchesState, StatusState, Stash, Commit, ListPagination, DetachedHead } from "./types";
+import { GitView, BranchesState, StatusState, Stash, Commit, ListPagination, DetachedHead, Tag } from "./types";
 import { useGitRemotes } from "./hooks/useGitRemotes";
 import RemotesView from "./commands/views/RemotesView";
 import TagsView from "./commands/views/TagsView";
 import { Branch, Remote } from "./types";
 import { GitManager } from "./utils/git-manager";
+import { useGitTags } from "./hooks/useGitTags";
 
 interface Arguments {
   path: string;
@@ -37,6 +38,12 @@ export type RepositoryContext = {
   };
   branches: {
     data: BranchesState;
+    isLoading: boolean;
+    error: Error | undefined;
+    revalidate: () => void;
+  };
+  tags: {
+    data: Tag[];
     isLoading: boolean;
     error: Error | undefined;
     revalidate: () => void;
@@ -103,6 +110,7 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
   // Shared data hooks lifted to the top-level to persist across view switches
   const remotesContext = useGitRemotes(gitManager);
   const branchesContext = useGitBranches(gitManager);
+  const tagsContext = useGitTags(gitManager);
   const commitsContext = useGitCommits(gitManager, branchesContext.data);
   const stashesContext = useGitStash(gitManager);
   const statusContext = useGitStatus(gitManager);
@@ -114,6 +122,7 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
     commits: commitsContext,
     stashes: stashesContext,
     status: statusContext,
+    tags: tagsContext,
     currentView,
     navigateTo: setCurrentView,
   };
@@ -132,21 +141,21 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
       return (
         <BranchesView {...rootContext} />
       );
+    case "tags":
+      return (
+        <TagsView {...rootContext} />
+      );
     case "remotes":
       return (
         <RemotesView {...rootContext} />
-      );
-    case "files":
-      return (
-        <FilesView {...rootContext} />
       );
     case "stashes":
       return (
         <StashesView {...rootContext} />
       );
-    case "tags":
+    case "files":
       return (
-        <TagsView {...rootContext} />
+        <FilesView {...rootContext} />
       );
     default:
       setCurrentView("branches");

@@ -13,25 +13,25 @@ type RemoteConnectivity = {
 };
 
 export default function RemotesView(context: RepositoryContext & NavigationContext) {
+  const items: Remote[] = useMemo(() => Object.values(context.remotes.data), [context.remotes.data]);
+
   const { data: connectivity, isLoading: isChecking, revalidate: revalidateConnectivity } = usePromise(
-    async (repoPath: string, remoteHosts: string[]) => {
+    async (repoPath: string, remoteHosts: Remote[]) => {
       const entries = await Promise.all(
-        remoteHosts.map(async (name) => {
+        remoteHosts.map(async (remote) => {
           try {
-            await context.gitManager.checkRemoteConnectivity(name);
-            return [name, { reachable: true }] as const;
+            await context.gitManager.checkRemoteConnectivity(remote.name);
+            return [remote.name, { reachable: true }] as const;
           } catch (error) {
-            return [name, { reachable: false, reason: error instanceof Error ? error.message : "Unknown error" }] as const;
+            return [remote.name, { reachable: false, reason: error instanceof Error ? error.message : "Unknown error" }] as const;
           }
         })
       );
 
       return Object.fromEntries(entries) as Record<string, RemoteConnectivity>;
     },
-    [context.gitManager.repoPath, Object.keys(context.remotes.data).map(name => name)]
+    [context.gitManager.repoPath, items]
   );
-
-  const items: Remote[] = useMemo(() => Object.values(context.remotes.data), [context.remotes.data]);
 
   return (
     <List
@@ -47,7 +47,7 @@ export default function RemotesView(context: RepositoryContext & NavigationConte
         </ActionPanel>
       }
     >
-      {items.length === 0 ? (
+      {!isChecking && items.length === 0 ? (
         <List.EmptyView
           title="No remotes"
           description="This repository has no remote configured."

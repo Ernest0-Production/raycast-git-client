@@ -31,6 +31,11 @@ export function WorkspaceNavigationDropdown(context: NavigationContext) {
                 icon={`git-branch.svg`}
             />
             <List.Dropdown.Item
+                title="Tags"
+                value="tags"
+                icon={Icon.Tag}
+            />
+            <List.Dropdown.Item
                 title="Remotes"
                 value="remotes"
                 keywords={["origin"]}
@@ -47,12 +52,6 @@ export function WorkspaceNavigationDropdown(context: NavigationContext) {
                 value="files"
                 keywords={["history", "ls-files", "workspace", "project"]}
                 icon={Icon.Clock}
-            />
-            <List.Dropdown.Item
-                title="Tags"
-                value="tags"
-                keywords={["release", "refs/tags"]}
-                icon={Icon.Tag}
             />
         </List.Dropdown>
     );
@@ -81,27 +80,28 @@ export function WorkspaceNavigationActions(context: NavigationContext & Reposito
                     shortcut={{ modifiers: ["cmd"], key: "3" }}
                 />
                 <Action
+                    title="Go to Tags"
+                    onAction={() => context.navigateTo("tags")}
+                    icon={Icon.Tag}
+                    shortcut={{ modifiers: ["cmd"], key: "4" }}
+                />
+                <Action
                     title="Go to Remotes"
                     onAction={() => context.navigateTo("remotes")}
                     icon={Icon.Network}
-                    shortcut={{ modifiers: ["cmd"], key: "4" }}
+                    shortcut={{ modifiers: ["cmd"], key: "5" }}
                 />
                 <Action
                     title="Go to Stash"
                     onAction={() => context.navigateTo("stashes")}
                     icon={Icon.Bookmark}
-                    shortcut={{ modifiers: ["cmd"], key: "5" }}
+                    shortcut={{ modifiers: ["cmd"], key: "6" }}
                 />
                 <Action
                     title="Go to Files"
                     onAction={() => context.navigateTo("files")}
                     icon={Icon.Folder}
                     shortcut={{ modifiers: ["cmd"], key: "0" }}
-                />
-                <Action
-                    title="Go to Tags"
-                    onAction={() => context.navigateTo("tags")}
-                    icon={Icon.Tag}
                 />
             </ActionPanel.Section>
 

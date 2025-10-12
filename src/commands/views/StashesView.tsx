@@ -15,27 +15,19 @@ export function StashesView(context: RepositoryContext & NavigationContext) {
       searchBarAccessory={WorkspaceNavigationDropdown(context)}
       actions={
         <ActionPanel>
-          <Action title="Refresh"
-            onAction={context.stashes.revalidate}
-            icon={Icon.ArrowClockwise}
-            shortcut={{ modifiers: ["cmd"], key: "r" }}
-          />
+          <RefreshStashesAction {...context} />
           <WorkspaceNavigationActions {...context} />
         </ActionPanel>
       }
     >
-      {!context.stashes.data || context.stashes.data.length === 0 ? (
+      {!context.stashes.isLoading && context.stashes.data.length === 0 ? (
         <List.EmptyView
           title="No stashes"
           description="No saved changes in the stash."
           icon={Icon.Bookmark}
           actions={
             <ActionPanel>
-              <Action title="Refresh"
-                onAction={context.stashes.revalidate}
-                icon={Icon.ArrowClockwise}
-                shortcut={{ modifiers: ["cmd"], key: "r" }}
-              />
+              <RefreshStashesAction {...context} />
               <WorkspaceNavigationActions {...context} />
             </ActionPanel>
           }
@@ -75,14 +67,21 @@ function StashListItem(context: RepositoryContext & NavigationContext & {
             <StashDropAction {...context} />
           </ActionPanel.Section>
 
-          <Action title="Refresh"
-            onAction={context.stashes.revalidate}
-            icon={Icon.ArrowClockwise}
-            shortcut={{ modifiers: ["cmd"], key: "r" }}
-          />
+          <RefreshStashesAction {...context} />
           <WorkspaceNavigationActions {...context} />
         </ActionPanel>
       }
+    />
+  );
+}
+
+function RefreshStashesAction(context: RepositoryContext & NavigationContext) {
+  return (
+    <Action
+      title="Refresh"
+      icon={Icon.ArrowClockwise}
+      onAction={context.stashes.revalidate}
+      shortcut={{ modifiers: ["cmd"], key: "r" }}
     />
   );
 }

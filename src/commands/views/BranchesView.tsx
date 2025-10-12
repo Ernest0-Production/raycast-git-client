@@ -34,12 +34,7 @@ export function BranchesView(context: RepositoryContext & NavigationContext) {
           actions={
             <ActionPanel>
               <ActionPanel.Section title="Branches">
-                <Action
-                  title="Refresh"
-                  icon={Icon.ArrowClockwise}
-                  onAction={context.branches.revalidate}
-                  shortcut={{ modifiers: ["cmd"], key: "r" }}
-                />
+                <RefreshBranchesAction {...context} />
                 <BranchCreateAction {...context} />
                 <RemoteFetchAction {...context} />
               </ActionPanel.Section>
@@ -48,7 +43,7 @@ export function BranchesView(context: RepositoryContext & NavigationContext) {
           }
         />
       ) : !context.branches.data ||
-        (!context.branches.data.currentBranch && !context.branches.data.detachedHead) ? (
+        (!context.branches.isLoading && !context.branches.data.currentBranch && !context.branches.data.detachedHead) ? (
         <List.EmptyView
           title="No branches"
           description="No branches found in the repository."
@@ -58,12 +53,7 @@ export function BranchesView(context: RepositoryContext & NavigationContext) {
               <ActionPanel.Section title="Branches">
                 <BranchCreateAction {...context} />
                 <RemoteFetchAction {...context} />
-                <Action
-                  title="Refresh"
-                  icon={Icon.ArrowClockwise}
-                  onAction={context.branches.revalidate}
-                  shortcut={{ modifiers: ["cmd"], key: "r" }}
-                />
+                <RefreshBranchesAction {...context} />
               </ActionPanel.Section>
               <WorkspaceNavigationActions {...context} />
             </ActionPanel>
@@ -243,12 +233,7 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
           <ActionPanel.Section title="Branches">
             <BranchCreateAction {...context} />
             <RemoteFetchAction {...context} />
-            <Action
-              title="Refresh"
-              icon={Icon.ArrowClockwise}
-              onAction={context.branches.revalidate}
-              shortcut={{ modifiers: ["cmd"], key: "r" }}
-            />
+            <RefreshBranchesAction {...context} />
           </ActionPanel.Section>
           <WorkspaceNavigationActions {...context} />
         </ActionPanel>
@@ -295,16 +280,22 @@ function DetachedHeadListItem(context: RepositoryContext & NavigationContext & {
           <ActionPanel.Section title="Branches">
             <BranchCreateAction {...context} />
             <RemoteFetchAction {...context} />
-            <Action
-              title="Refresh"
-              icon={Icon.ArrowClockwise}
-              onAction={context.branches.revalidate}
-              shortcut={{ modifiers: ["cmd"], key: "r" }}
-            />
+            <RefreshBranchesAction {...context} />
           </ActionPanel.Section>
           <WorkspaceNavigationActions {...context} />
         </ActionPanel>
       }
+    />
+  );
+}
+
+function RefreshBranchesAction(context: RepositoryContext & NavigationContext) {
+  return (
+    <Action
+      title="Refresh"
+      icon={Icon.ArrowClockwise}
+      onAction={context.branches.revalidate}
+      shortcut={{ modifiers: ["cmd"], key: "r" }}
     />
   );
 }

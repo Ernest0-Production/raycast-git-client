@@ -17,6 +17,8 @@ export interface Preferences {
   commitsPerPage: string;
   /** Maximum number of branches to load per pagination page. */
   maxBranchesToLoad: string;
+  /** Maximum number of tags to load in tags list. */
+  maxTagsToLoad: string;
   /** Automatically generate a commit message using AI when opening the commit view. */
   autoGenerateCommitMessage: boolean;
 }

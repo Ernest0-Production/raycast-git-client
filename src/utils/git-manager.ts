@@ -1037,6 +1037,10 @@ __REBASE_TODO__
    * Gets a list of all stashes.
    */
   async getStashes(): Promise<Stash[]> {
+    // Check if stash reference exists before proceeding
+    const stashPath = join(this.repoPath, '.git', 'refs', 'stash');
+    if (!existsSync(stashPath)) return [];
+
     const stashList = await this.git.raw(["reflog", "show", "refs/stash", "--date=iso-strict", "--format='òòòòòò %H ò %ad ò %gs ò %gd ò %gN ò %gE òò'"]);
 
     return stashList.trim()
@@ -1103,7 +1107,7 @@ __REBASE_TODO__
    * Checks out a tag (detached HEAD state).
    */
   async checkoutTag(tagName: string): Promise<void> {
-    await this.git.checkout([`tags/${tagName}`]);
+    await this.git.checkout([`refs/tags/${tagName}`]);
   }
 
   /**
@@ -1239,58 +1243,38 @@ __REBASE_TODO__
   /**
    * Gets a list of all local tags with basic metadata.
    */
-  async getLocalTags(): Promise<Tag[]> {
+  async getTags(): Promise<Tag[]> {
+    const maxTagsToLoad = parseInt(
+      getPreferenceValues<Preferences>().maxTagsToLoad
+    );
+
     // Use for-each-ref to retrieve tag name, object (commit) and metadata where available
     // %(objectname) returns the referenced object (commit for lightweight tags or tag object for annotated)
     // %(*objectname) dereferences annotated tags to the target object (commit)
-    const format = "%(refname:short)|%(objectname)|%(*objectname)|%(taggerdate:iso-strict)|%(subject)";
-    const raw = await this.git.raw(["for-each-ref", "refs/tags", `--format=${format}`]);
+    const format = "%(refname:short)|%(objectname)|%(*objectname)|%(taggerdate:iso-strict)|%(subject)|%(taggername)|%(taggeremail)";
+    const raw = await this.git.raw([
+      "for-each-ref",
+      "refs/tags",
+      "--sort=-creatordate",
+      `--format=${format}`,
+      `--count=${maxTagsToLoad}`
+    ]);
 
     return raw
       .trim()
       .split("\n")
       .filter((line) => !!line.trim())
       .map((line) => {
-        const [name, objectName, peeledObjectName, dateStr, subject] = line.split("|");
-        const commitHash = (peeledObjectName || objectName || "").trim();
-        const message = subject?.trim() || undefined;
+        const [name, objectName, dereferencedObjectName, dateStr, subject, authorStr, authorEmailStr] = line.split("|");
+        // For annotated tags, the object name is the tag object, and the peeled object name is the commit object
+        const commitHash = (dereferencedObjectName || objectName || "").trim();
+        const message = subject?.trim();
         const date = dateStr && dateStr.trim() ? new Date(dateStr.trim()) : undefined;
+        const author = authorStr?.trim();
+        const authorEmail = authorEmailStr?.trim().replace(/[<>]/g, '');
 
-        return { name, commitHash, message, date } as Tag;
+        return { name, commitHash, message, date, author, authorEmail } as Tag;
       });
-  }
-
-  /**
-   * Gets a list of remote tags for the specified remote.
-   * Only commit hashes and names are available via ls-remote.
-   */
-  async getRemoteTags(remote: string): Promise<Tag[]> {
-    const raw = await this.git.raw(["ls-remote", "--tags", remote]);
-
-    // Build a map of tag -> commit hash, preferring peeled ^{} entries when present
-    const tagToCommit: Record<string, string> = {};
-
-    for (const line of raw.trim().split("\n")) {
-      const parts = line.trim().split(/\s+/);
-      if (parts.length < 2) continue;
-      const hash = parts[0];
-      const ref = parts[1];
-
-      const match = ref.match(/^refs\/tags\/(.+?)(\^\{\})?$/);
-      if (!match) continue;
-
-      const tagName = match[1];
-      const isPeeled = !!match[2];
-
-      if (isPeeled) {
-        tagToCommit[tagName] = hash; // Prefer peeled commit hash
-      } else if (!tagToCommit[tagName]) {
-        // Set only if not already set by peeled entry
-        tagToCommit[tagName] = hash;
-      }
-    }
-
-    return Object.entries(tagToCommit).map(([name, commitHash]) => ({ name, commitHash }));
   }
 
   /**
@@ -1304,8 +1288,6 @@ __REBASE_TODO__
    * Pushes tags to remote with optional delete flag.
    */
   async pushTag(tagName: string, remote: string, deleteTag: boolean = false): Promise<void> {
-    // Use provided remote name or get the default remote
-
     if (deleteTag) {
       // Delete tag from remote using --delete flag
       await this.git.push(remote, tagName, ["--delete"]);
