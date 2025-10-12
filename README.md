@@ -1,44 +1,44 @@
 # Git Client for Raycast
 
-Управляйте локальными Git‑репозиториями через удобный интерфейс Raycast: просмотр статуса, веток, коммитов и тегов, клонирование, быстрые действия (открыть в Терминале/внешнем клиенте), интеграция с URL‑трекерами и пресетами AI‑подсказок для сообщений коммитов.
+Manage local Git repositories from Raycast with an intuitive UI: view status, branches, commits, and tags; clone repositories; perform quick actions (open in Terminal or an external Git client); link commit messages with URL trackers; and use AI prompt presets for commit message generation.
 
-![PLACEHOLDER — Hero: обзор расширения / список репозиториев](PLACEHOLDER)
+![PLACEHOLDER — Hero: extension overview / repositories list](PLACEHOLDER)
 
-См. пример оформления и UX в [Obsidian для Raycast (лучшие практики)](https://www.raycast.com/marcjulian/obsidian).
+Best practice reference: [Obsidian for Raycast](https://www.raycast.com/marcjulian/obsidian).
 
-## Возможности
+## Features
 
-- **Управление репозиториями**: команда `manage-repositories` показывает список локальных репозиториев с быстрыми действиями.
-- **Открытие репозитория**: команда `open-repository` открывает детальный интерфейс по пути (`path`).
-- **Клонирование по URL**: команда `clone-repository` клонирует репозиторий из удалённого URL (`url`).
-- **URL Trackers**: команда `configure-url-trackers` настраивает правила автоссылок из коммит‑месседжей (тикеты, PR и т. п.).
-- **AI Message Prompts**: команда `manage-ai-message-prompts` управляет пресетами подсказок для генерации сообщений коммитов.
-- **Быстрые действия**: открыть репозиторий в выбранном Терминале или внешнем Git‑клиенте из карточки.
-- **Производительность**: пагинация коммитов, лимиты на число веток/тегов (настраивается в Preferences).
+- **Repository management**: `manage-repositories` lists local repositories with quick actions.
+- **Open repository**: `open-repository` opens a detailed management interface by `path`.
+- **Clone by URL**: `clone-repository` clones a repository from a remote `url`.
+- **URL Trackers**: `configure-url-trackers` configures rules to auto-link patterns in commit messages.
+- **AI Message Prompts**: `manage-ai-message-prompts` manages prompt presets for AI‑generated commit messages.
+- **Quick actions**: open a repository in your preferred Terminal or external Git client.
+- **Performance**: commit pagination and limits for branches/tags (configurable via Preferences).
 
-## Скриншоты (плейсхолдеры)
+## Screenshots (placeholders)
 
-- ![PLACEHOLDER — Manage Repositories: список и быстрые действия](PLACEHOLDER)
-- ![PLACEHOLDER — Open Repository: обзор/шапка репозитория](PLACEHOLDER)
-- ![PLACEHOLDER — Status: изменённые файлы и действия](PLACEHOLDER)
-- ![PLACEHOLDER — Branches: локальные/удалённые ветки](PLACEHOLDER)
-- ![PLACEHOLDER — Commits: пагинация, детали, копирование SHA](PLACEHOLDER)
-- ![PLACEHOLDER — Tags: список тегов](PLACEHOLDER)
-- ![PLACEHOLDER — URL Trackers: конфигурация правил](PLACEHOLDER)
-- ![PLACEHOLDER — AI Message Prompts: пресеты для коммитов](PLACEHOLDER)
+- ![PLACEHOLDER — Manage Repositories: list and quick actions](PLACEHOLDER)
+- ![PLACEHOLDER — Open Repository: repository header/overview](PLACEHOLDER)
+- ![PLACEHOLDER — Status: changed files and actions](PLACEHOLDER)
+- ![PLACEHOLDER — Branches: local/remote branches](PLACEHOLDER)
+- ![PLACEHOLDER — Commits: pagination, details, copy SHA](PLACEHOLDER)
+- ![PLACEHOLDER — Tags: tags list](PLACEHOLDER)
+- ![PLACEHOLDER — URL Trackers: rule configuration](PLACEHOLDER)
+- ![PLACEHOLDER — AI Message Prompts: presets](PLACEHOLDER)
 
-## Установка
+## Installation
 
-### Из Raycast Store
-- [PLACEHOLDER — ссылка на страницу расширения в Raycast Store](PLACEHOLDER)
+### From Raycast Store
+- [PLACEHOLDER — extension page link in Raycast Store](PLACEHOLDER)
 
-### Из исходников
+### From source
 
-Требования:
-- macOS с установленным Raycast и Git (2.38+)
-- Node.js 18+ (для разработки)
+Requirements:
+- macOS with Raycast and Git (2.38+)
+- Node.js 18+ (for development)
 
-Шаги:
+Steps:
 
 ```bash
 git clone PLACEHOLDER_YOUR_REPO_URL.git
@@ -47,84 +47,84 @@ npm install
 npm run dev
 ```
 
-Команда `npm run dev` откроет окно разработки Raycast для этого расширения.
+`npm run dev` starts Raycast development mode for this extension.
 
-## Использование по командам
+## Commands
 
 ### Manage Git Repositories (`manage-repositories`)
-- Просматривайте список локальных репозиториев.
-- Быстрые действия: открыть в Терминале (см. Preference `Default Terminal`) или во внешнем Git‑клиенте.
-- Откройте детальный интерфейс репозитория одной командой.
+- Browse local repositories.
+- Quick actions: open in Terminal (see `Default Terminal` preference) or in an external Git client.
+- Open the detailed repository view with a single action.
 
-![PLACEHOLDER — Manage Repositories: список репозиториев](PLACEHOLDER)
+![PLACEHOLDER — Manage Repositories: list](PLACEHOLDER)
 
 ### Clone Git Repository (`clone-repository`)
-- Аргумент `url` обязателен — вставьте HTTPS/SSH URL.
-- После клонирования откройте репозиторий сразу из успешного тоста/экрана.
+- Required argument `url` — paste an HTTPS/SSH repository URL.
+- After cloning, open the repository directly from the success toast/view.
 
-![PLACEHOLDER — Clone: ввод URL и прогресс](PLACEHOLDER)
+![PLACEHOLDER — Clone: URL input and progress](PLACEHOLDER)
 
 ### Open Git Repository (`open-repository`)
-- Аргумент `path` обязателен — абсолютный путь к папке репозитория.
-- Интерфейс:
-  - **Status**: изменённые файлы, быстрые действия (просмотр/копирование путей).
-  - **Branches**: локальные/удалённые ветки, переключение, создание и т. п.
-  - **Commits**: история, детали коммита, копирование SHA, пагинация (`commitsPerPage`).
-  - **Tags**: список тегов (`maxTagsToLoad`).
+- Required argument `path` — absolute path to a local repository directory.
+- Interface sections:
+  - **Status**: changed files with quick actions (view/copy paths, etc.).
+  - **Branches**: local and remote branches, checkout, create, etc.
+  - **Commits**: history, commit details, copy SHA, pagination (`commitsPerPage`).
+  - **Tags**: tags list (`maxTagsToLoad`).
 
-![PLACEHOLDER — Open Repository: вкладки Status/Branches/Commits/Tags](PLACEHOLDER)
+![PLACEHOLDER — Open Repository: Status/Branches/Commits/Tags](PLACEHOLDER)
 
 ### Configure URL Trackers (`configure-url-trackers`)
-- Добавляйте правила, которые автоматически превращают совпавшие шаблоны в кликабельные ссылки в интерфейсе (например, `ABC-123` → ссылка на трекер задач).
+- Define rules that turn matched patterns into clickable links (e.g., `ABC-123` → your issue tracker).
 
-![PLACEHOLDER — URL Trackers: список правил, примеры](PLACEHOLDER)
+![PLACEHOLDER — URL Trackers: rules](PLACEHOLDER)
 
 ### Manage AI Message Prompts (`manage-ai-message-prompts`)
-- Создавайте и редактируйте пресеты подсказок для генерации коммит‑месседжей.
-- Если включён флаг `Auto Generate Commit Message`, окно коммита может сразу предлагать AI‑вариант.
+- Create and edit prompt presets for commit message generation.
+- When `Auto Generate Commit Message` is enabled, the commit view can suggest an AI variant automatically.
 
-![PLACEHOLDER — AI Prompts: список пресетов, предпросмотр](PLACEHOLDER)
+![PLACEHOLDER — AI Prompts: presets](PLACEHOLDER)
 
-## Настройки (Preferences)
+## Preferences
 
-| Имя | Тип | Значение по умолчанию | Описание |
-|---|---|---|---|
-| `Default Terminal` (`defaultTerminal`) | App Picker | `com.apple.Terminal` | Терминал по умолчанию для открытия директории репозитория |
-| `External Git Client` (`externalGitClient`) | App Picker | `com.apple.Terminal` | Внешний Git‑клиент для открытия репозитория (например, GitKraken) |
-| `Max Commits to Load` (`commitsPerPage`) | Textfield | `30` | Сколько коммитов подгружать за страницу (пагинация) |
-| `Max Branches to Load` (`maxBranchesToLoad`) | Textfield | `80` | Лимит загружаемых веток в списках |
-| `Max Tags to Load` (`maxTagsToLoad`) | Textfield | `80` | Лимит загружаемых тегов |
-| `Auto Generate Commit Message` (`autoGenerateCommitMessage`) | Checkbox | `false` | Автогенерация сообщения коммита с использованием AI |
+| Name | Key | Type | Default | Description |
+|---|---|---|---|---|
+| Default Terminal (Shift + Cmd + T) | `defaultTerminal` | App Picker | `com.apple.Terminal` | Terminal app used to open the repository directory (e.g., Terminal, Warp). |
+| External Git Client (Shift + Cmd + G) | `externalGitClient` | App Picker | `com.apple.Terminal` | External Git client used for Git operations (e.g., GitKraken). |
+| Max Commits to Load | `commitsPerPage` | Textfield | `30` | Number of commits per pagination page. Smaller values scroll smoother; larger values load slower initially. |
+| Max Branches to Load | `maxBranchesToLoad` | Textfield | `80` | Maximum number of branches loaded in local and remote sections. |
+| Max Tags to Load | `maxTagsToLoad` | Textfield | `80` | Maximum number of tags loaded in the tags list. |
+| Auto Generate Commit Message | `autoGenerateCommitMessage` | Checkbox | `false` | Automatically generate a commit message using AI when opening the commit view. |
 
-> Подсказка: если список большой или интерфейс подтормаживает, уменьшите лимиты или число коммитов на страницу.
+> Tip: If lists are large or the UI feels sluggish, lower `commitsPerPage`, `maxBranchesToLoad`, and/or `maxTagsToLoad`.
 
-## Скрипты
+## Scripts
 
 ```bash
-npm run dev     # локальная разработка (ray develop)
-npm run build   # сборка (ray build)
-npm run lint    # проверка линтером
+npm run dev     # ray develop
+npm run build   # ray build
+npm run lint    # ray lint
 npm run fix-lint
 ```
 
-## Решение проблем
+## Troubleshooting
 
-- **Raycast CLI не найден**: установите Raycast, затем запустите режим разработки (`npm run dev`).
-- **Git операции завершаются с ошибкой**: убедитесь, что путь — это валидный репозиторий и у вас есть права доступа к файлам.
-- **Не открывается в Терминале/внешнем клиенте**: проверьте выбранные приложения в Preferences.
-- **Проблемы с производительностью**: уменьшите `commitsPerPage`, `maxBranchesToLoad` и/или `maxTagsToLoad`.
+- **Raycast CLI not found**: Install Raycast and run development mode (`npm run dev`).
+- **Git operations fail**: Ensure the path points to a valid repository and you have file permissions.
+- **Cannot open in Terminal/external client**: Check your Preferences.
+- **Performance issues**: Decrease `commitsPerPage`, `maxBranchesToLoad`, and/or `maxTagsToLoad`.
 
-## Конфиденциальность
+## Privacy
 
-Расширение выполняет Git‑операции локально (через `simple-git`). Никакие данные репозитория не отправляются третьим сторонам. Сетевые вызовы происходят только при операциях Git (например, `fetch`, `push`, `pull`) согласно вашей конфигурации удалённых репозиториев.
+All Git operations run locally via `simple-git`. No repository data is sent to third parties. Network calls occur only for Git operations (e.g., `fetch`, `push`, `pull`) according to your remote configuration.
 
-## Лицензия
+## License
 
-MIT — см. `LICENSE` (если отсутствует, используйте MIT по умолчанию).
+MIT — see `LICENSE`.
 
-## Благодарности и ссылки
+## Credits & Links
 
-- [Raycast — документация для разработчиков](https://developers.raycast.com/)
-- [`simple-git` — обёртка Git для Node.js](https://github.com/steveukx/git-js)
-- [Obsidian для Raycast (пример лучших практик)](https://www.raycast.com/marcjulian/obsidian)
+- [Raycast — Developer Docs](https://developers.raycast.com/)
+- [`simple-git` — Git for Node.js](https://github.com/steveukx/git-js)
+- [Obsidian for Raycast (best practice reference)](https://www.raycast.com/marcjulian/obsidian)
 
