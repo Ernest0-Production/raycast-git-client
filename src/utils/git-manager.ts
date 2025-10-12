@@ -1248,16 +1248,12 @@ __REBASE_TODO__
       getPreferenceValues<Preferences>().maxTagsToLoad
     );
 
-    // Use for-each-ref to retrieve tag name, object (commit) and metadata where available
-    // %(objectname) returns the referenced object (commit for lightweight tags or tag object for annotated)
-    // %(*objectname) dereferences annotated tags to the target object (commit)
-    const format = "%(refname:short)|%(objectname)|%(*objectname)|%(taggerdate:iso-strict)|%(subject)|%(taggername)|%(taggeremail)";
     const raw = await this.git.raw([
       "for-each-ref",
       "refs/tags",
       "--sort=-creatordate",
-      `--format=${format}`,
-      `--count=${maxTagsToLoad}`
+      "--format=%(refname:short)|%(objectname)|%(*objectname)|%(taggerdate:iso-strict)|%(subject)|%(taggername)|%(taggeremail)",
+      `--count=${maxTagsToLoad}`,
     ]);
 
     return raw
