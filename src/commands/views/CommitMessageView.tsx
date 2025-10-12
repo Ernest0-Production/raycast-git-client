@@ -149,6 +149,7 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
       setIsSubmitting(true);
       // Commit changes
       await context.gitManager.commit(draftMessage.trim(), amend);
+      context.status.revalidate();
     } catch (error) {
       // Git error is already shown by GitManager
       return
@@ -164,10 +165,9 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
     }
     // Clear draft after successful commit
     clearDraft();
-    pop();
-    context.status.revalidate();
     context.branches.revalidate();
     context.commits.revalidate();
+    pop();
   };
 
   return (
