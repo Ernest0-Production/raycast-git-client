@@ -3,7 +3,7 @@ import { Application } from "@raycast/api";
 // Export all types from modules
 export * from "./git-types";
 
-export type GitView = "branches" | "status" | "commits" | "files" | "stashes" | "remotes";
+export type GitView = "branches" | "status" | "commits" | "files" | "stashes" | "remotes" | "tags";
 
 /**
  * User preferences for the Git Client extension.
@@ -17,6 +17,8 @@ export interface Preferences {
   commitsPerPage: string;
   /** Maximum number of branches to load per pagination page. */
   maxBranchesToLoad: string;
+  /** Maximum number of tags to load in tags list. */
+  maxTagsToLoad: string;
   /** Automatically generate a commit message using AI when opening the commit view. */
   autoGenerateCommitMessage: boolean;
 }

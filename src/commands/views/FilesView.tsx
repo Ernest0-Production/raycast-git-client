@@ -63,6 +63,7 @@ export default function FilesView(context: RepositoryContext & NavigationContext
                 <ActionPanel>
                     <SharedActionsSection
                         onClearRecent={handleClearRecent}
+                        files={recentFiles}
                         {...context}
                     />
                 </ActionPanel>
@@ -76,6 +77,7 @@ export default function FilesView(context: RepositoryContext & NavigationContext
                     actions={<ActionPanel>
                         <SharedActionsSection
                             onClearRecent={handleClearRecent}
+                            files={recentFiles}
                             {...context}
                         />
                     </ActionPanel>}
@@ -105,6 +107,7 @@ export default function FilesView(context: RepositoryContext & NavigationContext
                                 actions={<ActionPanel>
                                     <SharedActionsSection
                                         onClearRecent={handleClearRecent}
+                                        files={recentFiles}
                                         {...context}
                                     />
                                 </ActionPanel>}
@@ -118,6 +121,7 @@ export default function FilesView(context: RepositoryContext & NavigationContext
                             actions={<ActionPanel>
                                 <SharedActionsSection
                                     onClearRecent={handleClearRecent}
+                                    files={recentFiles}
                                     {...context}
                                 />
                             </ActionPanel>}
@@ -175,18 +179,21 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
 }
 
 function SharedActionsSection(context: RepositoryContext & NavigationContext & {
+    files?: string[];
     onClearRecent: () => void
 }) {
     return (
         <>
             <ActionPanel.Section title="Recent">
-                <Action
-                    title="Clear Recent Files"
-                    icon={Icon.Trash}
-                    style={Action.Style.Destructive}
-                    shortcut={{ modifiers: ["cmd", "ctrl"], key: "x" }}
-                    onAction={context.onClearRecent}
-                />
+                {context.files && context.files.length > 0 && (
+                    <Action
+                        title="Clear Recent Files"
+                        icon={Icon.Trash}
+                        style={Action.Style.Destructive}
+                        shortcut={{ modifiers: ["cmd", "ctrl"], key: "x" }}
+                        onAction={context.onClearRecent}
+                    />
+                )}
             </ActionPanel.Section>
             <WorkspaceNavigationActions {...context} />
         </>

@@ -2,7 +2,7 @@ import { CleanOptions, DiffNameStatus, DiffResult, DiffResultBinaryFile, DiffRes
 import { showToast, Toast, getPreferenceValues, Alert, confirmAlert } from "@raycast/api";
 import { readFileSync, writeFileSync, mkdtempSync, chmodSync, rmSync, existsSync } from "fs";
 import { tmpdir } from "os";
-import { Branch, FileStatus, Commit, Stash, BranchesState, DetachedHead, CommitFileChange, Preferences, RebasePlanItem, FileChangeStats, StatusState, ConflictState, MergeMode, PatchScope, RepositoryCloningProcess, RepositoryCloningState } from "../types";
+import { Branch, FileStatus, Commit, Stash, BranchesState, DetachedHead, CommitFileChange, Preferences, RebasePlanItem, FileChangeStats, StatusState, ConflictState, MergeMode, PatchScope, RepositoryCloningProcess, RepositoryCloningState, Tag } from "../types";
 import { basename, join } from "path";
 import { promises as fs } from "fs";
 import { showFailureToast } from "@raycast/utils";
@@ -993,7 +993,7 @@ __REBASE_TODO__
   }
 
   /**
-   * Creates a stash with an optional message and scope flags.
+   * Creates a stash with an optional message.
    */
   async stash(message: string, scope?: PatchScope): Promise<void> {
     const args: string[] = [];
@@ -1037,6 +1037,10 @@ __REBASE_TODO__
    * Gets a list of all stashes.
    */
   async getStashes(): Promise<Stash[]> {
+    // Check if stash reference exists before proceeding
+    const stashPath = join(this.repoPath, '.git', 'refs', 'stash');
+    if (!existsSync(stashPath)) return [];
+
     const stashList = await this.git.raw(["reflog", "show", "refs/stash", "--date=iso-strict", "--format='òòòòòò %H ò %ad ò %gs ò %gd ò %gN ò %gE òò'"]);
 
     return stashList.trim()
@@ -1088,6 +1092,22 @@ __REBASE_TODO__
     } else {
       this.git.raw(["tag", tagName, commitHash]);
     }
+  }
+
+  /**
+   * Renames a tag locally by creating a new tag pointing to the same object and deleting the old one.
+   */
+  async renameTag(oldName: string, newName: string): Promise<void> {
+    // Create new tag pointing to the same object as oldName, then delete old tag
+    await this.git.raw(["tag", newName, oldName]);
+    await this.git.raw(["tag", "-d", oldName]);
+  }
+
+  /**
+   * Checks out a tag (detached HEAD state).
+   */
+  async checkoutTag(tagName: string): Promise<void> {
+    await this.git.checkout([`refs/tags/${tagName}`]);
   }
 
   /**
@@ -1221,11 +1241,40 @@ __REBASE_TODO__
   }
 
   /**
-   * Gets a list of all tags.
+   * Gets a list of all local tags with basic metadata.
    */
-  async getTags(): Promise<string[]> {
-    const tags = await this.git.tags();
-    return tags.all;
+  async getTags(): Promise<Tag[]> {
+    const maxTagsToLoad = parseInt(
+      getPreferenceValues<Preferences>().maxTagsToLoad
+    );
+
+    // Use for-each-ref to retrieve tag name, object (commit) and metadata where available
+    // %(objectname) returns the referenced object (commit for lightweight tags or tag object for annotated)
+    // %(*objectname) dereferences annotated tags to the target object (commit)
+    const format = "%(refname:short)|%(objectname)|%(*objectname)|%(taggerdate:iso-strict)|%(subject)|%(taggername)|%(taggeremail)";
+    const raw = await this.git.raw([
+      "for-each-ref",
+      "refs/tags",
+      "--sort=-creatordate",
+      `--format=${format}`,
+      `--count=${maxTagsToLoad}`
+    ]);
+
+    return raw
+      .trim()
+      .split("\n")
+      .filter((line) => !!line.trim())
+      .map((line) => {
+        const [name, objectName, dereferencedObjectName, dateStr, subject, authorStr, authorEmailStr] = line.split("|");
+        // For annotated tags, the object name is the tag object, and the peeled object name is the commit object
+        const commitHash = (dereferencedObjectName || objectName || "").trim();
+        const message = subject?.trim();
+        const date = dateStr && dateStr.trim() ? new Date(dateStr.trim()) : undefined;
+        const author = authorStr?.trim();
+        const authorEmail = authorEmailStr?.trim().replace(/[<>]/g, '');
+
+        return { name, commitHash, message, date, author, authorEmail } as Tag;
+      });
   }
 
   /**
@@ -1239,8 +1288,6 @@ __REBASE_TODO__
    * Pushes tags to remote with optional delete flag.
    */
   async pushTag(tagName: string, remote: string, deleteTag: boolean = false): Promise<void> {
-    // Use provided remote name or get the default remote
-
     if (deleteTag) {
       // Delete tag from remote using --delete flag
       await this.git.push(remote, tagName, ["--delete"]);
@@ -1248,6 +1295,34 @@ __REBASE_TODO__
       // Push specific tag to remote
       await this.git.push(remote, tagName);
     }
+  }
+
+  /**
+   * Returns a single commit by hash with parsed metadata and changed files.
+   */
+  async getCommitByHash(commitHash: string): Promise<Commit | null> {
+    const log = await this.git.log(["--max-count=1", "--name-status", "--decorate=full", commitHash]);
+
+    if (!log.latest) return null;
+
+    const commit = log.latest;
+    const changedFiles = this.parseCommitChangedFiles(commit.diff!);
+    const parsedRefs = this.parseCommitRefs(commit.refs);
+
+    return {
+      hash: commit.hash,
+      shortHash: commit.hash.substring(0, 7),
+      message: commit.message,
+      body: commit.body,
+      author: commit.author_name,
+      authorEmail: commit.author_email,
+      date: new Date(commit.date),
+      localBranches: parsedRefs.localBranches,
+      remoteBranches: parsedRefs.remoteBranches,
+      tags: parsedRefs.tags,
+      currentBranchName: parsedRefs.currentBranchName,
+      changedFiles,
+    } as Commit;
   }
 
   /**

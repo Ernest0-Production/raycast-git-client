@@ -14,29 +14,21 @@ export function StashesView(context: RepositoryContext & NavigationContext) {
       searchBarAccessory={WorkspaceNavigationDropdown(context)}
       actions={
         <ActionPanel>
-          <Action title="Refresh"
-            onAction={context.stashes.revalidate}
-            icon={Icon.ArrowClockwise}
-            shortcut={{ modifiers: ["cmd"], key: "r" }}
-          />
+          <RefreshStashesAction {...context} />
           <WorkspaceNavigationActions {...context} />
         </ActionPanel>
       }
     >
-      {!context.stashes.data || context.stashes.data.length === 0 ? (
+      {!context.stashes.isLoading && context.stashes.data.length === 0 ? (
         <List.EmptyView
           title="No stashes"
           description="No saved changes in the stash."
           icon={Icon.Bookmark}
           actions={
             <ActionPanel>
-              <Action title="Refresh"
-                onAction={context.stashes.revalidate}
-                icon={Icon.ArrowClockwise}
-                shortcut={{ modifiers: ["cmd"], key: "r" }}
-              />
+              <RefreshStashesAction {...context} />
               <WorkspaceNavigationActions {...context} />
-            </ActionPanel>
+            </ActionPanel >
           }
         />
       ) : (
@@ -49,7 +41,7 @@ export function StashesView(context: RepositoryContext & NavigationContext) {
           />
         ))
       )}
-    </List>
+    </List >
   );
 }
 
@@ -61,7 +53,10 @@ function StashListItem(context: RepositoryContext & NavigationContext & {
     <List.Item
       title={context.stash.message}
       accessories={[
-        { text: context.stash.date.toRelativeDateString(), tooltip: Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(context.stash.date) }
+        {
+          text: context.stash.date.toRelativeDateString(),
+          tooltip: Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(context.stash.date)
+        }
       ]}
       keywords={[context.stash.hash, context.stash.author, context.stash.authorEmail].filter(Boolean)}
       actions={
@@ -71,15 +66,21 @@ function StashListItem(context: RepositoryContext & NavigationContext & {
             <StashRenameAction {...context} />
             <StashDropAction {...context} />
           </ActionPanel.Section>
-
-          <Action title="Refresh"
-            onAction={context.stashes.revalidate}
-            icon={Icon.ArrowClockwise}
-            shortcut={{ modifiers: ["cmd"], key: "r" }}
-          />
+          <RefreshStashesAction {...context} />
           <WorkspaceNavigationActions {...context} />
-        </ActionPanel>
+        </ActionPanel >
       }
+    />
+  );
+}
+
+function RefreshStashesAction(context: RepositoryContext & NavigationContext) {
+  return (
+    <Action
+      title="Refresh"
+      icon={Icon.ArrowClockwise}
+      onAction={context.stashes.revalidate}
+      shortcut={{ modifiers: ["cmd"], key: "r" }}
     />
   );
 }

@@ -241,6 +241,10 @@ export interface Tag {
   commitHash: string;
   /** The date the tag was created. */
   date?: Date;
+  /** The author of the tag. */
+  author?: string;
+  /** The author's email. */
+  authorEmail?: string;
 }
 
 /**

@@ -88,6 +88,14 @@
       "description": "Maximum number of branches to load in local and remote branches sections"
     },
     {
+      "name": "maxTagsToLoad",
+      "required": false,
+      "type": "textfield",
+      "title": "Max Tags to Load",
+      "default": "80",
+      "description": "Maximum number of tags to load in tags list"
+    },
+    {
       "name": "autoGenerateCommitMessage",
       "required": false,
       "type": "checkbox",

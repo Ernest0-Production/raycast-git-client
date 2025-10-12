@@ -58,7 +58,7 @@ export function BranchCkeckoutAction(context: RepositoryContext & NavigationCont
 export function BranchDeleteAction(context: RepositoryContext & { branch: Branch }) {
   const handleDeleteBranch = async () => {
     const confirmed = await confirmAlert({
-      title: "Delete",
+      title: "Delete branch?",
       message: `Are you sure you want to delete branch "${context.branch.name}"?`,
       primaryAction: {
         title: "Delete",
