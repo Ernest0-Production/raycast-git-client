@@ -535,9 +535,7 @@ export class GitManager {
   async getLastCommit(): Promise<Commit | null> {
     const log = await this.git.log(["--max-count=1", "--name-status", "--decorate=full"]);
 
-    if (!log.latest) {
-      return null;
-    }
+    if (!log.latest) return null;
 
     const commit = log.latest;
     const changedFiles = this.parseCommitChangedFiles(commit.diff!);

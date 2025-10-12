@@ -222,10 +222,10 @@ function RepositoryListItem({
                 )}`,
                 name: `Show ${repo.name} in Git`,
               }}
-              shortcut={{ modifiers: ["shift", "cmd"], key: "l" }}
+              shortcut={{ modifiers: ["cmd"], key: "l" }}
             />
             <Action
-              title="Remove"
+              title="Remove from List"
               onAction={onRemove}
               icon={Icon.Trash}
               style={Action.Style.Destructive}

@@ -2,16 +2,19 @@ import { Action, ActionPanel, Icon, List } from "@raycast/api";
 import { RepositoryContext, NavigationContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../../components/actions/WorkspaceNavigationActions";
 import { RemoteFetchAction } from "../../components/actions/RemoteActions";
-import { useMemo } from "react";
-import { TagCheckoutAction, TagCopyCommitHashAction, TagCopyNameAction, TagOpenCommitAction, TagPushAction, TagRemoveAction, TagRenameAction } from "../../components/actions/TagActions";
+import { useMemo, useState } from "react";
+import { TagCheckoutAction, TagCopyCommitHashAction, TagCopyNameAction, TagDetailsView, TagPushAction, TagRemoveAction, TagRenameAction } from "../../components/actions/TagActions";
 import { Tag } from "../../types";
 
 export default function TagsView(context: RepositoryContext & NavigationContext) {
+  const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
+
   return (
     <List
       isLoading={context.tags.isLoading}
       navigationTitle="Repository Tags"
       searchBarPlaceholder="Search tags by name..."
+      selectedItemId={selectedTagId || undefined}
       searchBarAccessory={WorkspaceNavigationDropdown(context)}
       actions={
         <ActionPanel>
@@ -34,7 +37,7 @@ export default function TagsView(context: RepositoryContext & NavigationContext)
             </ActionPanel>
           }
         />
-      ) : !context.tags.isLoading && context.tags.data.length === 0 ? (
+      ) : (!context.tags.isLoading && context.tags.data.length === 0) ? (
         <List.EmptyView
           title="No tags"
           description="Repository has no tags."
@@ -48,10 +51,12 @@ export default function TagsView(context: RepositoryContext & NavigationContext)
           }
         />
       ) : (
-        context.tags.data.map((tag) => (
+        context.tags.data.map((tag, index) => (
           <TagListItem
-            key={`local:${tag.name}`}
+            key={tag.name}
             tag={tag}
+            index={index}
+            onMoveToTag={setSelectedTagId}
             {...context}
           />
         ))
@@ -60,7 +65,11 @@ export default function TagsView(context: RepositoryContext & NavigationContext)
   );
 }
 
-function TagListItem(context: RepositoryContext & NavigationContext & { tag: Tag }) {
+function TagListItem(context: RepositoryContext & NavigationContext & {
+  tag: Tag,
+  index: number,
+  onMoveToTag: (tagName: string) => void
+}) {
   const accessories = useMemo(() => {
     const items: List.Item.Accessory[] = [];
 
@@ -80,6 +89,7 @@ function TagListItem(context: RepositoryContext & NavigationContext & { tag: Tag
 
   return (
     <List.Item
+      id={context.tag.name}
       title={context.tag.name}
       subtitle={{
         value: context.tag.message,
@@ -96,11 +106,15 @@ function TagListItem(context: RepositoryContext & NavigationContext & { tag: Tag
       ].filter(Boolean) as string[]}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title={`Tag '${context.tag.name}'`}>
-            <TagOpenCommitAction commitHash={context.tag.commitHash} {...context} />
+          <ActionPanel.Section title={context.tag.name}>
+            <Action.Push
+              title="Show Commit"
+              icon={Icon.Document}
+              target={<TagDetailsView {...context} />}
+            />
             <TagCheckoutAction tagName={context.tag.name} {...context} />
-            <TagPushAction tagName={context.tag.name} {...context} />
             <TagRenameAction tagName={context.tag.name} {...context} />
+            <TagPushAction tagName={context.tag.name} {...context} />
             <TagCopyNameAction
               tagName={context.tag.name}
               shortcut={{ modifiers: ["cmd"], key: "c" }}

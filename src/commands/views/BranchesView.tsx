@@ -10,6 +10,7 @@ import {
   BranchCopyNameAction,
   BranchInteractiveRebaseAction,
   BranchPushForceAction,
+  BranchShowCommitsAction,
 } from "../../components/actions/BranchActions";
 import { Branch, DetachedHead } from "../../types";
 import { useMemo } from "react";
@@ -42,8 +43,7 @@ export function BranchesView(context: RepositoryContext & NavigationContext) {
             </ActionPanel>
           }
         />
-      ) : !context.branches.data ||
-        (!context.branches.isLoading && !context.branches.data.currentBranch && !context.branches.data.detachedHead) ? (
+      ) : (!context.branches.isLoading && !context.branches.data.currentBranch && !context.branches.data.detachedHead) ? (
         <List.EmptyView
           title="No branches"
           description="No branches found in the repository."
@@ -197,6 +197,7 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
             {context.branch.type === "current" && (
               <>
                 <RemotePullAction {...context} />
+                <BranchShowCommitsAction {...context} />
                 <BranchPushAction {...context} />
                 <BranchPushForceAction {...context} />
                 <BranchRenameAction {...context} />
@@ -208,6 +209,7 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
             {context.branch.type === "local" && (
               <>
                 <BranchCkeckoutAction {...context} />
+                <BranchShowCommitsAction {...context} />
                 <BranchPushAction {...context} />
                 <BranchPushForceAction {...context} />
                 <BranchRebaseAction {...context} />
@@ -223,6 +225,7 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
             {context.branch.type === "remote" && (
               <>
                 <BranchCkeckoutAction {...context} />
+                <BranchShowCommitsAction {...context} />
                 <BranchPushAction {...context} />
                 <BranchCopyNameAction branch={context.branch.displayName} />
                 <BranchDeleteAction {...context} />

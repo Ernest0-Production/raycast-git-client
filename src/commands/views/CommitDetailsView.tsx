@@ -20,13 +20,13 @@ export function CommitDetailsView(context: RepositoryContext & NavigationContext
   const [currentIndex, setCurrentIndex] = useState(context.index);
   const toggleController = useToggleDetail("Commit Details", "Diff", false);
 
-  const switchToCommit = async (direction: ("parent" | "child")) => {
+  const switchToCommit = async (direction: ("next" | "previous")) => {
     let nextIndex = currentIndex;
     switch (direction) {
-      case "parent":
+      case "previous":
         nextIndex = currentIndex + 1;
         break;
-      case "child":
+      case "next":
         nextIndex = currentIndex - 1;
         break;
     }
@@ -41,7 +41,7 @@ export function CommitDetailsView(context: RepositoryContext & NavigationContext
     }
 
     if (nextIndex >= context.commits.data.length) {
-      context.commits.pagination?.onLoadMore()
+      context.commits.pagination?.onLoadMore();
 
       if (!context.commits.pagination?.hasMore) {
         showToast({
@@ -57,7 +57,7 @@ export function CommitDetailsView(context: RepositoryContext & NavigationContext
     }
 
     setCurrentIndex(nextIndex);
-    context.onMoveToCommit(context.commits.data[nextIndex].hash);
+    context.onMoveToCommit?.(context.commits.data[nextIndex].hash);
   };
 
   return (
@@ -72,7 +72,8 @@ export function CommitDetailsView(context: RepositoryContext & NavigationContext
 
 export function ConcreteCommitView(context: RepositoryContext & NavigationContext & {
   commit: Commit,
-  onMoveToCommit?: (direction: ("parent" | "child")) => void
+  navigationTitle?: string,
+  onMoveToCommit?: (direction: ("next" | "previous")) => void
   toggleController: ToggleDetailController
 }) {
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
@@ -85,7 +86,7 @@ export function ConcreteCommitView(context: RepositoryContext & NavigationContex
 
   return (
     <List
-      navigationTitle="Commit Changes"
+      navigationTitle={context.navigationTitle || "Commit Changes"}
       searchBarPlaceholder="Search files by name, path..."
       onSelectionChange={(id) => setSelectedFilePath(id)}
       filtering={{ keepSectionOrder: true }}
@@ -138,7 +139,7 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
   statsMap: Record<string, { insertions: number; deletions: number }> | undefined;
   toggleController: ToggleDetailController;
   selectedFilePath: string | null;
-  onMoveToCommit?: (direction: ("parent" | "child")) => void;
+  onMoveToCommit?: (direction: ("next" | "previous")) => void;
 }) {
   // Create a unique identifier for each file item
   const fileId = `${context.file.path}-${context.commit.hash}`;
@@ -219,19 +220,19 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
   );
 }
 
-function CommitNavigationActions({ onMoveToCommit }: { onMoveToCommit: (direction: ("parent" | "child")) => void }) {
+function CommitNavigationActions({ onMoveToCommit }: { onMoveToCommit: (direction: ("next" | "previous")) => void }) {
   return (
     <ActionPanel.Section title="History">
       <Action
-        title="Move to Child Commit"
+        title="Move to Next Commit"
         icon={Icon.ChevronUp}
-        onAction={() => onMoveToCommit("child")}
+        onAction={() => onMoveToCommit("next")}
         shortcut={{ modifiers: ["cmd"], key: "]" }}
       />
       <Action
-        title="Move to Parent Commit"
+        title="Move to Previous Commit"
         icon={Icon.ChevronDown}
-        onAction={() => onMoveToCommit("parent")}
+        onAction={() => onMoveToCommit("previous")}
         shortcut={{ modifiers: ["cmd"], key: "[" }}
       />
     </ActionPanel.Section>

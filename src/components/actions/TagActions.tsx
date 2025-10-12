@@ -4,7 +4,8 @@ import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { useState } from "react";
 import { usePromise } from "@raycast/utils";
-import { CommitDetailsView } from "../../commands/views/CommitDetailsView";
+import { ConcreteCommitView } from "../../commands/views/CommitDetailsView";
+import { useToggleDetail } from "./ToggleDetailAction";
 
 /**
  * Action for creating a tag on a commit.
@@ -68,7 +69,7 @@ export function TagRemoveAction(context: RepositoryContext & { tagName: string }
   if (!context.remotes.data || Object.keys(context.remotes.data).length <= 1) {
     return (
       <Action
-        title={`Remove Tag '${context.tagName}'`}
+        title={`Remove Tag`}
         onAction={() => handleRemoveTag(undefined)}
         icon={Icon.Trash}
         style={Action.Style.Destructive}
@@ -79,7 +80,7 @@ export function TagRemoveAction(context: RepositoryContext & { tagName: string }
 
   return (
     <ActionPanel.Submenu
-      title={`Remove Tag '${context.tagName} from'`}
+      title={`Remove Tag from'`}
       icon={Icon.Trash}
       shortcut={{ modifiers: ["ctrl"], key: "x" }}
     >
@@ -106,7 +107,7 @@ export function TagRemoveAction(context: RepositoryContext & { tagName: string }
  */
 export function TagCopyNameAction({ tagName, shortcut }: { tagName: string, shortcut?: Keyboard.Shortcut }) {
   return <Action.CopyToClipboard
-    title={`Copy Tag Name '${tagName}'`}
+    title={`Copy Tag Name`}
     content={tagName} icon={Icon.Clipboard}
     shortcut={shortcut}
   />;
@@ -114,7 +115,7 @@ export function TagCopyNameAction({ tagName, shortcut }: { tagName: string, shor
 
 export function TagCopyCommitHashAction({ commitHash, shortcut }: { commitHash: string, shortcut?: Keyboard.Shortcut }) {
   return <Action.CopyToClipboard
-    title={`Copy Commit Hash '${commitHash}'`}
+    title={'Copy Commit Hash'}
     content={commitHash} icon={Icon.Clipboard}
     shortcut={shortcut}
   />;
@@ -256,32 +257,74 @@ function TagRenameForm(context: RepositoryContext & { tagName: string }) {
 }
 
 /**
- * Action to open commit details for the tag's commit
+ * Action to open tag details.
  */
-export function TagOpenCommitAction(context: RepositoryContext & NavigationContext & { commitHash: string }) {
-  const { data: commit } = usePromise(async (hash: string) => {
-    return await context.gitManager.getCommitByHash(hash);
-  }, [context.commitHash]);
+export function TagDetailsView(context: RepositoryContext & NavigationContext & {
+  index: number,
+  onMoveToTag: (tagName: string) => void
+}) {
+  const [currentIndex, setCurrentIndex] = useState(context.index);
+  const toggleController = useToggleDetail("Tag Details", "Diff", false);
 
-  if (!commit) {
-    return undefined;
+  const { data: commit, isLoading } = usePromise(async (index: number) => {
+    return await context.gitManager.getCommitByHash(context.tags.data[index].commitHash);
+  }, [currentIndex]);
+
+  const switchToCommit = async (direction: ("next" | "previous")) => {
+    let nextIndex = currentIndex;
+    switch (direction) {
+      case "previous":
+        nextIndex = currentIndex + 1;
+        break;
+      case "next":
+        nextIndex = currentIndex - 1;
+        break;
+    }
+
+    if (nextIndex < 0) {
+      showToast({
+        style: Toast.Style.Failure,
+        title: "No more tags",
+        message: "This is the last tag in the repository.",
+      });
+      return;
+    }
+
+    if (nextIndex >= context.tags.data.length) {
+      showToast({
+        style: Toast.Style.Failure,
+        title: "No more tags",
+        message: "This is the last tag in the repository.",
+      });
+      return;
+
+    }
+
+    setCurrentIndex(nextIndex);
+    context.onMoveToTag(context.tags.data[nextIndex].name);
+  };
+
+  if (isLoading || !commit) {
+    return <List
+      isLoading={isLoading}
+      navigationTitle={`Commit Changes`}
+      searchBarPlaceholder="Search files by name, path..."
+    >
+      <List.EmptyView
+        title={`Loading tag ${context.tags.data[currentIndex].name}...`}
+        description="Please wait while we load the tag details..."
+        icon={Icon.Hourglass}
+      />
+    </List>
   }
 
   return (
-    <Action.Push
-      title="Show Commit"
-      icon={Icon.Document}
-      target={
-        <CommitDetailsView
-          {...context}
-          index={0}
-          onMoveToCommit={() => { }}
-          commits={{
-            ...context.commits,
-            data: [commit]
-          }}
-        />
-      }
+    <ConcreteCommitView
+      {...context}
+      commit={commit}
+      navigationTitle={context.tags.data[currentIndex].name}
+      toggleController={toggleController}
+      onMoveToCommit={switchToCommit}
     />
   );
 }

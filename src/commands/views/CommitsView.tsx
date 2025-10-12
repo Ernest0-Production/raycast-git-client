@@ -57,8 +57,21 @@ export function CommitsView(context: RepositoryContext & NavigationContext) {
             </ActionPanel>
           }
         />
-      ) : !context.commits.data || context.commits.data.length === 0 ? (
-        <List.EmptyView title="No commits" description="No commits in this branch." icon={`git-commit.svg`} />
+      ) : (!context.commits.isLoading && context.commits.data.length === 0) ? (
+        <List.EmptyView
+          title="No commits"
+          description="No commits in this branch."
+          icon={`git-commit.svg`}
+          actions={
+            <ActionPanel>
+              <SharedActionsSection
+                toggleDetailController={toggleDetailController}
+                toggleMetadataController={toggleMetadataController}
+                {...context}
+              />
+            </ActionPanel>
+          }
+        />
       ) : (
         <List.Section title={getBranchFilterDisplayName(context)}>
           {context.commits.data.map((commit, index) => (
@@ -300,6 +313,7 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
             ))}
           </ActionPanel.Section>
 
+          <CommitCopyInfoActions {...context} />
 
           {context.commit.tags.map((tag) => (
             <ActionPanel.Section key={`tag-${tag}`} title={`Tag '${tag}'`}>
@@ -310,8 +324,6 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
           <ActionPanel.Section>
             <TagCreateAction {...context} />
           </ActionPanel.Section>
-
-          <CommitCopyInfoActions {...context} />
 
           <SharedActionsSection {...context} />
         </ActionPanel>

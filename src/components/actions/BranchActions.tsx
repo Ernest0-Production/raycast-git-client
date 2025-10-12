@@ -53,6 +53,26 @@ export function BranchCkeckoutAction(context: RepositoryContext & NavigationCont
 }
 
 /**
+ * Action for showing commits for a branch.
+ */
+export function BranchShowCommitsAction(context: RepositoryContext & NavigationContext & { branch: Branch }) {
+  return (
+    <Action
+      title="Show Commits"
+      onAction={() => {
+        if (context.branch.type === "current") {
+          context.commits.setFilter({ kind: 'current' });
+        } else {
+          context.commits.setFilter({ kind: 'branch', value: context.branch });
+        }
+        context.navigateTo("commits");
+      }}
+      icon={Icon.List}
+    />
+  );
+}
+
+/**
  * Action for deleting a branch.
  */
 export function BranchDeleteAction(context: RepositoryContext & { branch: Branch }) {

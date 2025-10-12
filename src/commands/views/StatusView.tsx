@@ -100,7 +100,7 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
             </ActionPanel>
           }
         />
-      ) : !context.status.data?.files || context.status.data.files.length === 0 ? (
+      ) : (!context.status.isLoading && context.status.data.files.length === 0) ? (
         <List.EmptyView
           title="No changes"
           description="No changes in the repository. The working directory is clean."

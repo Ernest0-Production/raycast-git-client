@@ -51,7 +51,7 @@ export function CommitRewordAction(context: RepositoryContext & NavigationContex
     <Action.Push
       title="Reword Message"
       icon={{ source: Icon.Message, tintColor: Color.Yellow }}
-      target={<CommitMessageForm amendOnly={true} {...context} />}
+      target={<CommitMessageForm {...context} />}
       shortcut={{ modifiers: ["cmd", "shift"], key: "a" }}
     />
   );
