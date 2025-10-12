@@ -3,193 +3,132 @@ description:
 globs:
 alwaysApply: true
 ---
-# Структура проекта Git Client для Raycast
+# Git Client for Raycast: Project Structure
 
-## Описание
-Базовая файловая структура расширения для управления Git-репозиториями в Raycast, организованная по принципу разделения ответственности.
+## Description
+This document outlines the file structure for the Git Client Raycast extension, organized by responsibility. It serves as a roadmap for development.
 
-**Важно:** Данная структура является рекомендуемой схемой организации, которая может расширяться по мере развития проекта. В каждой папке могут добавляться дополнительные файлы согласно потребностям функциональности.
-
-## Структура файлов
+## File Structure
 
 ```
 git-client/
-├── package.json                    # Конфигурация расширения, команды, зависимости
-├── package-lock.json               # Зафиксированные версии зависимостей
-├── README.md                       # Документация расширения
-├── CHANGELOG.md                    # История изменений
+├── package.json                    # Extension configuration, commands, dependencies
+├── package-lock.json               # Locked dependency versions
+├── README.md                       # Extension documentation
+├── CHANGELOG.md                    # Changelog
 │
-├── assets/                         # Ресурсы расширения
-│   ├── extension-icon.png          # Иконка расширения
-│   ├── branch-icon.png             # Иконка для веток
-│   ├── commit-icon.png             # Иконка для коммитов
-│   ├── status-icon.png             # Иконка для статуса файлов
-│   └── ...                         # Дополнительные иконки и ресурсы
+├── assets/                         # Extension assets
+│   ├── extension-icon.png          # Extension icon
+│   └── ...                         # Additional icons and resources
 │
-└── src/                            # Исходный код
+└── src/                            # Source code
     |
-    ├── manage-repositories.tsx     # Команда списка репозиториев
-    ├── open-repository.tsx         # Команда открытия репозитория со всеми интерфейсами (ветки, статус, коммиты, итп)
-    ├── clone-repository.tsx        # Команда клонирования репозитория
-    ├── configure-url-trackers.tsx  # Команда настройки URL трекеров в сообщениях коммитов
-    ├── manage-ai-message-prompts.tsx # Команда настройки AI промптов для генерации сообщения коммита
-    ├── ...                         # Дополнительные команды по мере развития проекта
+    ├── manage-repositories.tsx     # Command to list repositories
+    ├── open-repository.tsx         # Command to open a repository with all UIs (branches, status, commits, etc.)
+    ├── clone-repository.tsx        # Command to clone a repository
+    ├── configure-url-trackers.tsx  # Command to configure URL trackers in commit messages
+    ├── manage-ai-message-prompts.tsx # Command to configure AI prompts for commit message generation
+    ├── ...                         # Additional commands as the project evolves
     |
-    ├── commands/                   # Команды расширения (содержат весь UI код)
-    │   ├── open-repository.tsx     # Команда открытия репозитория + UI интерфейсы
-    │   ├── recent-repositories.tsx # Команда недавних репозиториев + UI
-    │   └── ...                     # Дополнительные команды расширения
-    │
-    ├── components/                 # Переиспользуемые UI компоненты и действия
-    │   ├── actions/                # Переиспользуемые Action и ActionPanel компоненты
-    │   │   ├── FileActions.tsx     # Действия с файлами (stage, unstage, open)
-    │   │   ├── BranchActions.tsx   # Действия с ветками (checkout, delete, merge)
-    │   │   ├── CommitActions.tsx   # Действия с коммитами (cherry-pick, revert)
-    │   │   └── ...                 # Дополнительные Action компоненты
+    ├── components/                 # Reusable UI components and actions
+    │   ├── actions/                # Reusable Action and ActionPanel components
+    │   │   ├── FileActions.tsx     # Actions for files (stage, unstage, open)
+    │   │   ├── BranchActions.tsx   # Actions for branches (checkout, delete, merge)
+    │   │   └── ...                 # Additional Action components
     │   │
-    │   ├── views/                  # Переиспользуемые UI компоненты и действия
-    │   │   ├── BranchesView.tsx   # Ветки
-    │   │   ├── CommitsView.tsx    # Коммиты
-    │   │   ├── StatusView.tsx     # Статус файлов
-    │   │   └── ...                 # Дополнительные View компоненты
+    │   ├── views/                  # Reusable view components
+    │   │   ├── BranchesView.tsx    # Branches view
+    │   │   ├── CommitsView.tsx     # Commits view
+    │   │   ├── StatusView.tsx      # File status view
+    │   │   └── ...                 # Additional view components
     │   │
-    │   ├── icons/                  # Семантические иконки
-    │   │   ├── RemoteHostIcons.tsx # Иконки для хостов
-    │   │   ├── StatusIcons.tsx     # Иконки для статуса файлов
-    │   │   └── ...                 # Дополнительные семантические иконки
-    │   └── ...                     # Другие типы компонентов по необходимости
+    │   └── icons/                  # Semantic icons
+    │       ├── RemoteHostIcons.tsx # Icons for remote hosts
+    │       ├── StatusIcons.tsx     # Icons for file statuses
+    │       └── ...                 # Additional semantic icons
     │
-    ├── utils/                      # Утилиты (только необходимые)
-    │   ├── git-manager.ts          # Сервис для вызова Git команд через simple-git
-    │   ├── path-utils.ts           # Утилиты для работы с путями
-    │   ├── environment-utils.ts    # Утилиты для работы с shell окружением
-    │   ├── language-detector.ts    # Утилиты для определения языка файла
-    │   └── ...                     # Дополнительные утилиты по необходимости
+    ├── utils/                      # Utilities (only essential)
+    │   ├── git-manager.ts          # Service for Git commands via simple-git
+    │   ├── path-utils.ts           # Utilities for path manipulation
+    │   └── ...                     # Additional utilities as needed
     │
-    ├── types/                      # TypeScript типы и интерфейсы
-    │   ├── index.ts                # Модели данных специфичные для данного extension-а
-    │   ├── git-types.ts            # Модели данных специфичных для Git
-    │   └── ...                     # Дополнительные типы по мере развития
+    ├── types/                      # TypeScript types and interfaces
+    │   ├── index.ts                # Extension-specific data models
+    │   ├── git-types.ts            # Git-specific data models
+    │   └── ...                     # Additional types as the project evolves
     │
-    └── hooks/                      # Кастомные React хуки
-        ├── useGitRepository.ts     # Хук для работы с Git репозиторием
-        ├── useRepositoriesList.ts   # Хук для недавних репозиториев
-        ├── useGitStatus.ts         # Хук для статуса файлов
-        ├── useGitBranches.ts       # Хук для веток
-        ├── useGitCommits.ts        # Хук для коммитов
-        ├── useGitStash.ts          # Хук для stash
-        ├── useGitTags.ts           # Хук для тегов
-        ├── useGitRemotes.ts        # Хук для хостов
-        └── ...                     # Дополнительные хуки по необходимости
+    └── hooks/                      # Custom React hooks
+        ├── useGitRepository.ts     # Hook for working with a Git repository
+        ├── useGitStatus.ts         # Hook for file status
+        ├── useGitBranches.ts       # Hook for branches
+        ├── useGitCommits.ts        # Hook for commits
+        └── ...                     # Additional hooks as needed
 ```
 
-## Описание директорий
+## Directory Descriptions
 
-### `/src/commands/` - Команды расширения
-Содержит файлы команд Raycast с полным UI кодом. Начальные команды:
-- **open-repository.tsx** - Команда открытия Git репозитория со всеми интерфейсами (ветки, статус, коммиты)
-- **recent-repositories.tsx** - Команда списка недавних репозиториев с UI
+### `/src` - Commands
+The root `src` directory contains all Raycast command files. Each command is self-contained and includes all its UI logic.
+- `open-repository.tsx`: Main command for viewing a repository (status, branches, commits, etc.).
+- `manage-repositories.tsx`: Command for adding, removing, and viewing saved repositories.
+- `clone-repository.tsx`: Command for cloning a new repository.
+- `configure-url-trackers.tsx`: Command for configure URL patterns/regexs to extract links from commit messages.
+- `manage-ai-message-prompts.tsx`: Command for configure custom AI prompts for commit message generation.
 
-*Возможные дополнения:* команды для конкретных Git операций, специализированные интерфейсы
+### `/src/components/actions/` - Action Components
+Reusable `Action`, `ActionPanel.Submenu` and `ActionPanel` components that encapsulate operations related for concrete features.
+- `BranchActions.tsx` for create, delete, merge, rename branches, etc.
+-  `CommitActions.tsx` for checkout, cherry-pick, revert, reset, interactive rebase, patch create, etc.
+- `FileActions.tsx` for stage, unstage, open files, etc.
+- `StashActions.tsx` for create, rename, delete stashes, etc.
+- `TagActions.tsx` for create, rename, delete tags, etc.
+- etc.
 
-### `/src/components/` - Переиспользуемые компоненты
-Организованы по типам компонентов:
+### `/src/components/views/` - View Components
+Reusable components that represent different views within a part of some command.
+- `StatusView.tsx` for view status of files in repository
+- `BranchesView.tsx` for view all branches in repository
+- `CommitsView.tsx` for list commit graph in repository
+- `TagsView.tsx` for view all tags in repository
+- `StashesView.tsx` for manage stashes in repository
+- `RemotesView.tsx` for manage remotes in repository
+- etc.
 
-#### `/components/actions/` - Action компоненты
-Готовые Action и ActionPanel компоненты для разных сущностей (базовый набор):
-- **FileActions.tsx** - Действия с файлами (stage, unstage, открыть в редакторе/Finder)
-- **BranchActions.tsx** - Действия с ветками (checkout, delete, push, pull, merge)
-- **CommitActions.tsx** - Действия с коммитами (cherry-pick, revert, reset)
-- **RepositoryActions.tsx** - Действия с репозиториями (открыть, удалить из недавних)
+Each view is a React component that is displayed in the Raycast window as a page.
 
-*Возможные дополнения:* TagActions, StashActions, RemoteActions и другие Action компоненты
+### `/src/hooks/` - Custom React Hooks
+Custom hooks for managing state and logic.
+- `useGitStatus.ts`, `useGitBranches.ts`, `useGitCommits.ts`, `useGitTags.ts`, `useGitStash.ts`: Hooks for specific Git features in a concrete repository.
+- `useRepositoriesList.ts`: Hook for storing paths to repositories and repository metadata.
 
-#### `/components/shared/` - Общие UI компоненты
-Базовые компоненты состояний:
-- **LoadingView.tsx** - Компонент загрузки
-- **ErrorView.tsx** - Компонент отображения ошибок
-- **EmptyView.tsx** - Компонент пустого состояния
+### `/src/utils/` - Utilities
+Minimal, essential helper functions.
+- `git-manager.ts`: A core service wrapper around `simple-git` for all Git operations.
+- `path-utils.ts`: Path-related utilities.
+- `environment-utils.ts`: Shell environment utilities.
+- `date-utils.ts`, `language-detector.ts`, `remote-host-parser.ts`: Other specific utilities.
 
-*Возможные дополнения:* модальные окна, формы, специализированные индикаторы
+### `/src/types/` - TypeScript Definitions
+Contains all TypeScript type definitions and interfaces for the extension that should be available across the all commands/actions/hooks/views.
+- `git-types.ts`: Types for Git entities (Branch, Commit, FileStatus).
+- `index.ts`: Core types for the extension (not related to Git, but relate to extension-specific data models).
 
-### `/src/utils/` - Утилиты
-Основные утилиты согласно принципу минимализма:
-- **git-utils.ts** - Обёртка над simple-git для всех Git операций
-- **storage.ts** - Управление LocalStorage для недавних репозиториев
-- **validation.ts** - Валидация путей к Git репозиториям
+## Organizational Principles
 
-*Возможные дополнения:* утилиты для работы с конкретными Git провайдерами, форматирования, конвертации данных
+- **Commands Own UI**: Command files (`/src/*.tsx`) contain all UI rendering logic. Views from `/src/components/views` are used to compose the final UI.
+- **Reusable Actions**: Standardized `Action` components are in `/src/components/actions/` for use across different commands.
+- **Minimal Utilities**: The `/src/utils/` directory contains only essential, reusable functions.
+- **Native Raycast API**: Use Raycast APIs directly (e.g., `getPreferenceValues()`, `showToast()`) without creating wrappers.
 
-### `/src/types/` - TypeScript определения
-Базовые типы проекта:
-- **index.ts** - Основные экспорты типов
-- **repository.ts** - Интерфейсы для репозиториев
-- **git.ts** - Типы для Git сущностей (Branch, Commit, FileStatus)
-- **ui.ts** - Типы для UI состояний и пропсов
+## Dependencies
 
-*Возможные дополнения:* типы для API интеграций, расширенные Git типы, типы для конфигураций
+### Main
+- `@raycast/api` & `@raycast/utils`
+- `simple-git`: For Git operations.
+- `fast-fuzzy`: For fuzzy searching.
+- `nanoid`: For unique ID generation.
+- `react`: For UI components.
 
-### `/src/hooks/` - Кастомные React хуки
-Основные хуки для управления состоянием:
-- **useGitRepository.ts** - Основной хук для работы с репозиторием
-- **useRecentRepositories.ts** - Управление списком недавних репозиториев
-- **useGitStatus.ts** - Получение и обновление статуса файлов
-- **useGitBranches.ts** - Работа с ветками
-- **useGitCommits.ts** - Получение истории коммитов
-
-*Возможные дополнения:* хуки для работы с тегами, stash, конфигурацией, интеграцией с внешними сервисами
-
-## Принципы организации
-
-### 1. Гибкость структуры
-- Структура предназначена для эволюции по мере роста функциональности
-- Каждая папка может содержать дополнительные файлы согласно потребностям
-- Новые директории добавляются при необходимости специализированной логики
-
-### 2. Команды содержат весь UI код
-- Никаких отдельных компонентов для интерфейсов команд
-- Вся логика отображения находится в файлах команд
-- Переиспользование через компоненты actions и shared
-
-### 3. Переиспользуемые действия
-- Все Action и ActionPanel компоненты вынесены в `/components/actions/`
-- Стандартизированные действия для файлов, веток, коммитов
-- Легкое переиспользование в разных командах
-
-### 4. Минимальные утилиты
-- Только действительно необходимые файлы в базовой реализации
-- Git операции, хранилище, валидация как основа
-- Никаких излишних абстракций без четкой необходимости
-
-### 5. Raycast API нативно
-- Preferences доступны через `getPreferenceValues()` из `@raycast/api`
-- QuickLinks создаются через стандартное API
-- Навигация через встроенные механизмы Raycast
-
-## Расширяемость
-
-По мере развития проекта могут быть добавлены:
-- Новые команды в `/src/commands/`
-- Специализированные компоненты в `/src/components/`
-- Дополнительные утилиты в `/src/utils/`
-- Расширенные типы в `/src/types/`
-- Новые хуки в `/src/hooks/`
-- Дополнительные директории для специфичной функциональности
-
-## Style Guide
-Детальные соглашения по именованию, архитектурные принципы и best practices см. в файле `.cursorrules`
-
-## Зависимости
-
-### Основные
-- `@raycast/api` - Raycast API
-- `@raycast/utils` - Raycast Utils
-- `simple-git` - Git операции
-- `fast-fuzzy` - поиск по файлам и директориям
-- `nanoid` - генератор уникальных id
-- `react` - UI компоненты
-
-### Разработка
-- `typescript` - Типизация
-- `eslint` - Линтер
-- `@raycast/eslint-config` - Конфигурация ESLint для Raycast
+### Development
+- `typescript`
+- `eslint` & `@raycast/eslint-config`
