@@ -28,10 +28,7 @@ export class GitManager {
       }
     });
 
-
-    // for (const [key, value] of Object.entries(shellEnvironmentVariables)) {
     this.git = this.git.env(shellEnvironmentVariables);
-    // }
 
     // Global logging of all git commands for debugging
     this.setupGlobalLogging();
