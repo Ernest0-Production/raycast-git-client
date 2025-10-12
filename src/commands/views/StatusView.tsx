@@ -9,7 +9,7 @@ import { existsSync } from "fs";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../../components/actions/WorkspaceNavigationActions";
 import { PatchApplyAction, PatchCreateAction } from "../../components/actions/PatchActions";
-import { CommitAction, ConflictAbortAction, FileDiscardAction, FileDiscardAllAction, FileStageAction, FileStageAllAction, FileUnstageAction, FileUnstageAllAction } from "../../components/actions/StatusActions";
+import { CommitChangesAction, ConflictAbortAction, FileDiscardAction, FileDiscardAllAction, FileStageAction, FileStageAllAction, FileUnstageAction, FileUnstageAllAction } from "../../components/actions/StatusActions";
 import { FileHistoryAction } from "./FileHistoryView";
 import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../../components/actions/ToggleDetailAction";
 import { basename } from "path";
@@ -52,7 +52,7 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
       actions={
         <ActionPanel>
           {context.status.data && context.branches.data.currentBranch && (
-            <CommitAction {...context} />
+            <CommitChangesAction {...context} />
           )}
 
           <ActionPanel.Section>
@@ -226,7 +226,7 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
 
           <ActionPanel.Section>
             {context.branches.data.currentBranch && (
-              <CommitAction {...context} />
+              <CommitChangesAction {...context} />
             )}
             <ConflictAbortAction {...context} />
             <FileStageAllAction {...context} />

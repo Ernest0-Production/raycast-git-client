@@ -220,7 +220,7 @@ export function FileDiscardAllAction(context: RepositoryContext) {
 /**
  * Action to commit changes or continue a rebase/merge.
  */
-export function CommitAction(context: RepositoryContext) {
+export function CommitChangesAction(context: RepositoryContext) {
     const hasStagedFiles = context.status.data?.files.some((f) => f.status === "staged");
     const hasConflictedFiles = context.status.data?.files.some((f) => f.type === "conflicted");
 
@@ -271,18 +271,30 @@ export function CommitAction(context: RepositoryContext) {
         }
     }
 
-    if (hasStagedFiles && context.branches.data.currentBranch) {
-        return (
-            <Action.Push
-                title="Commit Changes"
-                icon={{ source: Icon.Checkmark, tintColor: Color.Green }}
-                target={<CommitMessageForm {...context} />}
-                shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
-            />
-        );
-    }
+    if (!context.branches.data.currentBranch) return undefined;
 
-    return null;
+    return (
+        <>
+            {hasStagedFiles &&
+                <Action.Push
+                    title="Commit Staged Changes"
+                    icon={{ source: Icon.Checkmark, tintColor: Color.Green }}
+                    target={<CommitMessageForm {...context} />}
+                    shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
+                />
+            }
+            <Action.Push
+                title="Commit All Changes"
+                icon={{ source: Icon.Checkmark, tintColor: Color.Yellow }}
+                target={<CommitMessageForm {...context} />}
+                shortcut={{ modifiers: ["cmd", "shift", "opt"], key: "enter" }}
+                onPush={async () => {
+                    await context.gitManager.stageAll();
+                    context.status.revalidate();
+                }}
+            />
+        </>
+    );
 }
 
 /**
