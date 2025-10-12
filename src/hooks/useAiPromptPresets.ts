@@ -1,4 +1,3 @@
-import { AI } from "@raycast/api";
 import { useCachedState } from "@raycast/utils";
 import { nanoid } from "nanoid";
 import { useEffect, useMemo } from "react";
@@ -24,13 +23,10 @@ const DEFAULT_AI_COMMIT_PROMPT = `
 You are a helpful assistant that generates concise, clear Git commit messages.
 
 Analyze the provided git diff and generate a conventional commit message that accurately describes the changes.
-Use conventional commit format:
-\`\`\`example
+- Focus on what changed and why.
+- Use conventional commit format:
 <short title>
 <listed changes>
-\`\`\`
-- Message should be without quotes.
-- Focus on what changed and why.
 `;
 
 
