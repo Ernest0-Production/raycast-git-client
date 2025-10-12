@@ -173,9 +173,9 @@ function RepositoryListItem({
 
     if (remotes && Object.keys(remotes).length > 0) {
       result.push(...Object.keys(remotes).map((remote) => ({
-        tag: { value: `${remotes[remote].organizationName}/${remotes[remote].repositoryName}` },
+        tag: { value: `${remotes[remote].displayName}` },
         icon: RemoteHostIcon(remotes[remote].provider),
-        tooltip: `Hosted on ${remotes[remote].provider} at ${remotes[remote].organizationName}/${remotes[remote].repositoryName}`,
+        tooltip: `Hosted on ${remotes[remote].provider} at ${remotes[remote].displayName}`,
       })));
     }
 
@@ -238,7 +238,7 @@ function RepositoryListItem({
           {remotes && Object.keys(remotes).map((remote) => (
             <ActionPanel.Section
               key={remote}
-              title={`${remote} • ${remotes[remote].organizationName}/${remotes[remote].repositoryName}`}
+              title={`${remote} • ${remotes[remote].displayName}`}
             >
               <RemoteOpenPullRequestAction key={remote} remote={remotes[remote]} />
             </ActionPanel.Section>
@@ -280,7 +280,7 @@ function AddRepositoryForm({ onAddRepository }: { onAddRepository: (repoPath: st
       }
     });
 
-    return invalidRepos.length > 0 ? `Invalid repositories: ${invalidRepos.join(", ")}` : undefined;
+    return invalidRepos.length > 0 ? `Invalid repositories:${invalidRepos.join(", ")}` : undefined;
   };
 
   const handleSubmit = async (values: { repositoryPath: string[] }) => {

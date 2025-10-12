@@ -113,7 +113,7 @@ export function WorkspaceNavigationActions(context: NavigationContext & Reposito
             {context.remotes.data && Object.keys(context.remotes.data).map((remote) => (
                 <ActionPanel.Section
                     key={remote}
-                    title={`${remote} • ${context.remotes.data[remote].organizationName}/${context.remotes.data[remote].repositoryName}`}
+                    title={`${remote} • ${context.remotes.data[remote].displayName}`}
                 >
                     {/* Remote pull request actions */}
                     <RemoteOpenPullRequestAction remote={context.remotes.data[remote]} />

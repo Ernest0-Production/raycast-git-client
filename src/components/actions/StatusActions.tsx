@@ -77,7 +77,7 @@ export function FileDiscardAction(context: RepositoryContext & { file: FileStatu
             title: "Discard changes",
             message: `Are you sure you want to discard changes in file "${basename(context.file.path)}"? This action cannot be undone.`,
             primaryAction: {
-                title: "Discard changes",
+                title: "Discard",
                 style: Alert.ActionStyle.Destructive,
             },
         });

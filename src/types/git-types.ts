@@ -219,6 +219,7 @@ export type Remote = {
   pushUrl: string;
   type: "ssh" | "http";
   organizationName?: string;
+  displayName: string;
   repositoryName?: string;
   provider: RemoteProvider;
   pages: {

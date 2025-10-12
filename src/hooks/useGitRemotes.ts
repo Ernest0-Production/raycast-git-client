@@ -30,6 +30,7 @@ export function useGitRemotes(gitManager: GitManager): RepositoryContext["remote
       pushUrl: remote.pushUrl,
       type: detectRemoteProtocol(primaryUrl),
       organizationName: parser.organizationName,
+      displayName: `${parser.organizationName}/${parser.repositoryName}`,
       repositoryName: parser.repositoryName,
       provider: parser.provider,
       pages: {
