@@ -36,17 +36,17 @@ Analyze the provided git diff and generate a conventional commit message that ac
  */
 export function useAiPromptPresets() {
     const defaultPreset = useMemo<AiPromptPreset>(() => ({
-        id: "default",
-        name: "Default Prompt",
+        id: "builtin",
+        name: "Built-in Prompt",
         prompt: DEFAULT_AI_COMMIT_PROMPT,
         model: undefined
     }), []);
 
-    const [presets, setPresets] = useCachedState<AiPromptPreset[]>("ai-commit-message-presets", []);
+    const [presets, setPresets] = useCachedState<AiPromptPreset[]>("commit-message-prompts", []);
 
     useEffect(() => {
         // Ensure default preset is always up to date
-        const defaultPresetIndex = presets.findIndex(p => p.id === "default");
+        const defaultPresetIndex = presets.findIndex(p => p.id === "builtin");
         if (defaultPresetIndex !== -1) {
             const updatedPresets = [...presets];
             updatedPresets[defaultPresetIndex] = defaultPreset;
@@ -58,7 +58,7 @@ export function useAiPromptPresets() {
 
     const addPreset = (name: string, prompt: string, model?: string) => {
         const newPreset: AiPromptPreset = { id: nanoid(), name: name.trim(), prompt: prompt.trim(), model };
-        setPresets((current) => [newPreset, ...current.filter((p) => p.name !== newPreset.name)]);
+        setPresets((current) => [...current.filter((p) => p.name !== newPreset.name), newPreset]);
         return newPreset;
     };
 
@@ -67,20 +67,21 @@ export function useAiPromptPresets() {
     };
 
     const deletePreset = (id: string) => {
-        if (id === "default") {
+        if (id === "builtin") {
             return;
         }
 
         setPresets((current) => current.filter((p) => p.id !== id));
     };
 
-    const movePreset = (id: string, direction: "up" | "down") => {
+    const setDefault = (id: string) => {
         setPresets((current) => {
             const index = current.findIndex((p) => p.id === id);
-            const newIndex = direction === "up" ? index - 1 : index + 1;
-            const [item] = current.splice(index, 1);
-            current.splice(newIndex, 0, item);
-            return current;
+            if (index === -1) return current;
+
+            const newArray = [...current];
+            const [item] = newArray.splice(index, 1);
+            return [item, ...newArray];
         });
     };
 
@@ -89,6 +90,6 @@ export function useAiPromptPresets() {
         addPreset,
         updatePreset,
         deletePreset,
-        movePreset
+        setDefault
     };
 }

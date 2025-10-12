@@ -1,9 +1,9 @@
-import { ActionPanel, Action, Icon, List, Form, useNavigation, confirmAlert, Alert, AI } from "@raycast/api";
+import { ActionPanel, Action, Icon, List, Form, useNavigation, confirmAlert, Alert, AI, Color } from "@raycast/api";
 import { useState } from "react";
 import { useAiPromptPresets, AiPromptPreset } from "./hooks/useAiPromptPresets";
 
 export default function ManageAiMessagePrompts() {
-    const { presets, deletePreset, movePreset } = useAiPromptPresets();
+    const { presets, deletePreset, setDefault } = useAiPromptPresets();
 
     return (
         <List
@@ -20,13 +20,13 @@ export default function ManageAiMessagePrompts() {
                 </ActionPanel>
             }
         >
-            {presets.map((preset) => (
+            {presets.map((preset, index) => (
                 <PresetListItem
                     key={preset.id}
                     preset={preset}
-                    isDefault={preset.id === "default"}
-                    onDelete={(id) => deletePreset(id)}
-                    onMove={(id, direction) => movePreset(id, direction)}
+                    isDefault={index === 0}
+                    onDelete={() => deletePreset(preset.id)}
+                    onSetDefault={() => setDefault(preset.id)}
                 />
             ))}
         </List>
@@ -37,12 +37,12 @@ function PresetListItem({
     preset,
     isDefault,
     onDelete,
-    onMove
+    onSetDefault
 }: {
     preset: AiPromptPreset;
     isDefault: boolean;
-    onDelete: (id: string) => void;
-    onMove: (id: string, direction: "up" | "down") => void;
+    onDelete: () => void;
+    onSetDefault: () => void;
 }) {
     const handleDelete = async () => {
         const confirmed = await confirmAlert({
@@ -55,18 +55,34 @@ function PresetListItem({
         });
 
         if (confirmed) {
-            onDelete(preset.id);
+            onDelete();
         }
     };
+
+    const isEditable = preset.id !== "builtin"
 
     return (
         <List.Item
             title={preset.name}
-            accessories={preset.model ? [{ text: preset.model }] : [{ text: "Auto" }]}
+            subtitle={preset.model ? preset.model : "Auto"}
+            accessories={isDefault ? [
+                {
+                    tag: { value: "Default" },
+                    tooltip: "Default preset that will be used when run 'Generate Message' action in Commit Message Form."
+                }
+            ] : []
+            }
             actions={
                 <ActionPanel>
                     <ActionPanel.Section title={preset.name}>
                         {!isDefault &&
+                            <Action
+                                title="Set as Default"
+                                icon={Icon.Star}
+                                onAction={onSetDefault}
+                            />
+                        }
+                        {!isDefault && isEditable &&
                             <Action.Push
                                 title="Edit Preset"
                                 icon={Icon.Pencil}
@@ -74,7 +90,7 @@ function PresetListItem({
                                 shortcut={{ modifiers: ["cmd"], key: "e" }}
                             />
                         }
-                        {!isDefault &&
+                        {!isDefault && isEditable &&
                             <Action
                                 title="Delete Preset"
                                 icon={Icon.Trash}
@@ -90,21 +106,6 @@ function PresetListItem({
                         shortcut={{ modifiers: ["cmd"], key: "n" }}
                         target={<AiMessagePresetEditorForm />}
                     />
-
-                    <ActionPanel.Section title="Order">
-                        <Action
-                            title="Move Up"
-                            icon={Icon.ChevronUp}
-                            onAction={() => onMove(preset.id, "up")}
-                            shortcut={{ modifiers: ["cmd", "opt"], key: "arrowUp" }}
-                        />
-                        <Action
-                            title="Move Down"
-                            icon={Icon.ChevronDown}
-                            onAction={() => onMove(preset.id, "down")}
-                            shortcut={{ modifiers: ["cmd", "opt"], key: "arrowDown" }}
-                        />
-                    </ActionPanel.Section>
                 </ActionPanel>
             }
         />
