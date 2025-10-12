@@ -2,7 +2,7 @@ import { Action, Icon, Color, Alert } from "@raycast/api";
 import { RepositoryContext } from "../../open-repository";
 import { confirmAlert } from "@raycast/api";
 import { Commit, FileStatus } from "../../types";
-import { CommitMessageForm } from "../../commands/views/CommitMessageView";
+import { CommitMessageForm } from "../views/CommitMessageView";
 import { existsSync } from "fs";
 import { basename } from "path";
 
@@ -37,7 +37,7 @@ export function FileStageAction(context: RepositoryContext & { file: FileStatus 
         <Action
             title={isConflicted ? "Mark as Resolved" : "Stage"}
             onAction={handleStageFile}
-            icon={isConflicted ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Plus}
+            icon={isConflicted ? { source: Icon.CheckRosette, tintColor: Color.Green } : Icon.Plus}
         />
     );
 }

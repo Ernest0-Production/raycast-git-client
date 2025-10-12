@@ -1,17 +1,17 @@
 import { ActionPanel, Action, List, Icon } from "@raycast/api";
 import { useGitDiff } from "../../hooks/useGitDiff";
-import { FileManagerActions } from "../../components/actions/FileActions";
-import { FileStatusIcon } from "../../components/icons/StatusIcons";
-import { StashCreateAction } from "../../components/actions/StashActions";
+import { FileManagerActions } from "../actions/FileActions";
+import { FileStatusIcon } from "../icons/StatusIcons";
+import { StashCreateAction } from "../actions/StashActions";
 import { FileStatus } from "../../types";
 import { useMemo, useState } from "react";
 import { existsSync } from "fs";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
-import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../../components/actions/WorkspaceNavigationActions";
-import { PatchApplyAction, PatchCreateAction } from "../../components/actions/PatchActions";
-import { CommitChangesAction, ConflictAbortAction, FileDiscardAction, FileDiscardAllAction, FileStageAction, FileStageAllAction, FileUnstageAction, FileUnstageAllAction } from "../../components/actions/StatusActions";
+import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
+import { PatchApplyAction, PatchCreateAction } from "../actions/PatchActions";
+import { CommitChangesAction, ConflictAbortAction, FileDiscardAction, FileDiscardAllAction, FileStageAction, FileStageAllAction, FileUnstageAction, FileUnstageAllAction } from "../actions/StatusActions";
 import { FileHistoryAction } from "./FileHistoryView";
-import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../../components/actions/ToggleDetailAction";
+import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../actions/ToggleDetailAction";
 import { basename } from "path";
 
 export function StatusView(context: RepositoryContext & NavigationContext) {

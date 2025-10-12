@@ -4,7 +4,7 @@ import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { useState } from "react";
 import { usePromise } from "@raycast/utils";
-import { ConcreteCommitView } from "../../commands/views/CommitDetailsView";
+import { ConcreteCommitView } from "../views/CommitDetailsView";
 import { useToggleDetail } from "./ToggleDetailAction";
 
 /**

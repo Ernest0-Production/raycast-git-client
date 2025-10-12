@@ -1,9 +1,9 @@
 import { ActionPanel, Action, List, Icon } from "@raycast/api";
-import { StashApplyAction, StashDropAction, StashRenameAction } from "../../components/actions/StashActions";
+import { StashApplyAction, StashDropAction, StashRenameAction } from "../actions/StashActions";
 import "../../utils/date-utils";
 import { Stash } from "../../types";
 import { RepositoryContext, NavigationContext } from "../../open-repository";
-import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../../components/actions/WorkspaceNavigationActions";
+import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
 
 export function StashesView(context: RepositoryContext & NavigationContext) {
   return (

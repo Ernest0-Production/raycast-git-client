@@ -1,11 +1,11 @@
 import { ActionPanel, Action, Icon, confirmAlert, Alert, clearSearchBar, useNavigation, Clipboard, Form, Color } from "@raycast/api";
 import { Commit } from "../../types";
-import InteractiveRebaseEditorView from "../../commands/views/InteractiveRebaseEditorView";
+import InteractiveRebaseEditorView from "../views/InteractiveRebaseEditorView";
 import { ResetMode } from "simple-git";
 import { useCachedState } from "@raycast/utils";
 import { existsSync } from "fs";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
-import { CommitMessageForm } from "../../commands/views/CommitMessageView";
+import { CommitMessageForm } from "../views/CommitMessageView";
 
 /**
  * Action for checking out a commit.

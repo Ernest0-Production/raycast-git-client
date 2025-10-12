@@ -1,18 +1,18 @@
 import { ActionPanel, List, Icon, Action, Color, Image } from "@raycast/api";
 import { getFavicon } from "@raycast/utils";
-import { CommitCheckoutAction, CommitCherryPickAction, CommitRevertAction, CommitResetAction, CommitInteractiveRebaseAction, CommitPatchCreateAction, CommitCopyInfoActions, CommitRewordAction } from "../../components/actions/CommitActions";
-import { TagCreateAction, TagRemoveAction, TagCopyNameAction } from "../../components/actions/TagActions";
-import { BranchCopyNameAction, BranchPushAction, BranchPushForceAction } from "../../components/actions/BranchActions";
+import { CommitCheckoutAction, CommitCherryPickAction, CommitRevertAction, CommitResetAction, CommitInteractiveRebaseAction, CommitPatchCreateAction, CommitCopyInfoActions, CommitRewordAction } from "../actions/CommitActions";
+import { TagCreateAction, TagRemoveAction, TagCopyNameAction } from "../actions/TagActions";
+import { BranchCopyNameAction, BranchPushAction, BranchPushForceAction } from "../actions/BranchActions";
 import { CommitDetailsView } from "./CommitDetailsView";
 import { useIssueTracker, replaceUrlPatternsWithLinks } from "../../hooks/useIssueTracker";
 import "../../utils/date-utils";
 import { Branch, Commit, IssueTrackerConfig } from "../../types";
 import { useMemo, useState } from "react";
-import { RemoteHostIcon } from "../../components/icons/RemoteHostIcons";
-import { RemoteFetchAction, RemoteOpenCommitAction, RemotePullAction } from "../../components/actions/RemoteActions";
+import { RemoteHostIcon } from "../icons/RemoteHostIcons";
+import { RemoteFetchAction, RemoteOpenCommitAction, RemotePullAction } from "../actions/RemoteActions";
 import { RepositoryContext, NavigationContext } from "../../open-repository";
-import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../../components/actions/WorkspaceNavigationActions";
-import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../../components/actions/ToggleDetailAction";
+import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
+import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../actions/ToggleDetailAction";
 import { basename } from "path";
 
 export function CommitsView(context: RepositoryContext & NavigationContext) {

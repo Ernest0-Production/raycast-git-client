@@ -15,13 +15,9 @@ alwaysApply: true
 ```
 git-client/
 ├── package.json                    # Конфигурация расширения, команды, зависимости
-├── package-lock.json              # Зафиксированные версии зависимостей
-├── tsconfig.json                   # Конфигурация TypeScript
-├── eslint.config.js               # Конфигурация ESLint
+├── package-lock.json               # Зафиксированные версии зависимостей
 ├── README.md                       # Документация расширения
 ├── CHANGELOG.md                    # История изменений
-├── DEVELOPMENT_PLAN.md             # План разработки
-│   # ... другие конфигурационные файлы по необходимости
 │
 ├── assets/                         # Ресурсы расширения
 │   ├── extension-icon.png          # Иконка расширения
@@ -31,6 +27,14 @@ git-client/
 │   └── ...                         # Дополнительные иконки и ресурсы
 │
 └── src/                            # Исходный код
+    |
+    ├── manage-repositories.tsx     # Команда списка репозиториев
+    ├── open-repository.tsx         # Команда открытия репозитория со всеми интерфейсами (ветки, статус, коммиты, итп)
+    ├── clone-repository.tsx        # Команда клонирования репозитория
+    ├── configure-url-trackers.tsx  # Команда настройки URL трекеров в сообщениях коммитов
+    ├── manage-ai-message-prompts.tsx # Команда настройки AI промптов для генерации сообщения коммита
+    ├── ...                         # Дополнительные команды по мере развития проекта
+    |
     ├── commands/                   # Команды расширения (содержат весь UI код)
     │   ├── open-repository.tsx     # Команда открытия репозитория + UI интерфейсы
     │   ├── recent-repositories.tsx # Команда недавних репозиториев + UI
@@ -41,37 +45,42 @@ git-client/
     │   │   ├── FileActions.tsx     # Действия с файлами (stage, unstage, open)
     │   │   ├── BranchActions.tsx   # Действия с ветками (checkout, delete, merge)
     │   │   ├── CommitActions.tsx   # Действия с коммитами (cherry-pick, revert)
-    │   │   ├── RepositoryActions.tsx # Действия с репозиториями (open, delete from recent)
     │   │   └── ...                 # Дополнительные Action компоненты
-    │   ├── shared/                 # Общие UI компоненты
-    │   │   ├── LoadingView.tsx     # Компонент загрузки
-    │   │   ├── ErrorView.tsx       # Компонент отображения ошибок
-    │   │   ├── EmptyView.tsx       # Компонент пустого состояния
-    │   │   └── ...                 # Дополнительные UI компоненты
+    │   │
+    │   ├── views/                  # Переиспользуемые UI компоненты и действия
+    │   │   ├── BranchesView.tsx   # Ветки
+    │   │   ├── CommitsView.tsx    # Коммиты
+    │   │   ├── StatusView.tsx     # Статус файлов
+    │   │   └── ...                 # Дополнительные View компоненты
+    │   │
+    │   ├── icons/                  # Семантические иконки
+    │   │   ├── RemoteHostIcons.tsx # Иконки для хостов
+    │   │   ├── StatusIcons.tsx     # Иконки для статуса файлов
+    │   │   └── ...                 # Дополнительные семантические иконки
     │   └── ...                     # Другие типы компонентов по необходимости
     │
     ├── utils/                      # Утилиты (только необходимые)
-    │   ├── git-utils.ts            # Git операции через simple-git
-    │   ├── storage.ts              # Управление LocalStorage для недавних репозиториев
-    │   ├── validation.ts           # Валидация Git-репозиториев
+    │   ├── git-manager.ts          # Сервис для вызова Git команд через simple-git
+    │   ├── path-utils.ts           # Утилиты для работы с путями
+    │   ├── environment-utils.ts    # Утилиты для работы с shell окружением
+    │   ├── language-detector.ts    # Утилиты для определения языка файла
     │   └── ...                     # Дополнительные утилиты по необходимости
     │
     ├── types/                      # TypeScript типы и интерфейсы
-    │   ├── index.ts                # Основные экспорты типов
-    │   ├── repository.ts           # Типы для репозиториев
-    │   ├── git.ts                  # Типы для Git операций
-    │   ├── ui.ts                   # Типы для UI компонентов
+    │   ├── index.ts                # Модели данных специфичные для данного extension-а
+    │   ├── git-types.ts            # Модели данных специфичных для Git
     │   └── ...                     # Дополнительные типы по мере развития
     │
-    ├── hooks/                      # Кастомные React хуки
-    │   ├── useGitRepository.ts     # Хук для работы с Git репозиторием
-    │   ├── useRecentRepositories.ts # Хук для недавних репозиториев
-    │   ├── useGitStatus.ts         # Хук для статуса файлов
-    │   ├── useGitBranches.ts       # Хук для веток
-    │   ├── useGitCommits.ts        # Хук для коммитов
-    │   └── ...                     # Дополнительные хуки по необходимости
-    │
-    └── ...                         # Дополнительные папки по мере развития проекта
+    └── hooks/                      # Кастомные React хуки
+        ├── useGitRepository.ts     # Хук для работы с Git репозиторием
+        ├── useRepositoriesList.ts   # Хук для недавних репозиториев
+        ├── useGitStatus.ts         # Хук для статуса файлов
+        ├── useGitBranches.ts       # Хук для веток
+        ├── useGitCommits.ts        # Хук для коммитов
+        ├── useGitStash.ts          # Хук для stash
+        ├── useGitTags.ts           # Хук для тегов
+        ├── useGitRemotes.ts        # Хук для хостов
+        └── ...                     # Дополнительные хуки по необходимости
 ```
 
 ## Описание директорий
@@ -174,7 +183,10 @@ git-client/
 
 ### Основные
 - `@raycast/api` - Raycast API
+- `@raycast/utils` - Raycast Utils
 - `simple-git` - Git операции
+- `fast-fuzzy` - поиск по файлам и директориям
+- `nanoid` - генератор уникальных id
 - `react` - UI компоненты
 
 ### Разработка

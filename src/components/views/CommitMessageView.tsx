@@ -6,7 +6,7 @@ import { AI } from "@raycast/api";
 import { Action, ActionPanel, Form, Icon, Alert } from "@raycast/api";
 import { AiPromptPreset, useAiPromptPresets } from "../../hooks/useAiPromptPresets";
 import { AiMessagePresetEditorForm } from "../../manage-ai-message-prompts";
-import { RemoteHostIcon } from "../../components/icons/RemoteHostIcons";
+import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 import { RepositoryContext } from "../../open-repository";
 
 /**

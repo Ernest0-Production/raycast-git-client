@@ -1,9 +1,9 @@
 import { Action, ActionPanel, Icon, List } from "@raycast/api";
 import { RepositoryContext, NavigationContext } from "../../open-repository";
-import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../../components/actions/WorkspaceNavigationActions";
-import { RemoteFetchAction } from "../../components/actions/RemoteActions";
+import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
+import { RemoteFetchAction } from "../actions/RemoteActions";
 import { useMemo, useState } from "react";
-import { TagCheckoutAction, TagCopyCommitHashAction, TagCopyNameAction, TagDetailsView, TagPushAction, TagRemoveAction, TagRenameAction } from "../../components/actions/TagActions";
+import { TagCheckoutAction, TagCopyCommitHashAction, TagCopyNameAction, TagDetailsView, TagPushAction, TagRemoveAction, TagRenameAction } from "../actions/TagActions";
 import { Tag } from "../../types";
 
 export default function TagsView(context: RepositoryContext & NavigationContext) {

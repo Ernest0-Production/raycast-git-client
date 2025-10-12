@@ -1,13 +1,13 @@
 import { Action, ActionPanel, Icon, List, Toast, showToast } from "@raycast/api";
 import { useCachedState, usePromise } from "@raycast/utils";
-import { FileManagerActions } from "../../components/actions/FileActions";
+import { FileManagerActions } from "../actions/FileActions";
 import { FileHistoryAction } from "./FileHistoryView";
 import { basename, join } from "path";
 import { useMemo, useState } from "react";
 import { existsSync } from "fs";
 import { search, sortKind } from "fast-fuzzy";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
-import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../../components/actions/WorkspaceNavigationActions";
+import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
 
 const MAX_RESULTS = 60;
 

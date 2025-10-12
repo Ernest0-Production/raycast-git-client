@@ -2,7 +2,7 @@ import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast, Form,
 import { useState } from "react";
 import { Branch, MergeMode } from "../../types";
 import { usePromise } from "@raycast/utils";
-import InteractiveRebaseEditorView from "../../commands/views/InteractiveRebaseEditorView";
+import InteractiveRebaseEditorView from "../views/InteractiveRebaseEditorView";
 import { RemotesHosts } from "../../hooks/useGitRemotes";
 import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 import { NavigationContext, RepositoryContext } from "../../open-repository";

@@ -3,15 +3,15 @@ import { useMemo, useState } from "react";
 import { usePromise } from "@raycast/utils";
 import { Commit, CommitFileChange } from "../../types";
 import { useGitDiff } from "../../hooks/useGitDiff";
-import { FileManagerActions } from "../../components/actions/FileActions";
-import { FileRestoreAction } from "../../components/actions/StatusActions";
-import { CommitFileIcon } from "../../components/icons/StatusIcons";
+import { FileManagerActions } from "../actions/FileActions";
+import { FileRestoreAction } from "../actions/StatusActions";
+import { CommitFileIcon } from "../icons/StatusIcons";
 import { basename, join } from "path";
-import { CommitCopyInfoActions } from "../../components/actions/CommitActions";
+import { CommitCopyInfoActions } from "../actions/CommitActions";
 import { existsSync } from "fs";
-import { RemoteOpenCommitAction } from "../../components/actions/RemoteActions";
+import { RemoteOpenCommitAction } from "../actions/RemoteActions";
 import { RepositoryContext } from "../../open-repository";
-import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../../components/actions/ToggleDetailAction";
+import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../actions/ToggleDetailAction";
 
 export function FileHistoryAction(context: RepositoryContext & {
     filePath: string,

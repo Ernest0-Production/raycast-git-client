@@ -1,17 +1,17 @@
 import { ActionPanel, Action, List, Icon, Color, showToast, Toast } from "@raycast/api";
 import { useGitDiff } from "../../hooks/useGitDiff";
 import { Commit, CommitFileChange } from "../../types";
-import { FileManagerActions } from "../../components/actions/FileActions";
-import { CommitFileIcon } from "../../components/icons/StatusIcons";
+import { FileManagerActions } from "../actions/FileActions";
+import { CommitFileIcon } from "../icons/StatusIcons";
 import { useState, useMemo } from "react";
 import { usePromise } from "@raycast/utils";
 import { existsSync } from "fs";
 import { basename, join } from "path";
 import { RepositoryContext, NavigationContext } from "../../open-repository";
-import { WorkspaceNavigationActions } from "../../components/actions/WorkspaceNavigationActions";
-import { FileRestoreAction } from "../../components/actions/StatusActions";
+import { WorkspaceNavigationActions } from "../actions/WorkspaceNavigationActions";
+import { FileRestoreAction } from "../actions/StatusActions";
 import { FileHistoryAction } from "./FileHistoryView";
-import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../../components/actions/ToggleDetailAction";
+import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../actions/ToggleDetailAction";
 
 export function CommitDetailsView(context: RepositoryContext & NavigationContext & {
   index: number,

@@ -11,13 +11,13 @@ import {
   BranchInteractiveRebaseAction,
   BranchPushForceAction,
   BranchShowCommitsAction,
-} from "../../components/actions/BranchActions";
+} from "../actions/BranchActions";
 import { Branch, DetachedHead } from "../../types";
 import { useMemo } from "react";
-import { RemoteHostIcon } from "../../components/icons/RemoteHostIcons";
+import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
-import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../../components/actions/WorkspaceNavigationActions";
-import { RemoteFetchAction, RemotePullAction } from "../../components/actions/RemoteActions";
+import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
+import { RemoteFetchAction, RemotePullAction } from "../actions/RemoteActions";
 
 export function BranchesView(context: RepositoryContext & NavigationContext) {
   return (
