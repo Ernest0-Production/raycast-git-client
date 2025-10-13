@@ -424,7 +424,7 @@ function BranchCreateForm(context: RepositoryContext) {
         value={branchName}
         onChange={(value) => setBranchName(value.replace(/ /g, "-"))}
       />
-      {currentBranch && <Form.Description text={`From branch '${currentBranch}'`} />}
+      {currentBranch && <Form.Description text={`From branch '${currentBranch.displayName}'`} />}
     </Form>
   );
 }

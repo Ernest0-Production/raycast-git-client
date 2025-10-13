@@ -18,7 +18,7 @@ export function FileStageAction(context: RepositoryContext & { file: FileStatus 
                 title: "Mark as Resolved",
                 message: `Are you sure you want to mark "${basename(context.file.path)}" as resolved?`,
                 primaryAction: {
-                    title: "Mark as Resolved"
+                    title: "Resolved"
                 },
             });
 
