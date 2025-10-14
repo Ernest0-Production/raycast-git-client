@@ -21,12 +21,12 @@ export interface AiPromptPreset {
  */
 const DEFAULT_AI_COMMIT_PROMPT = `
 You are a helpful assistant that generates concise, clear Git commit messages.
-
 Analyze the provided git diff and generate a conventional commit message that accurately describes the changes.
 - Focus on what changed and why.
 - Use conventional commit format:
 <short title>
 <listed changes>
+- Only give the commit message, do not include any other text and markdown formatting.
 `;
 
 
@@ -39,7 +39,7 @@ export function useAiPromptPresets() {
         id: "builtin",
         name: "Built-in Prompt",
         prompt: DEFAULT_AI_COMMIT_PROMPT,
-        model: undefined
+        model: "Google_Gemini_2.5_Flash"
     }), []);
 
     const [presets, setPresets] = useCachedState<AiPromptPreset[]>("commit-message-prompts", []);

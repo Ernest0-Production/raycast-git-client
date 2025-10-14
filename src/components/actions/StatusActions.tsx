@@ -265,7 +265,8 @@ export function CommitChangesAction(context: RepositoryContext) {
                 context.commits.revalidate();
             };
             return <
-                Action title="Continue Rebase"
+                Action
+                title="Continue Rebase"
                 onAction={handleContinueRebase}
                 icon={{ source: Icon.ArrowRight, tintColor: Color.Blue }}
                 shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}

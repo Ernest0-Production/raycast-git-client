@@ -75,11 +75,25 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
       // Form a more structured and readable prompt for AI generation of commit message using selected preset
       const promptParts = [presetPrompt.prompt.trim(), ""];
 
+      if (!context.commit) {
+        promptParts.push(
+          "--------------------",
+          "GIT DIFF (staged changes):",
+          "--------------------",
+          "```",
+          diff.trim(),
+          "```",
+          "",
+          "--------------------",
+        );
+      }
+
       // If amend is enabled and we have a last commit, include it in the context
       if (amend && lastCommit) {
         promptParts.push(
+          "- Final commit message should be merged with previous amended commit message.",
           "--------------------",
-          "PREVIOUS COMMIT MESSAGE (for amend):",
+          "PREVIOUS COMMIT MESSAGE:",
           "--------------------",
           lastCommit.message.trim(),
           "",
@@ -88,18 +102,14 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
         );
       }
 
-      if (!context.commit) {
-        promptParts.push(
-          "--------------------",
-          "GIT DIFF:",
-          "--------------------",
-          diff.trim(),
-          "",
-          "--------------------",
-        );
+      const prompt = promptParts.join("\n");
+
+      if (environment.isDevelopment) {
+        prompt.split("\n").forEach((part) => {
+          console.warn(part);
+        });
       }
 
-      const prompt = promptParts.join("\n");
       const model = presetPrompt.model ? AI.Model[presetPrompt.model as keyof typeof AI.Model] : undefined;
 
       const aiResponse = AI.ask(prompt, {

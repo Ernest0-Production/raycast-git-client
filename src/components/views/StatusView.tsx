@@ -13,6 +13,8 @@ import { CommitChangesAction, ConflictAbortAction, FileDiscardAction, FileDiscar
 import { FileHistoryAction } from "./FileHistoryView";
 import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../actions/ToggleDetailAction";
 import { basename } from "path";
+import { BranchPushAction, BranchPushForceAction } from "../actions/BranchActions";
+import { RemoteFetchAction, RemotePullAction } from "../actions/RemoteActions";
 
 export function StatusView(context: RepositoryContext & NavigationContext) {
   const toggleController = useToggleDetail("Status Diff", "Changes", false);
@@ -67,12 +69,7 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
             <ConflictAbortAction {...context} />
           )}
           <ActionPanel.Section title="Workspace">
-            <Action
-              title="Refresh"
-              onAction={context.status.revalidate}
-              icon={Icon.ArrowClockwise}
-              shortcut={{ modifiers: ["cmd"], key: "r" }}
-            />
+            <RefreshStatusAction {...context} />
           </ActionPanel.Section>
 
           <WorkspaceNavigationActions {...context} />
@@ -86,13 +83,8 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
           icon={Icon.ExclamationMark}
           actions={
             <ActionPanel>
-              <ActionPanel.Section title="Workspace">
-                <Action
-                  title="Refresh"
-                  onAction={context.status.revalidate}
-                  icon={Icon.ArrowClockwise}
-                  shortcut={{ modifiers: ["cmd"], key: "r" }}
-                />
+              <ActionPanel.Section>
+                <RefreshStatusAction {...context} />
               </ActionPanel.Section>
 
               <ToggleDetailAction controller={toggleController} />
@@ -107,12 +99,9 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
           icon={Icon.NewDocument}
           actions={
             <ActionPanel>
-              <Action
-                title="Refresh"
-                onAction={context.status.revalidate}
-                icon={Icon.ArrowClockwise}
-                shortcut={{ modifiers: ["cmd"], key: "r" }}
-              />
+              <ActionPanel.Section>
+                <RefreshStatusAction {...context} />
+              </ActionPanel.Section>
               <ToggleDetailAction controller={toggleController} />
 
               <ActionPanel.Section title="Patch">
@@ -122,6 +111,23 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
               {context.status.data && (
                 <ConflictAbortAction {...context} />
               )}
+
+              <ActionPanel.Section title="History">
+                <RemotePullAction {...context} />
+                {context.branches.data.currentBranch && context.branches.data.currentBranch.type === "current" && (
+                  <>
+                    <BranchPushAction
+                      branch={context.branches.data.currentBranch}
+                      {...context}
+                    />
+                    <BranchPushForceAction
+                      branch={context.branches.data.currentBranch}
+                      {...context}
+                    />
+                  </>
+                )}
+                <RemoteFetchAction {...context} />
+              </ActionPanel.Section>
 
               <WorkspaceNavigationActions {...context} />
             </ActionPanel>
@@ -241,18 +247,41 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
 
           <StashCreateAction {...context} />
 
+          <ActionPanel.Section title="History">
+            <RemotePullAction {...context} />
+            {context.branches.data.currentBranch && context.branches.data.currentBranch.type === "current" && (
+              <>
+                <BranchPushAction
+                  branch={context.branches.data.currentBranch}
+                  {...context}
+                />
+                <BranchPushForceAction
+                  branch={context.branches.data.currentBranch}
+                  {...context}
+                />
+              </>
+            )}
+            <RemoteFetchAction {...context} />
+          </ActionPanel.Section>
+
           <ActionPanel.Section title="Workspace">
-            <Action
-              title="Refresh"
-              onAction={context.status.revalidate}
-              icon={Icon.ArrowClockwise}
-              shortcut={{ modifiers: ["cmd"], key: "r" }}
-            />
+            <RefreshStatusAction {...context} />
           </ActionPanel.Section>
 
           <WorkspaceNavigationActions {...context} />
         </ActionPanel>
       }
+    />
+  );
+}
+
+function RefreshStatusAction(context: RepositoryContext) {
+  return (
+    <Action
+      title="Refresh"
+      onAction={context.status.revalidate}
+      icon={Icon.ArrowClockwise}
+      shortcut={{ modifiers: ["cmd"], key: "r" }}
     />
   );
 }
