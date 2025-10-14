@@ -8,6 +8,8 @@ interface UseGitDiffProps {
   execute?: boolean;
 }
 
+const MAX_DIFF_LINES = 200;
+
 /**
  * Hook for fetching the diff for a file or commit with smart caching.
  * - Commit diffs are cached long-term (commits are immutable)
@@ -27,7 +29,7 @@ export function useGitDiff({ gitManager, options, execute = true }: UseGitDiffPr
 
       if (rawDiff) {
         const lines = rawDiff.split("\n");
-        if (lines.length > 200) {
+        if (lines.length > MAX_DIFF_LINES) {
           return [
             "```text",
             "⚠️ Diff is too large to display (more than 200 lines).",

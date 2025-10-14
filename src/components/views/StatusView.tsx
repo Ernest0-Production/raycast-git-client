@@ -22,21 +22,21 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
   const unstagedFiles = context.status.data?.files ? context.status.data.files.filter((f) => f.status === "unstaged" || f.status === "untracked") : [];
 
   const navigationTitle = useMemo(() => {
-    if (context.status.data?.conflict) {
-      switch (context.status.data.conflict.type) {
-        case "rebase":
-          return `⚠️ Rebase Conflict (${context.status.data.conflict.current}/${context.status.data.conflict.total})`;
-        case "merge":
-          return `⚠️ Merge Conflict (${context.status.data.conflict.current}/${context.status.data.conflict.total})`;
-        case "squash":
-          return `Squashing Commit`;
-        default:
-          return "⚠️ Conflict";
-      }
-    } else {
-      return "Repository Status";
+    switch (context.status.data.mode.kind) {
+      case "rebase":
+        return `⚠️ Rebase ${context.status.data.mode.conflict ? "Conflict" : "Progress"} (${context.status.data.mode.current}/${context.status.data.mode.total})`;
+      case "merge":
+        return `⚠️ Merge Conflict`;
+      case "squash":
+        return `Squashing Commit`;
+      case "cherryPick":
+        return `⚠️ Cherry Pick Conflict`;
+      case "revert":
+        return `⚠️ Revert Conflict`;
+      case "regular":
+        return "Repository Status";
     }
-  }, [context.status.data?.conflict]);
+  }, [context.status.data.mode.kind]);
 
   return (
     <List

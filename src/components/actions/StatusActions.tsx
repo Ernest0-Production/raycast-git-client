@@ -221,91 +221,111 @@ export function FileDiscardAllAction(context: RepositoryContext) {
  * Action to commit changes or continue a rebase/merge.
  */
 export function CommitChangesAction(context: RepositoryContext) {
-    const hasStagedFiles = context.status.data?.files.some((f) => f.status === "staged");
     const hasConflictedFiles = context.status.data?.files.some((f) => f.type === "conflicted");
-
-    if (context.status.data?.conflict) {
-        if (hasConflictedFiles) {
-            return null; // Don't show if there are still conflicts
-        }
-
-        switch (context.status.data.conflict.type) {
-            case "rebase":
-                const handleContinueRebase = async () => {
-                    try { await context.gitManager.continueRebase(); }
-                    // Git error is already shown by GitManager
-                    catch (error) { }
-                    context.status.revalidate();
-                    context.branches.revalidate();
-                    context.commits.revalidate();
-                };
-                return <
-                    Action title="Continue Rebase"
-                    onAction={handleContinueRebase}
-                    icon={{ source: Icon.ArrowRight, tintColor: Color.Blue }}
-                    shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
-                />;
-
-            case "merge":
-                const handleCommitMerge = async () => {
-                    try { await context.gitManager.commitMerge(); }
-                    catch (error) { }
-                    context.status.revalidate();
-                    context.branches.revalidate();
-                    context.commits.revalidate();
-                };
-
-                return <Action
-                    title="Commit Merge"
-                    onAction={handleCommitMerge}
-                    icon={{ source: Icon.Check, tintColor: Color.Green }}
-                    shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
-                />;
-
-            case "squash":
-                // It should be regular commit
-                break;
-
-            case undefined:
-                return null;
-        }
+    if (hasConflictedFiles) {
+        return null; // Don't show if there are still conflicts
     }
 
-    if (!context.branches.data.currentBranch) return undefined;
+    switch (context.status.data.mode.kind) {
+        case "regular":
+        case "squash":
+            const hasStagedFiles = context.status.data?.files.some((f) => f.status === "staged");
+            if (!context.branches.data.currentBranch) return undefined;
 
-    return (
-        <>
-            {hasStagedFiles &&
-                <Action.Push
-                    title="Commit Staged Changes"
-                    icon={{ source: Icon.Checkmark, tintColor: Color.Green }}
-                    target={<CommitMessageForm {...context} />}
-                    shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
-                />
-            }
-            <Action.Push
-                title="Commit All Changes"
-                icon={{ source: Icon.Checkmark, tintColor: Color.Yellow }}
-                target={<CommitMessageForm {...context} />}
-                shortcut={{ modifiers: ["cmd", "shift", "opt"], key: "enter" }}
-                onPush={async () => {
-                    await context.gitManager.stageAll();
-                    context.status.revalidate();
-                }}
-            />
-        </>
-    );
+            return (
+                <>
+                    {hasStagedFiles &&
+                        <Action.Push
+                            title="Commit Staged Changes"
+                            icon={{ source: Icon.Checkmark, tintColor: Color.Green }}
+                            target={<CommitMessageForm {...context} />}
+                            shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
+                        />
+                    }
+                    <Action.Push
+                        title="Commit All Changes"
+                        icon={{ source: Icon.Checkmark, tintColor: Color.Yellow }}
+                        target={<CommitMessageForm {...context} />}
+                        shortcut={{ modifiers: ["cmd", "shift", "opt"], key: "enter" }}
+                        onPush={async () => {
+                            await context.gitManager.stageAll();
+                            context.status.revalidate();
+                        }}
+                    />
+                </>
+            );
+
+        case "rebase":
+            const handleContinueRebase = async () => {
+                try { await context.gitManager.continueRebase(); }
+                // Git error is already shown by GitManager
+                catch (error) { }
+                context.status.revalidate();
+                context.branches.revalidate();
+                context.commits.revalidate();
+            };
+            return <
+                Action title="Continue Rebase"
+                onAction={handleContinueRebase}
+                icon={{ source: Icon.ArrowRight, tintColor: Color.Blue }}
+                shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
+            />;
+
+        case "merge":
+            const handleCommitMerge = async () => {
+                try { await context.gitManager.commitMerge(); }
+                catch (error) { }
+                context.status.revalidate();
+                context.branches.revalidate();
+                context.commits.revalidate();
+            };
+
+            return <Action
+                title="Commit Merge"
+                onAction={handleCommitMerge}
+                icon={{ source: Icon.Check, tintColor: Color.Green }}
+                shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
+            />;
+
+        case "cherryPick":
+            const handleCommitCherryPick = async () => {
+                try { await context.gitManager.continueCherryPick(); }
+                catch (error) { }
+                context.status.revalidate();
+                context.branches.revalidate();
+                context.commits.revalidate();
+            };
+
+            return <Action
+                title="Continue Cherry Pick"
+                onAction={handleCommitCherryPick}
+                icon={{ source: Icon.Check, tintColor: Color.Green }}
+                shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
+            />;
+
+        case "revert":
+            const handleCommitRevert = async () => {
+                try { await context.gitManager.continueRevert(); }
+                catch (error) { }
+                context.status.revalidate();
+                context.branches.revalidate();
+                context.commits.revalidate();
+            };
+
+            return <Action
+                title="Continue Revert"
+                onAction={handleCommitRevert}
+                icon={{ source: Icon.Check, tintColor: Color.Green }}
+                shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
+            />;
+    }
 }
 
 /**
  * Action to abort a rebase or merge.
  */
 export function ConflictAbortAction(context: RepositoryContext) {
-    if (!context.status.data?.conflict) {
-        return null;
-    }
-
-    switch (context.status.data.conflict?.type) {
+    switch (context.status.data.mode.kind) {
         case "rebase":
             return (
                 <Action
@@ -329,8 +349,8 @@ export function ConflictAbortAction(context: RepositoryContext) {
                     style={Action.Style.Destructive}
                 />
             );
+
         case "merge":
-        case undefined:
             return (
                 <Action
                     title="Abort Merge"
@@ -353,5 +373,34 @@ export function ConflictAbortAction(context: RepositoryContext) {
                     style={Action.Style.Destructive}
                 />
             );
+
+        case "cherryPick":
+            return (
+                <Action
+                    title="Abort Cherry Pick"
+                    onAction={async () => {
+                        await context.gitManager.abortCherryPick();
+                        context.status.revalidate();
+                    }}
+                    icon={Icon.XMarkCircleHalfDash}
+                    style={Action.Style.Destructive}
+                />
+            );
+
+        case "revert":
+            return (
+                <Action
+                    title="Abort Revert"
+                    onAction={async () => {
+                        await context.gitManager.abortRevert();
+                        context.status.revalidate();
+                    }}
+                    icon={Icon.XMarkCircleHalfDash}
+                    style={Action.Style.Destructive}
+                />
+            );
+        case "squash":
+        case "regular":
+            return undefined;
     }
 }

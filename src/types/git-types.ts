@@ -261,13 +261,23 @@ export interface FileChangeStats {
 /**
  * Represents the state of a git conflict.
  */
-export interface ConflictState {
-  type: "rebase" | "merge" | "squash" | undefined;
-  /** The current step of the conflict resolution. */
-  current: number;
-  /** The total number of steps in the conflict resolution. */
-  total: number;
-}
+export type StatusMode =
+  { kind: "regular" }
+  | { kind: "rebase", conflict: boolean, current: number, total: number }
+  | { kind: "merge" }
+  | { kind: "squash" }
+  | { kind: "cherryPick" }
+  | { kind: "revert" }
+
+// /** The type of the conflict. */
+// type: "rebase" | "merge" | "squash" | "cherryPick" | "revert";
+// /** The description of the conflict. */
+// description: string;
+// /** The current step of the conflict resolution. */
+// current: number;
+// /** The total number of steps in the conflict resolution. */
+// total: number;
+// }
 
 /**
  * Represents the status of the repository.
@@ -278,7 +288,7 @@ export interface StatusState {
   /** An array of file statuses. */
   files: FileStatus[];
   /** Information about an ongoing conflict, if any. */
-  conflict?: ConflictState;
+  mode: StatusMode;
 }
 
 /**

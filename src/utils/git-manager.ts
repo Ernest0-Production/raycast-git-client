@@ -2,7 +2,7 @@ import { CleanOptions, DiffNameStatus, DiffResult, DiffResultBinaryFile, DiffRes
 import { showToast, Toast, getPreferenceValues, Alert, confirmAlert } from "@raycast/api";
 import { readFileSync, writeFileSync, mkdtempSync, chmodSync, rmSync, existsSync } from "fs";
 import { tmpdir } from "os";
-import { Branch, FileStatus, Commit, Stash, BranchesState, DetachedHead, CommitFileChange, Preferences, RebasePlanItem, FileChangeStats, StatusState, ConflictState, MergeMode, PatchScope, RepositoryCloningProcess, RepositoryCloningState, Tag } from "../types";
+import { Branch, FileStatus, Commit, Stash, BranchesState, DetachedHead, CommitFileChange, Preferences, RebasePlanItem, FileChangeStats, StatusState, MergeMode, PatchScope, RepositoryCloningProcess, RepositoryCloningState, Tag, StatusMode } from "../types";
 import { basename, join } from "path";
 import { promises as fs } from "fs";
 import { showFailureToast } from "@raycast/utils";
@@ -248,34 +248,42 @@ export class GitManager {
       files.push(...fileEntries);
     }
 
-    const rebaseMergePath = join(this.repoPath, ".git", "rebase-merge");
+    const interactiveRebaseMergePath = join(this.repoPath, ".git", "rebase-merge");
+    const nonInteractiveRebaseMergePath = join(this.repoPath, ".git", "rebase-apply");
     const mergeHeadPath = join(this.repoPath, ".git", "MERGE_HEAD");
     const squashMessagePath = join(this.repoPath, ".git", "SQUASH_MSG");
+    const cherryPickHeadPath = join(this.repoPath, ".git", "CHERRY_PICK_HEAD");
+    const revertHeadPath = join(this.repoPath, ".git", "REVERT_HEAD");
 
-    let conflict: ConflictState | undefined;
+    let mode: StatusMode;
 
-    if (existsSync(rebaseMergePath)) {
-      const msgNumContent = await fs.readFile(
-        join(rebaseMergePath, "msgnum"),
-        "utf-8"
-      );
-      const endContent = await fs.readFile(
-        join(rebaseMergePath, "end"),
-        "utf-8"
-      );
-
-      conflict = {
-        type: "rebase",
-        current: parseInt(msgNumContent.trim()) || 0,
-        total: parseInt(endContent.trim()) || 0,
+    if (existsSync(interactiveRebaseMergePath)) {
+      mode = {
+        kind: "rebase",
+        conflict: existsSync(join(interactiveRebaseMergePath, "conflict")),
+        current: await fs.readFile(join(interactiveRebaseMergePath, "msgnum"), "utf-8").then(content => parseInt(content.trim()) || 0),
+        total: await fs.readFile(join(interactiveRebaseMergePath, "end"), "utf-8").then(content => parseInt(content.trim()) || 0),
+      };
+    } else if (existsSync(nonInteractiveRebaseMergePath)) {
+      mode = {
+        kind: "rebase",
+        conflict: existsSync(join(nonInteractiveRebaseMergePath, "conflict")),
+        current: await fs.readFile(join(nonInteractiveRebaseMergePath, "next"), "utf-8").then(content => parseInt(content.trim()) || 0),
+        total: await fs.readFile(join(nonInteractiveRebaseMergePath, "last"), "utf-8").then(content => parseInt(content.trim()) || 0),
       };
     } else if (existsSync(mergeHeadPath)) {
-      conflict = { type: "merge", current: 0, total: 1, };
+      mode = { kind: "merge" };
+    } else if (existsSync(cherryPickHeadPath)) {
+      mode = { kind: "cherryPick" };
+    } else if (existsSync(revertHeadPath)) {
+      mode = { kind: "revert" };
     } else if (existsSync(squashMessagePath)) {
-      conflict = { type: "squash", current: 0, total: 1, };
+      mode = { kind: "squash" };
+    } else {
+      mode = { kind: "regular" };
     }
 
-    return { branch: status.current, files, conflict };
+    return { branch: status.current, files, mode };
   }
 
   /**
@@ -1189,6 +1197,34 @@ __REBASE_TODO__
     await this.git
       .env("GIT_EDITOR", "true")
       .rebase(["--continue"]);
+  }
+
+  /**
+   * Continues an ongoing cherry-pick.
+   */
+  async continueCherryPick(): Promise<void> {
+    await this.git.rebase(["--continue"]);
+  }
+
+  /**
+   * Aborts an ongoing cherry-pick.
+   */
+  async abortCherryPick(): Promise<void> {
+    await this.git.rebase(["--abort"]);
+  }
+
+  /**
+   * Continues an ongoing revert.
+   */
+  async continueRevert(): Promise<void> {
+    await this.git.raw(["revert", "--continue"]);
+  }
+
+  /**
+   * Aborts an ongoing revert.
+   */
+  async abortRevert(): Promise<void> {
+    await this.git.raw(["revert", "--abort"]);
   }
 
   /**

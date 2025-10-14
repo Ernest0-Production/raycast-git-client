@@ -27,7 +27,7 @@ export function FileHistoryAction(context: RepositoryContext & {
             target={
                 <FileHistoryView {...context} />
             }
-            shortcut={{ modifiers: ["cmd", "shift"], key: "h" }}
+            shortcut={{ modifiers: ["cmd", "opt"], key: "h" }}
         />
     );
 }
