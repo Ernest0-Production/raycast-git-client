@@ -4,12 +4,12 @@ import { FileManagerActions } from "../actions/FileActions";
 import { FileStatusIcon } from "../icons/StatusIcons";
 import { StashCreateAction } from "../actions/StashActions";
 import { FileStatus } from "../../types";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { existsSync } from "fs";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
 import { PatchApplyAction, PatchCreateAction } from "../actions/PatchActions";
-import { CommitChangesAction, ConflictAbortAction, FileDiscardAction, FileDiscardAllAction, FileStageAction, FileStageAllAction, FileUnstageAction, FileUnstageAllAction } from "../actions/StatusActions";
+import { CommitChangesAction, ConflictAbortAction, FileDiscardAction, FileDiscardAllAction, FileResolveConflictAction, FileStageAction, FileStageAllAction, FileUnstageAction, FileUnstageAllAction } from "../actions/StatusActions";
 import { FileHistoryAction } from "./FileHistoryView";
 import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../actions/ToggleDetailAction";
 import { basename } from "path";
@@ -207,6 +207,9 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
             {/* Actions for staged files */}
             {context.file.status === "staged" && (
               <>
+                {context.file.type === "conflicted" && (
+                  <FileResolveConflictAction {...context} />
+                )}
                 <FileUnstageAction {...context} />
                 <ToggleDetailAction controller={context.toggleController} />
                 <FileManagerActions filePath={context.file.path} />
@@ -216,6 +219,9 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
             {/* Actions for unstaged/untracked files */}
             {(context.file.status === "unstaged" || context.file.status === "untracked") && (
               <>
+                {context.file.type === "conflicted" && (
+                  <FileResolveConflictAction {...context} />
+                )}
                 <FileStageAction {...context} />
                 <ToggleDetailAction controller={context.toggleController} />
                 <FileManagerActions filePath={context.file.path} />

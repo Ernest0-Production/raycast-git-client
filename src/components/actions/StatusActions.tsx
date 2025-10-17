@@ -3,8 +3,27 @@ import { RepositoryContext } from "../../open-repository";
 import { confirmAlert } from "@raycast/api";
 import { Commit, FileStatus } from "../../types";
 import { CommitMessageForm } from "../views/CommitMessageView";
+import FileMergeResolveView from "../views/FileMergeResolveView";
 import { existsSync } from "fs";
 import { basename } from "path";
+
+/**
+ * Action for resolving conflicts in a file.
+ */
+export function FileResolveConflictAction(context: RepositoryContext & { file: FileStatus }) {
+    if (context.file.type !== "conflicted") {
+        return null;
+    }
+
+    return (
+        <Action.Push
+            title="Resolve Conflicts"
+            icon={{ source: Icon.LevelMeter, tintColor: Color.Orange }}
+            target={<FileMergeResolveView {...context} filePath={context.file.path} />}
+            shortcut={{ modifiers: ["cmd"], key: "m" }}
+        />
+    );
+}
 
 /**
  * Action for staging a file.

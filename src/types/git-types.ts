@@ -309,3 +309,35 @@ export enum PatchScope {
   STAGED = "staged",
   UNSTAGED = "unstaged",
 }
+
+/**
+ * Represents a single conflict segment in a file.
+ */
+export interface ConflictSegment {
+  /** Unique identifier for the segment. */
+  id: string;
+  /** Line number where the conflict starts (1-based). */
+  startLine: number;
+  /** Line number where the conflict ends (1-based). */
+  endLine: number;
+  /** Content from the current branch (HEAD). */
+  currentContent: string;
+  /** Content from the incoming branch (merge/rebase source). */
+  incomingContent: string;
+  /** Label for the current version (e.g., "HEAD" or branch name). */
+  currentLabel: string;
+  /** Label for the incoming version (e.g., branch name or commit hash). */
+  incomingLabel: string;
+  /** The resolution choice: "current", "incoming", or null if not resolved. */
+  resolution: "current" | "incoming" | null;
+}
+
+/**
+ * Represents all conflicts in a file.
+ */
+export interface FileConflicts {
+  /** The file path. */
+  filePath: string;
+  /** All conflict segments in the file. */
+  segments: ConflictSegment[];
+}
