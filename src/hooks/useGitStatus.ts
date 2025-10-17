@@ -18,7 +18,7 @@ export function useGitStatus(gitManager: GitManager): RepositoryContext["status"
       initialData: {
         branch: null,
         files: [],
-        conflict: undefined
+        mode: { kind: "regular" }
       } as StatusState
     }
   ) as RepositoryContext["status"];
