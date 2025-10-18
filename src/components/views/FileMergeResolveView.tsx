@@ -86,22 +86,6 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
           ))}
         </List.Section>
       )}
-
-      {allResolved && segments.length > 0 && (
-        <List.Item
-          title="Apply Resolutions"
-          icon={{ source: Icon.CheckCircle, tintColor: Color.Green }}
-          actions={
-            <ActionPanel>
-              <Action
-                title="Apply Resolutions"
-                icon={{ source: Icon.Check, tintColor: Color.Green }}
-                onAction={applyResolutions}
-              />
-            </ActionPanel>
-          }
-        />
-      )}
     </List>
   );
 }
