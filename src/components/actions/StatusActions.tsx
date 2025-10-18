@@ -20,7 +20,6 @@ export function FileResolveConflictAction(context: RepositoryContext & { file: F
             title="Resolve Conflicts"
             icon={{ source: Icon.LevelMeter, tintColor: Color.Orange }}
             target={<FileMergeResolveView {...context} filePath={context.file.path} />}
-            shortcut={{ modifiers: ["cmd"], key: "m" }}
         />
     );
 }

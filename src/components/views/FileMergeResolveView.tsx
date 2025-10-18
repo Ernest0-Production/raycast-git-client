@@ -1,43 +1,21 @@
 import { Action, ActionPanel, Alert, Color, confirmAlert, Icon, List, showToast, Toast, useNavigation } from "@raycast/api";
-import { useEffect, useState } from "react";
-import { ConflictSegment, FileConflicts } from "../../types";
-import { parseConflictedFile, applyConflictResolutions } from "../../utils/conflict-parser";
+import { useMemo } from "react";
+import { ConflictSegment } from "../../types";
+import { useConflictResolver } from "../../hooks/useConflictResolver";
 import { RepositoryContext } from "../../open-repository";
-import { writeFileSync } from "fs";
 import { basename } from "path";
 
 export default function FileMergeResolveView(context: RepositoryContext & { filePath: string }) {
   const { pop } = useNavigation();
-  const [isLoading, setIsLoading] = useState(true);
-  const [conflicts, setConflicts] = useState<FileConflicts | null>(null);
-  const [segments, setSegments] = useState<ConflictSegment[]>([]);
-
-  useEffect(() => {
-    try {
-      setIsLoading(true);
-      const parsed = parseConflictedFile(context.filePath);
-      setConflicts(parsed);
-      setSegments(parsed.segments);
-    } catch (error) {
-      showToast({
-        style: Toast.Style.Failure,
-        title: "Failed to parse conflicts",
-        message: error instanceof Error ? error.message : "Unknown error",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [context.filePath]);
-
-  const setResolution = (segmentId: string, resolution: "current" | "incoming") => {
-    setSegments((prev) =>
-      prev.map((seg) =>
-        seg.id === segmentId ? { ...seg, resolution } : seg
-      )
-    );
-  };
-
-  const allResolved = segments.every((seg) => seg.resolution !== null);
+  const {
+    conflicts,
+    segments,
+    isLoading,
+    error,
+    resolveSegment,
+    applyResolution,
+    allResolved,
+  } = useConflictResolver(context.filePath);
 
   const applyResolutions = async () => {
     const confirmed = await confirmAlert({
@@ -52,8 +30,7 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
     if (!confirmed) return;
 
     try {
-      const resolvedContent = applyConflictResolutions(context.filePath, segments);
-      writeFileSync(context.filePath, resolvedContent, "utf-8");
+      applyResolution();
 
       await showToast({
         style: Toast.Style.Success,
@@ -63,22 +40,22 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
 
       context.status.revalidate();
       pop();
-    } catch (error) {
+    } catch (err) {
       showToast({
         style: Toast.Style.Failure,
         title: "Failed to apply resolutions",
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: err instanceof Error ? err.message : "Unknown error",
       });
     }
   };
 
-  const getSegmentTitle = (segment: ConflictSegment): string => {
-    // Get first non-empty line from current or incoming content
-    const currentFirstLine = segment.currentContent.split("\n").find((line) => line.trim() !== "");
-    const incomingFirstLine = segment.incomingContent.split("\n").find((line) => line.trim() !== "");
-    
-    return currentFirstLine || incomingFirstLine || "Empty conflict";
-  };
+  if (error) {
+    showToast({
+      style: Toast.Style.Failure,
+      title: "Failed to parse conflicts",
+      message: error,
+    });
+  }
 
   return (
     <List
@@ -103,8 +80,7 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
               segment={segment}
               index={index + 1}
               totalSegments={segments.length}
-              title={getSegmentTitle(segment)}
-              onSetResolution={setResolution}
+              onSetResolution={resolveSegment}
               onApplyAll={allResolved ? applyResolutions : undefined}
             />
           ))}
@@ -113,7 +89,7 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
 
       {allResolved && segments.length > 0 && (
         <List.Item
-          title="✅ All conflicts resolved"
+          title="Apply Resolutions"
           icon={{ source: Icon.CheckCircle, tintColor: Color.Green }}
           actions={
             <ActionPanel>
@@ -121,7 +97,6 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
                 title="Apply Resolutions"
                 icon={{ source: Icon.Check, tintColor: Color.Green }}
                 onAction={applyResolutions}
-                shortcut={{ modifiers: ["cmd"], key: "enter" }}
               />
             </ActionPanel>
           }
@@ -135,25 +110,31 @@ function ConflictSegmentItem({
   segment,
   index,
   totalSegments,
-  title,
   onSetResolution,
   onApplyAll,
 }: {
   segment: ConflictSegment;
   index: number;
   totalSegments: number;
-  title: string;
   onSetResolution: (segmentId: string, resolution: "current" | "incoming") => void;
   onApplyAll?: () => void;
 }) {
   const isResolved = segment.resolution !== null;
 
-  const getIcon = () => {
+  const title = useMemo(() => {
+    // Get first non-empty line from current or incoming content
+    const currentFirstLine = segment.currentContent.split("\n").find((line) => line.trim() !== "");
+    const incomingFirstLine = segment.incomingContent.split("\n").find((line) => line.trim() !== "");
+    
+    return currentFirstLine || incomingFirstLine || "Empty conflict";
+  }, [segment.currentContent, segment.incomingContent]);
+
+  const icon = useMemo(() => {
     if (!isResolved) {
       return { source: Icon.ExclamationMark, tintColor: Color.Orange };
     }
     return { source: Icon.CheckCircle, tintColor: Color.Green };
-  };
+  }, [isResolved]);
 
   const formatMarkdownContent = (content: string, label: string) => {
     // Trim empty lines from start and end
@@ -176,12 +157,7 @@ function ConflictSegmentItem({
   return (
     <List.Item
       title={title}
-      subtitle={isResolved ? `✓ Resolved: ${segment.resolution === "current" ? segment.currentLabel : segment.incomingLabel}` : "Not resolved"}
-      icon={getIcon()}
-      accessories={[
-        { text: `Conflict ${index}/${totalSegments}` },
-        { text: `Lines ${segment.startLine}-${segment.endLine}` },
-      ]}
+      icon={icon}
       detail={
         <List.Item.Detail
           markdown={detailMarkdown}
@@ -194,13 +170,13 @@ function ConflictSegmentItem({
               title={`Select ${segment.currentLabel}`}
               icon={{ source: Icon.ChevronUp, tintColor: Color.Blue }}
               onAction={() => onSetResolution(segment.id, "current")}
-              shortcut={{ modifiers: ["cmd"], key: "1" }}
+              shortcut={{ modifiers: [], key: "[" }}
             />
             <Action
               title={`Select ${segment.incomingLabel}`}
               icon={{ source: Icon.ChevronDown, tintColor: Color.Purple }}
               onAction={() => onSetResolution(segment.id, "incoming")}
-              shortcut={{ modifiers: ["cmd"], key: "2" }}
+              shortcut={{ modifiers: [], key: "]" }}
             />
           </ActionPanel.Section>
 
@@ -210,7 +186,6 @@ function ConflictSegmentItem({
                 title="Apply All Resolutions"
                 icon={{ source: Icon.Check, tintColor: Color.Green }}
                 onAction={onApplyAll}
-                shortcut={{ modifiers: ["cmd"], key: "enter" }}
               />
             </ActionPanel.Section>
           )}

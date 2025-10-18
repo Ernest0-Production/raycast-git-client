@@ -207,9 +207,6 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
             {/* Actions for staged files */}
             {context.file.status === "staged" && (
               <>
-                {context.file.type === "conflicted" && (
-                  <FileResolveConflictAction {...context} />
-                )}
                 <FileUnstageAction {...context} />
                 <ToggleDetailAction controller={context.toggleController} />
                 <FileManagerActions filePath={context.file.path} />

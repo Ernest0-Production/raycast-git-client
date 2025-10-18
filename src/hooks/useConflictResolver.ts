@@ -1,18 +1,12 @@
-import { readFileSync } from "fs";
+import { useEffect, useState } from "react";
 import { ConflictSegment, FileConflicts } from "../types";
+import { readFileSync, writeFileSync } from "fs";
 import { nanoid } from "nanoid";
 
 /**
  * Parses a conflicted file and extracts all conflict segments.
- * 
- * Git conflict markers format:
- * <<<<<<< HEAD (or branch name)
- * current content
- * =======
- * incoming content
- * >>>>>>> branch-name (or commit hash)
  */
-export function parseConflictedFile(filePath: string): FileConflicts {
+function parseConflictedFile(filePath: string): FileConflicts {
   const fileContent = readFileSync(filePath, "utf-8");
   const lines = fileContent.split("\n");
   const segments: ConflictSegment[] = [];
@@ -23,7 +17,7 @@ export function parseConflictedFile(filePath: string): FileConflicts {
 
     // Look for conflict start marker
     if (line.startsWith("<<<<<<<")) {
-      const startLine = i + 1; // Line numbers are 1-based
+      const startLine = i + 1;
       const currentLabel = line.replace(/^<{7}\s*/, "").trim() || "HEAD";
 
       // Find the separator
@@ -72,7 +66,7 @@ export function parseConflictedFile(filePath: string): FileConflicts {
 /**
  * Applies conflict resolutions to a file and returns the resolved content.
  */
-export function applyConflictResolutions(filePath: string, segments: ConflictSegment[]): string {
+function applyConflictResolutions(filePath: string, segments: ConflictSegment[]): string {
   const fileContent = readFileSync(filePath, "utf-8");
   const lines = fileContent.split("\n");
 
@@ -133,4 +127,63 @@ export function applyConflictResolutions(filePath: string, segments: ConflictSeg
   }
 
   return resolvedLines.join("\n");
+}
+
+/**
+ * Custom hook for managing conflict resolution in a file.
+ * 
+ * @param filePath - Path to the conflicted file
+ * @returns Object containing:
+ *   - conflicts: Parsed conflict data
+ *   - segments: Array of conflict segments with resolution state
+ *   - isLoading: Loading state
+ *   - error: Error message if parsing failed
+ *   - resolveSegment: Function to set resolution for a segment
+ *   - applyResolution: Function to write resolved content to file
+ *   - allResolved: Boolean indicating if all conflicts are resolved
+ */
+export function useConflictResolver(filePath: string) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [conflicts, setConflicts] = useState<FileConflicts | null>(null);
+  const [segments, setSegments] = useState<ConflictSegment[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const parsed = parseConflictedFile(filePath);
+      setConflicts(parsed);
+      setSegments(parsed.segments);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [filePath]);
+
+  const resolveSegment = (segmentId: string, resolution: "current" | "incoming") => {
+    setSegments((prev) =>
+      prev.map((seg) =>
+        seg.id === segmentId ? { ...seg, resolution } : seg
+      )
+    );
+  };
+
+  const applyResolution = () => {
+    const resolvedContent = applyConflictResolutions(filePath, segments);
+    writeFileSync(filePath, resolvedContent, "utf-8");
+  };
+
+  const allResolved = segments.every((seg) => seg.resolution !== null);
+
+  return {
+    conflicts,
+    segments,
+    isLoading,
+    error,
+    resolveSegment,
+    applyResolution,
+    allResolved,
+  };
 }
