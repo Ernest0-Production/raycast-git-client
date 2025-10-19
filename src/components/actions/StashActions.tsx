@@ -1,6 +1,6 @@
 import { ActionPanel, Action, Icon, confirmAlert, Alert, Form, useNavigation } from "@raycast/api";
 import { useState } from "react";
-import { FileStatus, PatchScope, Stash } from "../../types";
+import { FileStatus, StashScope, Stash } from "../../types";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { basename } from "path";
 
@@ -74,80 +74,36 @@ export function StashDropAction(context: RepositoryContext & NavigationContext &
   );
 }
 
-export function StashCreateAction(context: RepositoryContext) {
+export function StashCreateAction(context: RepositoryContext & { file?: FileStatus }) {
   return (
     <ActionPanel.Submenu
       title="Create Stash"
       icon={Icon.Bookmark}
       shortcut={{ modifiers: ["cmd"], key: "s" }}
     >
+      {context.file && (
+        <Action.Push
+          title={`This File (${basename(context.file.relativePath)})`}
+          target={<StashCreateForm scope={{ filePath: context.file.relativePath }} {...context} />}
+        />
+      )}
       <Action.Push
         title="All Changes"
-        target={<StashCreateForm scope={PatchScope.ALL} {...context} />}
+        target={<StashCreateForm scope="all" {...context} />}
       />
       <Action.Push
         title="Only Staged"
-        target={<StashCreateForm scope={PatchScope.STAGED} {...context} />}
+        target={<StashCreateForm scope="staged" {...context} />}
       />
       <Action.Push
         title="Only Unstaged"
-        target={<StashCreateForm scope={PatchScope.UNSTAGED} {...context} />}
+        target={<StashCreateForm scope="unstaged" {...context} />}
       />
     </ActionPanel.Submenu>
   );
 }
 
-/**
- * Action for creating a stash for a specific file.
- */
-export function StashCreateForFileAction(context: RepositoryContext & { file: FileStatus }) {
-  return (
-    <Action.Push
-      title="Stash This File"
-      icon={Icon.Bookmark}
-      target={<StashCreateForFileForm {...context} />}
-    />
-  );
-}
-
-function StashCreateForFileForm(context: RepositoryContext & { file: FileStatus }) {
-  const { pop } = useNavigation();
-  const [message, setMessage] = useState("");
-
-  const handleSubmit = async (values: { message: string }) => {
-    try {
-      await context.gitManager.stashFile(context.file.relativePath, values.message);
-      context.stashes.revalidate();
-      context.status.revalidate();
-      pop();
-    } catch (error) {
-      // Git error is already shown by GitManager
-    }
-  };
-
-  return (
-    <Form
-      navigationTitle={`Stash ${basename(context.file.relativePath)}`}
-      actions={
-        <ActionPanel>
-          <Action.SubmitForm title={"Create Stash"} onSubmit={handleSubmit} />
-        </ActionPanel>
-      }
-    >
-      <Form.TextField
-        id="message"
-        title="Stash Message"
-        placeholder="Describe the changes being stashed"
-        info="Optional"
-        error={message.trim().length === 0 ? "Required" : undefined}
-        value={message}
-        onChange={setMessage}
-      />
-    </Form>
-  );
-}
-
-function StashCreateForm(context: RepositoryContext & { scope: PatchScope }) {
+function StashCreateForm(context: RepositoryContext & { scope: StashScope }) {
   const { pop } = useNavigation();
   const [message, setMessage] = useState("");
 

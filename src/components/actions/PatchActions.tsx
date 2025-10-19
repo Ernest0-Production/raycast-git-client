@@ -10,24 +10,30 @@ import { basename } from "path";
 /**
  * Action to create a patch for all unstaged changes.
  */
-export function PatchCreateAction(context: RepositoryContext) {
+export function PatchCreateAction(context: RepositoryContext & { file?: FileStatus }) {
     return (
         <ActionPanel.Submenu
             title="Save as Patch"
             icon={`patch.svg`}
             shortcut={{ modifiers: ["cmd", "shift"], key: "s" }}
         >
+            {context.file && (
+                <Action.Push
+                    title={`This File (${basename(context.file.relativePath)})`}
+                    target={<PatchCreateForm scope={{ filePath: context.file.relativePath, status: context.file.status as "staged" | "unstaged" }} {...context} />}
+                />
+            )}
             <Action.Push
                 title="All Changes"
-                target={<PatchCreateForm scope={PatchScope.ALL} {...context} />}
+                target={<PatchCreateForm scope="all" {...context} />}
             />
             <Action.Push
                 title="Only Staged"
-                target={<PatchCreateForm scope={PatchScope.STAGED} {...context} />}
+                target={<PatchCreateForm scope="staged" {...context} />}
             />
             <Action.Push
                 title="Only Unstaged"
-                target={<PatchCreateForm scope={PatchScope.UNSTAGED} {...context} />}
+                target={<PatchCreateForm scope="unstaged" {...context} />}
             />
         </ActionPanel.Submenu>
     );
@@ -62,72 +68,6 @@ function PatchCreateForm(context: RepositoryContext & { scope: PatchScope }) {
     return (
         <Form
             navigationTitle="Create Patch"
-            actions={
-                <ActionPanel>
-                    <Action.SubmitForm title="Create Patch" onSubmit={handleSubmit} />
-                </ActionPanel>
-            }
-        >
-            <Form.FilePicker
-                id="directoryPath"
-                title="Output Directory"
-                value={directoryPath}
-                error={validateDirectoryPath(directoryPath)}
-                onChange={setDirectoryPath}
-                allowMultipleSelection={false}
-                canChooseDirectories
-                canChooseFiles={false}
-            />
-        </Form>
-    );
-}
-
-/**
- * Action to create a patch for a specific file.
- */
-export function PatchCreateForFileAction(context: RepositoryContext & { file: FileStatus }) {
-    return (
-        <Action.Push
-            title="Save File as Patch"
-            icon={`patch.svg`}
-            target={<PatchCreateForFileForm {...context} />}
-        />
-    );
-}
-
-function PatchCreateForFileForm(context: RepositoryContext & { file: FileStatus }) {
-    const { pop } = useNavigation();
-    const [directoryPath, setDirectoryPath] = useCachedState<string[]>(`patches-directory`, []);
-
-    const validateDirectoryPath = (directoryPath: string[]) => {
-        if (directoryPath.length === 0) {
-            return "Required";
-        }
-
-        if (!existsSync(directoryPath[0])) {
-            return "Not exists";
-        }
-
-        return undefined;
-    };
-
-    const handleSubmit = async (values: { directoryPath: string[] }) => {
-        try {
-            const patchPath = await context.gitManager.createPatchForFile(
-                context.file.relativePath,
-                context.file.status,
-                values.directoryPath[0]
-            );
-            await Clipboard.copy(patchPath);
-            pop();
-        } catch (error) {
-            // Git error is already shown by GitManager
-        }
-    };
-
-    return (
-        <Form
-            navigationTitle={`Create Patch for ${basename(context.file.relativePath)}`}
             actions={
                 <ActionPanel>
                     <Action.SubmitForm title="Create Patch" onSubmit={handleSubmit} />

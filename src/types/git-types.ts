@@ -304,11 +304,20 @@ export enum MergeMode {
 /**
  * Represents the scope of a patch.
  */
-export enum PatchScope {
-  ALL = "all",
-  STAGED = "staged",
-  UNSTAGED = "unstaged",
-}
+export type PatchScope =
+  | "all"
+  | "staged"
+  | "unstaged"
+  | { filePath: string; status: "staged" | "unstaged" };
+
+/**
+ * Represents the scope of a stash.
+ */
+export type StashScope =
+  | "all"
+  | "staged"
+  | "unstaged"
+  | { filePath: string };
 
 /**
  * Represents a single conflict segment in a file.

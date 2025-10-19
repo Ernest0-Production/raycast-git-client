@@ -998,14 +998,21 @@ __REBASE_TODO__
   /**
    * Creates a stash with an optional message.
    */
-  async stash(message: string, scope?: PatchScope): Promise<void> {
+  async stash(message: string, scope?: StashScope): Promise<void> {
     const args: string[] = [];
 
-    if (scope === PatchScope.STAGED) {
+    // Handle file-specific stash
+    if (typeof scope === "object" && "filePath" in scope) {
+      await this.git.stash(["push", "-m", message, "--", scope.filePath]);
+      return;
+    }
+
+    // Handle all/staged/unstaged stash
+    if (scope === "staged") {
       args.push("--staged");
     }
 
-    if (scope === PatchScope.UNSTAGED) {
+    if (scope === "unstaged") {
       args.push("--keep-index");
       args.push("--include-untracked");
     }
@@ -1013,13 +1020,6 @@ __REBASE_TODO__
     args.push("-m", message);
 
     await this.git.stash(["push", ...args]);
-  }
-
-  /**
-   * Creates a stash for a specific file.
-   */
-  async stashFile(relativePath: string, message: string): Promise<void> {
-    await this.git.stash(["push", "-m", message, "--", relativePath]);
   }
 
   /**
@@ -1474,7 +1474,42 @@ __REBASE_TODO__
    * Returns the absolute path to the created patch file.
    */
   async createPatch(outputDirectoryPath: string, scope: PatchScope): Promise<string> {
-    // Collect untracked files to include in diff
+    // Handle file-specific patch
+    if (typeof scope === "object" && "filePath" in scope) {
+      const status = await this.git.status();
+      const isUntracked = status.not_added?.includes(scope.filePath);
+
+      // Temporarily mark untracked file with intent-to-add so git diff will include it
+      if (isUntracked) {
+        await this.git.add(["-N", "--", scope.filePath]);
+      }
+
+      try {
+        // Generate patch content for specific file
+        let patchContent: string;
+        if (scope.status === "staged") {
+          patchContent = await this.git.diff(["--binary", "--staged", "--", scope.filePath]);
+        } else {
+          patchContent = await this.git.diff(["--binary", "--", scope.filePath]);
+        }
+
+        // Compose unique patch file name with file basename
+        const currentDateString = new Date().toISOString().replace(/[:.]/g, '-');
+        const fileBasename = basename(scope.filePath).replace(/[^a-zA-Z0-9._-]/g, '_');
+        const fileName = `${this.repoName}_${fileBasename}_${currentDateString}.patch`;
+        const targetPath = join(outputDirectoryPath, fileName);
+
+        await fs.writeFile(targetPath, patchContent, { encoding: "utf-8" });
+        return targetPath;
+      } finally {
+        // Revert intent-to-add mark to avoid changing repo state
+        if (isUntracked) {
+          await this.git.reset(["HEAD", scope.filePath]);
+        }
+      }
+    }
+
+    // Handle all/staged/unstaged patches
     const status = await this.git.status();
     const untrackedFiles = (status.not_added || []).filter((p) => !!p);
 
@@ -1510,44 +1545,6 @@ __REBASE_TODO__
       // Revert intent-to-add marks to avoid changing repo state
       for (const file of untrackedFiles) {
         await this.git.reset(["HEAD", file]);
-      }
-    }
-  }
-
-  /**
-   * Creates a unified diff patch file for a specific file.
-   * Returns the absolute path to the created patch file.
-   */
-  async createPatchForFile(relativePath: string, fileStatus: FileStatus["status"], outputDirectoryPath: string): Promise<string> {
-    const status = await this.git.status();
-    const isUntracked = status.not_added?.includes(relativePath);
-
-    // Temporarily mark untracked file with intent-to-add so git diff will include it
-    if (isUntracked) {
-      await this.git.add(["-N", "--", relativePath]);
-    }
-
-    try {
-      // Generate patch content for specific file
-      let patchContent: string;
-      if (fileStatus === "staged") {
-        patchContent = await this.git.diff(["--binary", "--staged", "--", relativePath]);
-      } else {
-        patchContent = await this.git.diff(["--binary", "--", relativePath]);
-      }
-
-      // Compose unique patch file name with file basename
-      const currentDateString = new Date().toISOString().replace(/[:.]/g, '-');
-      const fileBasename = basename(relativePath).replace(/[^a-zA-Z0-9._-]/g, '_');
-      const fileName = `${this.repoName}_${fileBasename}_${currentDateString}.patch`;
-      const targetPath = join(outputDirectoryPath, fileName);
-
-      await fs.writeFile(targetPath, patchContent, { encoding: "utf-8" });
-      return targetPath;
-    } finally {
-      // Revert intent-to-add mark to avoid changing repo state
-      if (isUntracked) {
-        await this.git.reset(["HEAD", relativePath]);
       }
     }
   }
