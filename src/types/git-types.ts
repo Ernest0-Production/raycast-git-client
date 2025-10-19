@@ -308,7 +308,7 @@ export type PatchScope =
   | "all"
   | "staged"
   | "unstaged"
-  | { filePath: string; status: "staged" | "unstaged" };
+  | Pick<FileStatus, "path" | "status">;
 
 /**
  * Represents the scope of a stash.

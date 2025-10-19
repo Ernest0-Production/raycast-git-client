@@ -83,8 +83,8 @@ export function StashCreateAction(context: RepositoryContext & { file?: FileStat
     >
       {context.file && (
         <Action.Push
-          title={`This File (${basename(context.file.relativePath)})`}
-          target={<StashCreateForm scope={{ filePath: context.file.relativePath }} {...context} />}
+          title={`${basename(context.file.path)}`}
+          target={<StashCreateForm scope={{ filePath: context.file.path }} {...context} />}
         />
       )}
       <Action.Push

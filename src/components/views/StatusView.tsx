@@ -244,11 +244,11 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Patch">
-            <PatchCreateAction {...context} file={context.file} />
+            <PatchCreateAction {...context} />
             <PatchApplyAction {...context} />
           </ActionPanel.Section>
 
-          <StashCreateAction {...context} file={context.file} />
+          <StashCreateAction {...context} />
 
           <ActionPanel.Section title="History">
             <RemotePullAction {...context} />

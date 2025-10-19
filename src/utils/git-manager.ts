@@ -2,7 +2,7 @@ import { CleanOptions, DiffNameStatus, DiffResult, DiffResultBinaryFile, DiffRes
 import { showToast, Toast, getPreferenceValues, Alert, confirmAlert } from "@raycast/api";
 import { readFileSync, writeFileSync, mkdtempSync, chmodSync, rmSync, existsSync } from "fs";
 import { tmpdir } from "os";
-import { Branch, FileStatus, Commit, Stash, BranchesState, DetachedHead, CommitFileChange, Preferences, RebasePlanItem, FileChangeStats, StatusState, MergeMode, PatchScope, RepositoryCloningProcess, RepositoryCloningState, Tag, StatusMode } from "../types";
+import { Branch, FileStatus, Commit, Stash, BranchesState, DetachedHead, CommitFileChange, Preferences, RebasePlanItem, FileChangeStats, StatusState, MergeMode, PatchScope, RepositoryCloningProcess, RepositoryCloningState, Tag, StatusMode, StashScope } from "../types";
 import { basename, join } from "path";
 import { promises as fs } from "fs";
 import { showFailureToast } from "@raycast/utils";
@@ -1001,11 +1001,6 @@ __REBASE_TODO__
   async stash(message: string, scope?: StashScope): Promise<void> {
     const args: string[] = [];
 
-    // Handle file-specific stash
-    if (typeof scope === "object" && "filePath" in scope) {
-      await this.git.stash(["push", "-m", message, "--", scope.filePath]);
-      return;
-    }
 
     // Handle all/staged/unstaged stash
     if (scope === "staged") {
@@ -1018,6 +1013,11 @@ __REBASE_TODO__
     }
 
     args.push("-m", message);
+
+    // Handle file-specific stash
+    if (typeof scope === "object" && "filePath" in scope) {
+      args.push("--", scope.filePath);
+    }
 
     await this.git.stash(["push", ...args]);
   }
@@ -1474,77 +1474,50 @@ __REBASE_TODO__
    * Returns the absolute path to the created patch file.
    */
   async createPatch(outputDirectoryPath: string, scope: PatchScope): Promise<string> {
-    // Handle file-specific patch
-    if (typeof scope === "object" && "filePath" in scope) {
-      const status = await this.git.status();
-      const isUntracked = status.not_added?.includes(scope.filePath);
-
-      // Temporarily mark untracked file with intent-to-add so git diff will include it
-      if (isUntracked) {
-        await this.git.add(["-N", "--", scope.filePath]);
-      }
-
-      try {
-        // Generate patch content for specific file
-        let patchContent: string;
-        if (scope.status === "staged") {
-          patchContent = await this.git.diff(["--binary", "--staged", "--", scope.filePath]);
-        } else {
-          patchContent = await this.git.diff(["--binary", "--", scope.filePath]);
-        }
-
-        // Compose unique patch file name with file basename
-        const currentDateString = new Date().toISOString().replace(/[:.]/g, '-');
-        const fileBasename = basename(scope.filePath).replace(/[^a-zA-Z0-9._-]/g, '_');
-        const fileName = `${this.repoName}_${fileBasename}_${currentDateString}.patch`;
-        const targetPath = join(outputDirectoryPath, fileName);
-
-        await fs.writeFile(targetPath, patchContent, { encoding: "utf-8" });
-        return targetPath;
-      } finally {
-        // Revert intent-to-add mark to avoid changing repo state
-        if (isUntracked) {
-          await this.git.reset(["HEAD", scope.filePath]);
-        }
-      }
-    }
-
-    // Handle all/staged/unstaged patches
     const status = await this.git.status();
-    const untrackedFiles = (status.not_added || []).filter((p) => !!p);
+    const untrackedFiles = status.not_added;
+    const filesToTemporarilyAdd: string[] = [];
 
-    // Temporarily mark untracked files with intent-to-add so git diff will include them
-    if (untrackedFiles.length > 0) {
-      await this.git.add(["-N", "--", ...untrackedFiles]);
-    }
+    const diffArgs = ["--binary"];
 
-    try {
-      // Generate patch content for all unstaged changes, include binary diffs as well
-      let patchContent: string;
+    if (typeof scope === "object" && "path" in scope) {
+      if (scope.status === "staged") {
+        diffArgs.push("--staged");
+      }
+      diffArgs.push("--", scope.path);
+      if (untrackedFiles.includes(scope.path)) {
+        filesToTemporarilyAdd.push(scope.path);
+      }
+    } else {
       switch (scope) {
         case "staged":
-          patchContent = await this.git.diff(["--binary", "--staged"]);
+          diffArgs.push("--staged");
           break;
         case "unstaged":
-          patchContent = await this.git.diff(["--binary"]);
+          filesToTemporarilyAdd.push(...untrackedFiles);
           break;
         case "all":
         default:
-          patchContent = await this.git.diff(["--binary", "HEAD"]);
+          diffArgs.push("HEAD");
+          filesToTemporarilyAdd.push(...untrackedFiles);
           break;
       }
+    }
 
-      // Compose unique patch file name
-      const currentDateString = new Date().toISOString().replace(/[:.]/g, '-');
+    if (filesToTemporarilyAdd.length > 0) {
+      await this.git.add(["-N", ...filesToTemporarilyAdd]);
+    }
+
+    try {
+      const patchContent = await this.git.diff(diffArgs);
+      const currentDateString = new Date().toISOString().replace(/[:.]/g, "-");
       const fileName = `${this.repoName}_${currentDateString}.patch`;
       const targetPath = join(outputDirectoryPath, fileName);
-
       await fs.writeFile(targetPath, patchContent, { encoding: "utf-8" });
       return targetPath;
     } finally {
-      // Revert intent-to-add marks to avoid changing repo state
-      for (const file of untrackedFiles) {
-        await this.git.reset(["HEAD", file]);
+      if (filesToTemporarilyAdd.length > 0) {
+        await this.git.reset(["HEAD", "--", ...filesToTemporarilyAdd]);
       }
     }
   }

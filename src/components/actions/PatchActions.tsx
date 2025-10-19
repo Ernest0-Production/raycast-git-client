@@ -19,8 +19,8 @@ export function PatchCreateAction(context: RepositoryContext & { file?: FileStat
         >
             {context.file && (
                 <Action.Push
-                    title={`This File (${basename(context.file.relativePath)})`}
-                    target={<PatchCreateForm scope={{ filePath: context.file.relativePath, status: context.file.status as "staged" | "unstaged" }} {...context} />}
+                    title={`${basename(context.file.path)}`}
+                    target={<PatchCreateForm scope={context.file} {...context} />}
                 />
             )}
             <Action.Push
