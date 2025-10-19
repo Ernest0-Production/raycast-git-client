@@ -1016,6 +1016,13 @@ __REBASE_TODO__
   }
 
   /**
+   * Creates a stash for a specific file.
+   */
+  async stashFile(relativePath: string, message: string): Promise<void> {
+    await this.git.stash(["push", "-m", message, "--", relativePath]);
+  }
+
+  /**
    * Applies a stash by index.
    */
   async applyStash(index = 0): Promise<void> {
@@ -1503,6 +1510,44 @@ __REBASE_TODO__
       // Revert intent-to-add marks to avoid changing repo state
       for (const file of untrackedFiles) {
         await this.git.reset(["HEAD", file]);
+      }
+    }
+  }
+
+  /**
+   * Creates a unified diff patch file for a specific file.
+   * Returns the absolute path to the created patch file.
+   */
+  async createPatchForFile(relativePath: string, fileStatus: FileStatus["status"], outputDirectoryPath: string): Promise<string> {
+    const status = await this.git.status();
+    const isUntracked = status.not_added?.includes(relativePath);
+
+    // Temporarily mark untracked file with intent-to-add so git diff will include it
+    if (isUntracked) {
+      await this.git.add(["-N", "--", relativePath]);
+    }
+
+    try {
+      // Generate patch content for specific file
+      let patchContent: string;
+      if (fileStatus === "staged") {
+        patchContent = await this.git.diff(["--binary", "--staged", "--", relativePath]);
+      } else {
+        patchContent = await this.git.diff(["--binary", "--", relativePath]);
+      }
+
+      // Compose unique patch file name with file basename
+      const currentDateString = new Date().toISOString().replace(/[:.]/g, '-');
+      const fileBasename = basename(relativePath).replace(/[^a-zA-Z0-9._-]/g, '_');
+      const fileName = `${this.repoName}_${fileBasename}_${currentDateString}.patch`;
+      const targetPath = join(outputDirectoryPath, fileName);
+
+      await fs.writeFile(targetPath, patchContent, { encoding: "utf-8" });
+      return targetPath;
+    } finally {
+      // Revert intent-to-add mark to avoid changing repo state
+      if (isUntracked) {
+        await this.git.reset(["HEAD", relativePath]);
       }
     }
   }

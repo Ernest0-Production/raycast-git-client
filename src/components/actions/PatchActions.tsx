@@ -1,9 +1,10 @@
 import { Action, ActionPanel, useNavigation, Clipboard, Form, Icon, confirmAlert, Alert } from "@raycast/api";
-import { PatchScope } from "../../types";
+import { FileStatus, PatchScope } from "../../types";
 import { RepositoryContext } from "../../open-repository";
 import { useCachedState } from "@raycast/utils";
 import { existsSync } from "fs";
 import { useEffect, useState } from "react";
+import { basename } from "path";
 
 
 /**
@@ -61,6 +62,72 @@ function PatchCreateForm(context: RepositoryContext & { scope: PatchScope }) {
     return (
         <Form
             navigationTitle="Create Patch"
+            actions={
+                <ActionPanel>
+                    <Action.SubmitForm title="Create Patch" onSubmit={handleSubmit} />
+                </ActionPanel>
+            }
+        >
+            <Form.FilePicker
+                id="directoryPath"
+                title="Output Directory"
+                value={directoryPath}
+                error={validateDirectoryPath(directoryPath)}
+                onChange={setDirectoryPath}
+                allowMultipleSelection={false}
+                canChooseDirectories
+                canChooseFiles={false}
+            />
+        </Form>
+    );
+}
+
+/**
+ * Action to create a patch for a specific file.
+ */
+export function PatchCreateForFileAction(context: RepositoryContext & { file: FileStatus }) {
+    return (
+        <Action.Push
+            title="Save File as Patch"
+            icon={`patch.svg`}
+            target={<PatchCreateForFileForm {...context} />}
+        />
+    );
+}
+
+function PatchCreateForFileForm(context: RepositoryContext & { file: FileStatus }) {
+    const { pop } = useNavigation();
+    const [directoryPath, setDirectoryPath] = useCachedState<string[]>(`patches-directory`, []);
+
+    const validateDirectoryPath = (directoryPath: string[]) => {
+        if (directoryPath.length === 0) {
+            return "Required";
+        }
+
+        if (!existsSync(directoryPath[0])) {
+            return "Not exists";
+        }
+
+        return undefined;
+    };
+
+    const handleSubmit = async (values: { directoryPath: string[] }) => {
+        try {
+            const patchPath = await context.gitManager.createPatchForFile(
+                context.file.relativePath,
+                context.file.status,
+                values.directoryPath[0]
+            );
+            await Clipboard.copy(patchPath);
+            pop();
+        } catch (error) {
+            // Git error is already shown by GitManager
+        }
+    };
+
+    return (
+        <Form
+            navigationTitle={`Create Patch for ${basename(context.file.relativePath)}`}
             actions={
                 <ActionPanel>
                     <Action.SubmitForm title="Create Patch" onSubmit={handleSubmit} />

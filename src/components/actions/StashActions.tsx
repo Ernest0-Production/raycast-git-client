@@ -1,7 +1,8 @@
 import { ActionPanel, Action, Icon, confirmAlert, Alert, Form, useNavigation } from "@raycast/api";
 import { useState } from "react";
-import { PatchScope, Stash } from "../../types";
+import { FileStatus, PatchScope, Stash } from "../../types";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
+import { basename } from "path";
 
 /**
  * Action for applying a stash.
@@ -93,6 +94,56 @@ export function StashCreateAction(context: RepositoryContext) {
         target={<StashCreateForm scope={PatchScope.UNSTAGED} {...context} />}
       />
     </ActionPanel.Submenu>
+  );
+}
+
+/**
+ * Action for creating a stash for a specific file.
+ */
+export function StashCreateForFileAction(context: RepositoryContext & { file: FileStatus }) {
+  return (
+    <Action.Push
+      title="Stash This File"
+      icon={Icon.Bookmark}
+      target={<StashCreateForFileForm {...context} />}
+    />
+  );
+}
+
+function StashCreateForFileForm(context: RepositoryContext & { file: FileStatus }) {
+  const { pop } = useNavigation();
+  const [message, setMessage] = useState("");
+
+  const handleSubmit = async (values: { message: string }) => {
+    try {
+      await context.gitManager.stashFile(context.file.relativePath, values.message);
+      context.stashes.revalidate();
+      context.status.revalidate();
+      pop();
+    } catch (error) {
+      // Git error is already shown by GitManager
+    }
+  };
+
+  return (
+    <Form
+      navigationTitle={`Stash ${basename(context.file.relativePath)}`}
+      actions={
+        <ActionPanel>
+          <Action.SubmitForm title={"Create Stash"} onSubmit={handleSubmit} />
+        </ActionPanel>
+      }
+    >
+      <Form.TextField
+        id="message"
+        title="Stash Message"
+        placeholder="Describe the changes being stashed"
+        info="Optional"
+        error={message.trim().length === 0 ? "Required" : undefined}
+        value={message}
+        onChange={setMessage}
+      />
+    </Form>
   );
 }
 
