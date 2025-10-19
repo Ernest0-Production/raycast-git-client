@@ -81,16 +81,16 @@ export function StashCreateAction(context: RepositoryContext & { file?: FileStat
       icon={Icon.Bookmark}
       shortcut={{ modifiers: ["cmd"], key: "s" }}
     >
-      {context.file && (
-        <Action.Push
-          title={`${basename(context.file.path)}`}
-          target={<StashCreateForm scope={{ filePath: context.file.path }} {...context} />}
-        />
-      )}
       <Action.Push
         title="All Changes"
         target={<StashCreateForm scope="all" {...context} />}
       />
+      {context.file && (
+        <Action.Push
+          title={`Only ${basename(context.file.path)}`}
+          target={<StashCreateForm scope={{ filePath: context.file.path }} {...context} />}
+        />
+      )}
       <Action.Push
         title="Only Staged"
         target={<StashCreateForm scope="staged" {...context} />}

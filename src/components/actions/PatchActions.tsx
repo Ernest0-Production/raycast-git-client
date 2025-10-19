@@ -17,16 +17,16 @@ export function PatchCreateAction(context: RepositoryContext & { file?: FileStat
             icon={`patch.svg`}
             shortcut={{ modifiers: ["cmd", "shift"], key: "s" }}
         >
-            {context.file && (
-                <Action.Push
-                    title={`${basename(context.file.path)}`}
-                    target={<PatchCreateForm scope={context.file} {...context} />}
-                />
-            )}
             <Action.Push
                 title="All Changes"
                 target={<PatchCreateForm scope="all" {...context} />}
             />
+            {context.file && (
+                <Action.Push
+                    title={`Only ${basename(context.file.path)}`}
+                    target={<PatchCreateForm scope={context.file} {...context} />}
+                />
+            )}
             <Action.Push
                 title="Only Staged"
                 target={<PatchCreateForm scope="staged" {...context} />}
