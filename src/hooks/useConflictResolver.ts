@@ -1,12 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePromise } from "@raycast/utils";
 import { ConflictSegment, FileConflicts } from "../types";
 import { readFileSync, writeFileSync } from "fs";
 import { nanoid } from "nanoid";
 
+export type ConflictResolveState = {
+  segments: ConflictSegment[];
+  isLoading: boolean;
+  resolveSegment: (segmentId: string, resolution: "current" | "incoming" | null) => void;
+  applyResolution: () => void;
+}
+
 /**
  * Custom hook for managing conflict resolution in a file.
- * 
+ *
  * @param filePath - Path to the conflicted file
  * @returns Object containing:
  *   - conflicts: Parsed conflict data
@@ -17,22 +24,18 @@ import { nanoid } from "nanoid";
  *   - applyResolution: Function to write resolved content to file
  *   - allResolved: Boolean indicating if all conflicts are resolved
  */
-export function useConflictResolver(filePath: string) {
-  const { data: conflicts, isLoading, error } = usePromise(
-    async (path: string) => {
-      return parseConflictedFile(path);
-    },
-    [filePath]
-  );
+export function useConflictResolver(filePath: string): ConflictResolveState {
+  const [segments, setSegments] = useState<ConflictSegment[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [segments, setSegments] = useState<ConflictSegment[]>(conflicts?.segments || []);
-
-  // Update segments when conflicts change
-  if (conflicts && segments.length === 0 && conflicts.segments.length > 0) {
+  useEffect(() => {
+    setIsLoading(true);
+    const conflicts = parseConflictedFile(filePath);
     setSegments(conflicts.segments);
-  }
+    setIsLoading(false);
+  }, [filePath]);
 
-  const resolveSegment = (segmentId: string, resolution: "current" | "incoming") => {
+  const resolveSegment = (segmentId: string, resolution: "current" | "incoming" | null) => {
     setSegments((prev) =>
       prev.map((seg) =>
         seg.id === segmentId ? { ...seg, resolution } : seg
@@ -45,16 +48,11 @@ export function useConflictResolver(filePath: string) {
     writeFileSync(filePath, resolvedContent, "utf-8");
   };
 
-  const allResolved = segments.every((seg) => seg.resolution !== null);
-
   return {
-    conflicts: conflicts || null,
     segments,
     isLoading,
-    error: error?.message || null,
     resolveSegment,
     applyResolution,
-    allResolved,
   };
 }
 
@@ -160,8 +158,8 @@ function applyConflictResolutions(filePath: string, segments: ConflictSegment[])
 
         if (segment && segment.resolution) {
           // Apply the resolution
-          const resolvedContent = segment.resolution === "current" 
-            ? segment.currentContent 
+          const resolvedContent = segment.resolution === "current"
+            ? segment.currentContent
             : segment.incomingContent;
 
           resolvedLines.push(resolvedContent);

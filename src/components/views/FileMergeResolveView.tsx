@@ -4,17 +4,16 @@ import { ConflictSegment } from "../../types";
 import { useConflictResolver } from "../../hooks/useConflictResolver";
 import { RepositoryContext } from "../../open-repository";
 import { basename } from "path";
+import { FileManagerActions } from "../actions/FileActions";
+import { existsSync } from "fs";
 
 export default function FileMergeResolveView(context: RepositoryContext & { filePath: string }) {
   const { pop } = useNavigation();
   const {
-    conflicts,
     segments,
     isLoading,
-    error,
     resolveSegment,
     applyResolution,
-    allResolved,
   } = useConflictResolver(context.filePath);
 
   const applyResolutions = async () => {
@@ -38,6 +37,7 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
         message: `File "${basename(context.filePath)}" has been updated`,
       });
 
+      await context.gitManager.stageFile(context.filePath);
       context.status.revalidate();
       pop();
     } catch (err) {
@@ -49,21 +49,13 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
     }
   };
 
-  if (error) {
-    showToast({
-      style: Toast.Style.Failure,
-      title: "Failed to parse conflicts",
-      message: error,
-    });
-  }
-
   return (
     <List
       isLoading={isLoading}
-      navigationTitle={`Resolve Conflicts: ${basename(context.filePath)}`}
+      navigationTitle={"Resolve Conflicts"}
       isShowingDetail={true}
     >
-      {conflicts && segments.length === 0 ? (
+      {segments.length === 0 ? (
         <List.EmptyView
           title="No conflicts found"
           description="This file doesn't contain any conflict markers."
@@ -74,14 +66,13 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
           title={basename(context.filePath)}
           subtitle={`${segments.length} conflict${segments.length !== 1 ? "s" : ""}`}
         >
-          {segments.map((segment, index) => (
+          {segments.map((segment) => (
             <ConflictSegmentItem
               key={segment.id}
+              filePath={context.filePath}
               segment={segment}
-              index={index + 1}
-              totalSegments={segments.length}
-              onSetResolution={resolveSegment}
-              onApplyAll={allResolved ? applyResolutions : undefined}
+              onSetResolution={(resolution) => resolveSegment(segment.id, resolution)}
+              onApplyAll={applyResolutions}
             />
           ))}
         </List.Section>
@@ -91,16 +82,14 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
 }
 
 function ConflictSegmentItem({
+  filePath,
   segment,
-  index,
-  totalSegments,
   onSetResolution,
   onApplyAll,
 }: {
+  filePath: string;
   segment: ConflictSegment;
-  index: number;
-  totalSegments: number;
-  onSetResolution: (segmentId: string, resolution: "current" | "incoming") => void;
+  onSetResolution: (resolution: "current" | "incoming" | null) => void;
   onApplyAll?: () => void;
 }) {
   const isResolved = segment.resolution !== null;
@@ -109,7 +98,7 @@ function ConflictSegmentItem({
     // Get first non-empty line from current or incoming content
     const currentFirstLine = segment.currentContent.split("\n").find((line) => line.trim() !== "");
     const incomingFirstLine = segment.incomingContent.split("\n").find((line) => line.trim() !== "");
-    
+
     return currentFirstLine || incomingFirstLine || "Empty conflict";
   }, [segment.currentContent, segment.incomingContent]);
 
@@ -120,23 +109,32 @@ function ConflictSegmentItem({
     return { source: Icon.CheckCircle, tintColor: Color.Green };
   }, [isResolved]);
 
-  const formatMarkdownContent = (content: string, label: string) => {
-    // Trim empty lines from start and end
-    const trimmedContent = content.trim();
-    
-    if (!trimmedContent) {
-      return `**${label}** (empty)\n\n`;
-    }
+  const detailMarkdown = useMemo(() => {
+    const formatMarkdownContent = (content: string, label: string, selected: boolean) => {
+      if (!content) {
+        return [
+          `> ${selected ? "✔︎" : "*"} ${label} (empty)`,
+          ``,
+        ].join("\n");
+      }
 
-    return `**${label}**\n\n\`\`\`\n${trimmedContent}\n\`\`\`\n\n`;
-  };
+      return [
+        `> ${selected ? "✔︎" : "*"} ${label}`,
+        ``,
+        `\`\`\`\n${content}\n\`\`\``,
+        ``,
+      ]
+        .join("\n");
+    };
 
-  const detailMarkdown = 
-    `## Conflict ${index} of ${totalSegments}\n\n` +
-    `**Lines:** ${segment.startLine}-${segment.endLine}\n\n---\n\n` +
-    formatMarkdownContent(segment.currentContent, segment.currentLabel) +
-    `---\n\n` +
-    formatMarkdownContent(segment.incomingContent, segment.incomingLabel);
+    return [
+      `Lines: ${segment.startLine}-${segment.endLine}`,
+      ``,
+      formatMarkdownContent(segment.currentContent, segment.currentLabel, segment.resolution === "current"),
+      ``,
+      formatMarkdownContent(segment.incomingContent, segment.incomingLabel, segment.resolution === "incoming")
+    ].join("\n");
+  }, [segment]);
 
   return (
     <List.Item
@@ -147,32 +145,41 @@ function ConflictSegmentItem({
           markdown={detailMarkdown}
         />
       }
+      quickLook={existsSync(filePath) ? { path: filePath, name: basename(filePath) } : undefined}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title={`Conflict ${index}`}>
+          <ActionPanel.Section>
             <Action
               title={`Select ${segment.currentLabel}`}
-              icon={{ source: Icon.ChevronUp, tintColor: Color.Blue }}
-              onAction={() => onSetResolution(segment.id, "current")}
-              shortcut={{ modifiers: [], key: "[" }}
+              icon={Icon.ChevronUp}
+              onAction={() => onSetResolution("current")}
+              shortcut={{ modifiers: ["cmd"], key: "[" }}
             />
             <Action
               title={`Select ${segment.incomingLabel}`}
-              icon={{ source: Icon.ChevronDown, tintColor: Color.Purple }}
-              onAction={() => onSetResolution(segment.id, "incoming")}
-              shortcut={{ modifiers: [], key: "]" }}
+              icon={Icon.ChevronDown}
+              onAction={() => onSetResolution("incoming")}
+              shortcut={{ modifiers: ["cmd"], key: "]" }}
+            />
+            <Action
+              title="Discard"
+              icon={Icon.ArrowCounterClockwise}
+              style={Action.Style.Destructive}
+              onAction={() => onSetResolution(null)}
+              shortcut={{ modifiers: ["cmd"], key: "z" }}
             />
           </ActionPanel.Section>
 
-          {onApplyAll && (
-            <ActionPanel.Section title="Apply">
-              <Action
-                title="Apply All Resolutions"
-                icon={{ source: Icon.Check, tintColor: Color.Green }}
-                onAction={onApplyAll}
-              />
-            </ActionPanel.Section>
-          )}
+          <ActionPanel.Section>
+            <Action
+              title="Apply All Resolutions"
+              icon={{ source: Icon.Check, tintColor: Color.Green }}
+              onAction={onApplyAll}
+              shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
+            />
+          </ActionPanel.Section>
+
+          <FileManagerActions filePath={filePath} />
         </ActionPanel>
       }
     />

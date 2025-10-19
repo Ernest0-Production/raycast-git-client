@@ -12,13 +12,13 @@ import { basename } from "path";
  */
 export function FileResolveConflictAction(context: RepositoryContext & { file: FileStatus }) {
     if (context.file.type !== "conflicted") {
-        return null;
+        return undefined;
     }
 
     return (
         <Action.Push
             title="Resolve Conflicts"
-            icon={{ source: Icon.LevelMeter, tintColor: Color.Orange }}
+            icon={{ source: Icon.Wand, tintColor: Color.Yellow }}
             target={<FileMergeResolveView {...context} filePath={context.file.path} />}
         />
     );
@@ -241,7 +241,7 @@ export function FileDiscardAllAction(context: RepositoryContext) {
 export function CommitChangesAction(context: RepositoryContext) {
     const hasConflictedFiles = context.status.data?.files.some((f) => f.type === "conflicted");
     if (hasConflictedFiles) {
-        return null; // Don't show if there are still conflicts
+        return undefined; // Don't show if there are still conflicts
     }
 
     switch (context.status.data.mode.kind) {
@@ -398,8 +398,19 @@ export function ConflictAbortAction(context: RepositoryContext) {
                 <Action
                     title="Abort Cherry Pick"
                     onAction={async () => {
-                        await context.gitManager.abortCherryPick();
-                        context.status.revalidate();
+                        const confirmed = await confirmAlert({
+                            title: "Abort Cherry Pick",
+                            message: "Are you sure you want to abort the cherry pick? This action cannot be undone.",
+                            primaryAction: {
+                                title: "Abort Cherry Pick",
+                                style: Alert.ActionStyle.Destructive,
+                            },
+                        });
+
+                        if (confirmed) {
+                            await context.gitManager.abortCherryPick();
+                            context.status.revalidate();
+                        }
                     }}
                     icon={Icon.XMarkCircleHalfDash}
                     style={Action.Style.Destructive}
@@ -411,8 +422,18 @@ export function ConflictAbortAction(context: RepositoryContext) {
                 <Action
                     title="Abort Revert"
                     onAction={async () => {
-                        await context.gitManager.abortRevert();
-                        context.status.revalidate();
+                        const confirmed = await confirmAlert({
+                            title: "Abort Revert",
+                            message: "Are you sure you want to abort the revert? This action cannot be undone.",
+                            primaryAction: {
+                                title: "Abort Revert",
+                                style: Alert.ActionStyle.Destructive,
+                            },
+                        });
+                        if (confirmed) {
+                            await context.gitManager.abortRevert();
+                            context.status.revalidate();
+                        }
                     }}
                     icon={Icon.XMarkCircleHalfDash}
                     style={Action.Style.Destructive}
