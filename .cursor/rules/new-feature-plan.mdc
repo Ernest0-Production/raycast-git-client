@@ -1,8 +1,7 @@
 ---
 alwaysApply: false
+description: Creating a new Feature-View for `open-repository.tsx`
 ---
-Creating a new Feature-View in `open-repository.tsx`
-
 Goal: To quickly and consistently add a new View to the Raycast Git Client, preserving the existing architecture, UX, and keeping the context minimal.
 
 # 1. View File Structure
