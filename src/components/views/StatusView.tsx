@@ -1,9 +1,9 @@
-import { ActionPanel, Action, List, Icon } from "@raycast/api";
+import { ActionPanel, Action, List, Icon, Color } from "@raycast/api";
 import { useGitDiff } from "../../hooks/useGitDiff";
 import { FileManagerActions } from "../actions/FileActions";
 import { FileStatusIcon } from "../icons/StatusIcons";
 import { StashCreateAction } from "../actions/StashActions";
-import { FileStatus } from "../../types";
+import { FileStatus, StatusMode } from "../../types";
 import { useMemo, useState } from "react";
 import { existsSync } from "fs";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
@@ -94,9 +94,7 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
         />
       ) : (!context.status.isLoading && context.status.data.files.length === 0) ? (
         <List.EmptyView
-          title="No changes"
-          description="No changes in the repository. The working directory is clean."
-          icon={Icon.NewDocument}
+          {...emptyViewProperties(context.status.data.mode.kind)}
           actions={
             <ActionPanel>
               <ActionPanel.Section>
@@ -287,4 +285,45 @@ function RefreshStatusAction(context: RepositoryContext) {
       shortcut={{ modifiers: ["cmd"], key: "r" }}
     />
   );
+}
+
+function emptyViewProperties(kind: StatusMode["kind"]): Pick<List.EmptyView.Props, "icon" | "title" | "description"> {
+  switch (kind) {
+    case "regular":
+      return {
+        icon: Icon.NewDocument,
+        title: "No changes",
+        description: "No changes in the repository. The working directory is clean.",
+      };
+    case "merge":
+      return {
+        icon: { source: `git-merge.svg`, tintColor: Color.Yellow },
+        title: "Merge Conflict",
+        description: "Please run \"Commit Merge\" action to finish.",
+      };
+    case "squash":
+      return {
+        icon: { source: `arrow-bounce.svg`, tintColor: Color.Yellow },
+        title: "Squash Conflict",
+        description: "Please run \"Commit Squash\" action to finish.",
+      };
+    case "cherryPick":
+      return {
+        icon: { source: Icon.ExclamationMark, tintColor: Color.Yellow },
+        title: "Cherry Pick Conflict",
+        description: "Please run \"Continue Cherry Pick\" action to finish.",
+      };
+    case "revert":
+      return {
+        icon: { source: Icon.ArrowCounterClockwise, tintColor: Color.Yellow },
+        title: "Revert Conflict",
+        description: "Please run \"Continue Revert\" action to finish.",
+      };
+    case "rebase":
+      return {
+        icon: { source: `arrow-rebase.svg`, tintColor: Color.Yellow },
+        title: "Rebase Progress",
+        description: "Please run \"Continue Rebase\" action to finish.",
+      };
+  }
 }
