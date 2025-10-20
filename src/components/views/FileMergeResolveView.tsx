@@ -37,8 +37,11 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
         message: `File "${basename(context.filePath)}" has been updated`,
       });
 
-      await context.gitManager.stageFile(context.filePath);
-      context.status.revalidate();
+      const isAllResolved = segments.every(segment => segment.resolution !== null);
+      if (isAllResolved) {
+        await context.gitManager.stageFile(context.filePath);
+        context.status.revalidate();
+      }
       pop();
     } catch (err) {
       showToast({
@@ -48,8 +51,6 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
       });
     }
   };
-
-  const allResolved = segments.every(seg => seg.resolution !== null);
 
   return (
     <List
@@ -65,27 +66,26 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
         />
       ) : (
         <>
-          {segments.map((segment, index) => (
+          {segments.map((segment) => (
             <List.Section
               key={segment.id}
-              title={`Conflict ${index + 1} of ${segments.length}`}
-              subtitle={`Lines ${segment.startLine}-${segment.endLine} • ${segment.resolution ? "Resolved" : "Unresolved"}`}
+              title={`Lines ${segment.startLine}-${segment.endLine}`}
             >
               <ConflictOptionItem
                 filePath={context.filePath}
                 segment={segment}
                 type="current"
-                onSetResolution={(resolution) => resolveSegment(segment.id, resolution)}
+                onSetResolution={() => resolveSegment(segment.id, "current")}
+                onDiscardSelection={() => resolveSegment(segment.id, null)}
                 onApplyAll={applyResolutions}
-                allResolved={allResolved}
               />
               <ConflictOptionItem
                 filePath={context.filePath}
                 segment={segment}
                 type="incoming"
-                onSetResolution={(resolution) => resolveSegment(segment.id, resolution)}
+                onSetResolution={() => resolveSegment(segment.id, "incoming")}
+                onDiscardSelection={() => resolveSegment(segment.id, null)}
                 onApplyAll={applyResolutions}
-                allResolved={allResolved}
               />
             </List.Section>
           ))}
@@ -100,64 +100,69 @@ function ConflictOptionItem({
   segment,
   type,
   onSetResolution,
+  onDiscardSelection,
   onApplyAll,
-  allResolved,
 }: {
   filePath: string;
   segment: ConflictSegment;
   type: "current" | "incoming";
-  onSetResolution: (resolution: "current" | "incoming" | null) => void;
+  onSetResolution: () => void;
+  onDiscardSelection: () => void;
   onApplyAll?: () => void;
-  allResolved: boolean;
 }) {
-  const isCurrent = type === "current";
-  const label = isCurrent ? segment.currentLabel : segment.incomingLabel;
-  const content = isCurrent ? segment.currentContent : segment.incomingContent;
-  const isSelected = segment.resolution === type;
-  const nothingSelected = segment.resolution === null;
+  const label = type === "current" ? segment.currentLabel : segment.incomingLabel;
+  const content = type === "current" ? segment.currentContent : segment.incomingContent;
 
   const title = useMemo(() => {
     const firstLine = content.split("\n").find((line) => line.trim() !== "");
-    return `${label}${firstLine ? `: ${firstLine}` : " (empty)"}`;
-  }, [content, label]);
+    return `${firstLine ? `${firstLine}` : "<empty>"}`;
+  }, [content]);
 
   const icon = useMemo(() => {
-    if (nothingSelected) {
-      return { source: Icon.ExclamationMark, tintColor: Color.Orange };
+    if (segment.resolution === null) {
+      return {
+        tooltip: "Unresolved",
+        value: { source: `tag-solid.svg`, tintColor: Color.SecondaryText }
+      };
     }
-    if (isSelected) {
-      return { source: Icon.CheckCircle, tintColor: Color.Green };
+    if (segment.resolution === type) {
+      return {
+        tooltip: "Selected",
+        value: { source: `tag-solid.svg`, tintColor: Color.Blue }
+      };
     }
-    return { source: Icon.Dot, tintColor: Color.SecondaryText };
-  }, [isSelected, nothingSelected]);
+    return {
+      tooltip: "Unselected",
+      value: { source: `tag-outline.svg`, tintColor: Color.SecondaryText }
+    };
+  }, [segment.resolution, type]);
 
   const detailMarkdown = useMemo(() => {
-    if (!content || content.trim() === "") {
-      return `# ${label}\n\n*Empty content*`;
+    if (content === "") {
+      return [
+        `${label}`,
+        "```",
+        "Empty content",
+        "```",
+      ].join("\n");
     }
 
     return [
-      `# ${label}`,
-      ``,
-      `\`\`\``,
+      `${label}`,
+      "",
+      "```diff",
       content,
-      `\`\`\``,
+      "```",
     ].join("\n");
   }, [content, label]);
 
-  const accessories = useMemo(() => {
-    const result = [];
-    if (isSelected) {
-      result.push({ icon: { source: Icon.Check, tintColor: Color.Green }, tooltip: "Selected" });
-    }
-    return result;
-  }, [isSelected]);
-
   return (
     <List.Item
-      title={title}
+      title={{
+        value: title,
+        tooltip: label,
+      }}
       icon={icon}
-      accessories={accessories}
       detail={
         <List.Item.Detail
           markdown={detailMarkdown}
@@ -168,31 +173,28 @@ function ConflictOptionItem({
         <ActionPanel>
           <ActionPanel.Section>
             <Action
-              title={`Select This (${label})`}
+              title={`Select ${label}`}
               icon={Icon.CheckCircle}
-              onAction={() => onSetResolution(type)}
-              shortcut={{ modifiers: ["cmd"], key: "enter" }}
+              onAction={onSetResolution}
             />
-            {!nothingSelected && (
+            {segment.resolution !== null && (
               <Action
                 title="Discard Selection"
                 icon={Icon.ArrowCounterClockwise}
                 style={Action.Style.Destructive}
-                onAction={() => onSetResolution(null)}
+                onAction={onDiscardSelection}
                 shortcut={{ modifiers: ["cmd"], key: "z" }}
               />
             )}
           </ActionPanel.Section>
 
           <ActionPanel.Section>
-            {allResolved && (
-              <Action
-                title="Apply All Resolutions"
-                icon={{ source: Icon.Check, tintColor: Color.Green }}
-                onAction={onApplyAll}
-                shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
-              />
-            )}
+            <Action
+              title="Apply All Resolutions"
+              icon={{ source: Icon.Check, tintColor: Color.Green }}
+              onAction={onApplyAll}
+              shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
+            />
           </ActionPanel.Section>
 
           <FileManagerActions filePath={filePath} />
