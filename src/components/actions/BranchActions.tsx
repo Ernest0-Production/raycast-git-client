@@ -321,6 +321,7 @@ export function BranchRebaseAction(context: RepositoryContext & NavigationContex
       try {
         await context.gitManager.rebase(context.branch.name);
         context.branches.revalidate();
+        context.commits.revalidate();
         context.status.revalidate();
       } catch (error) {
         context.branches.revalidate();

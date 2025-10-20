@@ -175,6 +175,48 @@ export function CommitResetAction(context: RepositoryContext & NavigationContext
   );
 }
 
+
+/**
+ * Action for rebasing the current commit onto another commit.
+ */
+export function CommitRebaseAction(context: RepositoryContext & NavigationContext & { commit: Commit }) {
+  const handleRebaseCommit = async () => {
+    const targetName = context.commit.localBranches.length > 0 ? context.commit.localBranches[0] : context.commit.shortHash;
+
+    const confirmed = await confirmAlert({
+      title: "Rebase commit",
+      message: `Are you sure you want to rebase the current commit onto "${targetName}"?`,
+      primaryAction: {
+        title: "Rebase",
+        style: Alert.ActionStyle.Default,
+      },
+    });
+
+    if (confirmed) {
+      try {
+        await context.gitManager.rebase(targetName);
+        context.branches.revalidate();
+        context.commits.revalidate();
+        context.status.revalidate();
+      } catch (error) {
+        context.branches.revalidate();
+        context.status.revalidate();
+        context.navigateTo("status");
+      }
+    }
+  };
+
+  return (
+    <Action
+      title="Rebase to Here"
+      onAction={handleRebaseCommit}
+      icon={`arrow-rebase.svg`}
+      shortcut={{ modifiers: ["cmd", "shift"], key: "r" }}
+    />
+  );
+}
+
+
 /**
  * Action to open Interactive Rebase Editor starting from selected commit.
  */

@@ -1,6 +1,6 @@
 import { ActionPanel, List, Icon, Action, Color, Image } from "@raycast/api";
 import { getFavicon } from "@raycast/utils";
-import { CommitCheckoutAction, CommitCherryPickAction, CommitRevertAction, CommitResetAction, CommitInteractiveRebaseAction, CommitPatchCreateAction, CommitCopyInfoActions, CommitRewordAction } from "../actions/CommitActions";
+import { CommitCheckoutAction, CommitCherryPickAction, CommitRevertAction, CommitResetAction, CommitInteractiveRebaseAction, CommitPatchCreateAction, CommitCopyInfoActions, CommitRewordAction, CommitRebaseAction } from "../actions/CommitActions";
 import { TagCreateAction, TagRemoveAction, TagCopyNameAction } from "../actions/TagActions";
 import { BranchCopyNameAction, BranchPushAction, BranchPushForceAction } from "../actions/BranchActions";
 import { CommitDetailsView } from "./CommitDetailsView";
@@ -289,6 +289,7 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
             <CommitCherryPickAction {...context} />
             <CommitResetAction {...context} />
             <CommitRevertAction {...context} />
+            <CommitRebaseAction {...context} />
             <CommitInteractiveRebaseAction {...context} />
             <CommitPatchCreateAction {...context} />
           </ActionPanel.Section>
