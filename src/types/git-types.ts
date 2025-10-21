@@ -334,13 +334,15 @@ export interface ConflictSegment {
   beforeContent: string;
   afterContent: string;
   /** Content from the current branch (HEAD). */
-  currentContent: string;
+  current: {
+    label: string;
+    content: string;
+  };
   /** Content from the incoming branch (merge/rebase source). */
-  incomingContent: string;
-  /** Label for the current version (e.g., "HEAD" or branch name). */
-  currentLabel: string;
-  /** Label for the incoming version (e.g., branch name or commit hash). */
-  incomingLabel: string;
+  incoming: {
+    label: string;
+    content: string;
+  };
   /** The resolution choice: "current", "incoming", or null if not resolved. */
   resolution: "current" | "incoming" | null;
 }

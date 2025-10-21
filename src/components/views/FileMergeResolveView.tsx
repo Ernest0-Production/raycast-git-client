@@ -75,16 +75,14 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
                 filePath={context.filePath}
                 segment={segment}
                 type="current"
-                onSetResolution={() => resolveSegment(segment.id, "current")}
-                onDiscardSelection={() => resolveSegment(segment.id, null)}
+                onSetResolution={(resolution) => resolveSegment(segment.id, resolution)}
                 onApplyAll={applyResolutions}
               />
               <ConflictOptionItem
                 filePath={context.filePath}
                 segment={segment}
                 type="incoming"
-                onSetResolution={() => resolveSegment(segment.id, "incoming")}
-                onDiscardSelection={() => resolveSegment(segment.id, null)}
+                onSetResolution={(resolution) => resolveSegment(segment.id, resolution)}
                 onApplyAll={applyResolutions}
               />
             </List.Section>
@@ -100,20 +98,20 @@ function ConflictOptionItem({
   segment,
   type,
   onSetResolution,
-  onDiscardSelection,
   onApplyAll,
 }: {
   filePath: string;
   segment: ConflictSegment;
   type: "current" | "incoming";
-  onSetResolution: () => void;
-  onDiscardSelection: () => void;
+  onSetResolution: (type: "current" | "incoming" | null) => void;
   onApplyAll?: () => void;
 }) {
-  const label = type === "current" ? segment.currentLabel : segment.incomingLabel;
+  const label = type === "current" ? segment.current.label : segment.incoming.label;
+  const otherType = type === "current" ? "incoming" : "current";
+  const otherLabel = otherType === "current" ? segment.incoming.label : segment.current.label;
 
   const title = useMemo(() => {
-    const selectingContent = type === "current" ? segment.currentContent : segment.incomingContent
+    const selectingContent = type === "current" ? segment.current.content : segment.incoming.content
     const firstLine = selectingContent.split("\n").find((line) => line.trim() !== "");
     return `${firstLine ? `${firstLine}` : "<empty>"}`;
   }, [type]);
@@ -138,7 +136,7 @@ function ConflictOptionItem({
   }, [segment.resolution, type]);
 
   const detailMarkdown = useMemo(() => {
-    const selectedSegmentContent = type === "current" ? segment.currentContent : segment.incomingContent;
+    const selectedSegmentContent = type === "current" ? segment.current.content : segment.incoming.content;
 
     return [
       `${label}`,
@@ -165,23 +163,40 @@ function ConflictOptionItem({
       quickLook={existsSync(filePath) ? { path: filePath, name: basename(filePath) } : undefined}
       actions={
         <ActionPanel>
-          <ActionPanel.Section>
+          <ActionPanel.Section title={`Lines ${segment.startLine}-${segment.endLine}`}>
             {segment.resolution !== type ?
               <Action
                 title={`Select ${label}`}
                 icon={{ source: Icon.Checkmark, tintColor: Color.Blue }}
-                onAction={onSetResolution}
+                onAction={() => onSetResolution(type)}
+                shortcut={{ modifiers: ["cmd"], key: type === "current" ? "[" : "]" }}
               /> :
               <Action
                 title={`Deselect ${label}`}
                 icon={Icon.ArrowCounterClockwise}
                 style={Action.Style.Destructive}
-                onAction={onDiscardSelection}
+                onAction={() => onSetResolution(null)}
+                shortcut={{ modifiers: ["cmd"], key: type === "current" ? "[" : "]" }}
+              />
+            }
+            {segment.resolution !== otherType ?
+              <Action
+                title={`Select ${otherLabel}`}
+                icon={{ source: Icon.Checkmark, tintColor: Color.Blue }}
+                onAction={() => onSetResolution(otherType)}
+                shortcut={{ modifiers: ["cmd"], key: otherType === "current" ? "[" : "]" }}
+              /> :
+              <Action
+                title={`Deselect ${otherLabel}`}
+                icon={Icon.ArrowCounterClockwise}
+                style={Action.Style.Destructive}
+                onAction={() => onSetResolution(null)}
+                shortcut={{ modifiers: ["cmd"], key: otherType === "current" ? "[" : "]" }}
               />
             }
           </ActionPanel.Section>
 
-          <ActionPanel.Section>
+          <ActionPanel.Section title={basename(filePath)}>
             <Action
               title="Save Resolved Changes"
               icon={Icon.SaveDocument}

@@ -98,10 +98,14 @@ function parseConflictedFile(filePath: string): FileConflicts {
           endLine: endIndex + 1,
           beforeContent,
           afterContent,
-          currentContent,
-          incomingContent,
-          currentLabel,
-          incomingLabel,
+          current: {
+            label: currentLabel,
+            content: currentContent,
+          },
+          incoming: {
+            label: incomingLabel,
+            content: incomingContent,
+          },
           resolution: null,
         });
 
@@ -163,8 +167,8 @@ function applyConflictResolutions(filePath: string, segments: ConflictSegment[])
         if (segment && segment.resolution) {
           // Apply the resolution
           const resolvedContent = segment.resolution === "current"
-            ? segment.currentContent
-            : segment.incomingContent;
+            ? segment.current.content
+            : segment.incoming.content;
 
           resolvedLines.push(resolvedContent);
         } else {
