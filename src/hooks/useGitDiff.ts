@@ -25,7 +25,10 @@ export function useGitDiff({ gitManager, options, execute = true }: UseGitDiffPr
     revalidate,
   } = usePromise(
     async (file, commitHash, status, repoPath) => {
-      const rawDiff = await gitManager.getDiff({ file, commitHash, status });
+      let rawDiff = await gitManager.getDiff({ file, commitHash, status });
+
+      // Remove leading whitespace from diff lines
+      rawDiff = rawDiff.replace(/^\s+([+-])/gm, "$1 ");
 
       if (rawDiff) {
         const lines = rawDiff.split("\n");
@@ -37,10 +40,10 @@ export function useGitDiff({ gitManager, options, execute = true }: UseGitDiffPr
             "```",
           ].join("\n");
         }
-        return `\`\`\`diff\n${rawDiff}\n\`\`\``;
+        return `~~~diff\n${rawDiff}\n~~~`;
       }
 
-      return "";
+      return undefined;
     },
     [file, commitHash, status, gitManager.repoPath],
     {
@@ -48,11 +51,8 @@ export function useGitDiff({ gitManager, options, execute = true }: UseGitDiffPr
     },
   );
 
-  // Return loading text while diff is being fetched
-  const diff = isLoading ? "Loading..." : rawDiffData;
-
   return {
-    diff,
+    diff: rawDiffData,
     isLoading,
     error,
     revalidate,

@@ -329,6 +329,9 @@ export interface ConflictSegment {
   startLine: number;
   /** Line number where the conflict ends (1-based). */
   endLine: number;
+  /** Content before and after the conflict segment. */
+  beforeContent: string;
+  afterContent: string;
   /** Content from the current branch (HEAD). */
   currentContent: string;
   /** Content from the incoming branch (merge/rebase source). */

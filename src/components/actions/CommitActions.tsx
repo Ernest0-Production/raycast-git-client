@@ -26,12 +26,12 @@ export function CommitCheckoutAction(context: RepositoryContext & NavigationCont
     if (confirmed) {
       try {
         await context.gitManager.checkoutCommit(targetName);
-        clearSearchBar();
       } catch (error) {
         // Git error is already shown by GitManager
       } finally {
         context.branches.revalidate();
         context.status.revalidate();
+        clearSearchBar();
       }
     }
   };
@@ -114,6 +114,8 @@ export function CommitRevertAction(context: RepositoryContext & NavigationContex
         context.commits.revalidate();
         context.status.revalidate();
         context.navigateTo("status");
+      } finally {
+        clearSearchBar();
       }
     }
   };
@@ -152,6 +154,8 @@ export function CommitResetAction(context: RepositoryContext & NavigationContext
         context.commits.revalidate();
         context.status.revalidate();
         context.navigateTo("status");
+      } finally {
+        clearSearchBar();
       }
     }
   };
@@ -202,6 +206,8 @@ export function CommitRebaseAction(context: RepositoryContext & NavigationContex
         context.branches.revalidate();
         context.status.revalidate();
         context.navigateTo("status");
+      } finally {
+        clearSearchBar();
       }
     }
   };

@@ -26,7 +26,7 @@ interface Arguments {
 
 export type BranchFilter =
   { kind: 'all' } |
-  { kind: 'current' } |
+  { kind: 'current', upstream: boolean } |
   { kind: 'branch', value: Pick<Branch, 'name' | 'type' | 'remote'> }
 
 export type RepositoryContext = {

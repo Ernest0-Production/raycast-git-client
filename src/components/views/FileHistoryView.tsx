@@ -110,6 +110,18 @@ function CommitListItem(context: RepositoryContext & {
         execute: shouldLoadDiff,
     });
 
+    const diffMarkdown = useMemo(() => {
+        const contentParts = [context.file.path];
+        if (diff) {
+            contentParts.push(diff);
+        } else if (isLoading) {
+            contentParts.push("Loading...");
+        } else if (error) {
+            contentParts.push("Error loading diff", error.message);
+        }
+        return contentParts.join("\n\n");
+    }, [context.file.path, diff, isLoading, error]);
+
     const accessories = useMemo(() => {
         if (context.toggleDetailController.isShowingDetail) {
             return undefined;
@@ -140,7 +152,7 @@ function CommitListItem(context: RepositoryContext & {
                 context.toggleDetailController.isShowingDetail ? (
                     <List.Item.Detail
                         isLoading={isLoading}
-                        markdown={`${context.file.path}:\n\n${error ? `Error loading diff: ${error.message}` : (diff ?? "")}`}
+                        markdown={diffMarkdown}
                         metadata={
                             context.toggleMetadataController.isShowingDetail ? (
                                 <List.Item.Detail.Metadata>

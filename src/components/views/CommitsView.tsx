@@ -441,18 +441,29 @@ function CommitBranchFilterAction(context: RepositoryContext) {
             title={`HEAD (${context.branches.data.detachedHead.shortCommitHash})`}
             icon={context.commits.filter.kind === 'current' ? Icon.Checkmark : Icon.Anchor}
             autoFocus={context.commits.filter.kind === 'current'}
-            onAction={() => context.commits.setFilter({ kind: 'current' })}
+            onAction={() => context.commits.setFilter({ kind: 'current', upstream: false })}
           />
         )}
         {context.branches.data.currentBranch && (
           <Action
             title={context.branches.data.currentBranch.displayName}
-            icon={{ source: context.commits.filter.kind === 'current' ? Icon.Checkmark : Icon.Dot, tintColor: Color.Green }}
-            autoFocus={context.commits.filter.kind === 'current'}
-            onAction={() => context.commits.setFilter({ kind: 'current' })}
+            icon={{ source: context.commits.filter.kind === 'current' && !context.commits.filter.upstream ? Icon.Checkmark : Icon.Dot, tintColor: Color.Green }}
+            autoFocus={context.commits.filter.kind === 'current' && !context.commits.filter.upstream}
+            onAction={() => context.commits.setFilter({ kind: 'current', upstream: false })}
           />
         )}
       </ActionPanel.Section>
+
+      {context.branches.data.currentBranch?.upstream && (
+        <ActionPanel.Section title={"Upstream Branch"}>
+          <Action
+            title={context.branches.data.currentBranch.upstream}
+            icon={{ source: context.commits.filter.kind === 'current' && context.commits.filter.upstream ? Icon.Checkmark : Icon.Globe }}
+            autoFocus={context.commits.filter.kind === 'current' && context.commits.filter.upstream}
+            onAction={() => context.commits.setFilter({ kind: 'current', upstream: true })}
+          />
+        </ActionPanel.Section>
+      )}
 
       {/* Local Branches Section */}
       {context.branches.data.localBranches.length > 0 && (

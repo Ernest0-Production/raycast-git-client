@@ -14,7 +14,7 @@ export function useGitCommits(
 ): RepositoryContext["commits"] {
   const [branchFilter, setBranchFilter] = useCachedState<BranchFilter>(
     `${gitManager.repoPath}:selected-commits-filter`,
-    { kind: 'current' }
+    { kind: 'current', upstream: false }
   );
 
   const selectedBranch: Branch | DetachedHead | undefined = useMemo(() => {
@@ -30,7 +30,12 @@ export function useGitCommits(
         if (branchesState.detachedHead) {
           return branchesState.detachedHead;
         } else {
-          return branchesState.currentBranch;
+          if (branchFilter.upstream && branchesState.currentBranch?.upstream) {
+            const remoteName = branchesState.currentBranch.upstream.split("/")[0];
+            return branchesState.remoteBranches[remoteName]?.find((branch) => branch.displayName === branchesState.currentBranch?.upstream);
+          } else {
+            return branchesState.currentBranch;
+          }
         }
 
       case 'branch':

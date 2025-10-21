@@ -177,11 +177,28 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
   // Only load diff if this file is selected and detail view is showing
   const isFocused = context.toggleController.isShowingDetail && context.selectedFilePath === fileId;
 
-  const { diff, isLoading } = useGitDiff({
+  const { diff, isLoading, error } = useGitDiff({
     gitManager: context.gitManager,
     options: { file: context.file.relativePath, status: context.file.status },
     execute: isFocused,
   });
+
+  const diffMarkdown = useMemo(() => {
+    if (!isFocused) return undefined;
+
+    const contentParts = [context.file.relativePath];
+    if (diff) {
+      contentParts.push(diff);
+    } else if (isLoading) {
+      contentParts.push("Loading...");
+    } else if (error) {
+      contentParts.push("Error loading diff", error.message);
+    } else if (context.file.type === "conflicted" && !isLoading) {
+      contentParts.push("Deleted");
+    }
+
+    return contentParts.join("\n\n");
+  }, [context.file.relativePath, diff, isLoading, error]);
 
   return (
     <List.Item
@@ -195,7 +212,11 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
       keywords={[context.file.path, context.file.oldPath].filter((keyword): keyword is string => Boolean(keyword))}
       detail={
         context.toggleController.isShowingDetail ? (
-          <List.Item.Detail isLoading={isLoading} markdown={`${context.file.relativePath}:\n\n${diff ?? ""}`} metadata />
+          <List.Item.Detail
+            isLoading={isLoading}
+            markdown={diffMarkdown}
+            metadata
+          />
         ) : undefined
       }
       quickLook={existsSync(context.file.path) ? { path: context.file.path, name: context.file.relativePath } : undefined}

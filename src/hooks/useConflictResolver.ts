@@ -4,6 +4,8 @@ import { ConflictSegment, FileConflicts } from "../types";
 import { readFileSync, writeFileSync } from "fs";
 import { nanoid } from "nanoid";
 
+const MAX_CONTENT_PREVIEW_OFFSET_LINES = 5;
+
 export type ConflictResolveState = {
   segments: ConflictSegment[];
   isLoading: boolean;
@@ -16,13 +18,10 @@ export type ConflictResolveState = {
  *
  * @param filePath - Path to the conflicted file
  * @returns Object containing:
- *   - conflicts: Parsed conflict data
  *   - segments: Array of conflict segments with resolution state
  *   - isLoading: Loading state
- *   - error: Error message if parsing failed
  *   - resolveSegment: Function to set resolution for a segment
  *   - applyResolution: Function to write resolved content to file
- *   - allResolved: Boolean indicating if all conflicts are resolved
  */
 export function useConflictResolver(filePath: string): ConflictResolveState {
   const [segments, setSegments] = useState<ConflictSegment[]>([]);
@@ -90,10 +89,15 @@ function parseConflictedFile(filePath: string): FileConflicts {
         const incomingContent = lines.slice(separatorIndex + 1, endIndex).join("\n");
         const incomingLabel = lines[endIndex].replace(/^>{7}\s*/, "").trim() || "incoming";
 
+        const beforeContent = lines.slice(Math.max(0, startLine - MAX_CONTENT_PREVIEW_OFFSET_LINES), startLine - 1).join("\n");
+        const afterContent = lines.slice(endIndex + 1, Math.min(lines.length, endIndex + MAX_CONTENT_PREVIEW_OFFSET_LINES)).join("\n");
+
         segments.push({
           id: nanoid(),
           startLine,
           endLine: endIndex + 1,
+          beforeContent,
+          afterContent,
           currentContent,
           incomingContent,
           currentLabel,

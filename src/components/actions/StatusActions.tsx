@@ -15,6 +15,10 @@ export function FileResolveConflictAction(context: RepositoryContext & { file: F
         return undefined;
     }
 
+    if (context.file.path.endsWith("Generated/AuthServiceProtocolMock+Generated.swift")) {
+        console.log(context.file);
+    }
+
     return (
         <Action.Push
             title="Resolve Conflicts"

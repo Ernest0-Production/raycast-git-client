@@ -153,6 +153,18 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
     execute: shouldLoadDiff,
   });
 
+  const diffMarkdown = useMemo(() => {
+    const contentParts = [context.file.path];
+    if (diff) {
+      contentParts.push(diff);
+    } else if (isLoading) {
+      contentParts.push("Loading...");
+    } else if (error) {
+      contentParts.push("Error loading diff", error.message);
+    }
+    return contentParts.join("\n\n");
+  }, [context.file.path, diff, isLoading, error]);
+
   const absolutePath = join(context.gitManager.repoPath, context.file.path);
   const fileExists = existsSync(absolutePath);
 
@@ -183,10 +195,7 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
       keywords={[context.file.path, context.file.oldPath].filter((keyword): keyword is string => Boolean(keyword))}
       detail={
         context.toggleController.isShowingDetail ? (
-          <List.Item.Detail
-            isLoading={isLoading}
-            markdown={`${context.file.path}:\n\n${error ? `Error loading diff: ${error.message}` : (diff ?? "")}`}
-          />
+          <List.Item.Detail isLoading={isLoading} markdown={diffMarkdown} />
         ) : undefined
       }
       quickLook={fileExists ? { path: absolutePath, name: context.file.path } : undefined}

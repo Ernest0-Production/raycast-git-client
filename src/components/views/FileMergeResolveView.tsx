@@ -5,7 +5,7 @@ import { useConflictResolver } from "../../hooks/useConflictResolver";
 import { RepositoryContext } from "../../open-repository";
 import { basename } from "path";
 import { FileManagerActions } from "../actions/FileActions";
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 
 export default function FileMergeResolveView(context: RepositoryContext & { filePath: string }) {
   const { pop } = useNavigation();
@@ -18,8 +18,8 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
 
   const applyResolutions = async () => {
     const confirmed = await confirmAlert({
-      title: "Apply Conflict Resolutions",
-      message: `Are you sure you want to apply the resolutions to "${basename(context.filePath)}"?`,
+      title: "Apply Resolved Changes",
+      message: `Are you sure you want to apply selected resolutions to "${basename(context.filePath)}"?`,
       primaryAction: {
         title: "Apply",
         style: Alert.ActionStyle.Default,
@@ -111,12 +111,12 @@ function ConflictOptionItem({
   onApplyAll?: () => void;
 }) {
   const label = type === "current" ? segment.currentLabel : segment.incomingLabel;
-  const content = type === "current" ? segment.currentContent : segment.incomingContent;
 
   const title = useMemo(() => {
-    const firstLine = content.split("\n").find((line) => line.trim() !== "");
+    const selectingContent = type === "current" ? segment.currentContent : segment.incomingContent
+    const firstLine = selectingContent.split("\n").find((line) => line.trim() !== "");
     return `${firstLine ? `${firstLine}` : "<empty>"}`;
-  }, [content]);
+  }, [type]);
 
   const icon = useMemo(() => {
     if (segment.resolution === null) {
@@ -138,23 +138,17 @@ function ConflictOptionItem({
   }, [segment.resolution, type]);
 
   const detailMarkdown = useMemo(() => {
-    if (content === "") {
-      return [
-        `${label}`,
-        "```",
-        "Empty content",
-        "```",
-      ].join("\n");
-    }
+    const selectedSegmentContent = type === "current" ? segment.currentContent : segment.incomingContent;
 
     return [
       `${label}`,
-      "",
-      "```diff",
-      content,
-      "```",
+      "~~~diff",
+      segment.beforeContent,
+      `+ ${selectedSegmentContent.replace(/\n/g, `\n+ `)}`,
+      segment.afterContent,
+      "~~~"
     ].join("\n");
-  }, [content, label]);
+  }, [type, segment]);
 
   return (
     <List.Item
@@ -172,31 +166,29 @@ function ConflictOptionItem({
       actions={
         <ActionPanel>
           <ActionPanel.Section>
-            <Action
-              title={`Select ${label}`}
-              icon={Icon.CheckCircle}
-              onAction={onSetResolution}
-            />
-            {segment.resolution !== null && (
+            {segment.resolution !== type ?
               <Action
-                title="Discard Selection"
+                title={`Select ${label}`}
+                icon={{ source: Icon.Checkmark, tintColor: Color.Blue }}
+                onAction={onSetResolution}
+              /> :
+              <Action
+                title={`Deselect ${label}`}
                 icon={Icon.ArrowCounterClockwise}
                 style={Action.Style.Destructive}
                 onAction={onDiscardSelection}
-                shortcut={{ modifiers: ["cmd"], key: "z" }}
               />
-            )}
+            }
           </ActionPanel.Section>
 
           <ActionPanel.Section>
             <Action
-              title="Apply All Resolutions"
-              icon={{ source: Icon.Check, tintColor: Color.Green }}
+              title="Save Resolved Changes"
+              icon={Icon.SaveDocument}
               onAction={onApplyAll}
-              shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
+              shortcut={{ modifiers: ["cmd"], key: "s" }}
             />
           </ActionPanel.Section>
-
           <FileManagerActions filePath={filePath} />
         </ActionPanel>
       }
