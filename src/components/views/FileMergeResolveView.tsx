@@ -16,6 +16,12 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
     applyResolution,
   } = useConflictResolver(context.filePath);
 
+  const setAllResolution = (type: "current" | "incoming") => {
+    for (const segment of segments) {
+      resolveSegment(segment.id, type);
+    }
+  };
+
   const applyResolutions = async () => {
     const confirmed = await confirmAlert({
       title: "Apply Resolved Changes",
@@ -76,6 +82,7 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
                 segment={segment}
                 type="current"
                 onSetResolution={(resolution) => resolveSegment(segment.id, resolution)}
+                onSetAllResolution={setAllResolution}
                 onApplyAll={applyResolutions}
               />
               <ConflictOptionItem
@@ -83,6 +90,7 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
                 segment={segment}
                 type="incoming"
                 onSetResolution={(resolution) => resolveSegment(segment.id, resolution)}
+                onSetAllResolution={setAllResolution}
                 onApplyAll={applyResolutions}
               />
             </List.Section>
@@ -98,17 +106,19 @@ function ConflictOptionItem({
   segment,
   type,
   onSetResolution,
+  onSetAllResolution,
   onApplyAll,
 }: {
   filePath: string;
   segment: ConflictSegment;
   type: "current" | "incoming";
   onSetResolution: (type: "current" | "incoming" | null) => void;
+  onSetAllResolution: (type: "current" | "incoming") => void;
   onApplyAll?: () => void;
 }) {
   const label = type === "current" ? segment.current.label : segment.incoming.label;
   const otherType = type === "current" ? "incoming" : "current";
-  const otherLabel = otherType === "current" ? segment.incoming.label : segment.current.label;
+  const otherLabel = otherType === "current" ? segment.current.label : segment.incoming.label;
 
   const title = useMemo(() => {
     const selectingContent = type === "current" ? segment.current.content : segment.incoming.content
@@ -194,6 +204,19 @@ function ConflictOptionItem({
                 shortcut={{ modifiers: ["cmd"], key: otherType === "current" ? "[" : "]" }}
               />
             }
+          </ActionPanel.Section>
+
+          <ActionPanel.Section title="All Lines">
+            <Action
+              title={`Select ${segment.current.label}`}
+              onAction={() => onSetAllResolution("current")}
+              shortcut={{ modifiers: ["cmd", "ctrl", "opt"], key: "[" }}
+            />
+            <Action
+              title={`Select ${segment.incoming.label}`}
+              onAction={() => onSetAllResolution("incoming")}
+              shortcut={{ modifiers: ["cmd", "ctrl", "opt"], key: "]" }}
+            />
           </ActionPanel.Section>
 
           <ActionPanel.Section title={basename(filePath)}>
