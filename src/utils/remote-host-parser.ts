@@ -59,6 +59,9 @@ function githubParser(_url: string, parsed: URLComponents) {
         createPullRequestUrl(branchName: string) {
             return `${scheme}://${hostname}/${path}/compare/${encodeURIComponent(branchName)}?expand=1`;
         },
+        fileUrl(filePath: string, ref: string) {
+            return `${scheme}://${hostname}/${path}/blob/${encodeURIComponent(ref)}/${filePath}`;
+        },
     };
 }
 
@@ -87,6 +90,9 @@ function gitlabParser(_url: string, parsed: URLComponents) {
         createPullRequestUrl(branchName: string) {
             return `${scheme}://${hostname}/${path}/-/merge_requests/new?merge_request[source_branch]=${encodeURIComponent(branchName)}`;
         },
+        fileUrl(filePath: string, ref: string) {
+            return `${scheme}://${hostname}/${path}/-/blob/${encodeURIComponent(ref)}/${filePath}`;
+        },
     };
 }
 
@@ -114,6 +120,9 @@ function giteaParser(_url: string, parsed: URLComponents) {
         },
         createPullRequestUrl(_branchName: string) {
             return undefined;
+        },
+        fileUrl(filePath: string, ref: string) {
+            return `${scheme}://${hostname}/${path}/src/branch/${encodeURIComponent(ref)}/${filePath}`;
         },
     };
 }
@@ -168,6 +177,13 @@ function bitbucketParser(_url: string, parsed: URLComponents) {
                 return `${repoBase}/pull-requests?create&sourceBranch=${encodeURIComponent(`refs/heads/${branchName}`)}`;
             }
             return `${repoBase}/pull-requests/new?source=${encodeURIComponent(branchName)}`;
+        },
+        fileUrl(filePath: string, ref: string) {
+            if (!repoBase) return undefined;
+            if (repoBase.includes("/projects/")) {
+                return `${repoBase}/browse/${filePath}?at=${encodeURIComponent(ref)}`;
+            }
+            return `${repoBase}/src/${encodeURIComponent(ref)}/${filePath}`;
         },
     };
 }
@@ -245,6 +261,9 @@ function azureDevopsParser(_url: string, parsed: URLComponents) {
         createPullRequestUrl(branchName: string) {
             return repoBase ? `${repoBase}/pullrequestcreate?sourceRef=${encodeURIComponent(`refs/heads/${branchName}`)}` : undefined;
         },
+        fileUrl(filePath: string, ref: string) {
+            return repoBase ? `${repoBase}?path=/${filePath}&version=GB${encodeURIComponent(ref)}` : undefined;
+        },
     };
 }
 
@@ -269,6 +288,9 @@ function unknownParser(_url: string, parsed?: URLComponents) {
             return undefined;
         },
         createPullRequestUrl() {
+            return undefined;
+        },
+        fileUrl() {
             return undefined;
         },
     };

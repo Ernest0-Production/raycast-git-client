@@ -8,6 +8,7 @@ import { existsSync } from "fs";
 import { search, sortKind } from "fast-fuzzy";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
+import { RemoteCopyFileURLAction } from "../actions/RemoteActions";
 
 const MAX_RESULTS = 60;
 
@@ -169,6 +170,12 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
                             onOpen={context.onOpen}
                         />
                         <FileManagerActions filePath={absolutePath} />
+                        {context.branches.data.currentBranch && (
+                            <RemoteCopyFileURLAction
+                                {...context}
+                                ref={context.branches.data.currentBranch.name}
+                            />
+                        )}
                     </ActionPanel.Section>
 
                     <SharedActionsSection {...context} />

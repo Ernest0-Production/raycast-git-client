@@ -227,6 +227,7 @@ export type Remote = {
     pullRequests?: string;
     commitPage: (sha: string) => string | undefined;
     createPullRequestForm: (branchName: string) => string | undefined;
+    filePage: (filePath: string, ref: string) => string | undefined;
   }
 };
 

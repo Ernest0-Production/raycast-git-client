@@ -311,3 +311,63 @@ export function RemoteCopyUrlActions({ remote }: { remote: Remote }) {
         </>
     );
 }
+
+/**
+ * Copies file URL from remote host to clipboard.
+ * Returns undefined if no remotes available or provider doesn't support file URLs.
+ */
+export function RemoteCopyFileURLAction(context: RepositoryContext & {
+    filePath: string;
+    ref: string;
+}) {
+    if (!context.remotes.data || Object.keys(context.remotes.data).length === 0) {
+        return undefined;
+    }
+
+    const remotes = Object.values(context.remotes.data);
+    const availableRemotes = remotes.filter(remote => {
+        const url = remote.pages.filePage(context.filePath, context.ref);
+        return url !== undefined;
+    });
+
+    if (availableRemotes.length === 0) {
+        return undefined;
+    }
+
+    if (availableRemotes.length === 1) {
+        const remote = availableRemotes[0];
+        const url = remote.pages.filePage(context.filePath, context.ref);
+        if (!url) return undefined;
+
+        return (
+            <Action.CopyToClipboard
+                title={`Copy File URL in ${remote.provider}`}
+                content={url}
+                icon={Icon.Clipboard}
+                shortcut={{ modifiers: ["cmd", "ctrl", "opt"], key: "," }}
+            />
+        );
+    }
+
+    return (
+        <ActionPanel.Submenu
+            title="Copy File URL"
+            icon={Icon.Clipboard}
+            shortcut={{ modifiers: ["cmd", "ctrl", "opt"], key: "," }}
+        >
+            {availableRemotes.map((remote) => {
+                const url = remote.pages.filePage(context.filePath, context.ref);
+                if (!url) return null;
+
+                return (
+                    <Action.CopyToClipboard
+                        key={`${remote.name}:copy-file-url`}
+                        title={`in ${remote.displayName}`}
+                        content={url}
+                        icon={RemoteHostIcon(remote.provider)}
+                    />
+                );
+            })}
+        </ActionPanel.Submenu>
+    );
+}
