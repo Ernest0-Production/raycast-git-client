@@ -396,6 +396,9 @@ function CloningRepositoryListItem({
         title: "Kill",
         style: Alert.ActionStyle.Destructive,
       },
+      dismissAction: {
+        title: "Continue",
+      },
     });
 
     if (confirmed) {

@@ -38,9 +38,10 @@ export function FileStageAction(context: RepositoryContext & { file: FileStatus 
         if (isConflicted) {
             const confirmed = await confirmAlert({
                 title: "Mark as Resolved",
-                message: `Are you sure you want to mark "${basename(context.file.path)}" as resolved?`,
+                message: `Are you sure you want to mark "${basename(context.file.path)}" as resolved remaining conflicts unresolved?`,
                 primaryAction: {
-                    title: "Resolved"
+                    title: "Resolved",
+                    style: Alert.ActionStyle.Destructive,
                 },
             });
 
@@ -59,7 +60,8 @@ export function FileStageAction(context: RepositoryContext & { file: FileStatus 
         <Action
             title={isConflicted ? "Mark as Resolved" : "Stage"}
             onAction={handleStageFile}
-            icon={isConflicted ? { source: Icon.CheckRosette, tintColor: Color.Green } : Icon.Plus}
+            style={isConflicted ? Action.Style.Destructive : Action.Style.Regular}
+            icon={isConflicted ? Icon.CheckRosette : Icon.Plus}
         />
     );
 }
@@ -213,7 +215,7 @@ export function FileDiscardAllAction(context: RepositoryContext) {
             title: "Discard All Changes",
             message: "Are you sure you want to discard all unstaged changes? This action cannot be undone.",
             primaryAction: {
-                title: "Discard All Changes",
+                title: "Discard",
                 style: Alert.ActionStyle.Destructive,
             },
         });
@@ -358,7 +360,7 @@ export function ConflictAbortAction(context: RepositoryContext) {
                             title: "Abort Rebase",
                             message: "Are you sure you want to abort the rebase? This action cannot be undone.",
                             primaryAction: {
-                                title: "Abort Rebase",
+                                title: "Abort",
                                 style: Alert.ActionStyle.Destructive,
                             },
                         });
@@ -382,7 +384,7 @@ export function ConflictAbortAction(context: RepositoryContext) {
                             title: "Abort Merge",
                             message: "Are you sure you want to abort the merge? This action cannot be undone.",
                             primaryAction: {
-                                title: "Abort Merge",
+                                title: "Abort",
                                 style: Alert.ActionStyle.Destructive,
                             },
                         });
@@ -406,7 +408,7 @@ export function ConflictAbortAction(context: RepositoryContext) {
                             title: "Abort Cherry Pick",
                             message: "Are you sure you want to abort the cherry pick? This action cannot be undone.",
                             primaryAction: {
-                                title: "Abort Cherry Pick",
+                                title: "Abort",
                                 style: Alert.ActionStyle.Destructive,
                             },
                         });
@@ -430,7 +432,7 @@ export function ConflictAbortAction(context: RepositoryContext) {
                             title: "Abort Revert",
                             message: "Are you sure you want to abort the revert? This action cannot be undone.",
                             primaryAction: {
-                                title: "Abort Revert",
+                                title: "Abort",
                                 style: Alert.ActionStyle.Destructive,
                             },
                         });

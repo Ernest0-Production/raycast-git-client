@@ -962,7 +962,7 @@ __REBASE_TODO__
           primaryAction: {
             title: "Force Push",
             style: Alert.ActionStyle.Destructive,
-          },
+          }
         });
         if (confirmed) {
           await this.push(true, branch, remote);

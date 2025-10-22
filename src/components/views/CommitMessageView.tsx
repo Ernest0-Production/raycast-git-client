@@ -142,11 +142,11 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
         title: "Force Push Confirmation",
         message: "Force push will rewrite Git history on the remote repository. This can cause problems for other collaborators. Are you sure you want to continue?",
         primaryAction: {
-          title: "Force Push",
+          title: "Force",
           style: Alert.ActionStyle.Destructive,
         },
         dismissAction: {
-          title: "Cancel",
+          title: "Stop",
         },
       });
 

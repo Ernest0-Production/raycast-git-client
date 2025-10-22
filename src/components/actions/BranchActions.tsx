@@ -97,7 +97,7 @@ export function BranchDeleteAction(context: RepositoryContext & { branch: Branch
                 style: Alert.ActionStyle.Destructive,
               },
               dismissAction: {
-                title: "Only Local",
+                title: "Skip",
               },
             });
             if (confirmed) {
@@ -200,7 +200,7 @@ export function BranchPushForceAction(context: RepositoryContext & { branch: Bra
       title: "Push Force",
       message: `Are you sure you want to force push the current branch to '${remote}'?`,
       primaryAction: {
-        title: "Force Push",
+        title: "Force",
         style: Alert.ActionStyle.Destructive,
       },
     });

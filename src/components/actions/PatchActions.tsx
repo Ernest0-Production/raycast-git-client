@@ -121,7 +121,7 @@ function PatchApplyForm(context: RepositoryContext) {
                 message: "Are you sure you want to apply the patch? This action cannot be undone.",
                 primaryAction: {
                     title: "Apply",
-                    style: Alert.ActionStyle.Destructive,
+                    style: Alert.ActionStyle.Default,
                 },
             });
 

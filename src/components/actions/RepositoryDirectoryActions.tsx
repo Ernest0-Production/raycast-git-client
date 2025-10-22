@@ -28,7 +28,7 @@ export function RepositoryDirectoryActions({ repositoryPath, onOpen }: Repositor
         style: Alert.ActionStyle.Default,
       },
       dismissAction: {
-        title: "No",
+        title: "Ignore",
       }
     });
 

@@ -25,7 +25,10 @@ export function StashApplyAction(context: RepositoryContext & NavigationContext 
           await confirmAlert({
             title: "Drop Applied Stash?",
             message: `Stash "${context.stash.message}" has been applied. Do you want to drop it?`,
-            primaryAction: { title: "Drop", style: Alert.ActionStyle.Destructive },
+            primaryAction: {
+              title: "Drop",
+              style: Alert.ActionStyle.Destructive
+            },
           })
         ) {
           await context.gitManager.dropStash(context.index);
@@ -51,7 +54,11 @@ export function StashDropAction(context: RepositoryContext & NavigationContext &
     const confirmed = await confirmAlert({
       title: "Drop Stash?",
       message: `Are you sure you want to drop "${context.stash.message}"? This action cannot be undone.`,
-      primaryAction: { title: "Drop", style: Alert.ActionStyle.Destructive },
+      primaryAction: {
+        title: "Drop",
+
+        style: Alert.ActionStyle.Destructive
+      },
     })
     if (!confirmed) return;
 
