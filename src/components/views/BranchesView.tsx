@@ -201,7 +201,10 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
                 <BranchPushAction {...context} />
                 <BranchPushForceAction {...context} />
                 <BranchRenameAction {...context} />
-                <BranchCopyNameAction branch={context.branch.displayName} />
+                <BranchCopyNameAction
+                  branch={context.branch.displayName}
+                  shortcut={{ modifiers: ["cmd"], key: "c" }}
+                />
               </>
             )}
 
@@ -215,7 +218,10 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
                 <BranchRebaseAction {...context} />
                 <BranchMergeAction {...context} />
                 <BranchRenameAction {...context} />
-                <BranchCopyNameAction branch={context.branch.displayName} />
+                <BranchCopyNameAction
+                  branch={context.branch.displayName}
+                  shortcut={{ modifiers: ["cmd"], key: "c" }}
+                />
                 <BranchDeleteAction {...context} />
                 <BranchInteractiveRebaseAction {...context} />
               </>
@@ -227,7 +233,10 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
                 <BranchCkeckoutAction {...context} />
                 <BranchShowCommitsAction {...context} />
                 <BranchPushAction {...context} />
-                <BranchCopyNameAction branch={context.branch.displayName} />
+                <BranchCopyNameAction
+                  branch={context.branch.displayName}
+                  shortcut={{ modifiers: ["cmd"], key: "c" }}
+                />
                 <BranchDeleteAction {...context} />
               </>
             )}

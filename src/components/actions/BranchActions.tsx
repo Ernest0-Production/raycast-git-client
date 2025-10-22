@@ -1,9 +1,8 @@
-import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast, Form, useNavigation, clearSearchBar, Color } from "@raycast/api";
+import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast, Form, useNavigation, clearSearchBar, Color, Keyboard } from "@raycast/api";
 import { useState } from "react";
 import { Branch, MergeMode } from "../../types";
 import { usePromise } from "@raycast/utils";
 import InteractiveRebaseEditorView from "../views/InteractiveRebaseEditorView";
-import { RemotesHosts } from "../../hooks/useGitRemotes";
 import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 
@@ -61,7 +60,7 @@ export function BranchShowCommitsAction(context: RepositoryContext & NavigationC
       title="Show Commits"
       onAction={() => {
         if (context.branch.type === "current") {
-          context.commits.setFilter({ kind: 'current' });
+          context.commits.setFilter({ kind: 'current', upstream: false });
         } else {
           context.commits.setFilter({ kind: 'branch', value: context.branch });
         }
@@ -142,12 +141,12 @@ export function BranchDeleteAction(context: RepositoryContext & { branch: Branch
 /**
  * Action for copying current branch name to clipboard.
  */
-export function BranchCopyNameAction({ branch }: { branch: string }) {
+export function BranchCopyNameAction({ branch, shortcut }: { branch: string, shortcut?: Keyboard.Shortcut }) {
   return (
     <Action.CopyToClipboard
       title="Copy Branch Name"
       content={branch}
-      shortcut={{ modifiers: ["cmd"], key: "c" }}
+      shortcut={shortcut}
     />
   );
 }
