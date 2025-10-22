@@ -5,6 +5,10 @@ import { CommitFileChange, FileStatus } from "../../types/git-types";
  * Icons for different types of changes
  */
 export const FileStatusIcon = (file: FileStatus) => {
+    if (file.isConflicted) {
+        return { source: `alert-square-filled.svg`, tintColor: Color.Red, tooltip: `Conflicted (${file.type})` };
+    }
+
     switch (file.type) {
         case "added":
             return { source: `plus-square.svg`, tintColor: Color.Green, tooltip: "Added" };
@@ -16,8 +20,6 @@ export const FileStatusIcon = (file: FileStatus) => {
             return { source: `square-arrow-right-filled.svg`, tintColor: Color.Blue, tooltip: "Moved from " + file.oldPath };
         case "copied":
             return { source: `copy.svg`, tintColor: Color.Purple, tooltip: "Copied from " + file.oldPath };
-        case "conflicted":
-            return { source: `alert-square-filled.svg`, tintColor: Color.Red, tooltip: "Conflicted" };
         default:
             return { source: Icon.Document, tintColor: Color.SecondaryText, tooltip: "Unknown" };
     }

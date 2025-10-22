@@ -119,7 +119,9 @@ export interface FileStatus {
   /** The status of the file in the working area. */
   status: "staged" | "unstaged" | "untracked";
   /** The type of change to the file. */
-  type: "added" | "modified" | "deleted" | "renamed" | "copied" | "conflicted";
+  type: "added" | "modified" | "deleted" | "renamed" | "copied";
+  /** Whether the file is in a conflict state. */
+  isConflicted: boolean;
   /** The old path (for renamed files). */
   oldPath?: string;
 }

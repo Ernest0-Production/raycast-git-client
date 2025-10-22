@@ -312,12 +312,13 @@ export class GitManager {
     const { index, working_dir, path, from } = fileStatus;
 
     // Helper function to create file status object
-    const createFileStatus = (status: FileStatus["status"], type: FileStatus["type"]): FileStatus => ({
+    const createFileStatus = (status: FileStatus["status"], type: FileStatus["type"], isConflicted: boolean = false): FileStatus => ({
       path: this.getAbsolutePath(path),
       relativePath: path,
       status,
       type,
       oldPath: from ? this.getAbsolutePath(from) : undefined,
+      isConflicted,
     });
 
     // Explicit handling of all possible index + working_dir combinations
@@ -328,38 +329,38 @@ export class GitManager {
       // CONFLICT STATES (unmerged files)
       // ============================================================================
       case "DD": // unmerged, both deleted
-        results.push(createFileStatus("staged", "conflicted"));
-        results.push(createFileStatus("unstaged", "conflicted"));
+        results.push(createFileStatus("staged", "deleted", true));
+        results.push(createFileStatus("unstaged", "deleted", true));
         break;
 
       case "AU": // unmerged, added by us
-        results.push(createFileStatus("staged", "conflicted"));
-        results.push(createFileStatus("unstaged", "conflicted"));
+        results.push(createFileStatus("staged", "added", true));
+        results.push(createFileStatus("unstaged", "modified", true));
         break;
 
       case "UD": // unmerged, deleted by them
-        results.push(createFileStatus("staged", "conflicted"));
-        results.push(createFileStatus("unstaged", "conflicted"));
+        results.push(createFileStatus("staged", "modified", true));
+        results.push(createFileStatus("unstaged", "deleted", true));
         break;
 
       case "UA": // unmerged, added by them
-        results.push(createFileStatus("staged", "conflicted"));
-        results.push(createFileStatus("unstaged", "conflicted"));
+        results.push(createFileStatus("staged", "modified", true));
+        results.push(createFileStatus("unstaged", "added", true));
         break;
 
       case "DU": // unmerged, deleted by us
-        results.push(createFileStatus("staged", "conflicted"));
-        results.push(createFileStatus("unstaged", "conflicted"));
+        results.push(createFileStatus("staged", "deleted", true));
+        results.push(createFileStatus("unstaged", "modified", true));
         break;
 
       case "AA": // unmerged, both added
-        results.push(createFileStatus("staged", "conflicted"));
-        results.push(createFileStatus("unstaged", "conflicted"));
+        results.push(createFileStatus("staged", "added", true));
+        results.push(createFileStatus("unstaged", "added", true));
         break;
 
       case "UU": // unmerged, both modified
-        results.push(createFileStatus("staged", "conflicted"));
-        results.push(createFileStatus("unstaged", "conflicted"));
+        results.push(createFileStatus("staged", "modified", true));
+        results.push(createFileStatus("unstaged", "modified", true));
         break;
 
       // ============================================================================

@@ -11,7 +11,7 @@ import { basename } from "path";
  * Action for resolving conflicts in a file.
  */
 export function FileResolveConflictAction(context: RepositoryContext & { file: FileStatus }) {
-    if (context.file.type !== "conflicted") {
+    if (!context.file.isConflicted) {
         return undefined;
     }
 
@@ -32,10 +32,8 @@ export function FileResolveConflictAction(context: RepositoryContext & { file: F
  * Action for staging a file.
  */
 export function FileStageAction(context: RepositoryContext & { file: FileStatus }) {
-    const isConflicted = context.file.type === "conflicted";
-
     const handleStageFile = async () => {
-        if (isConflicted) {
+        if (context.file.isConflicted) {
             const confirmed = await confirmAlert({
                 title: "Mark as Resolved",
                 message: `Are you sure you want to mark "${basename(context.file.path)}" as resolved remaining conflicts unresolved?`,
@@ -58,10 +56,10 @@ export function FileStageAction(context: RepositoryContext & { file: FileStatus 
 
     return (
         <Action
-            title={isConflicted ? "Mark as Resolved" : "Stage"}
+            title={context.file.isConflicted ? "Mark as Resolved" : "Stage"}
             onAction={handleStageFile}
-            style={isConflicted ? Action.Style.Destructive : Action.Style.Regular}
-            icon={isConflicted ? Icon.CheckRosette : Icon.Plus}
+            style={context.file.isConflicted ? Action.Style.Destructive : Action.Style.Regular}
+            icon={context.file.isConflicted ? Icon.CheckRosette : Icon.Plus}
         />
     );
 }
@@ -245,7 +243,7 @@ export function FileDiscardAllAction(context: RepositoryContext) {
  * Action to commit changes or continue a rebase/merge.
  */
 export function CommitChangesAction(context: RepositoryContext) {
-    const hasConflictedFiles = context.status.data?.files.some((f) => f.type === "conflicted");
+    const hasConflictedFiles = context.status.data?.files.some((f) => f.isConflicted);
     if (hasConflictedFiles) {
         return undefined; // Don't show if there are still conflicts
     }

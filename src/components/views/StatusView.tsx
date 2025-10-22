@@ -187,14 +187,37 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
     if (!isFocused) return undefined;
 
     const contentParts = [context.file.relativePath];
+
+    if (isLoading) {
+      contentParts.push("Loading...");
+    }
+
     if (diff) {
       contentParts.push(diff);
-    } else if (isLoading) {
-      contentParts.push("Loading...");
     } else if (error) {
-      contentParts.push("Error loading diff", error.message);
-    } else if (context.file.type === "conflicted" && !isLoading) {
-      contentParts.push("Deleted");
+      contentParts.push(
+        "Error loading diff",
+        `~~~\n${error.message}\n~~~`
+      );
+    } else if (context.file.isConflicted) {
+      const currentSource = context.file.status === "staged" ? "local version" : "remote version";
+      const otherSource = context.file.status === "staged" ? "remote version" : "local version";
+
+      switch (context.file.type) {
+        case "deleted":
+          contentParts.push(`~~~\n⚠️ File was deleted in ${currentSource} but added or modified in ${otherSource}\n~~~`);
+          break;
+        case "added":
+          contentParts.push(`~~~\n⚠️ File was added in ${currentSource} but deleted or modified in ${otherSource}\n~~~`);
+          break;
+        case "modified":
+          contentParts.push(`~~~\n⚠️ File was modified in ${currentSource} but deleted or added in ${otherSource}\n~~~`);
+          break;
+      }
+    }
+
+    if (context.file.isConflicted) {
+      contentParts.push("\n\n > 💡 **Tips**: \n > - Resolve the conflict manually by running `Resolve Conflicts` action.");
     }
 
     return contentParts.join("\n\n");
@@ -209,7 +232,11 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
         tooltip: context.file.relativePath
       }}
       icon={FileStatusIcon(context.file)}
-      keywords={[context.file.path, context.file.oldPath].filter((keyword): keyword is string => Boolean(keyword))}
+      keywords={[
+        context.file.path,
+        context.file.relativePath,
+        context.file.oldPath
+      ].filter((keyword): keyword is string => Boolean(keyword))}
       detail={
         context.toggleController.isShowingDetail ? (
           <List.Item.Detail
@@ -235,7 +262,7 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
             {/* Actions for unstaged/untracked files */}
             {(context.file.status === "unstaged" || context.file.status === "untracked") && (
               <>
-                {context.file.type === "conflicted" && (
+                {context.file.isConflicted && (
                   <FileResolveConflictAction {...context} />
                 )}
                 <FileStageAction {...context} />
@@ -248,7 +275,7 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
                     {...context}
                   />
                 )}
-                {context.file.type !== "conflicted" && (
+                {!context.file.isConflicted && (
                   <FileDiscardAction {...context} />
                 )}
               </>
@@ -325,13 +352,13 @@ function emptyViewProperties(kind: StatusMode["kind"]): Pick<List.EmptyView.Prop
       };
     case "merge":
       return {
-        icon: { source: `git-merge.svg`, tintColor: Color.Yellow },
+        icon: { source: `git - merge.svg`, tintColor: Color.Yellow },
         title: "Merge Conflict",
         description: "Please run \"Commit Merge\" action to finish.",
       };
     case "squash":
       return {
-        icon: { source: `arrow-bounce.svg`, tintColor: Color.Yellow },
+        icon: { source: `arrow - bounce.svg`, tintColor: Color.Yellow },
         title: "Squash Conflict",
         description: "Please run \"Commit Squash\" action to finish.",
       };
@@ -349,7 +376,7 @@ function emptyViewProperties(kind: StatusMode["kind"]): Pick<List.EmptyView.Prop
       };
     case "rebase":
       return {
-        icon: { source: `arrow-rebase.svg`, tintColor: Color.Yellow },
+        icon: { source: `arrow - rebase.svg`, tintColor: Color.Yellow },
         title: "Rebase Progress",
         description: "Please run \"Continue Rebase\" action to finish.",
       };

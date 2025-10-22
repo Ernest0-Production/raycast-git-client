@@ -116,7 +116,7 @@ export function BranchesView(context: RepositoryContext & NavigationContext) {
 
 function BranchListItem(context: RepositoryContext & NavigationContext & { branch: Branch }) {
   const hasConflicts = context.branch.type === "current"
-    && context.status.data?.files?.some((file) => file.type === "conflicted");
+    && context.status.data?.files?.some((file) => file.isConflicted);
 
   const hasUncommittedChanges = context.branch.type === "current"
     && context.status.data?.files?.length !== 0;
@@ -255,7 +255,7 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
 }
 
 function DetachedHeadListItem(context: RepositoryContext & NavigationContext & { detachedHead: DetachedHead }) {
-  const hasConflicts = context.status.data?.files?.some((file) => file.type === "conflicted");
+  const hasConflicts = context.status.data?.files?.some((file) => file.isConflicted);
   const hasUncommittedChanges = context.status.data?.files?.length !== 0;
 
   const accessories = useMemo(() => {
