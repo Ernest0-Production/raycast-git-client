@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { usePromise } from "@raycast/utils";
-import { ConflictSegment, FileConflicts } from "../types";
+import { ConflictSegment } from "../types"
 import { readFileSync, writeFileSync } from "fs";
 import { nanoid } from "nanoid";
 
@@ -29,8 +28,8 @@ export function useConflictResolver(filePath: string): ConflictResolveState {
 
   useEffect(() => {
     setIsLoading(true);
-    const conflicts = parseConflictedFile(filePath);
-    setSegments(conflicts.segments);
+    const segments = parseConflictedFile(filePath);
+    setSegments(segments);
     setIsLoading(false);
   }, [filePath]);
 
@@ -58,7 +57,7 @@ export function useConflictResolver(filePath: string): ConflictResolveState {
 /**
  * Parses a conflicted file and extracts all conflict segments.
  */
-function parseConflictedFile(filePath: string): FileConflicts {
+function parseConflictedFile(filePath: string): ConflictSegment[] {
   const fileContent = readFileSync(filePath, "utf-8");
   const lines = fileContent.split("\n");
   const segments: ConflictSegment[] = [];
@@ -118,10 +117,7 @@ function parseConflictedFile(filePath: string): FileConflicts {
     }
   }
 
-  return {
-    filePath,
-    segments,
-  };
+  return segments;
 }
 
 /**

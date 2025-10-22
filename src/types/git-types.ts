@@ -346,13 +346,3 @@ export interface ConflictSegment {
   /** The resolution choice: "current", "incoming", or null if not resolved. */
   resolution: "current" | "incoming" | null;
 }
-
-/**
- * Represents all conflicts in a file.
- */
-export interface FileConflicts {
-  /** The file path. */
-  filePath: string;
-  /** All conflict segments in the file. */
-  segments: ConflictSegment[];
-}
