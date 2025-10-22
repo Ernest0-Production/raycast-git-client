@@ -1,6 +1,6 @@
 import { Action, ActionPanel, Alert, Color, confirmAlert, Icon, List, showToast, Toast, useNavigation } from "@raycast/api";
-import { useMemo } from "react";
-import { ConflictSegment } from "../../types";
+import { useMemo, useState } from "react";
+import { ConflictSegment, FileStatus } from "../../types";
 import { useConflictResolver } from "../../hooks/useConflictResolver";
 import { RepositoryContext } from "../../open-repository";
 import { basename } from "path";
@@ -8,6 +8,40 @@ import { FileManagerActions } from "../actions/FileActions";
 import { existsSync, readFileSync } from "fs";
 
 export default function FileMergeResolveView(context: RepositoryContext & { filePath: string }) {
+  const conflictState = useMemo(() => {
+    const fileStatuses = context.status.data.files.filter(f => f.path === context.filePath);
+    const staged = fileStatuses.find(f => f.status === "staged")!;
+    const unstaged = fileStatuses.find(f => f.status === "unstaged")!;
+
+    if (!staged || !unstaged) {
+      return undefined;
+    }
+
+    return { staged, unstaged };
+  }, [context.filePath]);
+
+  if (!conflictState) {
+    return <List>
+      <List.EmptyView
+        title="No conflicts found"
+        description="This file doesn't contain any conflict markers."
+        icon={Icon.CheckCircle}
+      />
+    </List>
+  }
+
+  const bothModified = conflictState.staged.type === "modified" && conflictState.unstaged.type === "modified";
+  if (bothModified) {
+    return <SegmentsMergeResolveView {...context} />
+  }
+  return <FileLevelMergeResolveView
+    {...context}
+    stageStatus={conflictState.staged}
+    unstagedStatus={conflictState.unstaged}
+  />
+}
+
+function SegmentsMergeResolveView(context: RepositoryContext & { filePath: string }) {
   const { pop } = useNavigation();
   const {
     segments,
@@ -49,11 +83,11 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
         context.status.revalidate();
       }
       pop();
-    } catch (err) {
+    } catch (error) {
       showToast({
         style: Toast.Style.Failure,
         title: "Failed to apply resolutions",
-        message: err instanceof Error ? err.message : "Unknown error",
+        message: error instanceof Error ? error.message : "Unknown error",
       });
     }
   };
@@ -77,7 +111,7 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
               key={segment.id}
               title={`Lines ${segment.startLine}-${segment.endLine}`}
             >
-              <ConflictOptionItem
+              <ConflictSegmentOptionItem
                 filePath={context.filePath}
                 segment={segment}
                 type="current"
@@ -85,7 +119,7 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
                 onSetAllResolution={setAllResolution}
                 onApplyAll={applyResolutions}
               />
-              <ConflictOptionItem
+              <ConflictSegmentOptionItem
                 filePath={context.filePath}
                 segment={segment}
                 type="incoming"
@@ -101,7 +135,7 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
   );
 }
 
-function ConflictOptionItem({
+function ConflictSegmentOptionItem({
   filePath,
   segment,
   type,
@@ -228,6 +262,179 @@ function ConflictOptionItem({
             />
           </ActionPanel.Section>
           <FileManagerActions filePath={filePath} />
+        </ActionPanel>
+      }
+    />
+  );
+}
+
+function FileLevelMergeResolveView(context: RepositoryContext & {
+  filePath: string;
+  stageStatus: FileStatus;
+  unstagedStatus: FileStatus;
+}) {
+  const { pop } = useNavigation();
+  const [resolution, setResolution] = useState<"current" | "incoming" | null>(null);
+
+  const applyResolution = async () => {
+    const confirmed = await confirmAlert({
+      title: "Apply Resolved Changes",
+      message: `Are you sure you want to apply selected resolution to "${basename(context.filePath)}"?`,
+      primaryAction: {
+        title: "Apply",
+        style: Alert.ActionStyle.Default,
+      },
+    });
+
+    if (!confirmed) return;
+
+    try {
+      if (resolution === "current") {
+        await context.gitManager.resolveConflictWithOurs(context.filePath);
+      } else {
+        await context.gitManager.resolveConflictWithTheirs(context.filePath);
+      }
+
+      await context.gitManager.stageFile(context.filePath);
+      context.status.revalidate();
+
+      await showToast({
+        style: Toast.Style.Success,
+        title: "Conflicts resolved",
+        message: `File "${basename(context.filePath)}" has been updated`,
+      });
+
+      pop();
+    } catch (error) {
+      showToast({
+        style: Toast.Style.Failure,
+        title: "Failed to apply resolution",
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+
+  return (
+    <List
+      navigationTitle="Resolve Conflicts"
+      isShowingDetail={false}
+    >
+      <List.Section title={context.stageStatus.relativePath}>
+        <ConflictFileOptionItem
+          fileStatus={context.stageStatus}
+          resolution={resolution}
+          onSetResolution={setResolution}
+          onApplyResolution={applyResolution}
+        />
+        <ConflictFileOptionItem
+          fileStatus={context.unstagedStatus}
+          resolution={resolution}
+          onSetResolution={setResolution}
+          onApplyResolution={applyResolution}
+        />
+      </List.Section>
+    </List>
+  );
+}
+
+function ConflictFileOptionItem({
+  fileStatus,
+  resolution,
+  onSetResolution,
+  onApplyResolution,
+}: {
+  fileStatus: FileStatus;
+  resolution: "current" | "incoming" | null;
+  onSetResolution: (type: "current" | "incoming" | null) => void;
+  onApplyResolution: () => void;
+}) {
+  const currentVersionType = fileStatus.status === "staged" ? "current" : "incoming";
+  const currentVersionName = fileStatus.status === "staged" ? "Local" : "Remote";
+  const otherVersionType = currentVersionType === "current" ? "incoming" : "current";
+  const otherVersionName = currentVersionType === "current" ? "Remote" : "Local";
+
+  const changeTypeName = useMemo(() => {
+    switch (fileStatus.type) {
+      case "added": return "Added";
+      case "deleted": return "Deleted";
+      case "modified": return "Modified";
+      case "renamed": return "Renamed";
+      case "copied": return "Copied";
+      default: return "Changed";
+    }
+  }, [fileStatus.type]);
+
+  const icon = useMemo(() => {
+    if (resolution === null) {
+      return {
+        tooltip: "Unresolved",
+        value: { source: `tag-solid.svg`, tintColor: Color.SecondaryText }
+      };
+    }
+    if (resolution === currentVersionType) {
+      return {
+        tooltip: "Selected",
+        value: { source: `tag-solid.svg`, tintColor: Color.Blue }
+      };
+    }
+    return {
+      tooltip: "Unselected",
+      value: { source: `tag-outline.svg`, tintColor: Color.SecondaryText }
+    };
+  }, [resolution, currentVersionType]);
+
+  return (
+    <List.Item
+      title={`${changeTypeName} Version from ${currentVersionName}`}
+      icon={icon}
+      quickLook={existsSync(fileStatus.path) ? { path: fileStatus.path, name: basename(fileStatus.path) } : undefined}
+      actions={
+        <ActionPanel>
+          <ActionPanel.Section>
+            {resolution !== currentVersionType ? (
+              <Action
+                title={`Select ${currentVersionName} Version`}
+                icon={{ source: Icon.Checkmark, tintColor: Color.Blue }}
+                onAction={() => onSetResolution(currentVersionType)}
+                shortcut={{ modifiers: ["cmd"], key: currentVersionType === "current" ? "[" : "]" }}
+              />
+            ) : (
+              <Action
+                title={`Deselect ${currentVersionName} Version`}
+                icon={Icon.ArrowCounterClockwise}
+                style={Action.Style.Destructive}
+                onAction={() => onSetResolution(null)}
+                shortcut={{ modifiers: ["cmd"], key: currentVersionType === "current" ? "[" : "]" }}
+              />
+            )}
+            {resolution !== otherVersionType ? (
+              <Action
+                title={`Select ${otherVersionName} Version`}
+                icon={{ source: Icon.Checkmark, tintColor: Color.Blue }}
+                onAction={() => onSetResolution(otherVersionType)}
+                shortcut={{ modifiers: ["cmd"], key: otherVersionType === "current" ? "[" : "]" }}
+              />
+            ) : (
+              <Action
+                title={`Deselect ${otherVersionName} Version`}
+                icon={Icon.ArrowCounterClockwise}
+                style={Action.Style.Destructive}
+                onAction={() => onSetResolution(null)}
+                shortcut={{ modifiers: ["cmd"], key: otherVersionType === "current" ? "[" : "]" }}
+              />
+            )}
+          </ActionPanel.Section>
+          {resolution !== null && (
+            <ActionPanel.Section title={basename(fileStatus.path)}>
+              <Action
+                title="Save Resolved Changes"
+                icon={Icon.SaveDocument}
+                onAction={onApplyResolution}
+                shortcut={{ modifiers: ["cmd"], key: "s" }}
+              />
+            </ActionPanel.Section>
+          )}
+          <FileManagerActions filePath={fileStatus.path} />
         </ActionPanel>
       }
     />

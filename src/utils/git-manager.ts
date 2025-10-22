@@ -875,6 +875,20 @@ __REBASE_TODO__
   }
 
   /**
+   * Resolves a conflict by accepting "ours" version (current/HEAD).
+   */
+  async resolveConflictWithOurs(filePath: string): Promise<void> {
+    await this.git.raw(['checkout', '--ours', '--', filePath]);
+  }
+
+  /**
+   * Resolves a conflict by accepting "theirs" version (incoming/merge source).
+   */
+  async resolveConflictWithTheirs(filePath: string): Promise<void> {
+    await this.git.raw(['checkout', '--theirs', '--', filePath]);
+  }
+
+  /**
    * Removes a file from the staging area.
    */
   async unstageFile(file: string): Promise<void> {
