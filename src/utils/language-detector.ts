@@ -13,8 +13,13 @@ const LANGUAGES_COLORS: Record<string, Image.ImageLike> = {
     Ruby: { source: "https://api.iconify.design/openmoji/ruby.svg" },
     PHP: { source: "https://api.iconify.design/akar-icons/php-fill.svg", tintColor: Color.Blue },
     Go: "https://api.iconify.design/vscode-icons/file-type-go-gopher.svg",
+    Rust: "https://api.iconify.design/material-icon-theme/rust.svg",
+    Dart: "https://api.iconify.design/vscode-icons/file-type-dartlang.svg",
     Swift: "https://api.iconify.design/vscode-icons/file-type-swift.svg",
     Kotlin: "https://api.iconify.design/material-icon-theme/kotlin.svg",
+    HTML: "https://api.iconify.design/vscode-icons/file-type-html.svg",
+    CSS: "https://api.iconify.design/vscode-icons/file-type-css.svg",
+    Zig: "https://api.iconify.design/material-icon-theme/zig.svg"
 };
 
 const LANGUAGE_EXTENSION: Record<string, string> = {
@@ -24,6 +29,7 @@ const LANGUAGE_EXTENSION: Record<string, string> = {
     jsx: "JavaScript",
     mjs: "JavaScript",
     cjs: "JavaScript",
+    vue: "JavaScript",
     py: "Python",
     java: "Java",
     cs: "C#",
@@ -42,6 +48,15 @@ const LANGUAGE_EXTENSION: Record<string, string> = {
     swift: "Swift",
     kt: "Kotlin",
     kts: "Kotlin",
+    rs: "Rust",
+    html: "HTML",
+    xhtml: "HTML",
+    css: "CSS",
+    scss: "CSS",
+    sass: "CSS",
+    less: "CSS",
+    dart: "Dart",
+    zig: "Zig"
 };
 
 function getExtension(filePath: string): string | undefined {
