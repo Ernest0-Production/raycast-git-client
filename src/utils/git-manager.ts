@@ -943,19 +943,68 @@ __REBASE_TODO__
   /**
    * Creates a commit with a message.
    */
-  async commit(message: string, amend = false): Promise<void> {
-    if (amend) {
-      await this.git.raw(["commit", "--amend", "-m", message]);
-    } else {
-      await this.git.commit(message);
+  async commit(message: string, amend = false, noVerify = false): Promise<void> {
+    const args = ["commit"];
+
+    if (amend) args.push("--amend");
+    if (noVerify) args.push("--no-verify");
+
+    args.push("-m", message);
+
+    try {
+      await this.git.raw(args);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
+      if (!noVerify) {
+        const confirmed = await confirmAlert({
+          title: "Commit Failed",
+          message: errorMessage,
+          primaryAction: {
+            title: "Skip Hooks",
+            style: Alert.ActionStyle.Destructive,
+          },
+        });
+
+        if (confirmed) {
+          await this.commit(message, amend, true);
+        }
+
+      } else {
+        throw error;
+      }
     }
   }
 
   /**
    * Creates a merge commit.
    */
-  async commitMerge(): Promise<void> {
-    await this.git.raw(["commit", "--no-edit"]);
+  async commitMerge(noVerify = false): Promise<void> {
+    const args = ["commit", "--no-edit"];
+    if (noVerify) args.push("--no-verify");
+
+    try {
+      await this.git.raw(args);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
+      if (!noVerify) {
+        const confirmed = await confirmAlert({
+          title: "Merge Commit Failed",
+          message: errorMessage,
+          primaryAction: {
+            title: "Skip Hooks",
+            style: Alert.ActionStyle.Destructive,
+          },
+        });
+
+        if (confirmed) {
+          await this.commitMerge(true);
+        }
+      } else {
+        throw error;
+      }
+    }
   }
 
   /**
