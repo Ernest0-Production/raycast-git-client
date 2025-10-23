@@ -23,7 +23,7 @@ export function PatchCreateAction(context: RepositoryContext & { file?: FileStat
             />
             {context.file && (
                 <Action.Push
-                    title={`Only ${basename(context.file.path)}`}
+                    title={`Only ${basename(context.file.absolutePath)}`}
                     target={<PatchCreateForm scope={context.file} {...context} />}
                 />
             )}

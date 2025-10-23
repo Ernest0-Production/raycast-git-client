@@ -49,7 +49,7 @@ export function RepositoryDirectoryActions({ repositoryPath, onOpen }: Repositor
       {defaultApp ? (
         <Action.Open
           key={defaultApp.bundleId || defaultApp.path}
-          title="Open Repository"
+          title="Open Repository in Default App"
           icon={{ fileIcon: defaultApp.path }}
           application={defaultApp}
           target={repositoryPath}

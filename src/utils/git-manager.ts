@@ -313,7 +313,7 @@ export class GitManager {
 
     // Helper function to create file status object
     const createFileStatus = (status: FileStatus["status"], type: FileStatus["type"], isConflicted: boolean = false): FileStatus => ({
-      path: this.getAbsolutePath(path),
+      absolutePath: this.getAbsolutePath(path),
       relativePath: path,
       status,
       type,
@@ -875,17 +875,24 @@ __REBASE_TODO__
   }
 
   /**
-   * Resolves a conflict by accepting "ours" version (current/HEAD).
+   * Resolves a conflict by accepting the specified side's version.
    */
-  async resolveConflictWithOurs(filePath: string): Promise<void> {
-    await this.git.raw(['checkout', '--ours', '--', filePath]);
+  async resolveConflict(filePath: string, side: "ours" | "theirs"): Promise<void> {
+    switch (side) {
+      case "ours":
+        await this.git.raw(['checkout', '--ours', '--', filePath]);
+        break;
+      case "theirs":
+        await this.git.raw(['checkout', '--theirs', '--', filePath]);
+        break;
+    }
   }
 
   /**
-   * Resolves a conflict by accepting "theirs" version (incoming/merge source).
+   * Removes a file from the working directory.
    */
-  async resolveConflictWithTheirs(filePath: string): Promise<void> {
-    await this.git.raw(['checkout', '--theirs', '--', filePath]);
+  async removeFile(filePath: string): Promise<void> {
+    await this.git.rm(filePath);
   }
 
   /**
@@ -1499,9 +1506,9 @@ __REBASE_TODO__
       if (scope.status === "staged") {
         diffArgs.push("--staged");
       }
-      diffArgs.push("--", scope.path);
-      if (untrackedFiles.includes(scope.path)) {
-        filesToTemporarilyAdd.push(scope.path);
+      diffArgs.push("--", scope.absolutePath);
+      if (untrackedFiles.includes(scope.absolutePath)) {
+        filesToTemporarilyAdd.push(scope.absolutePath);
       }
     } else {
       switch (scope) {

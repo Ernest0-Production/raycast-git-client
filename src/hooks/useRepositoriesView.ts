@@ -11,7 +11,7 @@ export type StructuredRepositories = { groupTitle: string; repositories: Reposit
 export function useRepositoriesView(repositories: Repository[]) {
     const [currentView, setCurrentView] = useCachedState<RepositoriesView>(
         "repositories-list-view",
-        { order: "visit-date", group: "none" }
+        { order: "visit-date", group: "parent" }
     );
 
     const displayedRepositories = useMemo<StructuredRepositories[]>(() => {

@@ -20,8 +20,8 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
   const toggleController = useToggleDetail("Status Diff", "Changes", false);
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
 
-  const stagedFiles = context.status.data?.files ? context.status.data.files.filter((f) => f.status === "staged") : [];
-  const unstagedFiles = context.status.data?.files ? context.status.data.files.filter((f) => f.status === "unstaged" || f.status === "untracked") : [];
+  const stagedFiles = useMemo(() => context.status.data.files.filter((f) => f.status === "staged"), [context.status.data.files]);
+  const unstagedFiles = useMemo(() => context.status.data.files.filter((f) => f.status === "unstaged" || f.status === "untracked"), [context.status.data.files]);
 
   const navigationTitle = useMemo(() => {
     switch (context.status.data.mode.kind) {
@@ -137,7 +137,7 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
             <List.Section title="Unstaged Files" subtitle={`${unstagedFiles.length}`}>
               {unstagedFiles.map((file) => (
                 <FileListItem
-                  key={file.path}
+                  key={file.absolutePath}
                   file={file}
                   toggleController={toggleController}
                   selectedFilePath={selectedFilePath}
@@ -151,7 +151,7 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
             <List.Section title="Staged Files" subtitle={`${stagedFiles.length}`}>
               {stagedFiles.map((file) => (
                 <FileListItem
-                  key={file.path}
+                  key={file.absolutePath}
                   file={file}
                   toggleController={toggleController}
                   selectedFilePath={selectedFilePath}
@@ -221,19 +221,19 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
     }
 
     return contentParts.join("\n\n");
-  }, [context.file.relativePath, diff, isLoading, error]);
+  }, [context.file.relativePath, diff, isLoading, error, isFocused]);
 
   return (
     <List.Item
       id={fileId}
-      title={basename(context.file.path)}
+      title={basename(context.file.absolutePath)}
       subtitle={context.toggleController.isShowingDetail ? undefined : {
         value: context.file.relativePath,
         tooltip: context.file.relativePath
       }}
       icon={FileStatusIcon(context.file)}
       keywords={[
-        context.file.path,
+        context.file.absolutePath,
         context.file.relativePath,
         context.file.oldPath
       ].filter((keyword): keyword is string => Boolean(keyword))}
@@ -246,16 +246,16 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
           />
         ) : undefined
       }
-      quickLook={existsSync(context.file.path) ? { path: context.file.path, name: context.file.relativePath } : undefined}
+      quickLook={existsSync(context.file.absolutePath) ? { path: context.file.absolutePath, name: context.file.relativePath } : undefined}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title={basename(context.file.path)}>
+          <ActionPanel.Section title={basename(context.file.absolutePath)}>
             {/* Actions for staged files */}
             {context.file.status === "staged" && (
               <>
                 <FileUnstageAction {...context} />
                 <ToggleDetailAction controller={context.toggleController} />
-                <FileManagerActions filePath={context.file.path} />
+                <FileManagerActions filePath={context.file.absolutePath} />
               </>
             )}
 
@@ -267,7 +267,7 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
                 )}
                 <FileStageAction {...context} />
                 <ToggleDetailAction controller={context.toggleController} />
-                <FileManagerActions filePath={context.file.path} />
+                <FileManagerActions filePath={context.file.absolutePath} />
                 {context.branches.data.currentBranch && (
                   <RemoteCopyFileURLAction
                     filePath={context.file.relativePath}
@@ -281,7 +281,7 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
               </>
             )}
             <FileHistoryAction
-              filePath={context.file.path}
+              filePath={context.file.absolutePath}
               {...context}
             />
           </ActionPanel.Section>

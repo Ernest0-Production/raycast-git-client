@@ -1,4 +1,4 @@
-import { Action, Icon, Color, Alert } from "@raycast/api";
+import { Action, Icon, Color, Alert, ActionPanel, Toast, showToast } from "@raycast/api";
 import { RepositoryContext } from "../../open-repository";
 import { confirmAlert } from "@raycast/api";
 import { Commit, FileStatus } from "../../types";
@@ -6,6 +6,8 @@ import { CommitMessageForm } from "../views/CommitMessageView";
 import FileMergeResolveView from "../views/FileMergeResolveView";
 import { existsSync } from "fs";
 import { basename } from "path";
+import { useMemo } from "react";
+import { FileStatusIcon } from "../icons/StatusIcons";
 
 /**
  * Action for resolving conflicts in a file.
@@ -15,13 +17,78 @@ export function FileResolveConflictAction(context: RepositoryContext & { file: F
         return undefined;
     }
 
-    return (
-        <Action.Push
-            title="Resolve Conflicts"
-            icon={{ source: Icon.Wand, tintColor: Color.Yellow }}
-            target={<FileMergeResolveView {...context} filePath={context.file.path} />}
+    const conflictState = useMemo(() => {
+        const otherStatus = context.status.data.files.find(f => f.absolutePath === context.file.absolutePath && f.status !== context.file.status);
+        if (!otherStatus) {
+            return undefined;
+        }
+
+        const staged = context.file.status === "staged" ? context.file : otherStatus;
+        const unstaged = context.file.status === "unstaged" ? context.file : otherStatus;
+
+        return { staged, unstaged };
+    }, [context.file]);
+
+    if (!conflictState) {
+        return undefined;
+    }
+
+    const bothModified = conflictState.staged.type === "modified" && conflictState.unstaged.type === "modified";
+    if (bothModified) {
+        return (
+            <Action.Push
+                title="Resolve Conflicts"
+                icon={{ source: Icon.Wand, tintColor: Color.Yellow }}
+                target={<FileMergeResolveView {...context} filePath={context.file.absolutePath} />}
+            />
+        );
+    }
+
+    const handleResolve = async (side: "ours" | "theirs") => {
+        const confirmed = await confirmAlert({
+            title: "Apply Resolved Changes",
+            message: `Are you sure you want to apply selected resolution to "${basename(context.file.absolutePath)}"?`,
+            primaryAction: {
+                title: "Apply",
+                style: Alert.ActionStyle.Destructive,
+            },
+        });
+        if (!confirmed) return;
+
+        const selectedFileVersion = side === "ours" ? conflictState.staged : conflictState.unstaged;
+
+        try {
+            if (selectedFileVersion.type === "deleted") {
+                await context.gitManager.removeFile(selectedFileVersion.absolutePath);
+            } else {
+                await context.gitManager.resolveConflict(selectedFileVersion.absolutePath, side);
+                await context.gitManager.stageFile(selectedFileVersion.absolutePath);
+            }
+            context.status.revalidate();
+        } catch (error) {
+            showToast({
+                style: Toast.Style.Failure,
+                title: "Failed to apply resolution",
+                message: error instanceof Error ? error.message : "Unknown error",
+            });
+        }
+    };
+
+    return <ActionPanel.Submenu
+        title="Resolve Conflicts with"
+        icon={{ source: Icon.Wand, tintColor: Color.Yellow }}
+    >
+        <Action
+            title={`Local ${conflictState.staged.type} version`}
+            icon={FileStatusIcon({ ...conflictState.staged, isConflicted: false })}
+            onAction={() => handleResolve("ours")}
         />
-    );
+        <Action
+            title={`Remote ${conflictState.unstaged.type} version`}
+            icon={FileStatusIcon({ ...conflictState.unstaged, isConflicted: false })}
+            onAction={() => handleResolve("theirs")}
+        />
+    </ActionPanel.Submenu>
 }
 
 /**
@@ -32,7 +99,7 @@ export function FileStageAction(context: RepositoryContext & { file: FileStatus 
         if (context.file.isConflicted) {
             const confirmed = await confirmAlert({
                 title: "Mark as Resolved",
-                message: `Are you sure you want to mark "${basename(context.file.path)}" as resolved remaining conflicts unresolved?`,
+                message: `Are you sure you want to mark "${basename(context.file.absolutePath)}" as resolved remaining conflicts unresolved?`,
                 primaryAction: {
                     title: "Resolved",
                     style: Alert.ActionStyle.Destructive,
@@ -80,11 +147,11 @@ export function FileUnstageAction(context: RepositoryContext & { file: FileStatu
  * Action for discarding changes to a file.
  */
 export function FileDiscardAction(context: RepositoryContext & { file: FileStatus }) {
-    if (context.file.type === "added" && existsSync(context.file.path)) {
+    if (context.file.type === "added" && existsSync(context.file.absolutePath)) {
         return (
             <Action.Trash
                 shortcut={{ modifiers: ["ctrl"], key: "x" }}
-                paths={[context.file.path]}
+                paths={[context.file.absolutePath]}
                 onTrash={context.status.revalidate}
             />
         )
@@ -93,7 +160,7 @@ export function FileDiscardAction(context: RepositoryContext & { file: FileStatu
     const handleDiscardChanges = async () => {
         const confirmed = await confirmAlert({
             title: "Discard changes",
-            message: `Are you sure you want to discard changes in file "${basename(context.file.path)}"? This action cannot be undone.`,
+            message: `Are you sure you want to discard changes in file "${basename(context.file.absolutePath)}"? This action cannot be undone.`,
             primaryAction: {
                 title: "Discard",
                 style: Alert.ActionStyle.Destructive,

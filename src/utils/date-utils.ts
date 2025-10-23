@@ -40,7 +40,7 @@ function formatRelativeDate(date: Date): string {
     });
     const day = date.toLocaleDateString(undefined, { day: "numeric" });
     const month = date.toLocaleDateString(undefined, { month: "short" });
-    return `${time} ${day} ${month}`;
+    return `${day} ${month} at ${time}`;
   }
 
   // More than a year ago or in the future
@@ -50,7 +50,7 @@ function formatRelativeDate(date: Date): string {
   return `${day} ${month} ${year}`;
 }
 
-export {};
+export { };
 /**
  * Extend Date prototype with toRelativeDateString method
  */

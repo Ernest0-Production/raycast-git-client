@@ -113,7 +113,7 @@ export interface BranchesState {
  */
 export interface FileStatus {
   /** The full path to the file. */
-  path: string;
+  absolutePath: string;
   /** The relative path from the repository root. */
   relativePath: string;
   /** The status of the file in the working area. */
@@ -311,7 +311,7 @@ export type PatchScope =
   | "all"
   | "staged"
   | "unstaged"
-  | Pick<FileStatus, "path" | "status">;
+  | Pick<FileStatus, "absolutePath" | "status">;
 
 /**
  * Represents the scope of a stash.

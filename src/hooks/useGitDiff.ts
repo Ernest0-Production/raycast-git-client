@@ -19,7 +19,7 @@ export function useGitDiff({ gitManager, options, execute = true }: UseGitDiffPr
   const { file, commitHash, status } = options;
 
   const {
-    data: rawDiffData,
+    data,
     isLoading,
     error,
     revalidate,
@@ -52,7 +52,7 @@ export function useGitDiff({ gitManager, options, execute = true }: UseGitDiffPr
   );
 
   return {
-    diff: rawDiffData,
+    diff: data,
     isLoading,
     error,
     revalidate,

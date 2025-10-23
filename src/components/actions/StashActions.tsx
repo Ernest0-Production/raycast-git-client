@@ -94,8 +94,8 @@ export function StashCreateAction(context: RepositoryContext & { file?: FileStat
       />
       {context.file && (
         <Action.Push
-          title={`Only ${basename(context.file.path)}`}
-          target={<StashCreateForm scope={{ filePath: context.file.path }} {...context} />}
+          title={`Only ${basename(context.file.absolutePath)}`}
+          target={<StashCreateForm scope={{ filePath: context.file.absolutePath }} {...context} />}
         />
       )}
       <Action.Push
