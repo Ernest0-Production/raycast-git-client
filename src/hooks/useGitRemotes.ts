@@ -12,7 +12,7 @@ export type RemotesHosts = Record<string, Remote>;
  * Repository path is included in cache dependencies to ensure separate cache per repository.
  */
 export function useGitRemotes(gitManager: GitManager): RepositoryContext["remotes"] {
-  const { data: remotes = [], isLoading, revalidate } = useCachedPromise(
+  const { data: remotes, isLoading, revalidate } = useCachedPromise(
     async (repoPath: string) => gitManager.getRemotes(),
     [gitManager.repoPath],
     {
