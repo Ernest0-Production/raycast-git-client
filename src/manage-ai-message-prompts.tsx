@@ -1,9 +1,9 @@
 import { ActionPanel, Action, Icon, List, Form, useNavigation, confirmAlert, Alert, AI, Color } from "@raycast/api";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAiPromptPresets, AiPromptPreset } from "./hooks/useAiPromptPresets";
 
 export default function ManageAiMessagePrompts() {
-    const { presets, deletePreset, setDefault } = useAiPromptPresets();
+    const { defaultPreset, otherPresets, deletePreset, setDefault } = useAiPromptPresets();
 
     return (
         <List
@@ -20,15 +20,33 @@ export default function ManageAiMessagePrompts() {
                 </ActionPanel>
             }
         >
-            {presets.map((preset, index) => (
+            <List.Section title="Default Preset">
                 <PresetListItem
-                    key={preset.id}
-                    preset={preset}
-                    isDefault={index === 0}
-                    onDelete={() => deletePreset(preset.id)}
-                    onSetDefault={() => setDefault(preset.id)}
+                    preset={defaultPreset}
+                    isDefault={true}
                 />
-            ))}
+            </List.Section>
+
+            <List.Section title="Other Presets">
+                {otherPresets.map((preset) => (
+                    <PresetListItem
+                        key={preset.id}
+                        preset={preset}
+                        isDefault={false}
+                        onDelete={() => deletePreset(preset.id)}
+                        onSetDefault={() => setDefault(preset.id)}
+                    />
+                ))}
+                <List.Item
+                    title="Add New Preset"
+                    icon={{ source: Icon.Plus, tintColor: Color.SecondaryText }}
+                    actions={
+                        <ActionPanel>
+                            <AddNewPresetAction />
+                        </ActionPanel>
+                    }
+                />
+            </List.Section>
         </List>
     );
 }
@@ -41,8 +59,8 @@ function PresetListItem({
 }: {
     preset: AiPromptPreset;
     isDefault: boolean;
-    onDelete: () => void;
-    onSetDefault: () => void;
+    onDelete?: () => void;
+    onSetDefault?: () => void;
 }) {
     const handleDelete = async () => {
         const confirmed = await confirmAlert({
@@ -55,23 +73,23 @@ function PresetListItem({
         });
 
         if (confirmed) {
-            onDelete();
+            onDelete?.();
         }
     };
 
-    const isEditable = preset.id !== "builtin"
+    const tintColor = useMemo(() => {
+        const colors = Object.values(Color).filter(c => c !== Color.PrimaryText && c !== Color.SecondaryText);
+        // use hash code of preset id to get a color
+        return colors[preset.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length];
+    }, [preset.id]);
 
     return (
         <List.Item
+            icon={{ source: Icon.Stars, tintColor: [Color.Blue, Color.Green, Color.Magenta, Color.Orange, Color.Purple, Color.Red, Color.Yellow][preset.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 7] }}
             title={preset.name}
-            subtitle={preset.model ? preset.model : "Auto"}
-            accessories={isDefault ? [
-                {
-                    tag: { value: "Default" },
-                    tooltip: "Default preset that will be used when run 'Generate Message' action in Commit Message Form."
-                }
-            ] : []
-            }
+            accessories={[
+                { text: preset.model ? preset.model : "Auto" }
+            ]}
             actions={
                 <ActionPanel>
                     <ActionPanel.Section title={preset.name}>
@@ -82,15 +100,13 @@ function PresetListItem({
                                 onAction={onSetDefault}
                             />
                         }
-                        {!isDefault && isEditable &&
-                            <Action.Push
-                                title="Edit Preset"
-                                icon={Icon.Pencil}
-                                target={<AiMessagePresetEditorForm initialPreset={preset} />}
-                                shortcut={{ modifiers: ["cmd"], key: "e" }}
-                            />
-                        }
-                        {!isDefault && isEditable &&
+                        <Action.Push
+                            title="Edit Preset"
+                            icon={Icon.Pencil}
+                            target={<AiMessagePresetEditorForm initialPreset={preset} />}
+                            shortcut={{ modifiers: ["cmd"], key: "e" }}
+                        />
+                        {!isDefault &&
                             <Action
                                 title="Delete Preset"
                                 icon={Icon.Trash}
@@ -100,14 +116,20 @@ function PresetListItem({
                             />
                         }
                     </ActionPanel.Section>
-                    <Action.Push
-                        title="Add New Preset"
-                        icon={Icon.Plus}
-                        shortcut={{ modifiers: ["cmd"], key: "n" }}
-                        target={<AiMessagePresetEditorForm />}
-                    />
+                    <AddNewPresetAction />
                 </ActionPanel>
             }
+        />
+    );
+}
+
+function AddNewPresetAction() {
+    return (
+        <Action.Push
+            title="Add New Preset"
+            icon={Icon.Plus}
+            shortcut={{ modifiers: ["cmd"], key: "n" }}
+            target={<AiMessagePresetEditorForm />}
         />
     );
 }

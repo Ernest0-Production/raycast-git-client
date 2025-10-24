@@ -17,6 +17,17 @@ export interface AiPromptPreset {
 }
 
 /**
+ * Represents the data structure for storing AI prompt presets.
+ */
+export interface AiPromptPresetsData {
+    /** List of all presets */
+    presets: AiPromptPreset[];
+    /** ID of the default preset */
+    defaultPresetId: string;
+}
+
+
+/**
  * Default prompt used when there are no saved presets.
  */
 const DEFAULT_AI_COMMIT_PROMPT = `
@@ -35,61 +46,64 @@ Analyze the provided git diff and generate a conventional commit message that ac
  * Presets are global for the extension (not per repository).
  */
 export function useAiPromptPresets() {
-    const defaultPreset = useMemo<AiPromptPreset>(() => ({
+    const builtInPreset = useMemo<AiPromptPreset>(() => ({
         id: "builtin",
         name: "Built-in Prompt",
         prompt: DEFAULT_AI_COMMIT_PROMPT,
         model: "Google_Gemini_2.5_Flash"
     }), []);
 
-    const [presets, setPresets] = useCachedState<AiPromptPreset[]>("commit-message-prompts", []);
+    const [data, setData] = useCachedState<AiPromptPresetsData>("ai-prompts", {
+        presets: [builtInPreset],
+        defaultPresetId: builtInPreset.id,
+    });
 
-    useEffect(() => {
-        // Ensure default preset is always up to date
-        const defaultPresetIndex = presets.findIndex(p => p.id === "builtin");
-        if (defaultPresetIndex !== -1) {
-            const updatedPresets = [...presets];
-            updatedPresets[defaultPresetIndex] = defaultPreset;
-            setPresets(updatedPresets);
-        } else {
-            setPresets([defaultPreset]);
-        }
-    }, [presets]);
+    const defaultPreset = data.presets.find((p) => p.id === data.defaultPresetId) ?? builtInPreset;
+    const otherPresets = data.presets.filter((p) => p.id !== data.defaultPresetId);
 
     const addPreset = (name: string, prompt: string, model?: string) => {
-        const newPreset: AiPromptPreset = { id: nanoid(), name: name.trim(), prompt: prompt.trim(), model };
-        setPresets((current) => [...current.filter((p) => p.name !== newPreset.name), newPreset]);
-        return newPreset;
+        const newPreset: AiPromptPreset = { id: nanoid(), name: name, prompt: prompt, model };
+        setData((current) => {
+            return {
+                ...current,
+                presets: [...current.presets, newPreset],
+            };
+        });
     };
 
     const updatePreset = (id: string, name: string, prompt: string, model?: string) => {
-        setPresets((current) => current.map((p) => (p.id === id ? { ...p, name: name.trim(), prompt: prompt.trim(), model } : p)));
+        setData((current) => {
+            return {
+                ...current,
+                presets: current.presets.map((p) => (p.id === id ? { ...p, name: name.trim(), prompt: prompt.trim(), model } : p)),
+            };
+        });
     };
 
     const deletePreset = (id: string) => {
-        if (id === "builtin") {
-            return;
-        }
-
-        setPresets((current) => current.filter((p) => p.id !== id));
+        setData((current) => {
+            return {
+                ...current,
+                presets: current.presets.filter((p) => p.id !== id),
+            };
+        });
     };
 
     const setDefault = (id: string) => {
-        setPresets((current) => {
-            const index = current.findIndex((p) => p.id === id);
-            if (index === -1) return current;
-
-            const newArray = [...current];
-            const [item] = newArray.splice(index, 1);
-            return [item, ...newArray];
+        setData((current) => {
+            if (current.presets.some((p) => p.id === id)) {
+                return { ...current, defaultPresetId: id };
+            }
+            return current;
         });
     };
 
     return {
-        presets,
+        defaultPreset,
+        otherPresets,
         addPreset,
         updatePreset,
         deletePreset,
-        setDefault
+        setDefault,
     };
 }

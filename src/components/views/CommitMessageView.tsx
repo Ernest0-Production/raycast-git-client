@@ -29,11 +29,11 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { pop } = useNavigation();
-  const { presets } = useAiPromptPresets();
+  const { defaultPreset, otherPresets } = useAiPromptPresets();
 
   useEffect(() => {
     if (preferences.autoGenerateCommitMessage && !context.commit) {
-      generateCommitMessage(presets[0]);
+      generateCommitMessage(defaultPreset);
     }
   }, []);
 
@@ -208,21 +208,24 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
 
           {environment.canAccess("AI") && (
             <ActionPanel.Section title="AI Assistant">
-              {presets.length > 0 && (
-                <Action
-                  key={presets[0].id}
-                  title="Generate Message"
-                  icon={Icon.Wand}
-                  onAction={() => generateCommitMessage(presets[0])}
-                  shortcut={{ modifiers: ["cmd"], key: "g" }}
-                />
-              )}
+              <Action
+                key={defaultPreset.id}
+                title="Generate Message"
+                icon={Icon.Wand}
+                onAction={() => generateCommitMessage(defaultPreset)}
+                shortcut={{ modifiers: ["cmd"], key: "g" }}
+              />
               <ActionPanel.Submenu
                 title="Generate Message with"
                 icon={Icon.Wand}
                 shortcut={{ modifiers: ["cmd", "shift"], key: "g" }}
               >
-                {presets.map((preset) => (
+                <Action
+                  key={defaultPreset.id}
+                  title={defaultPreset.name}
+                  onAction={() => generateCommitMessage(defaultPreset)}
+                />
+                {otherPresets.map((preset) => (
                   <Action
                     key={preset.id}
                     title={preset.name}
