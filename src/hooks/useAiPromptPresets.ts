@@ -1,6 +1,5 @@
 import { useCachedState } from "@raycast/utils";
 import { nanoid } from "nanoid";
-import { useEffect, useMemo } from "react";
 
 /**
  * Represents an AI commit message prompt preset.
@@ -14,6 +13,8 @@ export interface AiPromptPreset {
     prompt: string;
     /** AI model to use for the prompt */
     model?: string;
+    /** Icon to use for the preset */
+    icon?: string;
 }
 
 /**
@@ -26,43 +27,110 @@ export interface AiPromptPresetsData {
     defaultPresetId: string;
 }
 
-
 /**
  * Default prompt used when there are no saved presets.
  */
-const DEFAULT_AI_COMMIT_PROMPT = `
-You are a helpful assistant that generates concise, clear Git commit messages.
-Analyze the provided git diff and generate a conventional commit message that accurately describes the changes.
-- Focus on what changed and why.
-- Use conventional commit format:
-<short title>
-<listed changes>
-- Only give the commit message, do not include any other text and markdown formatting.
-`;
+const CONVENTIONAL_MESSAGE_PROMPT: AiPromptPreset = {
+    id: "conventional-commits-style",
+    name: "Conventional",
+    prompt: `
+You are a Git commit message generator. Analyze the git diff and create a conventional commit message.
 
+Format:
+<type>(<scope>): <description>
+
+- <change 1>
+- <change 2>
+
+Types: feat, fix, refactor, docs, style, test, chore, perf, ci, build
+- Keep title under 50 characters
+- Use imperative mood ("add" not "added")
+- Focus on WHAT changed, not why
+- Omit body if changes are trivial
+
+Output only the commit message, no markdown or extra text.
+`.trim(),
+    model: "Google_Gemini_2.5_Flash"
+};
+
+
+/**
+ * Gitmoji style commit message prompt.
+ */
+const GITMOJI_MESSAGE_PROMPT: AiPromptPreset = {
+    id: "gitmoji-style",
+    name: "Gitmoji",
+    icon: "🎨",
+    prompt: `
+You are a Git commit message generator. Analyze the git diff and create a gitmoji-style commit message.
+
+Format:
+:emoji: (<scope>): <description>
+
+- <change 1>
+- <change 2>
+
+Common emojis:
+- ✨ - New feature
+- 🐛 - Bug fix
+- 📝 - Documentation changes
+- 💄 - UI/style improvements
+- ♻️ - Code refactoring
+- 🔥 - Removing code/files
+- ✅ - Adding tests
+- 🚀 - Performance improvements
+- 🔧 - Configuration changes
+- 📦 - Dependency updates
+
+- Keep title under 50 characters
+- Use imperative mood ("add" not "added")
+- Focus on WHAT changed, not why
+- Choose the most appropriate emoji for the change
+- Omit body if changes are trivial
+
+Output only the commit message, no markdown or extra text.
+`.trim(),
+    model: "Google_Gemini_2.5_Flash"
+};
+
+/**
+ * Minimalist style commit message prompt.
+ */
+const MINIMALIST_MESSAGE_PROMPT: AiPromptPreset = {
+    id: "minimalist-style",
+    name: "Minimalist",
+    icon: "🔘",
+    prompt: `
+You are a Git commit message generator. Analyze the git diff and create a short, one-line commit message.
+
+- Keep it under 50 characters.
+- Describe WHAT changed.
+- No prefixes, scopes, or emojis.
+
+Output only the commit message, no markdown or extra text.
+`.trim(),
+    model: "Google_Gemini_2.5_Flash"
+};
 
 /**
  * Hook for managing AI commit message prompt presets in cached state.
  * Presets are global for the extension (not per repository).
  */
 export function useAiPromptPresets() {
-    const builtInPreset = useMemo<AiPromptPreset>(() => ({
-        id: "builtin",
-        name: "Built-in Prompt",
-        prompt: DEFAULT_AI_COMMIT_PROMPT,
-        model: "Google_Gemini_2.5_Flash"
-    }), []);
-
-    const [data, setData] = useCachedState<AiPromptPresetsData>("ai-prompts", {
-        presets: [builtInPreset],
-        defaultPresetId: builtInPreset.id,
+    const [data, setData] = useCachedState<AiPromptPresetsData>("ai-prompt-presets", {
+        presets: [
+            CONVENTIONAL_MESSAGE_PROMPT,
+            GITMOJI_MESSAGE_PROMPT,
+            MINIMALIST_MESSAGE_PROMPT,
+        ],
+        defaultPresetId: CONVENTIONAL_MESSAGE_PROMPT.id,
     });
 
-    const defaultPreset = data.presets.find((p) => p.id === data.defaultPresetId) ?? builtInPreset;
+    const defaultPreset = data.presets.find((p) => p.id === data.defaultPresetId) ?? CONVENTIONAL_MESSAGE_PROMPT;
     const otherPresets = data.presets.filter((p) => p.id !== data.defaultPresetId);
 
     const addPreset = (name: string, prompt: string, model?: string) => {
-        const newPreset: AiPromptPreset = { id: nanoid(), name: name, prompt: prompt, model };
+        const newPreset: AiPromptPreset = { id: nanoid(), ...parsePresetName(name), prompt: prompt, model };
         setData((current) => {
             return {
                 ...current,
@@ -75,7 +143,7 @@ export function useAiPromptPresets() {
         setData((current) => {
             return {
                 ...current,
-                presets: current.presets.map((p) => (p.id === id ? { ...p, name: name.trim(), prompt: prompt.trim(), model } : p)),
+                presets: current.presets.map((p) => (p.id === id ? { ...p, ...parsePresetName(name), prompt: prompt, model } : p)),
             };
         });
     };
@@ -106,4 +174,21 @@ export function useAiPromptPresets() {
         deletePreset,
         setDefault,
     };
+}
+
+/**
+ * Parse the name of a preset into an icon and name.
+ * If the name starts with an emoji, the emoji is returned as the icon.
+ * @param name - The name of the preset.
+ * @returns The icon and name.
+ */
+function parsePresetName(name: string): { icon?: string; name: string; } {
+    const emojiMatch = name.match(/^(\p{Emoji})\s+(.+)$/u);
+
+    if (emojiMatch) {
+        const [, emoji, actualName] = emojiMatch;
+        return { icon: emoji, name: actualName };
+    }
+
+    return { name: name };
 }

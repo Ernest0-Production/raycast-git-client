@@ -223,12 +223,14 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
                 <Action
                   key={defaultPreset.id}
                   title={defaultPreset.name}
+                  icon={defaultPreset.icon ? defaultPreset.icon : { source: Icon.Message, tintColor: Color.SecondaryText }}
                   onAction={() => generateCommitMessage(defaultPreset)}
                 />
                 {otherPresets.map((preset) => (
                   <Action
                     key={preset.id}
                     title={preset.name}
+                    icon={preset.icon ? preset.icon : { source: Icon.Message, tintColor: Color.SecondaryText }}
                     onAction={() => generateCommitMessage(preset)}
                   />
                 ))}

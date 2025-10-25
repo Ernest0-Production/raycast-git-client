@@ -77,15 +77,9 @@ function PresetListItem({
         }
     };
 
-    const tintColor = useMemo(() => {
-        const colors = Object.values(Color).filter(c => c !== Color.PrimaryText && c !== Color.SecondaryText);
-        // use hash code of preset id to get a color
-        return colors[preset.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length];
-    }, [preset.id]);
-
     return (
         <List.Item
-            icon={{ source: Icon.Stars, tintColor: [Color.Blue, Color.Green, Color.Magenta, Color.Orange, Color.Purple, Color.Red, Color.Yellow][preset.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 7] }}
+            icon={preset.icon ? preset.icon : { source: Icon.Message, tintColor: Color.SecondaryText }}
             title={preset.name}
             accessories={[
                 { text: preset.model ? preset.model : "Auto" }
@@ -105,6 +99,16 @@ function PresetListItem({
                             icon={Icon.Pencil}
                             target={<AiMessagePresetEditorForm initialPreset={preset} />}
                             shortcut={{ modifiers: ["cmd"], key: "e" }}
+                        />
+                        <Action.Push
+                            title="Duplicate Preset"
+                            icon={Icon.Duplicate}
+                            target={<AiMessagePresetEditorForm initialPreset={{
+                                ...preset,
+                                id: undefined,
+                                name: `${preset.name} copy`
+                            }} />}
+                            shortcut={{ modifiers: ["cmd"], key: "d" }}
                         />
                         {!isDefault &&
                             <Action
@@ -134,7 +138,7 @@ function AddNewPresetAction() {
     );
 }
 
-export function AiMessagePresetEditorForm({ initialPreset }: { initialPreset?: AiPromptPreset; }) {
+export function AiMessagePresetEditorForm({ initialPreset }: { initialPreset?: Partial<AiPromptPreset>; }) {
     const { pop } = useNavigation();
     const { addPreset, updatePreset } = useAiPromptPresets();
     const [name, setName] = useState(initialPreset?.name ?? "");
@@ -143,7 +147,7 @@ export function AiMessagePresetEditorForm({ initialPreset }: { initialPreset?: A
 
     const handleSubmit = (values: { name: string; prompt: string, model: string }) => {
         const aiModel = values.model === "auto" ? undefined : values.model;
-        if (initialPreset) {
+        if (initialPreset?.id) {
             updatePreset(initialPreset.id, values.name.trim(), values.prompt.trim(), aiModel);
         } else {
             addPreset(values.name.trim(), values.prompt.trim(), aiModel);
