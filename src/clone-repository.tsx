@@ -107,7 +107,6 @@ export default function CloneRepository(props: LaunchProps<{ arguments: CloneRep
  * Handles both HTTPS and SSH URLs.
  */
 function extractRepoNameFromUrl(url: string): string {
-
     // Regular expression to extract repository name from URL
     // Supports HTTPS and SSH formats URLs
     const repoNameRegex = /(?:\/|:)(?<repoName>[^\/]+?)(?:\.git)?$/;
