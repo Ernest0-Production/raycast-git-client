@@ -32,15 +32,6 @@ export function CommitsView(context: RepositoryContext & NavigationContext) {
       selectedItemId={selectedCommitId || undefined}
       isShowingDetail={toggleDetailController.isShowingDetail}
       searchBarAccessory={WorkspaceNavigationDropdown(context)}
-      actions={
-        <ActionPanel>
-          <SharedActionsSection
-            toggleDetailController={toggleDetailController}
-            toggleMetadataController={toggleMetadataController}
-            {...context}
-          />
-        </ActionPanel>
-      }
     >
       {context.commits.error ? (
         <List.EmptyView
@@ -305,13 +296,10 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
               />
             ))}
 
-            {Object.keys(context.remotes.data).map((remote) => (
-              <RemoteOpenCommitAction
-                key={`${remote}-open-commit`}
-                remote={context.remotes.data[remote]}
-                commit={context.commit.hash}
-              />
-            ))}
+            <RemoteOpenCommitAction
+              {...context}
+              commit={context.commit.hash}
+            />
           </ActionPanel.Section>
 
           <CommitCopyInfoActions {...context} />

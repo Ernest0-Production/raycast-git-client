@@ -75,13 +75,6 @@ export default function FilesView(context: RepositoryContext & NavigationContext
                     title="No tracked files"
                     description="Repository has no tracked files."
                     icon={Icon.Document}
-                    actions={<ActionPanel>
-                        <SharedActionsSection
-                            onClearRecent={handleClearRecent}
-                            files={recentFiles}
-                            {...context}
-                        />
-                    </ActionPanel>}
                 />
             ) : (
                 <>
@@ -105,13 +98,6 @@ export default function FilesView(context: RepositoryContext & NavigationContext
                                 title="Start typing to search files"
                                 description="Type to search tracked files using fuzzy match"
                                 icon={Icon.MagnifyingGlass}
-                                actions={<ActionPanel>
-                                    <SharedActionsSection
-                                        onClearRecent={handleClearRecent}
-                                        files={recentFiles}
-                                        {...context}
-                                    />
-                                </ActionPanel>}
                             />
                         )
                     ) : searchResult.length === 0 ? (
@@ -119,13 +105,6 @@ export default function FilesView(context: RepositoryContext & NavigationContext
                             title="No results"
                             description="Try different search terms."
                             icon={Icon.MagnifyingGlass}
-                            actions={<ActionPanel>
-                                <SharedActionsSection
-                                    onClearRecent={handleClearRecent}
-                                    files={recentFiles}
-                                    {...context}
-                                />
-                            </ActionPanel>}
                         />
                     ) : (
                         searchResult.map((filePath: string) => (

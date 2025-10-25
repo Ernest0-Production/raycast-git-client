@@ -139,22 +139,51 @@ export function RemoteCreatePullRequestAction({
  * Opens a specific commit page for a given remote.
  * Returns undefined if provider is unknown or URL can't be constructed.
  */
-export function RemoteOpenCommitAction({
-    remote,
-    commit
-}: {
-    remote: Remote,
-    commit: string
-}) {
-    const url = remote.pages.commitPage(commit);
-    if (!remote.provider || !url) return undefined;
+export function RemoteOpenCommitAction(context: RepositoryContext & { commit: string }) {
+    if (Object.keys(context.remotes.data).length === 0) {
+        return undefined;
+    }
+
+    const remotes = Object.values(context.remotes.data);
+    const availableRemotes = remotes.filter(remote => {
+        const url = remote.pages.commitPage(context.commit);
+        return url !== undefined;
+    });
+
+    if (availableRemotes.length === 0) {
+        return undefined;
+    }
+
+    if (availableRemotes.length === 1) {
+        const remote = availableRemotes[0];
+        const url = remote.pages.commitPage(context.commit);
+        if (!url) return undefined;
+
+        return (
+            <Action.OpenInBrowser
+                title={`Show Commit on ${remote.provider}`}
+                url={url}
+                icon={RemoteHostIcon(remote.provider)}
+            />
+        );
+    }
 
     return (
-        <Action.OpenInBrowser
-            title={`Show Commit on ${remote.provider}`}
-            url={url}
-            icon={RemoteHostIcon(remote.provider)}
-        />
+        <>
+            {availableRemotes.map((remote) => {
+                const url = remote.pages.commitPage(context.commit);
+                if (!url) return null;
+
+                return (
+                    <Action.OpenInBrowser
+                        key={`${remote.name}:show-commit`}
+                        title={`Show Commit on ${remote.displayName}`}
+                        url={url}
+                        icon={RemoteHostIcon(remote.provider)}
+                    />
+                );
+            })}
+        </>
     );
 }
 

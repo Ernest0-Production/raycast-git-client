@@ -19,7 +19,7 @@ export function CommitDetailsView(context: RepositoryContext & NavigationContext
   onMoveToCommit: (commitHash: string) => void
 }) {
   const [currentIndex, setCurrentIndex] = useState(context.index);
-  const toggleController = useToggleDetail("Commit Details", "Diff", false);
+  const toggleController = useToggleDetail("Commit Details", "Diff", true);
 
   const switchToCommit = async (direction: ("next" | "previous")) => {
     let nextIndex = currentIndex;
@@ -95,7 +95,6 @@ export function ConcreteCommitView(context: RepositoryContext & NavigationContex
       isLoading={isLoading}
       actions={
         <ActionPanel>
-          <ToggleDetailAction controller={context.toggleController} />
           {context.onMoveToCommit && (
             <CommitNavigationActions onMoveToCommit={context.onMoveToCommit} />
           )}
@@ -108,14 +107,6 @@ export function ConcreteCommitView(context: RepositoryContext & NavigationContex
           title="No file changes"
           description="This commit has no file changes."
           icon={Icon.Document}
-          actions={
-            <ActionPanel>
-              {context.onMoveToCommit && (
-                <CommitNavigationActions onMoveToCommit={context.onMoveToCommit} />
-              )}
-              <WorkspaceNavigationActions {...context} />
-            </ActionPanel>
-          }
         />
       ) : (
         <List.Section title={context.commit.message}>

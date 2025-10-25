@@ -17,7 +17,7 @@ import { BranchPushAction, BranchPushForceAction } from "../actions/BranchAction
 import { RemoteShowFilePageAction, RemoteFetchAction, RemotePullAction } from "../actions/RemoteActions";
 
 export function StatusView(context: RepositoryContext & NavigationContext) {
-  const toggleController = useToggleDetail("Status Diff", "Changes", false);
+  const toggleController = useToggleDetail("Status Diff", "Changes", true);
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
 
   const stagedFiles = useMemo(() => context.status.data.files.filter((f) => f.status === "staged"), [context.status.data.files]);
@@ -50,30 +50,6 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
       isShowingDetail={toggleController.isShowingDetail}
       searchBarAccessory={
         WorkspaceNavigationDropdown(context)
-      }
-      actions={
-        <ActionPanel>
-          {context.status.data && context.branches.data.currentBranch && (
-            <CommitChangesAction {...context} />
-          )}
-
-          <ActionPanel.Section>
-            <ToggleDetailAction controller={toggleController} />
-          </ActionPanel.Section>
-
-          <ActionPanel.Section title="Patch">
-            <PatchApplyAction {...context} />
-          </ActionPanel.Section>
-
-          {context.status.data && (
-            <ConflictAbortAction {...context} />
-          )}
-          <ActionPanel.Section title="Workspace">
-            <RefreshStatusAction {...context} />
-          </ActionPanel.Section>
-
-          <WorkspaceNavigationActions {...context} />
-        </ActionPanel>
       }
     >
       {context.status.error ? (

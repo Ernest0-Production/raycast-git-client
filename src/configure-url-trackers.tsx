@@ -1,4 +1,4 @@
-import { ActionPanel, Action, Icon, List, Form, useNavigation, confirmAlert, Alert } from "@raycast/api";
+import { ActionPanel, Action, Icon, List, Form, useNavigation, confirmAlert, Alert, Color } from "@raycast/api";
 import { useState } from "react";
 import { IssueTrackerConfig } from "./types";
 import { useIssueTracker } from "./hooks/useIssueTracker";
@@ -12,22 +12,25 @@ export default function ConfigureUrlTrackers() {
             searchBarPlaceholder="Search rules by title..."
             actions={
                 <ActionPanel>
-                    <Action.Push
-                        title="Add New Rule"
-                        icon={Icon.Plus}
-                        shortcut={{ modifiers: ["cmd"], key: "n" }}
-                        target={<UrlTrackerEditorForm />}
-                    />
+                    <AddNewRuleAction />
                 </ActionPanel>
             }
         >
-            {configs.map((config) => (
-                <RuleListItem
-                    key={config.id}
-                    config={config}
-                    onDelete={deleteConfig}
+            {configs.length === 0 ? (
+                <List.EmptyView
+                    title="No URL tracker rules configured"
+                    description="Add new URL trackers using the 'Add New Rule' action"
+                    icon={Icon.Link}
                 />
-            ))}
+            ) : (
+                configs.map((config) => (
+                    <RuleListItem
+                        key={config.id}
+                        config={config}
+                        onDelete={() => deleteConfig(config.id)}
+                    />
+                ))
+            )}
         </List>
     );
 }
@@ -37,7 +40,7 @@ function RuleListItem({
     onDelete
 }: {
     config: IssueTrackerConfig;
-    onDelete: (id: string) => void;
+    onDelete: () => void;
 }) {
     const handleDelete = async () => {
         const confirmed = await confirmAlert({
@@ -50,7 +53,7 @@ function RuleListItem({
         });
 
         if (confirmed) {
-            onDelete(config.id);
+            onDelete();
         }
     };
 
@@ -76,14 +79,20 @@ function RuleListItem({
                         />
                     </ActionPanel.Section>
 
-                    <Action.Push
-                        title="Add New Rule"
-                        icon={Icon.Plus}
-                        shortcut={{ modifiers: ["cmd"], key: "n" }}
-                        target={<UrlTrackerEditorForm />}
-                    />
+                    <AddNewRuleAction />
                 </ActionPanel>
             }
+        />
+    );
+}
+
+function AddNewRuleAction() {
+    return (
+        <Action.Push
+            title="Add New Rule"
+            icon={Icon.Plus}
+            shortcut={{ modifiers: ["cmd"], key: "n" }}
+            target={<UrlTrackerEditorForm />}
         />
     );
 }
@@ -125,7 +134,7 @@ function UrlTrackerEditorForm({ initialConfig }: { initialConfig?: IssueTrackerC
             <Form.TextField
                 id="title"
                 title="Title"
-                placeholder="e.g., Jira Ticket, GitHub Issue, Pull Request"
+                placeholder="e.g., Jira Issue, GitHub Issue"
                 value={title}
                 error={title.trim().length === 0 ? "Required" : undefined}
                 onChange={setTitle}
@@ -133,15 +142,16 @@ function UrlTrackerEditorForm({ initialConfig }: { initialConfig?: IssueTrackerC
             <Form.TextField
                 id="regex"
                 title="Regex Pattern"
-                placeholder="([A-Z]+-\\d+) for JIRA-123"
+                placeholder="PROJECT-(\d+)"
                 value={regex}
+                info="It should include a capture group for the issue number"
                 error={regex.trim().length === 0 ? "Required" : undefined}
                 onChange={setRegex}
             />
             <Form.TextField
                 id="urlPlaceholder"
                 title="URL Template"
-                placeholder="https://company.atlassian.net/browse/@key"
+                placeholder="https://your-comp.atlassian.net/browse/PROJECT-@key"
                 info="Use @key placeholder where the regex match should be inserted"
                 value={urlPlaceholder}
                 error={urlPlaceholder.trim().length === 0 ? "Required" : undefined}
@@ -150,5 +160,3 @@ function UrlTrackerEditorForm({ initialConfig }: { initialConfig?: IssueTrackerC
         </Form>
     );
 }
-
-

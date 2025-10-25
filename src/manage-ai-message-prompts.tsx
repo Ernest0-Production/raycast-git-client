@@ -82,7 +82,7 @@ function PresetListItem({
             icon={preset.icon ? preset.icon : { source: Icon.Message, tintColor: Color.SecondaryText }}
             title={preset.name}
             accessories={[
-                { text: preset.model ? preset.model : "Auto" }
+                { text: preset.model ? preset.model.replaceAll("_", " ") : "Auto" }
             ]}
             actions={
                 <ActionPanel>
@@ -192,7 +192,11 @@ export function AiMessagePresetEditorForm({ initialPreset }: { initialPreset?: P
             >
                 <Form.Dropdown.Item value={"auto"} title="Auto" />
                 {Object.keys(AI.Model).map((model) => (
-                    <Form.Dropdown.Item key={model} value={model} title={model} />
+                    <Form.Dropdown.Item
+                        key={model}
+                        title={model.replaceAll("_", " ")}
+                        value={model}
+                    />
                 ))}
             </Form.Dropdown>
 

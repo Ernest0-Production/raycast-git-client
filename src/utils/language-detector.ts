@@ -19,7 +19,8 @@ const LANGUAGES_COLORS: Record<string, Image.ImageLike> = {
     Kotlin: "https://api.iconify.design/material-icon-theme/kotlin.svg",
     HTML: "https://api.iconify.design/vscode-icons/file-type-html.svg",
     CSS: "https://api.iconify.design/vscode-icons/file-type-css.svg",
-    Zig: "https://api.iconify.design/material-icon-theme/zig.svg"
+    Zig: "https://api.iconify.design/material-icon-theme/zig.svg",
+    Shell: "https://api.iconify.design/simple-icons/gnubash.svg"
 };
 
 const LANGUAGE_EXTENSION: Record<string, string> = {
@@ -56,7 +57,16 @@ const LANGUAGE_EXTENSION: Record<string, string> = {
     sass: "CSS",
     less: "CSS",
     dart: "Dart",
-    zig: "Zig"
+    zig: "Zig",
+    sh: "Shell",
+    bash: "Shell",
+    zsh: "Shell",
+    fish: "Shell",
+    tcsh: "Shell",
+    csh: "Shell",
+    dash: "Shell",
+    ash: "Shell",
+    ksh: "Shell",
 };
 
 function getExtension(filePath: string): string | undefined {

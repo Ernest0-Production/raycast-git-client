@@ -24,12 +24,6 @@ export function StashesView(context: RepositoryContext & NavigationContext) {
           title="No stashes"
           description="No saved changes in the stash."
           icon={Icon.Bookmark}
-          actions={
-            <ActionPanel>
-              <RefreshStashesAction {...context} />
-              <WorkspaceNavigationActions {...context} />
-            </ActionPanel >
-          }
         />
       ) : (
         context.stashes.data.map((stash, index) => (

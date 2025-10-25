@@ -29,26 +29,12 @@ export default function TagsView(context: RepositoryContext & NavigationContext)
           title="Error loading tags"
           description={context.tags.error.message}
           icon={Icon.ExclamationMark}
-          actions={
-            <ActionPanel>
-              <RefreshTagsAction {...context} />
-              <RemoteFetchAction {...context} />
-              <WorkspaceNavigationActions {...context} />
-            </ActionPanel>
-          }
         />
       ) : (!context.tags.isLoading && context.tags.data.length === 0) ? (
         <List.EmptyView
           title="No tags"
           description="Repository has no tags."
           icon={Icon.Tag}
-          actions={
-            <ActionPanel>
-              <RefreshTagsAction {...context} />
-              <RemoteFetchAction {...context} />
-              <WorkspaceNavigationActions {...context} />
-            </ActionPanel>
-          }
         />
       ) : (
         context.tags.data.map((tag, index) => (

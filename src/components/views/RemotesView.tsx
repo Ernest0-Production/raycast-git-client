@@ -52,14 +52,6 @@ export default function RemotesView(context: RepositoryContext & NavigationConte
           title="No remotes"
           description="This repository has no remote configured."
           icon={Icon.Network}
-          actions={
-            <ActionPanel>
-              <SharedActionsSection
-                onCheckAgain={revalidateConnectivity}
-                {...context}
-              />
-            </ActionPanel>
-          }
         />
       ) : (
         items.map((remote: Remote) => (

@@ -65,14 +65,12 @@ export default function FileHistoryView(context: RepositoryContext & {
                     title="Error loading history"
                     description={error.message}
                     icon={Icon.ExclamationMark}
-                    actions={
-                        <ActionPanel>
-                            <RefreshHistoryAction revalidate={revalidateHistory} />
-                        </ActionPanel>
-                    }
                 />
             ) : !commits || commits.length === 0 ? (
-                <List.EmptyView title="No history" description="No commits have modified this file." icon={Icon.Document} />
+                <List.EmptyView
+                    title="No history"
+                    description="No commits have modified this file."
+                    icon={Icon.Document} />
             ) : (
                 <List.Section title={basename(context.filePath)} subtitle={`${commits.length} commits`}>
                     {commits.map((commit) => (
@@ -186,13 +184,11 @@ function CommitListItem(context: RepositoryContext & {
 
                     <ActionPanel.Section title="Commit">
                         <CommitCopyInfoActions commit={context.commit} />
-                        {Object.keys(context.remotes.data).map((remote) => (
-                            <RemoteOpenCommitAction
-                                key={`${remote}-open-commit`}
-                                remote={context.remotes.data[remote]}
-                                commit={context.commit.hash}
-                            />
-                        ))}
+
+                        <RemoteOpenCommitAction
+                            {...context}
+                            commit={context.commit.hash}
+                        />
                     </ActionPanel.Section>
 
                     <RefreshHistoryAction revalidate={context.onRevalidateHistory} />

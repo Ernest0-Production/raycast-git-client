@@ -6,14 +6,14 @@ import { nanoid } from "nanoid";
  * Hook to manage URL tracker configurations (global across the extension).
  */
 export function useIssueTracker() {
-    const [configs, setConfigs] = useCachedState<IssueTrackerConfig[]>("url-tracker-configs", []);
+    const [configs, setConfigs] = useCachedState<IssueTrackerConfig[]>("issue-tracker-configs", []);
 
     const addConfig = (title: string, regex: string, urlPlaceholder: string) => {
         const newConfig: IssueTrackerConfig = {
             id: nanoid(),
-            title: title.trim(),
-            regex: regex.trim(),
-            urlPlaceholder: urlPlaceholder.trim(),
+            title: title,
+            regex: regex,
+            urlPlaceholder: urlPlaceholder,
         };
         setConfigs((current) => [newConfig, ...current]);
         return newConfig;
@@ -21,7 +21,7 @@ export function useIssueTracker() {
 
     const updateConfig = (id: string, title: string, regex: string, urlPlaceholder: string) => {
         setConfigs((current) =>
-            current.map((c) => (c.id === id ? { ...c, title: title.trim(), regex: regex.trim(), urlPlaceholder: urlPlaceholder.trim() } : c)),
+            current.map((c) => (c.id === id ? { ...c, title: title, regex: regex, urlPlaceholder: urlPlaceholder } : c)),
         );
     };
 
