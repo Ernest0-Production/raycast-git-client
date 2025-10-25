@@ -294,7 +294,7 @@ export function RemoteDeleteAction(context: RepositoryContext & { remote: Remote
     );
 }
 
-export function RemoteCopyUrlActions({ remote }: { remote: Remote }) {
+export function RemoteCopyURLActions({ remote }: { remote: Remote }) {
     return (
         <>
             <Action.CopyToClipboard
@@ -316,7 +316,7 @@ export function RemoteCopyUrlActions({ remote }: { remote: Remote }) {
  * Copies file URL from remote host to clipboard.
  * Returns undefined if no remotes available or provider doesn't support file URLs.
  */
-export function RemoteCopyFileURLAction(context: RepositoryContext & {
+export function RemoteShowFilePageAction(context: RepositoryContext & {
     filePath: string;
     ref: string;
 }) {
@@ -340,30 +340,28 @@ export function RemoteCopyFileURLAction(context: RepositoryContext & {
         if (!url) return undefined;
 
         return (
-            <Action.CopyToClipboard
-                title={`Copy File URL in ${remote.provider}`}
-                content={url}
-                icon={Icon.Clipboard}
-                shortcut={{ modifiers: ["cmd", "ctrl", "opt"], key: "," }}
+            <Action.OpenInBrowser
+                title={`Show File on ${remote.provider}`}
+                url={url}
+                icon={RemoteHostIcon(remote.provider)}
             />
         );
     }
 
     return (
         <ActionPanel.Submenu
-            title="Copy File URL"
+            title="Show File Page on"
             icon={Icon.Clipboard}
-            shortcut={{ modifiers: ["cmd", "ctrl", "opt"], key: "," }}
         >
             {availableRemotes.map((remote) => {
                 const url = remote.pages.filePage(context.filePath, context.ref);
                 if (!url) return null;
 
                 return (
-                    <Action.CopyToClipboard
-                        key={`${remote.name}:copy-file-url`}
-                        title={`in ${remote.displayName}`}
-                        content={url}
+                    <Action.OpenInBrowser
+                        key={`${remote.name}:show-file-page`}
+                        title={remote.displayName}
+                        url={url}
                         icon={RemoteHostIcon(remote.provider)}
                     />
                 );
@@ -393,6 +391,7 @@ export function RemoteOpenBranchPage({
             title={`Show on ${remote.provider}`}
             url={url}
             icon={RemoteHostIcon(remote.provider)}
+            shortcut={{ modifiers: ["cmd"], key: "o" }}
         />
     );
 }

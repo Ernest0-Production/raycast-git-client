@@ -5,7 +5,7 @@ import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 import { usePromise } from "@raycast/utils";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
-import { RemoteAddAction, RemoteCopyUrlActions, RemoteDeleteAction, RemoteEditAction } from "../actions/RemoteActions";
+import { RemoteAddAction, RemoteCopyURLActions, RemoteDeleteAction, RemoteEditAction } from "../actions/RemoteActions";
 
 type RemoteConnectivity = {
   reachable: boolean,
@@ -123,7 +123,7 @@ function RemoteListItem(context: RepositoryContext & NavigationContext & {
               {...context}
             />
 
-            <RemoteCopyUrlActions
+            <RemoteCopyURLActions
               remote={context.remote}
             />
             <RemoteDeleteAction {...context} />

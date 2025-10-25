@@ -14,7 +14,7 @@ import { FileHistoryAction } from "./FileHistoryView";
 import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../actions/ToggleDetailAction";
 import { basename } from "path";
 import { BranchPushAction, BranchPushForceAction } from "../actions/BranchActions";
-import { RemoteCopyFileURLAction, RemoteFetchAction, RemotePullAction } from "../actions/RemoteActions";
+import { RemoteShowFilePageAction, RemoteFetchAction, RemotePullAction } from "../actions/RemoteActions";
 
 export function StatusView(context: RepositoryContext & NavigationContext) {
   const toggleController = useToggleDetail("Status Diff", "Changes", false);
@@ -269,7 +269,7 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
                 <ToggleDetailAction controller={context.toggleController} />
                 <FileManagerActions filePath={context.file.absolutePath} />
                 {context.branches.data.currentBranch && (
-                  <RemoteCopyFileURLAction
+                  <RemoteShowFilePageAction
                     filePath={context.file.relativePath}
                     ref={context.branches.data.currentBranch.name}
                     {...context}
