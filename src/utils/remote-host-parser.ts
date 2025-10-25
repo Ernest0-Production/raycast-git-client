@@ -62,6 +62,9 @@ function githubParser(_url: string, parsed: URLComponents) {
         fileUrl(filePath: string, ref: string) {
             return `${scheme}://${hostname}/${path}/blob/${encodeURIComponent(ref)}/${filePath}`;
         },
+        repositoryBranchUrl(branchName: string) {
+            return `${scheme}://${hostname}/${path}/tree/${encodeURIComponent(branchName)}`;
+        },
     };
 }
 
@@ -93,6 +96,9 @@ function gitlabParser(_url: string, parsed: URLComponents) {
         fileUrl(filePath: string, ref: string) {
             return `${scheme}://${hostname}/${path}/-/blob/${encodeURIComponent(ref)}/${filePath}`;
         },
+        repositoryBranchUrl(branchName: string) {
+            return `${scheme}://${hostname}/${path}/-/tree/${encodeURIComponent(branchName)}`;
+        },
     };
 }
 
@@ -123,6 +129,9 @@ function giteaParser(_url: string, parsed: URLComponents) {
         },
         fileUrl(filePath: string, ref: string) {
             return `${scheme}://${hostname}/${path}/src/branch/${encodeURIComponent(ref)}/${filePath}`;
+        },
+        repositoryBranchUrl(branchName: string) {
+            return `${scheme}://${hostname}/${path}/src/branch/${encodeURIComponent(branchName)}`;
         },
     };
 }
@@ -184,6 +193,13 @@ function bitbucketParser(_url: string, parsed: URLComponents) {
                 return `${repoBase}/browse/${filePath}?at=${encodeURIComponent(ref)}`;
             }
             return `${repoBase}/src/${encodeURIComponent(ref)}/${filePath}`;
+        },
+        repositoryBranchUrl(branchName: string) {
+            if (!repoBase) return undefined;
+            if (repoBase.includes("/projects/")) {
+                return `${repoBase}/browse?at=${encodeURIComponent(`refs/heads/${branchName}`)}`;
+            }
+            return `${repoBase}/src/${encodeURIComponent(branchName)}`;
         },
     };
 }
@@ -264,6 +280,9 @@ function azureDevopsParser(_url: string, parsed: URLComponents) {
         fileUrl(filePath: string, ref: string) {
             return repoBase ? `${repoBase}?path=/${filePath}&version=GB${encodeURIComponent(ref)}` : undefined;
         },
+        repositoryBranchUrl(branchName: string) {
+            return repoBase ? `${repoBase}?version=GB${encodeURIComponent(branchName)}` : undefined;
+        },
     };
 }
 
@@ -291,6 +310,9 @@ function unknownParser(_url: string, parsed?: URLComponents) {
             return undefined;
         },
         fileUrl() {
+            return undefined;
+        },
+        repositoryBranchUrl() {
             return undefined;
         },
     };

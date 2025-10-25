@@ -320,7 +320,7 @@ export function RemoteCopyFileURLAction(context: RepositoryContext & {
     filePath: string;
     ref: string;
 }) {
-    if (!context.remotes.data || Object.keys(context.remotes.data).length === 0) {
+    if (Object.keys(context.remotes.data).length === 0) {
         return undefined;
     }
 
@@ -369,5 +369,30 @@ export function RemoteCopyFileURLAction(context: RepositoryContext & {
                 );
             })}
         </ActionPanel.Submenu>
+    );
+}
+
+/**
+ * Opens repository page on a specific branch.
+ * Returns undefined if provider is unknown or URL can't be constructed.
+ */
+export function RemoteOpenBranchPage({
+    remote,
+    branch
+}: {
+    remote: Remote;
+    branch: string;
+}) {
+    const url = remote.pages.repositoryBranchUrl(branch);
+    if (!remote.provider || !url) return undefined;
+
+    console.log(url)
+
+    return (
+        <Action.OpenInBrowser
+            title={`Show on ${remote.provider}`}
+            url={url}
+            icon={RemoteHostIcon(remote.provider)}
+        />
     );
 }

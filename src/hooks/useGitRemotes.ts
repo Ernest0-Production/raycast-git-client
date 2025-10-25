@@ -39,6 +39,7 @@ export function useGitRemotes(gitManager: GitManager): RepositoryContext["remote
         commitPage: parser.commitUrl,
         createPullRequestForm: parser.createPullRequestUrl,
         filePage: parser.fileUrl,
+        repositoryBranchUrl: parser.repositoryBranchUrl,
       }
     };
     dictionary[remote.name] = info;

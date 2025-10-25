@@ -17,7 +17,7 @@ import { useMemo } from "react";
 import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
-import { RemoteFetchAction, RemotePullAction } from "../actions/RemoteActions";
+import { RemoteFetchAction, RemoteOpenBranchPage, RemotePullAction } from "../actions/RemoteActions";
 
 export function BranchesView(context: RepositoryContext & NavigationContext) {
   return (
@@ -213,6 +213,12 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
               <>
                 <BranchCkeckoutAction {...context} />
                 <BranchShowCommitsAction {...context} />
+                {context.branch.upstream && !context.branch.isGone && (
+                  <RemoteOpenBranchPage
+                    remote={context.remotes.data[context.branch.upstream!.split("/")[0]]}
+                    branch={context.branch.upstream!.split("/").slice(1).join("/")}
+                  />
+                )}
                 <BranchPushAction {...context} />
                 <BranchPushForceAction {...context} />
                 <BranchRebaseAction {...context} />
@@ -232,6 +238,12 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
               <>
                 <BranchCkeckoutAction {...context} />
                 <BranchShowCommitsAction {...context} />
+                {context.branch.remote && (
+                  <RemoteOpenBranchPage
+                    remote={context.remotes.data[context.branch.remote]}
+                    branch={context.branch.name}
+                  />
+                )}
                 <BranchPushAction {...context} />
                 <BranchCopyNameAction
                   branch={context.branch.displayName}
