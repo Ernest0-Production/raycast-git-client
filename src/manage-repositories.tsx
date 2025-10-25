@@ -27,46 +27,7 @@ export default function ManageRepositories() {
   const currentRepositories = useMemo(() => allRepositories.filter((repo) => !repo.cloning), [allRepositories]);
 
   // Use view hook only for regular repositories
-  const {
-    currentView: displayView,
-    setCurrentView: setDisplayView,
-    displayedRepositories
-  } = useRepositoriesView(currentRepositories);
-
-  const groupActions = (
-    <ActionPanel.Section title="View">
-      <ActionPanel.Submenu title="Sort by" icon={Icon.NumberList}>
-        <Action
-          title="Visit Date"
-          icon={displayView.order === "visit-date" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Clock}
-          onAction={() => setDisplayView({ ...displayView, order: "visit-date" })}
-        />
-        <Action
-          title="Alphabetically"
-          icon={displayView.order === "alphabetical" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Lowercase}
-          onAction={() => setDisplayView({ ...displayView, order: "alphabetical" })}
-        />
-      </ActionPanel.Submenu>
-
-      <ActionPanel.Submenu title="Group by" icon={Icon.List}>
-        <Action
-          title="None"
-          icon={displayView.group === "none" ? { source: Icon.Checkmark, tintColor: Color.Green } : undefined}
-          onAction={() => setDisplayView({ ...displayView, group: "none" })}
-        />
-        <Action
-          title="Language"
-          icon={displayView.group === "language" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Code}
-          onAction={() => setDisplayView({ ...displayView, group: "language" })}
-        />
-        <Action
-          title="Directory"
-          icon={displayView.group === "parent" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Folder}
-          onAction={() => setDisplayView({ ...displayView, group: "parent" })}
-        />
-      </ActionPanel.Submenu>
-    </ActionPanel.Section>
-  )
+  const { displayedRepositories } = useRepositoriesView(currentRepositories);
 
   const handleRemove = async (repoName: string, repoPath: string) => {
     const confirmed = await confirmAlert({
@@ -103,7 +64,7 @@ export default function ManageRepositories() {
             icon={Icon.Plus}
             shortcut={{ modifiers: ["cmd"], key: "n" }}
           />
-          {groupActions}
+          <RepositoriesOrderActionsSection />
         </ActionPanel>
       }
     >
@@ -114,7 +75,6 @@ export default function ManageRepositories() {
             <CloningRepositoryListItem
               key={repo.id}
               repo={repo}
-              groupActions={groupActions}
               onFinish={() => updateCloningState(repo.path, undefined)}
               onKill={() => handleKillClone(repo.path)}
               onRetry={(cloningProcess) => updateCloningState(repo.path, cloningProcess)}
@@ -141,7 +101,6 @@ export default function ManageRepositories() {
                 onOpen={() => visitRepository(repo.path)}
                 onRemove={() => handleRemove(repo.name, repo.path)}
                 onAddRepository={addRepository}
-                groupActions={groupActions}
               />
             ))}
           </List.Section>
@@ -156,13 +115,11 @@ function RepositoryListItem({
   onOpen,
   onRemove,
   onAddRepository,
-  groupActions,
 }: {
   repo: Repository;
   onOpen: () => void;
   onRemove: () => void;
   onAddRepository: (repoPath: string) => void;
-  groupActions: React.ReactNode;
 }) {
   const { gitManager } = useGitRepository(repo.path);
   if (!gitManager) return null;
@@ -244,7 +201,7 @@ function RepositoryListItem({
             </ActionPanel.Section>
           ))}
 
-          {groupActions}
+          <RepositoriesOrderActionsSection />
 
           <ActionPanel.Section title="List">
             <Action.Push
@@ -331,7 +288,6 @@ function AddRepositoryForm({ onAddRepository }: { onAddRepository: (repoPath: st
 
 function CloningRepositoryListItem({
   repo,
-  groupActions,
   onFinish,
   onKill,
   onRetry,
@@ -339,7 +295,6 @@ function CloningRepositoryListItem({
   onOpen,
 }: {
   repo: Repository;
-  groupActions: React.ReactNode;
   onFinish: () => void;
   onKill: () => void;
   onRetry: (cloningProcess: RepositoryCloningProcess) => void;
@@ -461,9 +416,52 @@ function CloningRepositoryListItem({
             content={repo.cloning!.url}
           />
           <RepositoryDirectoryActions repositoryPath={repo.path} onOpen={onOpen} />
-          {groupActions}
+          <RepositoriesOrderActionsSection />
         </ActionPanel>
       }
     />
+  );
+}
+
+function RepositoriesOrderActionsSection() {
+  const { repositories } = useRepositoriesList();
+  const {
+    currentView: displayView,
+    setCurrentView: setDisplayView,
+  } = useRepositoriesView(repositories);
+
+  return (
+    <ActionPanel.Section title="View">
+      <ActionPanel.Submenu title="Sort by" icon={Icon.NumberList}>
+        <Action
+          title="Visit Date"
+          icon={displayView.order === "visit-date" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Clock}
+          onAction={() => setDisplayView({ ...displayView, order: "visit-date" })}
+        />
+        <Action
+          title="Alphabetically"
+          icon={displayView.order === "alphabetical" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Lowercase}
+          onAction={() => setDisplayView({ ...displayView, order: "alphabetical" })}
+        />
+      </ActionPanel.Submenu>
+
+      <ActionPanel.Submenu title="Group by" icon={Icon.List}>
+        <Action
+          title="None"
+          icon={displayView.group === "none" ? { source: Icon.Checkmark, tintColor: Color.Green } : undefined}
+          onAction={() => setDisplayView({ ...displayView, group: "none" })}
+        />
+        <Action
+          title="Language"
+          icon={displayView.group === "language" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Code}
+          onAction={() => setDisplayView({ ...displayView, group: "language" })}
+        />
+        <Action
+          title="Directory"
+          icon={displayView.group === "parent" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Folder}
+          onAction={() => setDisplayView({ ...displayView, group: "parent" })}
+        />
+      </ActionPanel.Submenu>
+    </ActionPanel.Section>
   );
 }
