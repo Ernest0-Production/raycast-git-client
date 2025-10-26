@@ -17,8 +17,6 @@ const LANGUAGES_COLORS: Record<string, Image.ImageLike> = {
     Dart: "https://api.iconify.design/vscode-icons/file-type-dartlang.svg",
     Swift: "https://api.iconify.design/vscode-icons/file-type-swift.svg",
     Kotlin: "https://api.iconify.design/material-icon-theme/kotlin.svg",
-    HTML: "https://api.iconify.design/vscode-icons/file-type-html.svg",
-    CSS: "https://api.iconify.design/vscode-icons/file-type-css.svg",
     Zig: "https://api.iconify.design/material-icon-theme/zig.svg",
     Shell: "https://api.iconify.design/simple-icons/gnubash.svg"
 };
@@ -50,12 +48,6 @@ const LANGUAGE_EXTENSION: Record<string, string> = {
     kt: "Kotlin",
     kts: "Kotlin",
     rs: "Rust",
-    html: "HTML",
-    xhtml: "HTML",
-    css: "CSS",
-    scss: "CSS",
-    sass: "CSS",
-    less: "CSS",
     dart: "Dart",
     zig: "Zig",
     sh: "Shell",
