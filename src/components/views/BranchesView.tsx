@@ -14,7 +14,7 @@ import {
 } from "../actions/BranchActions";
 import { Branch, DetachedHead } from "../../types";
 import { useMemo } from "react";
-import { RemoteHostIcon } from "../icons/RemoteHostIcons";
+import { RemoteHostIcon, RemoteHostProviderIcon } from "../icons/RemoteHostIcons";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
 import { RemoteFetchAction, RemoteOpenBranchPage, RemotePullAction } from "../actions/RemoteActions";
@@ -177,7 +177,7 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
     if (context.branch.type === "current") {
       return { source: Icon.Dot, tintColor: Color.Green };
     } else if (context.branch.type === "remote") {
-      return RemoteHostIcon(context.remotes.data[context.branch.remote!]);
+      return RemoteHostProviderIcon(context.remotes.data[context.branch.remote!].provider);
     } else {
       return { source: Icon.Dot, tintColor: Color.SecondaryText };
     }

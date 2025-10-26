@@ -89,7 +89,7 @@ function evaluateBranchName(branchFilter: BranchFilter, branchesState: BranchesS
       } else if (branchesState.currentBranch) {
         return branchesState.currentBranch.name;
       } else {
-        console.error("No current branch found");
+        console.warn("No current branch found");
         return undefined;
       }
 
