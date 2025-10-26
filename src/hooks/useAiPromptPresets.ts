@@ -183,10 +183,11 @@ export function useAiPromptPresets() {
  * @returns The icon and name.
  */
 function parsePresetName(name: string): { icon?: string; name: string; } {
-    const emojiMatch = name.match(/^(\p{Emoji})\s+(.+)$/u);
+    // This regex captures both standard emojis and country flag emojis (which are composed of two Unicode characters)
+    const emojiMatch = name.match(/^(\p{Emoji}(\p{Emoji_Modifier}|\p{Emoji_Component})*)\s+(.+)$/u);
 
     if (emojiMatch) {
-        const [, emoji, actualName] = emojiMatch;
+        const [, emoji, , actualName] = emojiMatch;
         return { icon: emoji, name: actualName };
     }
 

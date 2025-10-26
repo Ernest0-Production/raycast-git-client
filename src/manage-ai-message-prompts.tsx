@@ -141,7 +141,7 @@ function AddNewPresetAction() {
 export function AiMessagePresetEditorForm({ initialPreset }: { initialPreset?: Partial<AiPromptPreset>; }) {
     const { pop } = useNavigation();
     const { addPreset, updatePreset } = useAiPromptPresets();
-    const [name, setName] = useState(initialPreset?.name ?? "");
+    const [name, setName] = useState(`${initialPreset?.icon ?? ""} ${initialPreset?.name ?? ""}`.trim());
     const [prompt, setPrompt] = useState(initialPreset?.prompt ?? "");
     const [model, setModel] = useState<string>(initialPreset?.model ?? "auto");
 
