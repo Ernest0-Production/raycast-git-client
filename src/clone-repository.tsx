@@ -1,5 +1,5 @@
 import { ActionPanel, Action, Form, showToast, Toast, Icon, LaunchProps, launchCommand, LaunchType } from "@raycast/api";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useCachedState } from "@raycast/utils";
 import { join } from "path";
 import { useRepositoriesList } from "./hooks/useRepositoriesList";
@@ -12,7 +12,7 @@ interface CloneRepositoryArguments {
 }
 
 export default function CloneRepository(props: LaunchProps<{ arguments: CloneRepositoryArguments }>) {
-    const { url } = props.arguments;
+    const [url, setUrl] = useState(props.arguments.url);
     const [parentDirectory, setParentDirectory] = useCachedState<string | undefined>("clone-parent-directory", undefined);
     const { addRepository } = useRepositoriesList();
 
@@ -78,7 +78,14 @@ export default function CloneRepository(props: LaunchProps<{ arguments: CloneRep
                 </ActionPanel>
             }
         >
-            <Form.Description title="URL" text={url} />
+            <Form.TextField
+                id="url"
+                title="URL"
+                value={url}
+                onChange={(value) => setUrl(value)}
+                error={url.trim().length === 0 ? "Required" : undefined}
+                placeholder="https://github.com/user/your-repo.git"
+            />
             <Form.Separator />
             <Form.FilePicker
                 id="parentDirectory"

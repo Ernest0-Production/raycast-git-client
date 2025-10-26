@@ -234,7 +234,7 @@ function RemoteEditorForm(context: RepositoryContext & { initialRemote?: Remote;
     const handleSubmit = async (values: { name: string; fetchUrl: string; pushUrl: string }) => {
         try {
             if (context.initialRemote) {
-                await context.gitManager.updateRemote(name.trim(), fetchUrl.trim(), pushUrl.trim());
+                await context.gitManager.updateRemote(context.initialRemote.name, fetchUrl.trim(), pushUrl.trim(), name.trim());
             } else {
                 await context.gitManager.addRemote(name.trim(), fetchUrl.trim(), pushUrl.trim());
             }

@@ -1335,10 +1335,13 @@ __REBASE_TODO__
     }
   }
 
-  async updateRemote(name: string, fetchUrl: string, pushUrl?: string): Promise<void> {
+  async updateRemote(name: string, fetchUrl: string, pushUrl?: string, newName?: string): Promise<void> {
     await this.git.raw(["remote", "set-url", name, fetchUrl]);
     if (pushUrl) {
       await this.git.raw(["remote", "set-url", "--push", name, pushUrl]);
+    }
+    if (newName && newName !== name) {
+      await this.git.raw(["remote", "rename", name, newName]);
     }
   }
 

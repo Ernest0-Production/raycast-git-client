@@ -1,4 +1,4 @@
-import { ActionPanel, Action, Icon, List, confirmAlert, Alert, showToast, Toast, Form, useNavigation, Color, Image } from "@raycast/api";
+import { ActionPanel, Action, Icon, List, confirmAlert, Alert, showToast, Toast, Form, useNavigation, Color, Image, LaunchType, launchCommand } from "@raycast/api";
 import { useMemo, useState } from "react";
 import { useRepositoriesList } from "./hooks/useRepositoriesList";
 import { RepositoryDirectoryActions } from "./components/actions/RepositoryDirectoryActions";
@@ -13,6 +13,7 @@ import { GitManager } from "./utils/git-manager";
 import { useInterval } from "./hooks/useInterval";
 import { promises as fs } from "fs";
 import { basename } from "path";
+import CloneRepository from "./clone-repository";
 
 export default function ManageRepositories() {
   const {
@@ -58,12 +59,7 @@ export default function ManageRepositories() {
       searchBarPlaceholder="Search by name, path"
       actions={
         <ActionPanel>
-          <Action.Push
-            title="Add Repository"
-            target={<AddRepositoryForm onAddRepository={addRepository} />}
-            icon={Icon.Plus}
-            shortcut={{ modifiers: ["cmd"], key: "n" }}
-          />
+          <AddRepositoryAction onAddRepository={addRepository} />
           <RepositoriesOrderActionsSection />
         </ActionPanel>
       }
@@ -204,16 +200,34 @@ function RepositoryListItem({
           <RepositoriesOrderActionsSection />
 
           <ActionPanel.Section title="List">
-            <Action.Push
-              title="Add Repository"
-              target={<AddRepositoryForm onAddRepository={onAddRepository} />}
-              icon={Icon.Plus}
-              shortcut={{ modifiers: ["cmd"], key: "n" }}
-            />
+            <AddRepositoryAction onAddRepository={onAddRepository} />
           </ActionPanel.Section>
         </ActionPanel>
       }
     />
+  );
+}
+
+function AddRepositoryAction({ onAddRepository }: { onAddRepository: (repoPath: string) => void }) {
+  return (
+    <>
+      <Action.Push
+        title="Add Repository"
+        target={<AddRepositoryForm onAddRepository={onAddRepository} />}
+        icon={Icon.Plus}
+        shortcut={{ modifiers: ["cmd"], key: "n" }}
+      />
+      <Action
+        title="Clone Repository"
+        onAction={async () => await launchCommand({
+          name: "clone-repository",
+          type: LaunchType.UserInitiated,
+          arguments: { url: "", },
+        })}
+        icon={Icon.Download}
+        shortcut={{ modifiers: ["cmd", "shift"], key: "n" }}
+      />
+    </>
   );
 }
 
