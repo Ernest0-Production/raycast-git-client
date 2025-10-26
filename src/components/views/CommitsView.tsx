@@ -160,7 +160,7 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
           icon = Icon.Dot;
         } else if (context.commit.remoteBranches.length > 0) {
           const remoteName = context.commit.remoteBranches[0].split("/")[0];
-          icon = RemoteHostIcon(context.remotes.data[remoteName]?.provider);
+          icon = RemoteHostIcon(context.remotes.data[remoteName]);
         }
       }
 
@@ -250,7 +250,7 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
                       {context.commit.remoteBranches.map((branch) => (
                         <List.Item.Detail.Metadata.TagList.Item
                           key={branch}
-                          icon={RemoteHostIcon(context.remotes.data[branch.split("/")[0]]?.provider)}
+                          icon={RemoteHostIcon(context.remotes.data[branch.split("/")[0]])}
                           text={branch}
                           color={Color.SecondaryText}
                         />
@@ -491,7 +491,7 @@ function BranchFilterAction(context: RepositoryContext & { branch: Branch }) {
     let baseIcon: Image.ImageLike = Icon.Dot;
     switch (context.branch.type) {
       case "remote":
-        baseIcon = RemoteHostIcon(context.remotes.data[context.branch.remote!]?.provider);
+        baseIcon = RemoteHostIcon(context.remotes.data[context.branch.remote!]);
         break;
       case "local":
         baseIcon = Icon.Dot;

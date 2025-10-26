@@ -13,7 +13,6 @@ import { GitManager } from "./utils/git-manager";
 import { useInterval } from "./hooks/useInterval";
 import { promises as fs } from "fs";
 import { basename } from "path";
-import CloneRepository from "./clone-repository";
 
 export default function ManageRepositories() {
   const {
@@ -127,7 +126,7 @@ function RepositoryListItem({
     if (remotes && Object.keys(remotes).length > 0) {
       result.push(...Object.keys(remotes).map((remote) => ({
         tag: { value: `${remotes[remote].displayName}` },
-        icon: RemoteHostIcon(remotes[remote].provider),
+        icon: RemoteHostIcon(remotes[remote]),
         tooltip: `Hosted on ${remotes[remote].provider} at ${remotes[remote].displayName}`,
       })));
     }

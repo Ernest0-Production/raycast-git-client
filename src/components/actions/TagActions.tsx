@@ -95,7 +95,7 @@ export function TagRemoveAction(context: RepositoryContext & { tagName: string }
           title={`Local and ${remote}`}
           onAction={() => handleRemoveTag(remote)}
           style={Action.Style.Destructive}
-          icon={RemoteHostIcon(context.remotes.data[remote].provider)}
+          icon={RemoteHostIcon(context.remotes.data[remote])}
         />
       ))}
     </ActionPanel.Submenu>
@@ -194,7 +194,7 @@ export function TagPushAction(context: RepositoryContext & { tagName: string }) 
         <Action
           key={`${remote}:push-tag`}
           title={remote}
-          icon={RemoteHostIcon(context.remotes.data[remote].provider)}
+          icon={RemoteHostIcon(context.remotes.data[remote])}
           onAction={() => handlePush(remote)}
         />
       ))}
@@ -439,7 +439,7 @@ function TagCreateAndPushAction(context: RepositoryContext & {
             key={`${remote}:create-tag-and-push`}
             title={remote}
             onAction={() => context.handleSubmit(remote)}
-            icon={RemoteHostIcon(context.remotes.data[remote].provider)}
+            icon={RemoteHostIcon(context.remotes.data[remote])}
           />
         ))
       }

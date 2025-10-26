@@ -165,7 +165,7 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
           color: context.branch.isGone ? Color.Yellow : Color.SecondaryText,
         },
         tooltip: context.branch.isGone ? "Upstream was removed from remote" : "Tracked upstream",
-        icon: context.branch.isGone ? Icon.ExclamationMark : RemoteHostIcon(context.remotes.data[context.branch.upstream!.split("/")[0]]?.provider)
+        icon: context.branch.isGone ? Icon.ExclamationMark : RemoteHostIcon(context.remotes.data[context.branch.upstream!.split("/")[0]])
       });
     }
 
@@ -177,7 +177,7 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
     if (context.branch.type === "current") {
       return { source: Icon.Dot, tintColor: Color.Green };
     } else if (context.branch.type === "remote") {
-      return RemoteHostIcon(context.remotes.data[context.branch.remote!]?.provider);
+      return RemoteHostIcon(context.remotes.data[context.branch.remote!]);
     } else {
       return { source: Icon.Dot, tintColor: Color.SecondaryText };
     }

@@ -224,6 +224,7 @@ export type Remote = {
   displayName: string;
   repositoryName?: string;
   provider: RemoteProvider;
+  avatarUrl?: string;
   pages: {
     mainPage?: string;
     pullRequests?: string;

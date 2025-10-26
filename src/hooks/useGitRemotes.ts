@@ -33,6 +33,7 @@ export function useGitRemotes(gitManager: GitManager): RepositoryContext["remote
       displayName: `${parser.organizationName}/${parser.repositoryName}`,
       repositoryName: parser.repositoryName,
       provider: parser.provider,
+      avatarUrl: parser.avatarUrl,
       pages: {
         get mainPage() { return parser.repositoryWebUrl; },
         get pullRequests() { return parser.pullRequestsListUrl; },

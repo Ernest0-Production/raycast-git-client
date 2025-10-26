@@ -186,7 +186,7 @@ export function BranchPushAction(context: RepositoryContext & { branch: Branch }
         <Action
           key={`${remote}:push`}
           title={remote}
-          icon={RemoteHostIcon(context.remotes.data[remote].provider)}
+          icon={RemoteHostIcon(context.remotes.data[remote])}
           onAction={() => handlePushToRemote(remote)}
         />
       ))}
@@ -241,7 +241,7 @@ export function BranchPushForceAction(context: RepositoryContext & { branch: Bra
         <Action
           key={`${remote}:force-push`}
           title={remote}
-          icon={RemoteHostIcon(context.remotes.data[remote].provider)}
+          icon={RemoteHostIcon(context.remotes.data[remote])}
           onAction={() => handleForcePushToRemote(remote)}
           style={Action.Style.Destructive}
         />

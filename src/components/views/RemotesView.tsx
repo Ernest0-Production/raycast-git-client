@@ -100,7 +100,7 @@ function RemoteListItem(context: RepositoryContext & NavigationContext & {
         value: context.remote.fetchUrl,
         tooltip: context.remote.fetchUrl
       }}
-      icon={RemoteHostIcon(context.remote.provider)}
+      icon={RemoteHostIcon(context.remote)}
       accessories={accessories}
       actions={
         <ActionPanel>

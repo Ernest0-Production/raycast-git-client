@@ -50,6 +50,9 @@ function githubParser(_url: string, parsed: URLComponents) {
         get repositoryWebUrl() {
             return `${scheme}://${hostname}/${path}`;
         },
+        get avatarUrl() {
+            return `${scheme}://${hostname}/${this.organizationName}.png?size=64`;
+        },
         get pullRequestsListUrl() {
             return `${scheme}://${hostname}/${path}/pulls`;
         },
@@ -84,6 +87,9 @@ function gitlabParser(_url: string, parsed: URLComponents) {
         get repositoryWebUrl() {
             return `${scheme}://${hostname}/${path}`;
         },
+        get avatarUrl() {
+            return undefined;
+        },
         get pullRequestsListUrl() {
             return `${scheme}://${hostname}/${path}/-/merge_requests`;
         },
@@ -117,6 +123,10 @@ function giteaParser(_url: string, parsed: URLComponents) {
         },
         get repositoryWebUrl() {
             return `${scheme}://${hostname}/${path}`;
+        },
+        get avatarUrl() {
+            if (!this.organizationName) return undefined;
+            return `${scheme}://${hostname}/${this.organizationName}.png`;
         },
         get pullRequestsListUrl() {
             return `${scheme}://${hostname}/${path}/pulls`;
@@ -153,15 +163,6 @@ function bitbucketParser(_url: string, parsed: URLComponents) {
         return `${scheme}://${hostname}/projects/${project}/repos/${repo}`;
     })();
 
-    const repositoryName = (() => {
-        if (isSelfHosted) {
-            const m = path.match(/\/([^\/]+)$/);
-            return m ? m[1] : undefined;
-        }
-        const m = path.match(/^([^\/]+)\/([^\/]+)/);
-        return m ? m[2] : undefined;
-    })();
-
     return {
         provider: "Bitbucket" as RemoteProvider,
         get organizationName() {
@@ -169,10 +170,21 @@ function bitbucketParser(_url: string, parsed: URLComponents) {
             return m ? m[1] : undefined;
         },
         get repositoryName() {
-            return repositoryName;
+            if (isSelfHosted) {
+                const m = path.match(/\/([^\/]+)$/);
+                return m ? m[1] : undefined;
+            }
+            const m = path.match(/^([^\/]+)\/([^\/]+)/);
+            return m ? m[2] : undefined;
         },
         get repositoryWebUrl() {
             return repoBase;
+        },
+        get avatarUrl() {
+            if (isSelfHosted) {
+                return undefined;
+            }
+            return `${scheme}://${hostname}/projects/${this.organizationName}/avatar.png?s=64`;
         },
         get pullRequestsListUrl() {
             return repoBase ? `${repoBase}/pull-requests` : undefined;
@@ -268,6 +280,9 @@ function azureDevopsParser(_url: string, parsed: URLComponents) {
         get repositoryWebUrl() {
             return repoBase;
         },
+        get avatarUrl() {
+            return undefined;
+        },
         get pullRequestsListUrl() {
             return repoBase ? `${repoBase}/pullrequests` : undefined;
         },
@@ -298,6 +313,9 @@ function unknownParser(_url: string, parsed?: URLComponents) {
             return scheme && hostname && path ? `${scheme}://${hostname}/${path}` : undefined;
         },
         get repositoryName() {
+            return undefined;
+        },
+        get avatarUrl() {
             return undefined;
         },
         get pullRequestsListUrl() {

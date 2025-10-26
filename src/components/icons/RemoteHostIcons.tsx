@@ -1,8 +1,16 @@
-import { Color, Icon } from "@raycast/api";
-import { RemoteProvider } from "../../types/git-types";
+import { Color, Icon, Image } from "@raycast/api";
+import { Remote } from "../../types/git-types";
 
-export function RemoteHostIcon(provider: RemoteProvider) {
-    switch (provider) {
+export function RemoteHostIcon(remoteHost: Remote): Image.ImageLike {
+    if (remoteHost.avatarUrl) {
+        return {
+            source: remoteHost.avatarUrl,
+            mask: Image.Mask.RoundedRectangle,
+            fallback: Icon.Globe
+        };
+    }
+
+    switch (remoteHost.provider) {
         case "GitHub":
             return { source: "github.svg", tintColor: Color.PrimaryText };
         case "GitLab":

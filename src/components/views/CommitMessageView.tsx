@@ -324,7 +324,7 @@ function CommitAndPushAction(context: RepositoryContext & {
         <Action
           key={`${remote}:commit-and-push`}
           title={remote}
-          icon={RemoteHostIcon(context.remotes.data[remote].provider)}
+          icon={RemoteHostIcon(context.remotes.data[remote])}
           onAction={() => context.handleCommit(remote)}
         />
       ))}

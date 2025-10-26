@@ -47,7 +47,7 @@ export function RemoteFetchAction(context: RepositoryContext & { remotesHosts?: 
                 <Action
                     key={`${remote}:fetch`}
                     title={remote}
-                    icon={RemoteHostIcon(context.remotes.data[remote].provider)}
+                    icon={RemoteHostIcon(context.remotes.data[remote])}
                     onAction={() => handleFetch(remote)}
                 />
             ))}
@@ -105,7 +105,7 @@ export function RemoteOpenPullRequestAction({ remote }: { remote: Remote }) {
         <Action.OpenInBrowser
             title={title}
             url={url}
-            icon={RemoteHostIcon(remote.provider)}
+            icon={RemoteHostIcon(remote)}
         />
     );
 }
@@ -130,7 +130,7 @@ export function RemoteCreatePullRequestAction({
         <Action.OpenInBrowser
             title={title}
             url={url}
-            icon={RemoteHostIcon(remote.provider)}
+            icon={RemoteHostIcon(remote)}
         />
     );
 }
@@ -163,7 +163,7 @@ export function RemoteOpenCommitAction(context: RepositoryContext & { commit: st
             <Action.OpenInBrowser
                 title={`Show Commit on ${remote.provider}`}
                 url={url}
-                icon={RemoteHostIcon(remote.provider)}
+                icon={RemoteHostIcon(remote)}
             />
         );
     }
@@ -179,7 +179,7 @@ export function RemoteOpenCommitAction(context: RepositoryContext & { commit: st
                         key={`${remote.name}:show-commit`}
                         title={`Show Commit on ${remote.displayName}`}
                         url={url}
-                        icon={RemoteHostIcon(remote.provider)}
+                        icon={RemoteHostIcon(remote)}
                     />
                 );
             })}
@@ -372,7 +372,7 @@ export function RemoteShowFilePageAction(context: RepositoryContext & {
             <Action.OpenInBrowser
                 title={`Show File on ${remote.provider}`}
                 url={url}
-                icon={RemoteHostIcon(remote.provider)}
+                icon={RemoteHostIcon(remote)}
             />
         );
     }
@@ -391,7 +391,7 @@ export function RemoteShowFilePageAction(context: RepositoryContext & {
                         key={`${remote.name}:show-file-page`}
                         title={remote.displayName}
                         url={url}
-                        icon={RemoteHostIcon(remote.provider)}
+                        icon={RemoteHostIcon(remote)}
                     />
                 );
             })}
@@ -419,7 +419,7 @@ export function RemoteOpenBranchPage({
         <Action.OpenInBrowser
             title={`Show on ${remote.provider}`}
             url={url}
-            icon={RemoteHostIcon(remote.provider)}
+            icon={RemoteHostIcon(remote)}
             shortcut={{ modifiers: ["cmd"], key: "o" }}
         />
     );
