@@ -1,4 +1,4 @@
-import { ActionPanel, Action, Icon, List, Form, useNavigation, confirmAlert, Alert, Color } from "@raycast/api";
+import { ActionPanel, Action, Icon, List, Form, useNavigation, confirmAlert, Alert, Color, Toast, showToast } from "@raycast/api";
 import { useState } from "react";
 import { IssueTrackerConfig } from "./types";
 import { useIssueTracker } from "./hooks/useIssueTracker";
@@ -106,7 +106,16 @@ function UrlTrackerEditorForm({ initialConfig }: { initialConfig?: IssueTrackerC
     const [urlPlaceholder, setUrlPlaceholder] = useState(initialConfig?.urlPlaceholder ?? "");
 
     const handleSubmit = (values: { title: string; regex: string; urlPlaceholder: string }) => {
-        validateConfig(values);
+        try {
+            validateConfig(values);
+        } catch (error) {
+            showToast({
+                title: "Invalid Regex",
+                message: error instanceof Error ? error.message : "Unknown error",
+                style: Toast.Style.Failure,
+            });
+            return;
+        }
 
         if (initialConfig) {
             updateConfig(initialConfig.id, values.title.trim(), values.regex.trim(), values.urlPlaceholder.trim());

@@ -30,8 +30,13 @@ export function useIssueTracker() {
     };
 
     const validateConfig = (config: { title: string; regex: string; urlPlaceholder: string }) => {
-        // Test regex validity
-        new RegExp(config.regex);
+        try {
+            // Test regex validity
+            new RegExp(config.regex);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Unknown error";
+            throw new Error(`Invalid regex pattern: ${config.regex}. Reason: ${errorMessage}`);
+        }
 
         // Check if URL template contains @key placeholder
         if (!config.urlPlaceholder.includes("@key")) {
