@@ -3,7 +3,7 @@ import { RepositoryContext, NavigationContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
 import { RemoteFetchAction } from "../actions/RemoteActions";
 import { useMemo, useState } from "react";
-import { TagCheckoutAction, TagCopyCommitHashAction, TagCopyNameAction, TagDetailsView, TagPushAction, TagRemoveAction, TagRenameAction } from "../actions/TagActions";
+import { TagCheckoutAction, TagCopyCommitHashAction, TagCopyNameAction, TagCreateAction, TagDetailsView, TagPushAction, TagRemoveAction, TagRenameAction } from "../actions/TagActions";
 import { Tag } from "../../types";
 
 export default function TagsView(context: RepositoryContext & NavigationContext) {
@@ -18,6 +18,13 @@ export default function TagsView(context: RepositoryContext & NavigationContext)
       searchBarAccessory={WorkspaceNavigationDropdown(context)}
       actions={
         <ActionPanel>
+          {context.branches.data.currentBranch &&
+            <TagCreateAction
+              {...context}
+              ref={context.branches.data.currentBranch.name}
+              shortcut={{ modifiers: ["cmd"], key: "n" }}
+            />
+          }
           <RefreshTagsAction {...context} />
           <RemoteFetchAction {...context} />
           <WorkspaceNavigationActions {...context} />
@@ -111,6 +118,14 @@ function TagListItem(context: RepositoryContext & NavigationContext & {
             />
             <TagRemoveAction tagName={context.tag.name} {...context} />
           </ActionPanel.Section>
+
+          {context.branches.data.currentBranch &&
+            <TagCreateAction
+              {...context}
+              ref={context.branches.data.currentBranch.name}
+              shortcut={{ modifiers: ["cmd"], key: "n" }}
+            />
+          }
           <RefreshTagsAction {...context} />
           <WorkspaceNavigationActions {...context} />
         </ActionPanel>

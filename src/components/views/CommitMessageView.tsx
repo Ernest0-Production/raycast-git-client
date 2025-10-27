@@ -17,7 +17,7 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
 
   // Use useState for autoGenerateCommitMessage mode, and useCachedState for amendOnly mode
   const [draftMessage, setDraftMessage] = context.commit ?
-    useState(context.commit.message + "\n\n" + context.commit.body) :
+    useState(`${context.commit.message}\n\n${context.commit.body}`.trim()) :
     preferences.autoGenerateCommitMessage
       ? useState("")
       : useCachedState(`commit-draft-${context.gitManager.repoPath}`, "");

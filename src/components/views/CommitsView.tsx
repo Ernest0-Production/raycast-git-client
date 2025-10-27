@@ -312,7 +312,10 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
             </ActionPanel.Section>
           ))}
           <ActionPanel.Section>
-            <TagCreateAction {...context} />
+            <TagCreateAction
+              {...context}
+              ref={context.commit.hash}
+            />
           </ActionPanel.Section>
 
           <SharedActionsSection {...context} />

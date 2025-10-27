@@ -10,13 +10,16 @@ import { useToggleDetail } from "./ToggleDetailAction";
 /**
  * Action for creating a tag on a commit.
  */
-export function TagCreateAction(context: RepositoryContext & { commit: Commit }) {
+export function TagCreateAction(context: RepositoryContext & {
+  ref: string
+  shortcut?: Keyboard.Shortcut
+}) {
   return (
     <Action.Push
       title="Create New Tag"
       target={<TagCreateForm {...context} />}
       icon={Icon.Plus}
-      shortcut={{ modifiers: ["cmd", "opt"], key: "t" }}
+      shortcut={context.shortcut}
     />
   );
 }
@@ -44,8 +47,8 @@ export function TagRemoveAction(context: RepositoryContext & { tagName: string }
 
       if (Object.keys(context.remotes.data).length === 1) {
         const confirmed = await confirmAlert({
-          title: "Remove tag",
-          message: `Are you sure you want to remove tag "${context.tagName}"?`,
+          title: "Delete remote tag",
+          message: `Also delete remote tag?`,
           primaryAction: {
             title: "Delete",
             style: Alert.ActionStyle.Destructive,
@@ -329,7 +332,7 @@ export function TagDetailsView(context: RepositoryContext & NavigationContext & 
   );
 }
 
-function TagCreateForm(context: RepositoryContext & { commit: Commit }) {
+function TagCreateForm(context: RepositoryContext & { ref: string }) {
   const { pop } = useNavigation();
   const [tagName, setTagName] = useState("");
   const [message, setMessage] = useState("");
@@ -339,7 +342,7 @@ function TagCreateForm(context: RepositoryContext & { commit: Commit }) {
     setIsLoading(true);
     try {
       // Create the tag
-      await context.gitManager.createTag(tagName.trim(), context.commit.hash, message.trim() || undefined);
+      await context.gitManager.createTag(tagName.trim(), context.ref, message.trim() || undefined);
 
       if (!remote) {
         remote = Object.keys(context.remotes.data)[0];
@@ -349,7 +352,7 @@ function TagCreateForm(context: RepositoryContext & { commit: Commit }) {
         // Show confirmation alert for pushing tags
         const shouldPushTags = await confirmAlert({
           title: "Push tags to remote?",
-          message: `Tag "${tagName.trim()}" was created successfully. Do you want to push tags to remote repository?`,
+          message: `Also push tag to remote?`,
           primaryAction: {
             title: "Push",
             style: Alert.ActionStyle.Destructive,
@@ -381,7 +384,7 @@ function TagCreateForm(context: RepositoryContext & { commit: Commit }) {
 
   return (
     <Form
-      navigationTitle={`Create Tag on ${context.commit.shortHash}`}
+      navigationTitle={`Create Tag`}
       isLoading={isLoading}
       actions={
         <ActionPanel>
@@ -412,12 +415,13 @@ function TagCreateForm(context: RepositoryContext & { commit: Commit }) {
         onChange={setMessage}
         info="Optional message for annotated tag"
       />
+      <Form.Description text={`From '${context.ref}'`} />
     </Form>
   );
 }
 
 function TagCreateAndPushAction(context: RepositoryContext & {
-  commit: Commit
+  ref: string
   handleSubmit: (remote: string) => void;
 }) {
   if (!context.remotes.data || Object.keys(context.remotes.data).length === 0) {
