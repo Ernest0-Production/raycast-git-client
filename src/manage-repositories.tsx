@@ -8,11 +8,11 @@ import { useRepositoriesView } from "./hooks/useRepositoriesView";
 import { useGitRemotes } from "./hooks/useGitRemotes";
 import { RemoteHostIcon } from "./components/icons/RemoteHostIcons";
 import { useGitRepository } from "./hooks/useGitRepository";
-import { RemoteOpenPullRequestAction } from "./components/actions/RemoteActions";
 import { GitManager } from "./utils/git-manager";
 import { useInterval } from "./hooks/useInterval";
 import { promises as fs } from "fs";
 import { basename } from "path";
+import { prettyPath } from "./utils/path-utils";
 
 export default function ManageRepositories() {
   const {
@@ -149,11 +149,12 @@ function RepositoryListItem({
       icon={icon}
       title={repo.name}
       subtitle={{
-        value: repo.path,
+        value: prettyPath(repo.path),
         tooltip: repo.path
       }}
       keywords={[
         repo.path,
+        prettyPath(repo.path),
         ...(repo.languageStats?.map((lang) => lang.name) || [])
       ].filter((keyword): keyword is string => Boolean(keyword))}
       accessories={accessories}
@@ -186,15 +187,6 @@ function RepositoryListItem({
           </ActionPanel.Section>
 
           <RepositoryDirectoryActions repositoryPath={repo.path} onOpen={onOpen} />
-
-          {remotes && Object.keys(remotes).map((remote) => (
-            <ActionPanel.Section
-              key={remote}
-              title={`${remote} • ${remotes[remote].displayName}`}
-            >
-              <RemoteOpenPullRequestAction key={remote} remote={remotes[remote]} />
-            </ActionPanel.Section>
-          ))}
 
           <RepositoriesOrderActionsSection />
 

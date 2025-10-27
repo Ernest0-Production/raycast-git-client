@@ -19,25 +19,10 @@ export function RepositoryDirectoryActions({ repositoryPath, onOpen }: Repositor
   const { data: applications } = usePromise(() => getApplications(repositoryPath));
   const [defaultApp, setDefaultApp] = useCachedState<Application | undefined>(`${repositoryPath}:repo-default-app`, undefined);
 
-  async function handleOpenWith(app: Application) {
-    const remember = await confirmAlert({
-      title: "Remember choise?",
-      message: `Do you want to remember "${app.name}" as the default app for this repository?`,
-      primaryAction: {
-        title: "Remember",
-        style: Alert.ActionStyle.Default,
-      },
-      dismissAction: {
-        title: "Ignore",
-      }
-    });
-
+  async function handleRememberDefaultApp(app: Application) {
     await open(repositoryPath, app);
     onOpen?.();
-
-    if (remember) {
-      setDefaultApp(app);
-    }
+    setDefaultApp(app);
   }
 
   function handleChangeDefault(app: Application) {
@@ -58,7 +43,7 @@ export function RepositoryDirectoryActions({ repositoryPath, onOpen }: Repositor
         />
       ) : (
         <ActionPanel.Submenu
-          title="Open Repository"
+          title="Open Repository in Default App"
           icon={Icon.AppWindow}
           shortcut={{ modifiers: ["cmd", "shift"], key: "o" }}
         >
@@ -67,7 +52,7 @@ export function RepositoryDirectoryActions({ repositoryPath, onOpen }: Repositor
               key={app.path}
               title={app.name}
               icon={{ fileIcon: app.path }}
-              onAction={() => handleOpenWith(app)}
+              onAction={() => { handleRememberDefaultApp(app) }}
             />
           ))}
         </ActionPanel.Submenu>

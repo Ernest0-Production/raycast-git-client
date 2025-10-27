@@ -1,7 +1,6 @@
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { GitView } from "../../types";
 import { Action, ActionPanel, Icon, List } from "@raycast/api";
-import { RemoteCreatePullRequestAction, RemoteOpenPullRequestAction } from "./RemoteActions";
 import { RepositoryDirectoryActions } from "./RepositoryDirectoryActions";
 
 
@@ -109,24 +108,6 @@ export function WorkspaceNavigationActions(context: NavigationContext & Reposito
             <RepositoryDirectoryActions
                 repositoryPath={context.gitManager.repoPath}
             />
-
-            {context.remotes.data && Object.keys(context.remotes.data).map((remote) => (
-                <ActionPanel.Section
-                    key={remote}
-                    title={`${remote} • ${context.remotes.data[remote].displayName}`}
-                >
-                    {/* Remote pull request actions */}
-                    <RemoteOpenPullRequestAction remote={context.remotes.data[remote]} />
-
-                    {/* Remote create pull request actions */}
-                    {context.branches.data.currentBranch && (
-                        <RemoteCreatePullRequestAction
-                            branch={context.branches.data.currentBranch?.name}
-                            remote={context.remotes.data[remote]}
-                        />
-                    )}
-                </ActionPanel.Section>
-            ))}
         </>
     );
 }

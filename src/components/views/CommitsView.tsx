@@ -9,7 +9,7 @@ import "../../utils/date-utils";
 import { Branch, Commit, IssueTrackerConfig } from "../../types";
 import { useMemo, useState } from "react";
 import { RemoteHostIcon } from "../icons/RemoteHostIcons";
-import { RemoteFetchAction, RemoteOpenCommitAction, RemotePullAction } from "../actions/RemoteActions";
+import { RemoteFetchAction, RemotePullAction, RemoteWebPageActions } from "../actions/RemoteActions";
 import { RepositoryContext, NavigationContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
 import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../actions/ToggleDetailAction";
@@ -27,7 +27,7 @@ export function CommitsView(context: RepositoryContext & NavigationContext) {
     <List
       isLoading={context.commits.isLoading}
       pagination={context.commits.pagination}
-      navigationTitle="Repository Commits"
+      navigationTitle={context.gitManager.repoName}
       searchBarPlaceholder="Search commits by message, sha, author, tags, files..."
       selectedItemId={selectedCommitId || undefined}
       isShowingDetail={toggleDetailController.isShowingDetail}
@@ -286,6 +286,7 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Attached Links">
+            {/* FIXME: Move to Commits Actions */}
             {commitUrls.map((urlInfo: { title: string; url: string }, index: number) => (
               <Action.OpenInBrowser
                 key={`${urlInfo.title}-${index}`}
@@ -296,7 +297,7 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
               />
             ))}
 
-            <RemoteOpenCommitAction
+            <RemoteWebPageActions
               {...context}
               commit={context.commit.hash}
             />

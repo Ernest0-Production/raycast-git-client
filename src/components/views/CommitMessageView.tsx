@@ -263,7 +263,7 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
         value={draftMessage}
         error={draftMessage.length > 0 ? undefined : "Required"}
         onChange={setDraftMessage}
-        info={!context.commit ? "Draft is automatically saved and will be cleared after successful commit" : undefined}
+        info={!context.commit ? "Draft is automatically saved until a successful commit" : undefined}
       />
       {!context.commit &&
         <Form.Checkbox

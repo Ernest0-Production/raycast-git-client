@@ -8,7 +8,7 @@ import { existsSync } from "fs";
 import { search, sortKind } from "fast-fuzzy";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
-import { RemoteShowFilePageAction } from "../actions/RemoteActions";
+import { RemoteWebPageActions } from "../actions/RemoteActions";
 
 const MAX_RESULTS = 60;
 
@@ -55,7 +55,7 @@ export default function FilesView(context: RepositoryContext & NavigationContext
     return (
         <List
             isLoading={isLoadingRepositoryContent || isSearching}
-            navigationTitle="Repository Files"
+            navigationTitle={context.gitManager.repoName}
             searchBarPlaceholder="Search files by name, path..."
             searchBarAccessory={WorkspaceNavigationDropdown(context)}
             onSearchTextChange={setSearchText}
@@ -148,13 +148,15 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
                             filePath={absolutePath}
                             onOpen={context.onOpen}
                         />
+
                         <FileManagerActions filePath={absolutePath} />
-                        {context.branches.data.currentBranch && (
-                            <RemoteShowFilePageAction
-                                {...context}
-                                ref={context.branches.data.currentBranch.name}
-                            />
-                        )}
+
+                        <RemoteWebPageActions
+                            {...context}
+                            file={context.branches.data.currentBranch?.upstream
+                                ? { path: context.filePath, ref: context.branches.data.currentBranch.upstream.split("/").slice(1).join("/") }
+                                : undefined}
+                        />
                     </ActionPanel.Section>
 
                     <SharedActionsSection {...context} />

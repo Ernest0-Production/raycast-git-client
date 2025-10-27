@@ -36,7 +36,7 @@ export default function RemotesView(context: RepositoryContext & NavigationConte
   return (
     <List
       isLoading={isChecking}
-      navigationTitle="Repository Remotes"
+      navigationTitle={context.gitManager.repoName}
       searchBarAccessory={WorkspaceNavigationDropdown(context)}
       actions={
         <ActionPanel>

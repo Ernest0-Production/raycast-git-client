@@ -1,9 +1,10 @@
 import { Action, ActionPanel, Alert, confirmAlert, Form, Icon, showToast, Toast, useNavigation } from "@raycast/api";
 import { RemotesHosts } from "../../hooks/useGitRemotes";
-import { RemoteHostIcon } from "../icons/RemoteHostIcons";
+import { RemoteHostIcon, RemoteHostProviderIcon } from "../icons/RemoteHostIcons";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { Remote } from "../../types";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { basename } from "path";
 
 
 /**
@@ -88,102 +89,6 @@ export function RemotePullAction(context: RepositoryContext & NavigationContext)
             <Action title="Rebase" icon={`arrow-rebase.svg`} onAction={handlePullRebase} />
             <Action title="Merge" icon={`git-merge.svg`} onAction={handlePullMerge} />
         </ActionPanel.Submenu>
-    );
-}
-
-/**
- * Opens Pull Requests / Merge Requests list for a given remote.
- * Returns undefined if provider is unknown or URL can't be constructed.
- */
-export function RemoteOpenPullRequestAction({ remote }: { remote: Remote }) {
-    const url = remote.pages.pullRequests;
-    if (!remote.provider || !url) return undefined;
-
-    const title = remote.provider === "GitLab" ? "Show Merge Requests" : "Show Pull Requests" + ` on ${remote.provider}`;
-
-    return (
-        <Action.OpenInBrowser
-            title={title}
-            url={url}
-            icon={RemoteHostIcon(remote)}
-        />
-    );
-}
-
-/**
- * Opens create PR/MR page from a branch for a given remote.
- * Returns undefined if provider is unknown or URL can't be constructed.
- */
-export function RemoteCreatePullRequestAction({
-    remote,
-    branch
-}: {
-    remote: Remote,
-    branch: string
-}) {
-    const url = remote.pages.createPullRequestForm(branch);
-    if (!remote.provider || !url) return undefined;
-
-    const title = remote.provider === "GitLab" ? "Create Merge Request" : "Create Pull Request" + ` on ${remote.provider}`;
-
-    return (
-        <Action.OpenInBrowser
-            title={title}
-            url={url}
-            icon={RemoteHostIcon(remote)}
-        />
-    );
-}
-
-/**
- * Opens a specific commit page for a given remote.
- * Returns undefined if provider is unknown or URL can't be constructed.
- */
-export function RemoteOpenCommitAction(context: RepositoryContext & { commit: string }) {
-    if (Object.keys(context.remotes.data).length === 0) {
-        return undefined;
-    }
-
-    const remotes = Object.values(context.remotes.data);
-    const availableRemotes = remotes.filter(remote => {
-        const url = remote.pages.commitPage(context.commit);
-        return url !== undefined;
-    });
-
-    if (availableRemotes.length === 0) {
-        return undefined;
-    }
-
-    if (availableRemotes.length === 1) {
-        const remote = availableRemotes[0];
-        const url = remote.pages.commitPage(context.commit);
-        if (!url) return undefined;
-
-        return (
-            <Action.OpenInBrowser
-                title={`Show Commit on ${remote.provider}`}
-                url={url}
-                icon={RemoteHostIcon(remote)}
-            />
-        );
-    }
-
-    return (
-        <>
-            {availableRemotes.map((remote) => {
-                const url = remote.pages.commitPage(context.commit);
-                if (!url) return null;
-
-                return (
-                    <Action.OpenInBrowser
-                        key={`${remote.name}:show-commit`}
-                        title={`Show Commit on ${remote.displayName}`}
-                        url={url}
-                        icon={RemoteHostIcon(remote)}
-                    />
-                );
-            })}
-        </>
     );
 }
 
@@ -341,86 +246,83 @@ export function RemoteCopyURLActions({ remote }: { remote: Remote }) {
     );
 }
 
-/**
- * Copies file URL from remote host to clipboard.
- * Returns undefined if no remotes available or provider doesn't support file URLs.
- */
-export function RemoteShowFilePageAction(context: RepositoryContext & {
-    filePath: string;
-    ref: string;
+export function RemoteWebPageActions(context: RepositoryContext & {
+    remoteName?: string;
+    branch?: string;
+    commit?: string;
+    file?: { path: string; ref: string };
 }) {
-    if (Object.keys(context.remotes.data).length === 0) {
-        return undefined;
-    }
+    const isSingleRemote = useMemo(() => Object.keys(context.remotes.data).length === 1, [context.remotes.data]);
 
-    const remotes = Object.values(context.remotes.data);
-    const availableRemotes = remotes.filter(remote => {
-        const url = remote.pages.filePage(context.filePath, context.ref);
-        return url !== undefined;
-    });
+    return <>
+        {Object.values(context.remotes.data)
+            .filter((remote) => context.remoteName ? remote.name === context.remoteName : true)
+            .map((remote) => (
+                <ActionPanel.Submenu
+                    key={`remote-web-page-actions-${remote.name}`}
+                    icon={RemoteHostProviderIcon(remote.provider)}
+                    title={`Open Web Page on ${isSingleRemote ? remote.provider : remote.displayName}`}
+                >
+                    {context.file && (() => {
+                        const url = remote.pages.filePage(context.file.path, context.file.ref);
+                        if (!url) return null;
 
-    if (availableRemotes.length === 0) {
-        return undefined;
-    }
+                        return (
+                            <Action.OpenInBrowser
+                                title={basename(context.file.path)}
+                                url={url}
+                                icon={Icon.Document}
+                            />
+                        );
+                    })()}
 
-    if (availableRemotes.length === 1) {
-        const remote = availableRemotes[0];
-        const url = remote.pages.filePage(context.filePath, context.ref);
-        if (!url) return undefined;
+                    {context.branch && (() => {
+                        const url = remote.pages.repositoryBranchUrl(context.branch);
+                        if (!url) return null;
 
-        return (
-            <Action.OpenInBrowser
-                title={`Show File on ${remote.provider}`}
-                url={url}
-                icon={RemoteHostIcon(remote)}
-            />
-        );
-    }
+                        return (
+                            <Action.OpenInBrowser
+                                title={`${context.branch}`}
+                                url={url}
+                                icon={`git-branch.svg`}
+                            />
+                        );
+                    })()}
 
-    return (
-        <ActionPanel.Submenu
-            title="Show File Page on"
-            icon={Icon.Clipboard}
-        >
-            {availableRemotes.map((remote) => {
-                const url = remote.pages.filePage(context.filePath, context.ref);
-                if (!url) return null;
+                    {context.branch && (() => {
+                        const url = remote.pages.createPullRequestForm(context.branch);
+                        if (!url) return null;
 
-                return (
-                    <Action.OpenInBrowser
-                        key={`${remote.name}:show-file-page`}
-                        title={remote.displayName}
-                        url={url}
-                        icon={RemoteHostIcon(remote)}
-                    />
-                );
-            })}
-        </ActionPanel.Submenu>
-    );
-}
+                        return (
+                            <Action.OpenInBrowser
+                                title={remote.provider === "GitLab" ? "Create Merge Request" : "Create Pull Request"}
+                                url={url}
+                                icon={Icon.PlusTopRightSquare}
+                            />
+                        );
+                    })()}
 
-/**
- * Opens repository page on a specific branch.
- * Returns undefined if provider is unknown or URL can't be constructed.
- */
-export function RemoteOpenBranchPage({
-    remote,
-    branch
-}: {
-    remote: Remote;
-    branch: string;
-}) {
-    const url = remote.pages.repositoryBranchUrl(branch);
-    if (!remote.provider || !url) return undefined;
+                    {context.commit && (() => {
+                        const url = remote.pages.commitPage(context.commit);
+                        if (!url) return null;
 
-    console.log(url)
+                        return (
+                            <Action.OpenInBrowser
+                                title={`Commit Page`}
+                                url={url}
+                                icon={`git-commit.svg`}
+                            />
+                        );
+                    })()}
 
-    return (
-        <Action.OpenInBrowser
-            title={`Show on ${remote.provider}`}
-            url={url}
-            icon={RemoteHostIcon(remote)}
-            shortcut={{ modifiers: ["cmd"], key: "o" }}
-        />
-    );
+                    {remote.pages.pullRequests && (
+                        <Action.OpenInBrowser
+                            title={remote.provider === "GitLab" ? "Merge Requests" : "Pull Requests"}
+                            url={remote.pages.pullRequests}
+                            icon={`git-merge.svg`}
+                        />
+                    )}
+                </ActionPanel.Submenu>
+            ))}
+    </>
 }

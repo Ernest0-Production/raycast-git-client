@@ -341,25 +341,31 @@ function TagCreateForm(context: RepositoryContext & { commit: Commit }) {
       // Create the tag
       await context.gitManager.createTag(tagName.trim(), context.commit.hash, message.trim() || undefined);
 
-      // Show confirmation alert for pushing tags
-      const shouldPushTags = await confirmAlert({
-        title: "Push tags to remote?",
-        message: `Tag "${tagName.trim()}" was created successfully. Do you want to push tags to remote repository?`,
-        primaryAction: {
-          title: "Push",
-          style: Alert.ActionStyle.Destructive,
-        },
-        dismissAction: {
-          title: "Don't Push",
-        },
-      });
+      if (!remote) {
+        remote = Object.keys(context.remotes.data)[0];
+      }
 
-      if (shouldPushTags && remote) {
-        await context.gitManager.pushTag(tagName.trim(), remote);
-        await showToast({
-          style: Toast.Style.Success,
-          title: `Tags pushed to ${remote}`,
+      if (remote) {
+        // Show confirmation alert for pushing tags
+        const shouldPushTags = await confirmAlert({
+          title: "Push tags to remote?",
+          message: `Tag "${tagName.trim()}" was created successfully. Do you want to push tags to remote repository?`,
+          primaryAction: {
+            title: "Push",
+            style: Alert.ActionStyle.Destructive,
+          },
+          dismissAction: {
+            title: "Don't Push",
+          },
         });
+
+        if (shouldPushTags) {
+          await context.gitManager.pushTag(tagName.trim(), remote);
+          await showToast({
+            style: Toast.Style.Success,
+            title: `Tags pushed to ${remote}`,
+          });
+        }
       }
 
       // Refresh the commits list

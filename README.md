@@ -107,7 +107,10 @@ Extension loads:
 
 ## 🧑‍🚀 Future Features
 
-- [ ] AI tools
+- [ ] AI Tools
 - [ ] Background fetching
-- [ ] Menu bar tool
+- [ ] Menu Bar Commands
 - [ ] Submodules support
+- [ ] Windows support
+- [ ] Manage Hooks
+- [ ] Manage Git Config

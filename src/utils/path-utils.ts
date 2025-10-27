@@ -15,3 +15,12 @@ export function resolveTildePath(path: string): string {
     }
     return path;
 }
+
+/**
+ * Replace full path with tilde path.
+ * @param path - The path to replace.
+ * @returns The replaced path.
+ */
+export function prettyPath(path: string): string {
+    return path.replace(homedir(), "~");
+}

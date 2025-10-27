@@ -12,7 +12,7 @@ import { WorkspaceNavigationActions } from "../actions/WorkspaceNavigationAction
 import { FileRestoreAction } from "../actions/StatusActions";
 import { FileHistoryAction } from "./FileHistoryView";
 import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../actions/ToggleDetailAction";
-import { RemoteShowFilePageAction } from "../actions/RemoteActions";
+import { RemoteWebPageActions } from "../actions/RemoteActions";
 
 export function CommitDetailsView(context: RepositoryContext & NavigationContext & {
   index: number,
@@ -196,10 +196,10 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
           <ActionPanel.Section title={basename(context.file.path)}>
             <ToggleDetailAction controller={context.toggleController} />
             <FileManagerActions filePath={absolutePath} />
-            <RemoteShowFilePageAction
-              filePath={context.file.path}
-              ref={context.commit.hash}
+            <RemoteWebPageActions
               {...context}
+              commit={context.commit.hash}
+              file={{ path: context.file.path, ref: context.commit.hash }}
             />
             <FileHistoryAction
               filePath={absolutePath}

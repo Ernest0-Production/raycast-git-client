@@ -9,7 +9,7 @@ import { CommitFileIcon } from "../icons/StatusIcons";
 import { basename, join } from "path";
 import { CommitCopyInfoActions } from "../actions/CommitActions";
 import { existsSync } from "fs";
-import { RemoteOpenCommitAction } from "../actions/RemoteActions";
+import { RemoteWebPageActions } from "../actions/RemoteActions";
 import { RepositoryContext } from "../../open-repository";
 import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../actions/ToggleDetailAction";
 
@@ -182,12 +182,15 @@ function CommitListItem(context: RepositoryContext & {
                         <FileRestoreAction filePath={absolutePath} before={true} {...context} />
                     </ActionPanel.Section>
 
-                    <ActionPanel.Section title="Commit">
+                    <ActionPanel.Section>
                         <CommitCopyInfoActions commit={context.commit} />
+                    </ActionPanel.Section>
 
-                        <RemoteOpenCommitAction
+                    <ActionPanel.Section>
+                        <RemoteWebPageActions
                             {...context}
                             commit={context.commit.hash}
+                            file={{ path: context.file.path, ref: context.commit.hash }}
                         />
                     </ActionPanel.Section>
 

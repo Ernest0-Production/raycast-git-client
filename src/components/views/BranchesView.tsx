@@ -17,13 +17,13 @@ import { useMemo } from "react";
 import { RemoteHostIcon, RemoteHostProviderIcon } from "../icons/RemoteHostIcons";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
-import { RemoteFetchAction, RemoteOpenBranchPage, RemotePullAction } from "../actions/RemoteActions";
+import { RemoteFetchAction, RemotePullAction, RemoteWebPageActions } from "../actions/RemoteActions";
 
 export function BranchesView(context: RepositoryContext & NavigationContext) {
   return (
     <List
       isLoading={context.branches.isLoading}
-      navigationTitle="Repository Branches"
+      navigationTitle={context.gitManager.repoName}
       searchBarPlaceholder="Search branches by name..."
       searchBarAccessory={WorkspaceNavigationDropdown(context)}
     >
@@ -98,7 +98,11 @@ export function BranchesView(context: RepositoryContext & NavigationContext) {
 
           {/* Remote Branches Sections */}
           {Object.entries(context.branches.data.remoteBranches).map(([remoteName, remoteBranches]) => (
-            <List.Section key={remoteName} title={`${remoteName} • ${context.remotes.data[remoteName]?.displayName}`}>
+            <List.Section
+              key={remoteName}
+              title={remoteName}
+              subtitle={context.remotes.data[remoteName]?.displayName}
+            >
               {remoteBranches.map((branch) => (
                 <BranchListItem
                   key={branch.displayName}
@@ -109,8 +113,9 @@ export function BranchesView(context: RepositoryContext & NavigationContext) {
             </List.Section>
           ))}
         </>
-      )}
-    </List>
+      )
+      }
+    </List >
   );
 }
 
@@ -214,9 +219,10 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
                 <BranchCkeckoutAction {...context} />
                 <BranchShowCommitsAction {...context} />
                 {context.branch.upstream && !context.branch.isGone && (
-                  <RemoteOpenBranchPage
-                    remote={context.remotes.data[context.branch.upstream!.split("/")[0]]}
-                    branch={context.branch.upstream!.split("/").slice(1).join("/")}
+                  <RemoteWebPageActions
+                    {...context}
+                    remoteName={context.branch.upstream.split("/")[0]}
+                    branch={context.branch.upstream.split("/").slice(1).join("/")}
                   />
                 )}
                 <BranchPushAction {...context} />
@@ -239,8 +245,9 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
                 <BranchCkeckoutAction {...context} />
                 <BranchShowCommitsAction {...context} />
                 {context.branch.remote && (
-                  <RemoteOpenBranchPage
-                    remote={context.remotes.data[context.branch.remote]}
+                  <RemoteWebPageActions
+                    {...context}
+                    remoteName={context.branch.remote}
                     branch={context.branch.name}
                   />
                 )}
@@ -259,6 +266,7 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
             <RemoteFetchAction {...context} />
             <RefreshBranchesAction {...context} />
           </ActionPanel.Section>
+
           <WorkspaceNavigationActions {...context} />
         </ActionPanel>
       }

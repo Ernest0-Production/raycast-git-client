@@ -14,7 +14,7 @@ import { FileHistoryAction } from "./FileHistoryView";
 import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../actions/ToggleDetailAction";
 import { basename } from "path";
 import { BranchPushAction, BranchPushForceAction } from "../actions/BranchActions";
-import { RemoteShowFilePageAction, RemoteFetchAction, RemotePullAction } from "../actions/RemoteActions";
+import { RemoteFetchAction, RemotePullAction, RemoteWebPageActions } from "../actions/RemoteActions";
 
 export function StatusView(context: RepositoryContext & NavigationContext) {
   const toggleController = useToggleDetail("Status Diff", "Changes", true);
@@ -43,7 +43,7 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
   return (
     <List
       isLoading={context.status.isLoading}
-      navigationTitle={navigationTitle}
+      navigationTitle={context.gitManager.repoName}
       searchBarPlaceholder="Search files by name, path..."
       onSelectionChange={(id) => setSelectedFilePath(id)}
       filtering={{ keepSectionOrder: true }}
@@ -244,13 +244,6 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
                 <FileStageAction {...context} />
                 <ToggleDetailAction controller={context.toggleController} />
                 <FileManagerActions filePath={context.file.absolutePath} />
-                {context.branches.data.currentBranch && (
-                  <RemoteShowFilePageAction
-                    filePath={context.file.relativePath}
-                    ref={context.branches.data.currentBranch.name}
-                    {...context}
-                  />
-                )}
                 {!context.file.isConflicted && (
                   <FileDiscardAction {...context} />
                 )}
@@ -295,6 +288,14 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
             )}
             <RemoteFetchAction {...context} />
           </ActionPanel.Section>
+
+          <RemoteWebPageActions
+            {...context}
+            branch={context.branches.data.currentBranch?.upstream?.split("/").slice(1).join("/")}
+            file={context.branches.data.currentBranch?.upstream
+              ? { path: context.file.relativePath, ref: context.branches.data.currentBranch.upstream.split("/").slice(1).join("/") }
+              : undefined}
+          />
 
           <ActionPanel.Section title="Workspace">
             <RefreshStatusAction {...context} />

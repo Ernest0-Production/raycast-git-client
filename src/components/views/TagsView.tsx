@@ -12,7 +12,7 @@ export default function TagsView(context: RepositoryContext & NavigationContext)
   return (
     <List
       isLoading={context.tags.isLoading}
-      navigationTitle="Repository Tags"
+      navigationTitle={context.gitManager.repoName}
       searchBarPlaceholder="Search tags by name..."
       selectedItemId={selectedTagId || undefined}
       searchBarAccessory={WorkspaceNavigationDropdown(context)}

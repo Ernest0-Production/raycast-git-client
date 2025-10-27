@@ -968,6 +968,8 @@ __REBASE_TODO__
 
         if (confirmed) {
           await this.commit(message, amend, true);
+        } else {
+          throw error;
         }
 
       } else {
@@ -1281,14 +1283,14 @@ __REBASE_TODO__
    * Continues an ongoing cherry-pick.
    */
   async continueCherryPick(): Promise<void> {
-    await this.git.rebase(["--continue"]);
+    await this.git.raw(["cherry-pick", "--continue"]);
   }
 
   /**
    * Aborts an ongoing cherry-pick.
    */
   async abortCherryPick(): Promise<void> {
-    await this.git.rebase(["--abort"]);
+    await this.git.raw(["cherry-pick", "--abort"]);
   }
 
   /**

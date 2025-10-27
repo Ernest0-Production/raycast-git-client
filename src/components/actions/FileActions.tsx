@@ -21,11 +21,6 @@ export function FileManagerActions({ filePath, onOpen }: { filePath: string, onO
         shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
         onOpen={onOpen}
       />
-      <Action.ShowInFinder
-        path={filePath}
-        shortcut={{ modifiers: ["cmd", "opt", "ctrl"], key: "o" }}
-        onShow={onOpen}
-      />
       <Action.ToggleQuickLook
         shortcut={{ modifiers: ["cmd"], key: "y" }}
       />

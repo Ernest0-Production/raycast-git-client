@@ -1,5 +1,5 @@
 import { ActionPanel, Action, Icon, List, Form, useNavigation, confirmAlert, Alert, AI, Color } from "@raycast/api";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useAiPromptPresets, AiPromptPreset } from "./hooks/useAiPromptPresets";
 
 export default function ManageAiMessagePrompts() {

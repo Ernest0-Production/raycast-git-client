@@ -9,7 +9,7 @@ export function StashesView(context: RepositoryContext & NavigationContext) {
   return (
     <List
       isLoading={context.stashes.isLoading}
-      navigationTitle="Repository Stashes"
+      navigationTitle={context.gitManager.repoName}
       searchBarPlaceholder="Search stashes by message, author..."
       searchBarAccessory={WorkspaceNavigationDropdown(context)}
       actions={

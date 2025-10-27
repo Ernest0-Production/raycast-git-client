@@ -109,23 +109,18 @@ export default function InteractiveRebaseEditorView(context: RepositoryContext &
                             case "edit": return { value: { source: Icon.Pencil, tintColor: Color.Yellow }, tooltip: "Edit: Stop for amending" };
                             case "drop": return { value: { source: Icon.Trash, tintColor: Color.Red }, tooltip: "Drop: Remove commit" };
                             case "squash": return { value: { source: Icon.ArrowDown, tintColor: Color.Blue }, tooltip: "Squash: Meld commit into previous one and keep message" };
-                            case "fixup": return { value: { source: Icon.Download, tintColor: Color.Blue }, tooltip: "Fixup: Meld commit into previous one and discard message" };
+                            case "fixup": return { value: { source: Icon.Download, tintColor: Color.SecondaryText }, tooltip: "Fixup: Meld commit into previous one and discard message" };
                         }
                     })()}
                     actions={
                         <ActionPanel>
                             <Action
-                                title="Rebase"
-                                icon={Icon.Checkmark}
-                                onAction={performRebase}
+                                title="Pick"
+                                icon={{ source: Icon.Dot, tintColor: Color.Green }}
+                                onAction={() => setAction(commit.hash, "pick")}
                             />
-                            <ActionPanel.Section title="Rebase Action">
-                                <Action
-                                    title="Pick"
-                                    icon={{ source: Icon.Dot, tintColor: Color.Green }}
-                                    onAction={() => setAction(commit.hash, "pick")}
-                                    shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
-                                />
+                            {/* Separate Section for prevent triggering on cmd + enter */}
+                            <ActionPanel.Section>
                                 <Action.Push
                                     title="Reword"
                                     icon={{ source: Icon.Message, tintColor: Color.Yellow }}
@@ -158,7 +153,7 @@ export default function InteractiveRebaseEditorView(context: RepositoryContext &
                                 />
                                 <Action
                                     title="Fixup"
-                                    icon={{ source: Icon.Download, tintColor: Color.Blue }}
+                                    icon={{ source: Icon.Download, tintColor: Color.SecondaryText }}
                                     onAction={() => setAction(commit.hash, "fixup")}
                                     shortcut={{ modifiers: ["cmd"], key: "f" }}
                                 />
@@ -178,6 +173,13 @@ export default function InteractiveRebaseEditorView(context: RepositoryContext &
                                     shortcut={{ modifiers: ["cmd", "opt"], key: "arrowDown" }}
                                 />
                             </ActionPanel.Section>
+
+                            <Action
+                                title="Apply Rebase"
+                                icon={{ source: Icon.Checkmark, tintColor: Color.Green }}
+                                onAction={performRebase}
+                                shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
+                            />
                         </ActionPanel>
                     }
                 />

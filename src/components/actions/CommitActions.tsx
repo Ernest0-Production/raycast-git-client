@@ -12,11 +12,12 @@ import { CommitMessageForm } from "../views/CommitMessageView";
  */
 export function CommitCheckoutAction(context: RepositoryContext & NavigationContext & { commit: Commit }) {
   const handleCheckoutCommit = async () => {
-    const targetName = context.commit.localBranches.length > 0 ? context.commit.localBranches[0] : context.commit.shortHash;
+    const isBranch = context.commit.localBranches.length > 0
+    const targetName = isBranch ? context.commit.localBranches[0] : context.commit.shortHash;
 
     const confirmed = await confirmAlert({
       title: "Checkout commit",
-      message: `Are you sure you want to checkout commit '${targetName}'? This will put you in a detached HEAD state.`,
+      message: `Are you sure you want to checkout commit? This will put you in a ${isBranch ? `'${targetName}' branch` : "detached HEAD"} state.`,
       primaryAction: {
         title: "Checkout",
         style: Alert.ActionStyle.Default,
@@ -26,6 +27,7 @@ export function CommitCheckoutAction(context: RepositoryContext & NavigationCont
     if (confirmed) {
       try {
         await context.gitManager.checkoutCommit(targetName);
+        await context.commits.setFilter({ kind: 'current', upstream: false });
       } catch (error) {
         // Git error is already shown by GitManager
       } finally {
@@ -108,9 +110,11 @@ export function CommitRevertAction(context: RepositoryContext & NavigationContex
     if (confirmed) {
       try {
         await context.gitManager.revert(context.commit.hash);
+        context.branches.revalidate();
         context.commits.revalidate();
         context.status.revalidate();
       } catch (error) {
+        context.branches.revalidate();
         context.commits.revalidate();
         context.status.revalidate();
         context.navigateTo("status");
@@ -164,16 +168,22 @@ export function CommitResetAction(context: RepositoryContext & NavigationContext
     <ActionPanel.Submenu title="Reset to Here" icon={Icon.ArrowClockwise}>
       <Action
         title="Soft Reset (Keep Changes Staged)"
+        icon={{ source: Icon.Dot, tintColor: Color.Green }}
         onAction={() => handleReset(ResetMode.SOFT)}
+        shortcut={{ modifiers: ["cmd"], key: "s" }}
       />
       <Action
         title="Mixed Reset (Keep Changes Unstaged)"
+        icon={{ source: Icon.Dot, tintColor: Color.Yellow }}
         onAction={() => handleReset(ResetMode.MIXED)}
+        shortcut={{ modifiers: ["cmd"], key: "m" }}
       />
       <Action
         title="Hard Reset (Discard All Changes)"
+        icon={{ source: Icon.Dot, tintColor: Color.Red }}
         onAction={() => handleReset(ResetMode.HARD)}
         style={Action.Style.Destructive}
+        shortcut={{ modifiers: ["cmd"], key: "h" }}
       />
     </ActionPanel.Submenu>
   );
