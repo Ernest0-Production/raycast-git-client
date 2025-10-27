@@ -109,7 +109,7 @@ export class GitManager {
   async getBranches(): Promise<BranchesState> {
     const summary = await this.git.branch(["--all", "-vv", "--sort=-committerdate"]);
 
-    const parseBranchInfo = (label: string): { ahead: number; behind: number; upstream?: string; isGone?: boolean } => {
+    const parseBranchInfo = (label: string): { ahead: number; behind: number; upstream?: { name: string; fullName: string; remote: string }; isGone?: boolean } => {
       // Single regex to parse all possible branch info patterns with named groups
       // Handles: no upstream, [upstream], [upstream: ahead X], [upstream: behind Y], [upstream: ahead X, behind Y], [upstream: gone]
       const match = label.match(/(?:\[(?<upstream>.*?)(?:: (?:ahead (?<ahead>\d+))?(?:, )?(?:behind (?<behind>\d+))?(?<gone>gone)?)?\])?/);
@@ -121,7 +121,11 @@ export class GitManager {
       return {
         ahead: match.groups.ahead ? parseInt(match.groups.ahead, 10) : 0,
         behind: match.groups.behind ? parseInt(match.groups.behind, 10) : 0,
-        upstream: match.groups.upstream,
+        upstream: match.groups.upstream ? {
+          name: match.groups.upstream.split("/").slice(1).join("/"),
+          fullName: match.groups.upstream,
+          remote: match.groups.upstream.split("/")[0],
+        } : undefined,
         isGone: !!match.groups.gone,
       };
     };
@@ -220,7 +224,7 @@ export class GitManager {
           displayName: `${remote}/${branchName}`,
           type: "remote",
           remote,
-          upstream: branch.name, // The full remote name is the upstream ref
+          upstream: undefined,
           lastCommitMessage: this.extractCommitMessage(branch.label),
           lastCommitHash: branch.commit,
         });
@@ -862,11 +866,6 @@ __REBASE_TODO__
     await this.git.push(remote, branchName, ["--delete"]);
   }
 
-  async deleteUpstreamBranch(upstream: string): Promise<void> {
-    const [remote, ...branchParts] = upstream.split("/");
-    await this.deleteRemoteBranch(remote, branchParts.join("/"));
-  }
-
   /**
    * Adds a file to the staging area.
    */
@@ -1446,22 +1445,19 @@ __REBASE_TODO__
   /**
    * Renames a local branch. If oldName is not provided, renames the current branch.
    */
-  async renameBranch(newName: string, oldName: string, upstream?: string): Promise<void> {
+  async renameBranch(newName: string, oldName: string, upstream?: { name: string; remote: string }): Promise<void> {
     await this.git.raw(["branch", "-m", oldName, newName]);
 
     if (upstream) {
-      let [remote, ...branchParts] = upstream.split("/");
-      let oldRemoteBranchName = branchParts.join("/");
-
       await this.git.push(
-        remote,
+        upstream.remote,
         undefined,
-        [`${newName}`, `:${oldRemoteBranchName}`]
+        [`${newName}`, `:${upstream.name}`]
       );
 
       await this.git.branch([
         '--set-upstream-to',
-        `${remote}/${newName}`,
+        `${upstream.remote}/${newName}`,
         newName
       ]);
     }

@@ -166,11 +166,11 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
     if ((context.branch.type === "local" || context.branch.type === "current") && context.branch.upstream) {
       result.push({
         tag: {
-          value: context.branch.upstream,
+          value: context.branch.upstream.fullName,
           color: context.branch.isGone ? Color.Yellow : Color.SecondaryText,
         },
         tooltip: context.branch.isGone ? "Upstream was removed from remote" : "Tracked upstream",
-        icon: context.branch.isGone ? Icon.ExclamationMark : RemoteHostIcon(context.remotes.data[context.branch.upstream!.split("/")[0]])
+        icon: context.branch.isGone ? Icon.ExclamationMark : RemoteHostIcon(context.remotes.data[context.branch.upstream!.remote])
       });
     }
 
@@ -194,7 +194,10 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
       title={context.branch.displayName}
       icon={icon}
       accessories={accessories}
-      keywords={[context.branch.upstream, context.branch.remote].filter((keyword): keyword is string => Boolean(keyword))}
+      keywords={[
+        context.branch.upstream?.fullName,
+        context.branch.remote
+      ].filter((keyword): keyword is string => Boolean(keyword))}
       actions={
         <ActionPanel>
           <ActionPanel.Section title={context.branch.displayName}>
@@ -221,8 +224,8 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
                 {context.branch.upstream && !context.branch.isGone && (
                   <RemoteWebPageActions
                     {...context}
-                    remoteName={context.branch.upstream.split("/")[0]}
-                    branch={context.branch.upstream.split("/").slice(1).join("/")}
+                    remoteName={context.branch.upstream.remote}
+                    branch={context.branch.upstream.name}
                   />
                 )}
                 <BranchPushAction {...context} />

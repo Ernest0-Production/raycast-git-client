@@ -291,9 +291,9 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
 
           <RemoteWebPageActions
             {...context}
-            branch={context.branches.data.currentBranch?.upstream?.split("/").slice(1).join("/")}
+            branch={context.branches.data.currentBranch?.upstream?.name}
             file={context.branches.data.currentBranch?.upstream
-              ? { path: context.file.relativePath, ref: context.branches.data.currentBranch.upstream.split("/").slice(1).join("/") }
+              ? { path: context.file.relativePath, ref: context.branches.data.currentBranch.upstream.name }
               : undefined}
           />
 

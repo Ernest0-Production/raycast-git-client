@@ -154,7 +154,7 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
                         <RemoteWebPageActions
                             {...context}
                             file={context.branches.data.currentBranch?.upstream
-                                ? { path: context.filePath, ref: context.branches.data.currentBranch.upstream.split("/").slice(1).join("/") }
+                                ? { path: context.filePath, ref: context.branches.data.currentBranch.upstream.name }
                                 : undefined}
                         />
                     </ActionPanel.Section>

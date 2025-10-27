@@ -8,7 +8,7 @@ import { useIssueTracker, replaceUrlPatternsWithLinks } from "../../hooks/useIss
 import "../../utils/date-utils";
 import { Branch, Commit, IssueTrackerConfig } from "../../types";
 import { useMemo, useState } from "react";
-import { RemoteHostIcon } from "../icons/RemoteHostIcons";
+import { RemoteHostIcon, RemoteHostProviderIcon } from "../icons/RemoteHostIcons";
 import { RemoteFetchAction, RemotePullAction, RemoteWebPageActions } from "../actions/RemoteActions";
 import { RepositoryContext, NavigationContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
@@ -449,8 +449,11 @@ function CommitBranchFilterAction(context: RepositoryContext) {
       {context.branches.data.currentBranch?.upstream && (
         <ActionPanel.Section title={"Upstream Branch"}>
           <Action
-            title={context.branches.data.currentBranch.upstream}
-            icon={{ source: context.commits.filter.kind === 'current' && context.commits.filter.upstream ? Icon.Checkmark : Icon.Globe }}
+            title={context.branches.data.currentBranch.upstream.fullName}
+            icon={context.commits.filter.kind === 'current' && context.commits.filter.upstream ?
+              { source: Icon.Checkmark }
+              : RemoteHostProviderIcon(context.remotes.data[context.branches.data.currentBranch.upstream.remote].provider)
+            }
             autoFocus={context.commits.filter.kind === 'current' && context.commits.filter.upstream}
             onAction={() => context.commits.setFilter({ kind: 'current', upstream: true })}
           />
@@ -495,7 +498,7 @@ function BranchFilterAction(context: RepositoryContext & { branch: Branch }) {
     let baseIcon: Image.ImageLike = Icon.Dot;
     switch (context.branch.type) {
       case "remote":
-        baseIcon = RemoteHostIcon(context.remotes.data[context.branch.remote!]);
+        baseIcon = RemoteHostProviderIcon(context.remotes.data[context.branch.remote!].provider);
         break;
       case "local":
         baseIcon = Icon.Dot;

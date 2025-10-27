@@ -65,7 +65,14 @@ export interface Branch {
   /** The type of the branch: current, local, or remote. */
   type: "current" | "local" | "remote";
   /** The upstream branch, if any. */
-  upstream?: string;
+  upstream?: {
+    /** The name of the upstream branch. */
+    name: string;
+    /** The display name of the upstream branch. */
+    fullName: string;
+    /** The remote of the upstream branch. */
+    remote: string;
+  };
   /** The number of commits ahead of upstream. */
   ahead?: number;
   /** The number of commits behind upstream. */

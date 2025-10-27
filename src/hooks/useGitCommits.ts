@@ -31,8 +31,8 @@ export function useGitCommits(
           return branchesState.detachedHead;
         } else {
           if (branchFilter.upstream && branchesState.currentBranch?.upstream) {
-            const remoteName = branchesState.currentBranch.upstream.split("/")[0];
-            return branchesState.remoteBranches[remoteName]?.find((branch) => branch.displayName === branchesState.currentBranch?.upstream);
+            const remoteName = branchesState.currentBranch.upstream.remote;
+            return branchesState.remoteBranches[remoteName]?.find((branch) => branch.displayName === branchesState.currentBranch?.upstream?.fullName);
           } else {
             return branchesState.currentBranch;
           }

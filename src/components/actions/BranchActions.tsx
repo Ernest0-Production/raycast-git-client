@@ -25,7 +25,7 @@ export function BranchCkeckoutAction(context: RepositoryContext & NavigationCont
     if (confirmed) {
       try {
         if (isRemote) {
-          await context.gitManager.checkoutRemoteBranch(context.branch.name, context.branch.upstream!);
+          await context.gitManager.checkoutRemoteBranch(context.branch.name, context.branch.upstream!.fullName);
         } else {
           await context.gitManager.checkoutLocalBranch(context.branch.name);
         }
@@ -91,7 +91,7 @@ export function BranchDeleteAction(context: RepositoryContext & { branch: Branch
           if (context.branch.upstream && !context.branch.isGone) {
             const confirmed = await confirmAlert({
               title: "Delete remote branch",
-              message: `Also delete remote branch "${context.branch.upstream}"?`,
+              message: `Also delete remote branch "${context.branch.upstream.fullName}"?`,
               primaryAction: {
                 title: "Delete",
                 style: Alert.ActionStyle.Destructive,
@@ -110,7 +110,10 @@ export function BranchDeleteAction(context: RepositoryContext & { branch: Branch
                 },
               });
               if (summaryConfirm) {
-                await context.gitManager.deleteUpstreamBranch(context.branch.upstream);
+                await context.gitManager.deleteRemoteBranch(
+                  context.branch.upstream!.remote,
+                  context.branch.upstream!.name
+                );
               }
             }
           }
@@ -477,7 +480,7 @@ function BranchRenameForm(context: RepositoryContext & { branch: Branch }) {
       {context.branch.upstream && (
         <Form.Checkbox
           id="renameRemote"
-          label={`Rename remote branch '${context.branch.upstream}'`}
+          label={`Rename remote branch '${context.branch.upstream.fullName}'`}
           value={renameRemote}
           onChange={setRenameRemote}
           info="This will delete the old remote branch and push the new one"
