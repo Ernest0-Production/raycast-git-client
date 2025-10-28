@@ -29,13 +29,16 @@ export function useGitCommits(
       case 'current':
         if (branchesState.detachedHead) {
           return branchesState.detachedHead;
-        } else {
-          if (branchFilter.upstream && branchesState.currentBranch?.upstream) {
-            const remoteName = branchesState.currentBranch.upstream.remote;
-            return branchesState.remoteBranches[remoteName]?.find((branch) => branch.displayName === branchesState.currentBranch?.upstream?.fullName);
+        } else if (branchesState.currentBranch) {
+          if (branchFilter.upstream) {
+            if (!branchesState.currentBranch.upstream) return undefined;
+            const upstreamName = branchesState.currentBranch.upstream!.fullName;
+            return branchesState.remoteBranches[branchesState.currentBranch.upstream.remote]?.find((branch) => branch.displayName === upstreamName);
           } else {
             return branchesState.currentBranch;
           }
+        } else {
+          return undefined;
         }
 
       case 'branch':
@@ -63,7 +66,12 @@ export function useGitCommits(
         hasMore: commits.length > 0
       };
     },
-    [gitManager.repoPath, branchFilter, branchesState?.currentBranch, branchesState?.detachedHead], // Include both repository path and branch for proper cache isolation
+    [
+      gitManager.repoPath,
+      branchFilter,
+      branchesState?.currentBranch,
+      branchesState?.detachedHead
+    ], // Include both repository path and branch for proper cache isolation
     {
       execute: branchesState !== undefined,
       initialData: []
@@ -87,7 +95,11 @@ function evaluateBranchName(branchFilter: BranchFilter, branchesState: BranchesS
       if (branchesState.detachedHead) {
         return branchesState.detachedHead.commitHash;
       } else if (branchesState.currentBranch) {
-        return branchesState.currentBranch.name;
+        if (branchFilter.upstream) {
+          return branchesState.currentBranch.upstream!.fullName;
+        } else {
+          return branchesState.currentBranch.name;
+        }
       } else {
         console.warn("No current branch found");
         return undefined;

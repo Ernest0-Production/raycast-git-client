@@ -69,7 +69,7 @@ export function TagRemoveAction(context: RepositoryContext & { tagName: string }
     }
   };
 
-  if (!context.remotes.data || Object.keys(context.remotes.data).length <= 1) {
+  if (Object.keys(context.remotes.data).length <= 1) {
     return (
       <Action
         title={`Remove Tag`}
@@ -172,7 +172,7 @@ export function TagPushAction(context: RepositoryContext & { tagName: string }) 
     }
   };
 
-  if (!context.remotes.data || Object.keys(context.remotes.data).length === 0) {
+  if (Object.keys(context.remotes.data).length === 0) {
     return null;
   }
 
@@ -424,7 +424,7 @@ function TagCreateAndPushAction(context: RepositoryContext & {
   ref: string
   handleSubmit: (remote: string) => void;
 }) {
-  if (!context.remotes.data || Object.keys(context.remotes.data).length === 0) {
+  if (Object.keys(context.remotes.data).length === 0) {
     return undefined;
   }
 

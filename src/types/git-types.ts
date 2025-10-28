@@ -166,7 +166,14 @@ export interface Commit {
   /** Local branches that contain this commit. */
   localBranches: string[];
   /** Remote branches that contain this commit. */
-  remoteBranches: string[];
+  remoteBranches: {
+    /** The name of the remote branch. */
+    name: string;
+    /** The remote of the remote branch. */
+    remote: string;
+    /** The display name of the remote branch. */
+    fullName: string;
+  }[];
   /** Tags pointing to this commit. */
   tags: string[];
   /** Name of the current branch if commit is on it. */

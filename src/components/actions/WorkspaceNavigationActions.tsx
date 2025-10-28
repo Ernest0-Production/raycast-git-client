@@ -50,7 +50,7 @@ export function WorkspaceNavigationDropdown(context: NavigationContext) {
                 title="Files"
                 value="files"
                 keywords={["history", "ls-files", "workspace", "project"]}
-                icon={Icon.Clock}
+                icon={Icon.Folder}
             />
         </List.Dropdown>
     );

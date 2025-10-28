@@ -11,6 +11,7 @@ import {
   BranchInteractiveRebaseAction,
   BranchPushForceAction,
   BranchShowCommitsAction,
+  BranchCopyUpstreamNameAction,
 } from "../actions/BranchActions";
 import { Branch, DetachedHead } from "../../types";
 import { useMemo } from "react";
@@ -213,6 +214,11 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
                   branch={context.branch.displayName}
                   shortcut={{ modifiers: ["cmd"], key: "c" }}
                 />
+                {context.branch.upstream && (
+                  <BranchCopyUpstreamNameAction
+                    branch={context.branch.upstream.fullName}
+                  />
+                )}
               </>
             )}
 
@@ -237,6 +243,11 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
                   branch={context.branch.displayName}
                   shortcut={{ modifiers: ["cmd"], key: "c" }}
                 />
+                {context.branch.upstream && (
+                  <BranchCopyUpstreamNameAction
+                    branch={context.branch.upstream.fullName}
+                  />
+                )}
                 <BranchDeleteAction {...context} />
                 <BranchInteractiveRebaseAction {...context} />
               </>
@@ -281,8 +292,8 @@ function DetachedHeadListItem(context: RepositoryContext & NavigationContext & {
   const hasConflicts = context.status.data?.files?.some((file) => file.isConflicted);
   const hasUncommittedChanges = context.status.data?.files?.length !== 0;
 
-  const accessories = useMemo(() => {
-    const result = [];
+  const accessories: List.Item.Accessory[] = useMemo(() => {
+    const result: List.Item.Accessory[] = [];
 
     if (hasConflicts) {
       result.push({

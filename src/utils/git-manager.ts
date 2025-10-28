@@ -493,13 +493,13 @@ export class GitManager {
    */
   private parseCommitRefs(refsString: string | undefined): {
     localBranches: string[];
-    remoteBranches: string[];
+    remoteBranches: { name: string; remote: string; fullName: string }[];
     tags: string[];
     currentBranchName?: string;
   } {
     const result = {
       localBranches: [] as string[],
-      remoteBranches: [] as string[],
+      remoteBranches: [] as { name: string; remote: string; fullName: string }[],
       tags: [] as string[],
       currentBranchName: undefined as string | undefined,
     };
@@ -528,7 +528,11 @@ export class GitManager {
         if (ref.startsWith("refs/remotes/")) {
           // Extract subpath from ref without "refs/remotes/"
           const remoteBranch = ref.replace(/^refs\/remotes\//, "");
-          result.remoteBranches.push(remoteBranch);
+          result.remoteBranches.push({
+            name: remoteBranch.split("/").slice(1).join("/"),
+            remote: remoteBranch.split("/")[0],
+            fullName: remoteBranch
+          });
         } else if (ref.startsWith("refs/heads/")) {
           const localBranch = ref.replace(/^refs\/heads\//, "");
           result.localBranches.push(localBranch);

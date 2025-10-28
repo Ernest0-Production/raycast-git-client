@@ -93,7 +93,7 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
   findUrls: (message: string) => { title: string; url: string }[];
   onMoveToCommit: (commitHash: string) => void;
 }) {
-  const icon = useMemo(() => {
+  const icon: Image.ImageLike | undefined = useMemo(() => {
     if (context.commits.selectedBranch && 'type' in context.commits.selectedBranch && context.commits.selectedBranch.ahead) {
       if (context.commits.selectedBranch.ahead > context.index) {
         return { source: Icon.Dot, tintColor: Color.Orange, tooltip: "Unpushed" };
@@ -107,12 +107,12 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
   }, [context.commit.hash, context.commit.message]);
 
   // Prepare accessories based on filter and detail view state
-  const accessories = useMemo(() => {
+  const accessories: List.Item.Accessory[] = useMemo(() => {
     if (context.toggleDetailController.isShowingDetail) {
-      return undefined;
+      return [];
     }
 
-    const accessoryItems = [];
+    const accessoryItems: List.Item.Accessory[] = [];
 
     // Handle tags - show maximum 1 tag
     if (context.commit.tags.length > 0) {
@@ -139,7 +139,7 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
       let color: Color = Color.SecondaryText;
       let icon: Image.ImageLike = Icon.Dot;
 
-      const allCommitBranches = context.commit.localBranches.concat(context.commit.remoteBranches);
+      const allCommitBranches = context.commit.localBranches.concat(context.commit.remoteBranches.map((branch) => branch.fullName));
 
       if (context.commit.currentBranchName) {
         title = context.commit.currentBranchName;
@@ -159,8 +159,7 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
         if (context.commit.localBranches.length > 0) {
           icon = Icon.Dot;
         } else if (context.commit.remoteBranches.length > 0) {
-          const remoteName = context.commit.remoteBranches[0].split("/")[0];
-          icon = RemoteHostIcon(context.remotes.data[remoteName]);
+          icon = RemoteHostIcon(context.remotes.data[context.commit.remoteBranches[0].remote]);
         }
       }
 
@@ -171,6 +170,10 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
           icon: icon,
         });
       }
+    }
+
+    if (context.commits.filter.kind === "current" && context.commits.filter.upstream) {
+
     }
 
     accessoryItems.push({
@@ -213,55 +216,53 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
         ...(context.commit.changedFiles?.map((fileChanges) => basename(fileChanges.path)) || []),
       ].filter((keyword): keyword is string => Boolean(keyword))}
       detail={
-        context.toggleDetailController.isShowingDetail ? (
-          <List.Item.Detail
-            markdown={commitBodyMarkdown}
-            metadata={
-              context.toggleMetadataController.isShowingDetail ? (
-                <List.Item.Detail.Metadata>
-                  <List.Item.Detail.Metadata.Label title="Author" text={context.commit.author} />
-                  <List.Item.Detail.Metadata.Label title="Email" text={context.commit.authorEmail} />
-                  <List.Item.Detail.Metadata.Label title="Date" text={context.commit.date.toLocaleString()} />
-                  <List.Item.Detail.Metadata.Label title="Hash" text={context.commit.hash} />
-                  {/* Tags as TagList */}
-                  {context.commit.tags.length > 0 && (
-                    <List.Item.Detail.Metadata.TagList title="Tags">
-                      {context.commit.tags.map((tag) => (
-                        <List.Item.Detail.Metadata.TagList.Item
-                          key={tag}
-                          icon={Icon.Tag}
-                          text={tag}
-                          color={Color.Blue}
-                        />
-                      ))}
-                    </List.Item.Detail.Metadata.TagList>
-                  )}
-                  {/* Branches as TagList */}
-                  {(context.commit.localBranches.length > 0 || context.commit.remoteBranches.length > 0) && (
-                    <List.Item.Detail.Metadata.TagList title="Branches">
-                      {context.commit.localBranches.map((branch) => (
-                        <List.Item.Detail.Metadata.TagList.Item
-                          key={branch}
-                          icon={Icon.Dot}
-                          text={branch}
-                          color={Color.SecondaryText}
-                        />
-                      ))}
-                      {context.commit.remoteBranches.map((branch) => (
-                        <List.Item.Detail.Metadata.TagList.Item
-                          key={branch}
-                          icon={RemoteHostIcon(context.remotes.data[branch.split("/")[0]])}
-                          text={branch}
-                          color={Color.SecondaryText}
-                        />
-                      ))}
-                    </List.Item.Detail.Metadata.TagList>
-                  )}
-                </List.Item.Detail.Metadata>
-              ) : undefined
-            }
-          />
-        ) : undefined
+        <List.Item.Detail
+          markdown={commitBodyMarkdown}
+          metadata={
+            context.toggleMetadataController.isShowingDetail ? (
+              <List.Item.Detail.Metadata>
+                <List.Item.Detail.Metadata.Label title="Author" text={context.commit.author} />
+                <List.Item.Detail.Metadata.Label title="Email" text={context.commit.authorEmail} />
+                <List.Item.Detail.Metadata.Label title="Date" text={context.commit.date.toLocaleString()} />
+                <List.Item.Detail.Metadata.Label title="Hash" text={context.commit.hash} />
+                {/* Tags as TagList */}
+                {context.commit.tags.length > 0 && (
+                  <List.Item.Detail.Metadata.TagList title="Tags">
+                    {context.commit.tags.map((tag) => (
+                      <List.Item.Detail.Metadata.TagList.Item
+                        key={tag}
+                        icon={Icon.Tag}
+                        text={tag}
+                        color={Color.Blue}
+                      />
+                    ))}
+                  </List.Item.Detail.Metadata.TagList>
+                )}
+                {/* Branches as TagList */}
+                {(context.commit.localBranches.length > 0 || context.commit.remoteBranches.length > 0) && (
+                  <List.Item.Detail.Metadata.TagList title="Branches">
+                    {context.commit.localBranches.map((branch) => (
+                      <List.Item.Detail.Metadata.TagList.Item
+                        key={branch}
+                        icon={Icon.Dot}
+                        text={branch}
+                        color={Color.SecondaryText}
+                      />
+                    ))}
+                    {context.commit.remoteBranches.map((branch) => (
+                      <List.Item.Detail.Metadata.TagList.Item
+                        key={branch.fullName}
+                        icon={RemoteHostIcon(context.remotes.data[branch.remote])}
+                        text={branch.fullName}
+                        color={Color.SecondaryText}
+                      />
+                    ))}
+                  </List.Item.Detail.Metadata.TagList>
+                )}
+              </List.Item.Detail.Metadata>
+            ) : undefined
+          }
+        />
       }
       actions={
         <ActionPanel>

@@ -63,7 +63,7 @@ function TagListItem(context: RepositoryContext & NavigationContext & {
   index: number,
   onMoveToTag: (tagName: string) => void
 }) {
-  const accessories = useMemo(() => {
+  const accessories: List.Item.Accessory[] = useMemo(() => {
     const items: List.Item.Accessory[] = [];
 
     if (context.tag.author) {

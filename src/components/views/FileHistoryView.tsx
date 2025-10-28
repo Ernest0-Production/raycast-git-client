@@ -120,9 +120,9 @@ function CommitListItem(context: RepositoryContext & {
         return contentParts.join("\n\n");
     }, [context.file.path, diff, isLoading, error]);
 
-    const accessories = useMemo(() => {
+    const accessories: List.Item.Accessory[] = useMemo(() => {
         if (context.toggleDetailController.isShowingDetail) {
-            return undefined;
+            return [];
         }
 
         return [
@@ -147,22 +147,20 @@ function CommitListItem(context: RepositoryContext & {
                 context.commit.authorEmail
             ]}
             detail={
-                context.toggleDetailController.isShowingDetail ? (
-                    <List.Item.Detail
-                        isLoading={isLoading}
-                        markdown={diffMarkdown}
-                        metadata={
-                            context.toggleMetadataController.isShowingDetail ? (
-                                <List.Item.Detail.Metadata>
-                                    <List.Item.Detail.Metadata.Label title="Author" text={context.commit.author} />
-                                    <List.Item.Detail.Metadata.Label title="Email" text={context.commit.authorEmail} />
-                                    <List.Item.Detail.Metadata.Label title="Date" text={context.commit.date.toLocaleString()} />
-                                    <List.Item.Detail.Metadata.Label title="Hash" text={context.commit.hash} />
-                                </List.Item.Detail.Metadata>
-                            ) : undefined
-                        }
-                    />
-                ) : undefined
+                <List.Item.Detail
+                    isLoading={isLoading}
+                    markdown={diffMarkdown}
+                    metadata={
+                        context.toggleMetadataController.isShowingDetail ? (
+                            <List.Item.Detail.Metadata>
+                                <List.Item.Detail.Metadata.Label title="Author" text={context.commit.author} />
+                                <List.Item.Detail.Metadata.Label title="Email" text={context.commit.authorEmail} />
+                                <List.Item.Detail.Metadata.Label title="Date" text={context.commit.date.toLocaleString()} />
+                                <List.Item.Detail.Metadata.Label title="Hash" text={context.commit.hash} />
+                            </List.Item.Detail.Metadata>
+                        ) : undefined
+                    }
+                />
             }
             quickLook={fileExists ? { path: absolutePath, name: absolutePath } : undefined}
             actions={

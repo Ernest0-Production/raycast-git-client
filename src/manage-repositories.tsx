@@ -123,12 +123,14 @@ function RepositoryListItem({
   const accessories: List.Item.Accessory[] = useMemo(() => {
     const result = [];
 
-    if (remotes && Object.keys(remotes).length > 0) {
-      result.push(...Object.keys(remotes).map((remote) => ({
-        tag: { value: `${remotes[remote].displayName}` },
-        icon: RemoteHostIcon(remotes[remote]),
-        tooltip: `Hosted on ${remotes[remote].provider} at ${remotes[remote].displayName}`,
-      })));
+    for (const remote of Object.values(remotes)) {
+      if (remote.provider === undefined) continue;
+
+      result.push({
+        tag: { value: `${remote.displayName}` },
+        icon: RemoteHostIcon(remote),
+        tooltip: `Hosted on ${remote.provider} at ${remote.displayName}`,
+      });
     }
 
     return result;
@@ -322,7 +324,7 @@ function CloningRepositoryListItem({
     return progressState;
   });
 
-  const icon = (() => {
+  const icon: Image.ImageLike = (() => {
     if (progressState?.exitCode !== undefined && progressState?.exitCode !== 0) {
       return { source: Icon.XMarkCircle, tintColor: Color.Red };
     }

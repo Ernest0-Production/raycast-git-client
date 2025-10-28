@@ -214,13 +214,11 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
         context.file.oldPath
       ].filter((keyword): keyword is string => Boolean(keyword))}
       detail={
-        context.toggleController.isShowingDetail ? (
-          <List.Item.Detail
-            isLoading={isLoading}
-            markdown={diffMarkdown}
-            metadata
-          />
-        ) : undefined
+        <List.Item.Detail
+          isLoading={isLoading}
+          markdown={diffMarkdown}
+          metadata
+        />
       }
       quickLook={existsSync(context.file.absolutePath) ? { path: context.file.absolutePath, name: context.file.relativePath } : undefined}
       actions={

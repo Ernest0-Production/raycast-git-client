@@ -160,18 +160,18 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
   const absolutePath = join(context.gitManager.repoPath, context.file.path);
   const fileExists = existsSync(absolutePath);
 
-  const accessories = useMemo(() => {
-    const accessories: List.Item.Accessory[] = [];
+  const accessories: List.Item.Accessory[] = useMemo(() => {
+    const result: List.Item.Accessory[] = [];
     const stats = context.statsMap?.[context.file.path];
     if (stats) {
       if (stats.insertions > 0) {
-        accessories.push({ tag: { value: `+${stats.insertions}`, color: Color.Green }, tooltip: "Insertions" });
+        result.push({ tag: { value: `+${stats.insertions}`, color: Color.Green }, tooltip: "Insertions" });
       }
       if (stats.deletions > 0) {
-        accessories.push({ tag: { value: `-${stats.deletions}`, color: Color.Red }, tooltip: "Deletions" });
+        result.push({ tag: { value: `-${stats.deletions}`, color: Color.Red }, tooltip: "Deletions" });
       }
     }
-    return accessories;
+    return result;
   }, [context.statsMap, context.file.path]);
 
   return (
@@ -186,9 +186,10 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
       accessories={accessories}
       keywords={[context.file.path, context.file.oldPath].filter((keyword): keyword is string => Boolean(keyword))}
       detail={
-        context.toggleController.isShowingDetail ? (
-          <List.Item.Detail isLoading={isLoading} markdown={diffMarkdown} />
-        ) : undefined
+        <List.Item.Detail
+          isLoading={isLoading}
+          markdown={diffMarkdown}
+        />
       }
       quickLook={fileExists ? { path: absolutePath, name: context.file.path } : undefined}
       actions={

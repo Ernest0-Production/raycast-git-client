@@ -155,6 +155,18 @@ export function BranchCopyNameAction({ branch, shortcut }: { branch: string, sho
 }
 
 /**
+ * Action for copying upstream branch name to clipboard.
+ */
+export function BranchCopyUpstreamNameAction({ branch }: { branch: string }) {
+  return (
+    <Action.CopyToClipboard
+      title="Copy Upstream Branch Name"
+      content={branch}
+    />
+  );
+}
+
+/**
  * Action for pushing the current branch.
  */
 export function BranchPushAction(context: RepositoryContext & { branch: Branch }) {
@@ -168,7 +180,7 @@ export function BranchPushAction(context: RepositoryContext & { branch: Branch }
     }
   };
 
-  if (!context.remotes.data || Object.keys(context.remotes.data).length === 0) {
+  if (Object.keys(context.remotes.data).length === 0) {
     return undefined;
   }
 
@@ -218,7 +230,7 @@ export function BranchPushForceAction(context: RepositoryContext & { branch: Bra
     }
   };
 
-  if (!context.remotes.data || Object.keys(context.remotes.data).length === 0) {
+  if (Object.keys(context.remotes.data).length === 0) {
     return undefined;
   }
 

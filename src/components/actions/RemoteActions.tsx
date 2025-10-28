@@ -21,12 +21,11 @@ export function RemoteFetchAction(context: RepositoryContext & { remotesHosts?: 
         }
     };
 
-    if (!context.remotes.data || Object.keys(context.remotes.data).length === 0) {
+    if (Object.keys(context.remotes.data).length === 0) {
         return undefined;
     }
 
     if (Object.keys(context.remotes.data).length === 1) {
-
         return (
             <Action
                 title="Fetch"

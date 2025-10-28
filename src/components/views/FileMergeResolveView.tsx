@@ -1,4 +1,4 @@
-import { Action, ActionPanel, Alert, Color, confirmAlert, Icon, List, showToast, Toast, useNavigation } from "@raycast/api";
+import { Action, ActionPanel, Alert, Color, confirmAlert, Icon, Image, List, showToast, Toast, useNavigation } from "@raycast/api";
 import { useMemo } from "react";
 import { ConflictSegment } from "../../types";
 import { useConflictResolver } from "../../hooks/useConflictResolver";
@@ -124,7 +124,7 @@ function ConflictSegmentOptionItem({
     return `${firstLine ? `${firstLine}` : "<empty>"}`;
   }, [type]);
 
-  const icon = useMemo(() => {
+  const icon: { value: Image.ImageLike, tooltip: string } = useMemo(() => {
     if (segment.resolution === null) {
       return {
         tooltip: "Unresolved",

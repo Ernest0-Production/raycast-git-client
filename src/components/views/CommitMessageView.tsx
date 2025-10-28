@@ -282,7 +282,7 @@ function CommitAndPushAction(context: RepositoryContext & {
   forcePush: boolean;
   handleCommit: (remote: string) => void;
 }) {
-  if (!context.remotes.data || Object.keys(context.remotes.data).length === 0) {
+  if (Object.keys(context.remotes.data).length === 0) {
     return undefined;
   }
 
