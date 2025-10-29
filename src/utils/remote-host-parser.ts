@@ -67,7 +67,7 @@ function githubParser(_url: string, parsed: URLComponents): RemoteHostParserResu
                     {
                         title: "File Page",
                         url: `${scheme}://${hostname}/${path}/blob/${encodeURIComponent(ref ?? "HEAD")}/${filePath}`,
-                        icon: Icon.Document,
+                        icon: Icon.CodeBlock,
                     },
                     {
                         title: "Blame",
@@ -89,7 +89,8 @@ function githubParser(_url: string, parsed: URLComponents): RemoteHostParserResu
                         title: `${issueNumber}`,
                         url: `${scheme}://${hostname}/${path}/issues/${issueNumber}`,
                         icon: Icon.Hashtag,
-                    }] : []),
+                        shortcut: { modifiers: ["cmd"], key: "i", },
+                    }] as RemoteWebPage[] : []),
                     {
                         title: `Commit Page`,
                         url: `${scheme}://${hostname}/${path}/commit/${encodeURIComponent(commit.hash)}`,
@@ -99,6 +100,7 @@ function githubParser(_url: string, parsed: URLComponents): RemoteHostParserResu
                         title: `Builds`,
                         url: `${scheme}://${hostname}/${path}/commit/${encodeURIComponent(commit.hash)}/checks`,
                         icon: Icon.Hammer,
+                        shortcut: { modifiers: ["cmd"], key: "b", },
                     }
                 ];
             },
@@ -113,6 +115,7 @@ function githubParser(_url: string, parsed: URLComponents): RemoteHostParserResu
                         title: "Create Pull Request",
                         url: `${scheme}://${hostname}/${path}/compare/${encodeURIComponent(branch)}?expand=1`,
                         icon: Icon.Plus,
+                        shortcut: { modifiers: ["cmd"], key: "n", },
                     }
                 ];
             },
@@ -136,15 +139,15 @@ function githubParser(_url: string, parsed: URLComponents): RemoteHostParserResu
                         icon: Icon.Bug,
                     },
                     {
-                        title: "Home Page",
-                        url: `${scheme}://${hostname}/${path}`,
-                        icon: { source: "git-project.svg" },
-                    },
-                    {
                         title: "Settings",
                         url: `${scheme}://${hostname}/${path}/settings`,
                         icon: Icon.Gear,
-                    }
+                    },
+                    {
+                        title: "Home Page",
+                        url: `${scheme}://${hostname}/${path}`,
+                        icon: { source: "git-project.svg" }
+                    },
                 ];
             }
         }
@@ -171,7 +174,7 @@ function gitlabParser(_url: string, parsed: URLComponents): RemoteHostParserResu
                     {
                         title: "File Page",
                         url: `${scheme}://${hostname}/${path}/-/blob/${encodeURIComponent(ref ?? "HEAD")}/${filePath}`,
-                        icon: Icon.Document,
+                        icon: Icon.CodeBlock,
                     },
                     {
                         title: "Blame",
@@ -196,6 +199,7 @@ function gitlabParser(_url: string, parsed: URLComponents): RemoteHostParserResu
                         title: "Pipelines",
                         url: `${scheme}://${hostname}/${path}/-/commit/${encodeURIComponent(commit.hash)}/pipelines`,
                         icon: Icon.Hammer,
+                        shortcut: { modifiers: ["cmd"], key: "b", },
                     }
                 ];
             },
@@ -210,6 +214,7 @@ function gitlabParser(_url: string, parsed: URLComponents): RemoteHostParserResu
                         title: "Create Merge Request",
                         url: `${scheme}://${hostname}/${path}/-/merge_requests/new?merge_request[source_branch]=${encodeURIComponent(branch)}`,
                         icon: Icon.Plus,
+                        shortcut: { modifiers: ["cmd"], key: "n", },
                     }
                 ];
             },
@@ -228,15 +233,15 @@ function gitlabParser(_url: string, parsed: URLComponents): RemoteHostParserResu
                         icon: { source: "git-merge.svg" },
                     },
                     {
+                        title: "Settings",
+                        url: `${scheme}://${hostname}/${path}/-/settings`,
+                        icon: Icon.Gear,
+                    },
+                    {
                         title: "Home Page",
                         url: `${scheme}://${hostname}/${path}`,
                         icon: { source: "git-project.svg" },
                     },
-                    {
-                        title: "Settings",
-                        url: `${scheme}://${hostname}/${path}/-/settings`,
-                        icon: Icon.Gear,
-                    }
                 ];
             }
         }
@@ -265,7 +270,7 @@ function giteaParser(_url: string, parsed: URLComponents): RemoteHostParserResul
                     {
                         title: "File Page",
                         url: `${scheme}://${hostname}/${path}/src/commit/${encodeURIComponent(ref ?? "HEAD")}/${filePath}`,
-                        icon: Icon.Document,
+                        icon: Icon.CodeBlock,
                     },
                     {
                         title: "Blame",
@@ -287,7 +292,8 @@ function giteaParser(_url: string, parsed: URLComponents): RemoteHostParserResul
                         title: `${issueNumber}`,
                         url: `${scheme}://${hostname}/${path}/issues/${issueNumber}`,
                         icon: Icon.Hashtag,
-                    }] : []),
+                        shortcut: { modifiers: ["cmd"], key: "i", },
+                    }] as RemoteWebPage[] : []),
                     {
                         title: `Commit Page`,
                         url: `${scheme}://${hostname}/${path}/commit/${encodeURIComponent(commit.hash)}`,
@@ -322,15 +328,15 @@ function giteaParser(_url: string, parsed: URLComponents): RemoteHostParserResul
                         icon: { source: "git-merge.svg" },
                     },
                     {
+                        title: "Settings",
+                        url: `${scheme}://${hostname}/${path}/settings`,
+                        icon: Icon.Gear,
+                    },
+                    {
                         title: "Home Page",
                         url: `${scheme}://${hostname}/${path}`,
                         icon: { source: "git-project.svg" },
                     },
-                    {
-                        title: "Settings",
-                        url: `${scheme}://${hostname}/${path}/settings`,
-                        icon: Icon.Gear,
-                    }
                 ];
             }
         }
@@ -383,7 +389,7 @@ function bitbucketParser(_url: string, parsed: URLComponents): RemoteHostParserR
                 return [{
                     title: "File Page",
                     url: fileUrl,
-                    icon: Icon.Document,
+                    icon: Icon.CodeBlock,
                 }];
             },
             commitRelated(commit: Pick<Commit, "hash" | "message">): RemoteWebPage[] {
@@ -398,6 +404,7 @@ function bitbucketParser(_url: string, parsed: URLComponents): RemoteHostParserR
                         title: "Builds",
                         url: `${repoBase}/builds?at=${encodeURIComponent(commit.hash)}`,
                         icon: Icon.Hammer,
+                        shortcut: { modifiers: ["cmd"], key: "b", },
                     }
                 ];
             },
@@ -421,6 +428,7 @@ function bitbucketParser(_url: string, parsed: URLComponents): RemoteHostParserR
                         title: "Create Pull Request",
                         url: createPrUrl,
                         icon: Icon.Plus,
+                        shortcut: { modifiers: ["cmd"], key: "n", },
                     }
                 ];
             },
@@ -436,15 +444,15 @@ function bitbucketParser(_url: string, parsed: URLComponents): RemoteHostParserR
                         icon: { source: "git-merge.svg" },
                     },
                     {
+                        title: "Settings",
+                        url: `${repoBase}/settings`,
+                        icon: Icon.Gear,
+                    },
+                    {
                         title: "Home Page",
                         url: repoBase,
                         icon: { source: "git-project.svg" },
                     },
-                    {
-                        title: "Settings",
-                        url: `${repoBase}/settings`,
-                        icon: Icon.Gear,
-                    }
                 ];
             }
         },
@@ -519,7 +527,7 @@ function azureDevopsParser(_url: string, parsed: URLComponents): RemoteHostParse
                 return [{
                     title: "File Page",
                     url: `${repoBase}?path=/${filePath}&version=GB${encodeURIComponent(ref ?? "HEAD")}`,
-                    icon: Icon.Document,
+                    icon: Icon.CodeBlock,
                 }];
             },
             commitRelated(commit: Pick<Commit, "hash" | "message">): RemoteWebPage[] {
@@ -542,6 +550,7 @@ function azureDevopsParser(_url: string, parsed: URLComponents): RemoteHostParse
                         title: "Create Pull Request",
                         url: `${repoBase}/pullrequestcreate?sourceRef=${encodeURIComponent(`refs/heads/${branch}`)}`,
                         icon: Icon.Plus,
+                        shortcut: { modifiers: ["cmd"], key: "n", },
                     }
                 ];
             },
