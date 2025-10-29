@@ -524,7 +524,7 @@ export class GitManager {
 
         const branchName = match[1].trim();
         result.currentBranchName = branchName;
-      } else if (!ref.startsWith("HEAD")) {
+      } else if (!ref.endsWith("HEAD")) {
         if (ref.startsWith("refs/remotes/")) {
           // Extract subpath from ref without "refs/remotes/"
           const remoteBranch = ref.replace(/^refs\/remotes\//, "");
@@ -1066,9 +1066,15 @@ __REBASE_TODO__
   async fetch(remote?: string): Promise<void> {
     await this.git.fetch([
       remote ? remote : "--all",
+      ...(await this.isShallow() ? ["--unshallow"] : []),
       "--prune",
       "--tags"
     ]);
+  }
+
+  async isShallow(): Promise<boolean> {
+    const isShallow = await this.git.raw(["rev-parse", "--is-shallow-repository"]);
+    return isShallow.trim() === "true";
   }
 
   /**
@@ -1667,11 +1673,11 @@ git fetch --depth 1 --progress origin 2> "${stderrPath}"
 # Set default remote HEAD
 git remote set-head origin -a 2>> "${stderrPath}"
 
-# Detect default branch name (e.g., origin/main)
-default_branch=$(git rev-parse --abbrev-ref origin/HEAD)
+# Detect default branch name (e.g., origin/main) and extract just the branch part (e.g., main)
+default_branch=$(git rev-parse --abbrev-ref origin/HEAD | sed 's|^origin/||')
 
 if [ -n "$default_branch" ]; then
-  git checkout -b "$default_branch" "$default_branch" 2>> "${stderrPath}"
+  git checkout -b "$default_branch" "origin/$default_branch" 2>> "${stderrPath}"
 fi
 
 echo $? > "${exitCodePath}"

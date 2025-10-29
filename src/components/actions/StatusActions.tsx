@@ -8,6 +8,9 @@ import { existsSync } from "fs";
 import { basename } from "path";
 import { useMemo } from "react";
 import { FileStatusIcon } from "../icons/StatusIcons";
+import { RemoteWebPageAction } from "./RemoteActions";
+import { useIssueTracker } from "../../hooks/useIssueTracker";
+import { getFavicon } from "@raycast/utils";
 
 /**
  * Action for resolving conflicts in a file.
@@ -510,4 +513,53 @@ export function ConflictAbortAction(context: RepositoryContext) {
         case "regular":
             return undefined;
     }
+}
+
+/**
+ * Action for opening the attached links of a file.
+ */
+export function FileAttachedLinksAction(context: RepositoryContext & {
+    filePath: string,
+    commit?: Pick<Commit, "hash" | "message">
+}) {
+    const { findUrls } = useIssueTracker();
+
+    const commitUrls = useMemo(() => {
+        if (!context.commit) {
+            return [];
+        }
+
+        return findUrls(context.commit.message);
+    }, [context.commit?.message]);
+
+    return (
+        <ActionPanel.Submenu
+            title="Attached Links"
+            icon={Icon.Link}
+            shortcut={{ modifiers: ["cmd"], key: "l" }}
+        >
+            <ActionPanel.Section>
+                {commitUrls.map((urlInfo: { title: string; url: string }, index: number) => (
+                    <Action.OpenInBrowser
+                        key={`${urlInfo.title}-${index}`}
+                        title={`Open ${urlInfo.title}`}
+                        url={urlInfo.url}
+                        icon={getFavicon(urlInfo.url, { fallback: Icon.Link })}
+                    />
+                ))}
+            </ActionPanel.Section>
+
+            <RemoteWebPageAction.Menu remotes={context.remotes.data}>{(remote) => (
+                <>
+                    <RemoteWebPageAction.File
+                        remote={remote}
+                        filePath={context.filePath}
+                        ref={context.commit?.hash ?? context.branches.data.currentBranch?.upstream?.name}
+                    />
+                    <RemoteWebPageAction.Base remote={remote} />
+                </>
+            )}
+            </RemoteWebPageAction.Menu>
+        </ActionPanel.Submenu>
+    );
 }

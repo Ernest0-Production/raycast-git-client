@@ -12,13 +12,14 @@ import {
   BranchPushForceAction,
   BranchShowCommitsAction,
   BranchCopyUpstreamNameAction,
+  BranchAttachedLinksAction,
 } from "../actions/BranchActions";
 import { Branch, DetachedHead } from "../../types";
 import { useMemo } from "react";
 import { RemoteHostIcon, RemoteHostProviderIcon } from "../icons/RemoteHostIcons";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
-import { RemoteFetchAction, RemotePullAction, RemoteWebPageActions } from "../actions/RemoteActions";
+import { RemoteFetchAction, RemotePullAction } from "../actions/RemoteActions";
 
 export function BranchesView(context: RepositoryContext & NavigationContext) {
   return (
@@ -227,13 +228,6 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
               <>
                 <BranchCkeckoutAction {...context} />
                 <BranchShowCommitsAction {...context} />
-                {context.branch.upstream && !context.branch.isGone && (
-                  <RemoteWebPageActions
-                    {...context}
-                    remoteName={context.branch.upstream.remote}
-                    branch={context.branch.upstream.name}
-                  />
-                )}
                 <BranchPushAction {...context} />
                 <BranchPushForceAction {...context} />
                 <BranchRebaseAction {...context} />
@@ -258,13 +252,6 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
               <>
                 <BranchCkeckoutAction {...context} />
                 <BranchShowCommitsAction {...context} />
-                {context.branch.remote && (
-                  <RemoteWebPageActions
-                    {...context}
-                    remoteName={context.branch.remote}
-                    branch={context.branch.name}
-                  />
-                )}
                 <BranchPushAction {...context} />
                 <BranchCopyNameAction
                   branch={context.branch.displayName}
@@ -273,6 +260,10 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
                 <BranchDeleteAction {...context} />
               </>
             )}
+          </ActionPanel.Section>
+
+          <ActionPanel.Section>
+            <BranchAttachedLinksAction {...context} />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Branches">

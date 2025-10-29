@@ -9,12 +9,12 @@ import { existsSync } from "fs";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
 import { PatchApplyAction, PatchCreateAction } from "../actions/PatchActions";
-import { CommitChangesAction, ConflictAbortAction, FileDiscardAction, FileDiscardAllAction, FileResolveConflictAction, FileStageAction, FileStageAllAction, FileUnstageAction, FileUnstageAllAction } from "../actions/StatusActions";
+import { CommitChangesAction, ConflictAbortAction, FileAttachedLinksAction, FileDiscardAction, FileDiscardAllAction, FileResolveConflictAction, FileStageAction, FileStageAllAction, FileUnstageAction, FileUnstageAllAction } from "../actions/StatusActions";
 import { FileHistoryAction } from "./FileHistoryView";
 import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../actions/ToggleDetailAction";
 import { basename } from "path";
-import { BranchPushAction, BranchPushForceAction } from "../actions/BranchActions";
-import { RemoteFetchAction, RemotePullAction, RemoteWebPageActions } from "../actions/RemoteActions";
+import { BranchAttachedLinksAction, BranchPushAction, BranchPushForceAction } from "../actions/BranchActions";
+import { RemoteFetchAction, RemotePullAction } from "../actions/RemoteActions";
 
 export function StatusView(context: RepositoryContext & NavigationContext) {
   const toggleController = useToggleDetail("Status Diff", "Changes", true);
@@ -101,6 +101,15 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
                   </>
                 )}
                 <RemoteFetchAction {...context} />
+              </ActionPanel.Section>
+
+              <ActionPanel.Section>
+                {context.branches.data.currentBranch && (
+                  <BranchAttachedLinksAction
+                    {...context}
+                    branch={context.branches.data.currentBranch}
+                  />
+                )}
               </ActionPanel.Section>
 
               <WorkspaceNavigationActions {...context} />
@@ -272,7 +281,7 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
 
           <ActionPanel.Section title="History">
             <RemotePullAction {...context} />
-            {context.branches.data.currentBranch && context.branches.data.currentBranch.type === "current" && (
+            {context.branches.data.currentBranch?.type === "current" && (
               <>
                 <BranchPushAction
                   branch={context.branches.data.currentBranch}
@@ -287,13 +296,12 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
             <RemoteFetchAction {...context} />
           </ActionPanel.Section>
 
-          <RemoteWebPageActions
-            {...context}
-            branch={context.branches.data.currentBranch?.upstream?.name}
-            file={context.branches.data.currentBranch?.upstream
-              ? { path: context.file.relativePath, ref: context.branches.data.currentBranch.upstream.name }
-              : undefined}
-          />
+          <ActionPanel.Section>
+            <FileAttachedLinksAction
+              {...context}
+              filePath={context.file.relativePath}
+            />
+          </ActionPanel.Section>
 
           <ActionPanel.Section title="Workspace">
             <RefreshStatusAction {...context} />

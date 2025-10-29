@@ -1,7 +1,7 @@
 import { ActionPanel, List, Icon, Action, Color, Image } from "@raycast/api";
 import { getFavicon } from "@raycast/utils";
-import { CommitCheckoutAction, CommitCherryPickAction, CommitRevertAction, CommitResetAction, CommitInteractiveRebaseAction, CommitPatchCreateAction, CommitCopyInfoActions, CommitRewordAction, CommitRebaseAction } from "../actions/CommitActions";
-import { TagCreateAction, TagRemoveAction, TagCopyNameAction } from "../actions/TagActions";
+import { CommitCheckoutAction, CommitCherryPickAction, CommitRevertAction, CommitResetAction, CommitInteractiveRebaseAction, CommitPatchCreateAction, CommitCopyInfoActions, CommitRewordAction, CommitRebaseAction, CommitAttachedLinksAction } from "../actions/CommitActions";
+import { TagCreateAction, TagRemoveAction, TagCopyNameAction, TagRenameAction } from "../actions/TagActions";
 import { BranchCopyNameAction, BranchPushAction, BranchPushForceAction } from "../actions/BranchActions";
 import { CommitDetailsView } from "./CommitDetailsView";
 import { useIssueTracker, replaceUrlPatternsWithLinks } from "../../hooks/useIssueTracker";
@@ -94,7 +94,7 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
   onMoveToCommit: (commitHash: string) => void;
 }) {
   const icon: Image.ImageLike | undefined = useMemo(() => {
-    if (context.commits.selectedBranch && 'type' in context.commits.selectedBranch && context.commits.selectedBranch.ahead) {
+    if (context.commits.selectedBranch && context.commits.selectedBranch.kind === 'branch' && context.commits.selectedBranch.ahead) {
       if (context.commits.selectedBranch.ahead > context.index) {
         return { source: Icon.Dot, tintColor: Color.Orange, tooltip: "Unpushed" };
       }
@@ -102,16 +102,12 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
     return undefined;
   }, [context.commits.selectedBranch, context.index]);
 
-  const commitUrls = useMemo(() => {
-    return context.findUrls(context.commit.message);
-  }, [context.commit.hash, context.commit.message]);
 
   // Prepare accessories based on filter and detail view state
   const accessories: List.Item.Accessory[] = useMemo(() => {
     if (context.toggleDetailController.isShowingDetail) {
       return [];
     }
-
     const accessoryItems: List.Item.Accessory[] = [];
 
     // Handle tags - show maximum 1 tag
@@ -170,10 +166,6 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
           icon: icon,
         });
       }
-    }
-
-    if (context.commits.filter.kind === "current" && context.commits.filter.upstream) {
-
     }
 
     accessoryItems.push({
@@ -286,29 +278,17 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
             <CommitPatchCreateAction {...context} />
           </ActionPanel.Section>
 
-          <ActionPanel.Section title="Attached Links">
-            {/* FIXME: Move to Commits Actions */}
-            {commitUrls.map((urlInfo: { title: string; url: string }, index: number) => (
-              <Action.OpenInBrowser
-                key={`${urlInfo.title}-${index}`}
-                title={`Open ${urlInfo.title}`}
-                url={urlInfo.url}
-                icon={getFavicon(urlInfo.url, { fallback: Icon.Link })}
-                shortcut={index === 0 ? { modifiers: ["cmd"], key: "l" } : undefined}
-              />
-            ))}
-
-            <RemoteWebPageActions
-              {...context}
-              commit={context.commit.hash}
-            />
+          <ActionPanel.Section>
+            <CommitAttachedLinksAction {...context} />
           </ActionPanel.Section>
-
-          <CommitCopyInfoActions {...context} />
+          <ActionPanel.Section>
+            <CommitCopyInfoActions {...context} />
+          </ActionPanel.Section>
 
           {context.commit.tags.map((tag) => (
             <ActionPanel.Section key={`tag-${tag}`} title={`Tag '${tag}'`}>
               <TagCopyNameAction key={`copy-${tag}`} tagName={tag} />
+              <TagRenameAction tagName={tag} {...context} />
               <TagRemoveAction key={`remove-${tag}`} tagName={tag} {...context} />
             </ActionPanel.Section>
           ))}

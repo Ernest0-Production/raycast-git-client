@@ -1,11 +1,12 @@
 import { Action, Icon, confirmAlert, Alert, ActionPanel, useNavigation, showToast, Toast, Form, List, Keyboard } from "@raycast/api";
-import { Commit } from "../../types";
+import { Commit, Tag } from "../../types";
 import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { useState } from "react";
 import { usePromise } from "@raycast/utils";
 import { ConcreteCommitView } from "../views/CommitDetailsView";
 import { useToggleDetail } from "./ToggleDetailAction";
+import { RemoteWebPageAction } from "./RemoteActions";
 
 /**
  * Action for creating a tag on a commit.
@@ -454,5 +455,26 @@ function TagCreateAndPushAction(context: RepositoryContext & {
         ))
       }
     </ActionPanel.Submenu >
+  );
+}
+
+/**
+ * Action for opening the attached links of a tag.
+ */
+export function TagAttachedLinksAction(context: RepositoryContext & { tag: Tag }) {
+  return (
+    <ActionPanel.Submenu
+      title="Attached Links"
+      icon={Icon.Link}
+      shortcut={{ modifiers: ["cmd"], key: "l" }}
+    >
+      <RemoteWebPageAction.Menu remotes={context.remotes.data}>{(remote) => (
+        <>
+          <RemoteWebPageAction.Tag remote={remote} tag={context.tag.name} />
+          <RemoteWebPageAction.Base remote={remote} />
+        </>
+      )}
+      </RemoteWebPageAction.Menu>
+    </ActionPanel.Submenu>
   );
 }

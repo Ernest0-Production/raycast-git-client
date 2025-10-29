@@ -3,6 +3,7 @@ import { GitManager } from "../utils/git-manager";
 import { Remote } from "../types";
 import { remoteHostParser } from "../utils/remote-host-parser";
 import { RepositoryContext } from "../open-repository";
+import { useMemo } from "react";
 
 export type RemotesHosts = Record<string, Remote>;
 
@@ -20,7 +21,7 @@ export function useGitRemotes(gitManager: GitManager): RepositoryContext["remote
     }
   );
 
-  const remotesRecords = remotes.reduce<RemotesHosts>((dictionary, remote) => {
+  const remotesRecords: RemotesHosts = useMemo(() => remotes.reduce<RemotesHosts>((dictionary, remote) => {
     const primaryUrl = remote.fetchUrl || remote.pushUrl || "";
     const parser = remoteHostParser(primaryUrl);
 
@@ -34,19 +35,14 @@ export function useGitRemotes(gitManager: GitManager): RepositoryContext["remote
       repositoryName: parser.repositoryName,
       provider: parser.provider,
       avatarUrl: parser.avatarUrl,
-      pages: {
-        get mainPage() { return parser.repositoryWebUrl; },
-        get pullRequests() { return parser.pullRequestsListUrl; },
-        commitPage: parser.commitUrl,
-        createPullRequestForm: parser.createPullRequestUrl,
-        filePage: parser.fileUrl,
-        repositoryBranchUrl: parser.repositoryBranchUrl,
-      }
+      webPages: parser.webPages
     };
     dictionary[remote.name] = info;
 
     return dictionary;
-  }, {} as RemotesHosts);
+  }, {} as RemotesHosts),
+    [remotes]
+  );
 
   return {
     data: remotesRecords,

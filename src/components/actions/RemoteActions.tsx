@@ -2,10 +2,9 @@ import { Action, ActionPanel, Alert, confirmAlert, Form, Icon, showToast, Toast,
 import { RemotesHosts } from "../../hooks/useGitRemotes";
 import { RemoteHostIcon, RemoteHostProviderIcon } from "../icons/RemoteHostIcons";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
-import { Remote } from "../../types";
+import { Commit, Remote } from "../../types";
 import { useMemo, useState } from "react";
 import { basename } from "path";
-
 
 /**
  * Global fetch action that can be reused across different views.
@@ -15,6 +14,7 @@ export function RemoteFetchAction(context: RepositoryContext & { remotesHosts?: 
         try {
             await context.gitManager.fetch(remote);
             context.branches.revalidate();
+            context.commits.revalidate();
             context.status.revalidate();
         } catch (error) {
             // Git error is already shown by GitManager
@@ -245,83 +245,115 @@ export function RemoteCopyURLActions({ remote }: { remote: Remote }) {
     );
 }
 
-export function RemoteWebPageActions(context: RepositoryContext & {
-    remoteName?: string;
-    branch?: string;
-    commit?: string;
-    file?: { path: string; ref: string };
-}) {
-    const isSingleRemote = useMemo(() => Object.keys(context.remotes.data).length === 1, [context.remotes.data]);
+/**
+ * Actions for opening the attached links of a remote.
+ */
+export namespace RemoteWebPageAction {
+    /**
+     * Action for opening the attached links of a remote.
+     */
+    export function Menu({ remotes, children }: { remotes: Record<string, Remote>, children: (remote: Remote) => React.ReactNode | React.ReactNode[] }) {
+        const knownRemotes = Object.values(remotes).filter((remote) => remote.provider !== undefined)
 
-    return <>
-        {Object.values(context.remotes.data)
-            .filter((remote) => context.remoteName ? remote.name === context.remoteName : true)
-            .map((remote) => (
-                <ActionPanel.Submenu
-                    key={`remote-web-page-actions-${remote.name}`}
-                    icon={RemoteHostProviderIcon(remote.provider)}
-                    title={`Open Web Page on ${isSingleRemote ? remote.provider : remote.displayName}`}
+        if (knownRemotes.length === 1) {
+            return (
+                children(knownRemotes[0])
+            );
+        } else {
+            return (
+                knownRemotes.map((remote) => (
+                    <ActionPanel.Submenu
+                        key={`${remote.name}-attached-links`}
+                        title={remote.displayName}
+                        icon={RemoteHostIcon(remote)}
+                    >
+                        {children(remote)}
+                    </ActionPanel.Submenu>
+                ))
+            )
+        }
+    }
+
+    export function Base({ remote }: { remote: Remote }) {
+        return (
+            <ActionPanel.Section>
+                {remote.webPages.other().map((page, index) => (
+                    <Action.OpenInBrowser
+                        key={`remote-web-page-other-${remote.name}-${index}`}
+                        {...page}
+                    />
+                ))}
+            </ActionPanel.Section>
+        )
+    }
+
+    export function Tags({ remote, tags }: { remote: Remote, tags: string[] }) {
+        return (
+            tags.map((tag) => (
+                <ActionPanel.Section
+                    key={`remote-web-page-tag-${remote.name}-${tag}`}
+                    title={tag}
                 >
-                    {context.file && (() => {
-                        const url = remote.pages.filePage(context.file.path, context.file.ref);
-                        if (!url) return null;
-
-                        return (
-                            <Action.OpenInBrowser
-                                title={basename(context.file.path)}
-                                url={url}
-                                icon={Icon.Document}
-                            />
-                        );
-                    })()}
-
-                    {context.branch && (() => {
-                        const url = remote.pages.repositoryBranchUrl(context.branch);
-                        if (!url) return null;
-
-                        return (
-                            <Action.OpenInBrowser
-                                title={`${context.branch}`}
-                                url={url}
-                                icon={`git-branch.svg`}
-                            />
-                        );
-                    })()}
-
-                    {context.branch && (() => {
-                        const url = remote.pages.createPullRequestForm(context.branch);
-                        if (!url) return null;
-
-                        return (
-                            <Action.OpenInBrowser
-                                title={remote.provider === "GitLab" ? "Create Merge Request" : "Create Pull Request"}
-                                url={url}
-                                icon={Icon.PlusTopRightSquare}
-                            />
-                        );
-                    })()}
-
-                    {context.commit && (() => {
-                        const url = remote.pages.commitPage(context.commit);
-                        if (!url) return null;
-
-                        return (
-                            <Action.OpenInBrowser
-                                title={`Commit Page`}
-                                url={url}
-                                icon={`git-commit.svg`}
-                            />
-                        );
-                    })()}
-
-                    {remote.pages.pullRequests && (
+                    {remote.webPages.tagRelated(tag).map((page, index) => (
                         <Action.OpenInBrowser
-                            title={remote.provider === "GitLab" ? "Merge Requests" : "Pull Requests"}
-                            url={remote.pages.pullRequests}
-                            icon={`git-merge.svg`}
+                            key={`remote-web-page-tag-${remote.name}-${tag}-${index}`}
+                            {...page}
                         />
-                    )}
-                </ActionPanel.Submenu>
-            ))}
-    </>
+                    ))}
+                </ActionPanel.Section>
+            ))
+        )
+    }
+
+    export function Tag({ remote, tag }: { remote: Remote, tag: string }) {
+        return Tags({ remote, tags: [tag] });
+    }
+
+    export function Branches({ remote, branches }: { remote: Remote, branches: string[] }) {
+        return (
+            branches.map((branch) => (
+                <ActionPanel.Section
+                    key={`remote-web-page-branch-${remote.name}-${branch}`}
+                    title={branch}
+                >
+                    {remote.webPages.branchRelated(branch).map((page, index) => (
+                        <Action.OpenInBrowser
+                            key={`remote-web-page-branch-${remote.name}-${branch}-${index}`}
+                            {...page}
+                        />
+                    ))}
+                </ActionPanel.Section>
+            ))
+        )
+    }
+
+    export function Branch({ remote, branch }: { remote: Remote, branch: string }) {
+        return Branches({ remote, branches: [branch] });
+    }
+
+    export function Commit({ remote, commit }: { remote: Remote, commit: Commit }) {
+        return (
+            <ActionPanel.Section title={commit.message}>
+                {remote.webPages.commitRelated(commit).map((page, index) => (
+                    <Action.OpenInBrowser
+                        key={`remote-web-page-commit-${remote.name}-${index}`}
+                        {...page}
+                    />
+                ))}
+            </ActionPanel.Section>
+        )
+    }
+
+    export function File({ remote, filePath, ref }: { remote: Remote, filePath: string, ref?: string }) {
+        return (
+            <ActionPanel.Section title={basename(filePath)}>
+                {remote.webPages.fileRelated(filePath, ref).map((page, index) => (
+                    <Action.OpenInBrowser
+                        key={`remote-web-page-file-${remote.name}-${index}`}
+                        {...page}
+                    />
+                ))}
+            </ActionPanel.Section>
+        )
+    }
 }

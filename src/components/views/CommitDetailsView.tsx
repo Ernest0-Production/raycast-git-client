@@ -9,10 +9,10 @@ import { existsSync } from "fs";
 import { basename, join } from "path";
 import { RepositoryContext, NavigationContext } from "../../open-repository";
 import { WorkspaceNavigationActions } from "../actions/WorkspaceNavigationActions";
-import { FileRestoreAction } from "../actions/StatusActions";
+import { FileAttachedLinksAction, FileRestoreAction } from "../actions/StatusActions";
 import { FileHistoryAction } from "./FileHistoryView";
 import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../actions/ToggleDetailAction";
-import { RemoteWebPageActions } from "../actions/RemoteActions";
+import { CommitCopyInfoActions } from "../actions/CommitActions";
 
 export function CommitDetailsView(context: RepositoryContext & NavigationContext & {
   index: number,
@@ -197,11 +197,6 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
           <ActionPanel.Section title={basename(context.file.path)}>
             <ToggleDetailAction controller={context.toggleController} />
             <FileManagerActions filePath={absolutePath} />
-            <RemoteWebPageActions
-              {...context}
-              commit={context.commit.hash}
-              file={{ path: context.file.path, ref: context.commit.hash }}
-            />
             <FileHistoryAction
               filePath={absolutePath}
               {...context}
@@ -217,6 +212,15 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
               {...context}
             />
           </ActionPanel.Section>
+          <ActionPanel.Section>
+            <FileAttachedLinksAction
+              {...context}
+              filePath={context.file.path}
+              commit={context.commit}
+            />
+          </ActionPanel.Section>
+          <CommitCopyInfoActions {...context} />
+
           {context.onMoveToCommit && (
             <CommitNavigationActions onMoveToCommit={context.onMoveToCommit} />
           )}

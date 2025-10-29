@@ -4,12 +4,11 @@ import { usePromise } from "@raycast/utils";
 import { Commit, CommitFileChange } from "../../types";
 import { useGitDiff } from "../../hooks/useGitDiff";
 import { FileManagerActions } from "../actions/FileActions";
-import { FileRestoreAction } from "../actions/StatusActions";
+import { FileAttachedLinksAction, FileRestoreAction } from "../actions/StatusActions";
 import { CommitFileIcon } from "../icons/StatusIcons";
 import { basename, join } from "path";
 import { CommitCopyInfoActions } from "../actions/CommitActions";
 import { existsSync } from "fs";
-import { RemoteWebPageActions } from "../actions/RemoteActions";
 import { RepositoryContext } from "../../open-repository";
 import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../actions/ToggleDetailAction";
 
@@ -180,16 +179,17 @@ function CommitListItem(context: RepositoryContext & {
                         <FileRestoreAction filePath={absolutePath} before={true} {...context} />
                     </ActionPanel.Section>
 
+
                     <ActionPanel.Section>
-                        <CommitCopyInfoActions commit={context.commit} />
+                        <FileAttachedLinksAction
+                            {...context}
+                            filePath={context.file.path}
+                            commit={context.commit}
+                        />
                     </ActionPanel.Section>
 
                     <ActionPanel.Section>
-                        <RemoteWebPageActions
-                            {...context}
-                            commit={context.commit.hash}
-                            file={{ path: context.file.path, ref: context.commit.hash }}
-                        />
+                        <CommitCopyInfoActions commit={context.commit} />
                     </ActionPanel.Section>
 
                     <RefreshHistoryAction revalidate={context.onRevalidateHistory} />

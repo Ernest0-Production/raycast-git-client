@@ -1,10 +1,11 @@
 import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast, Form, useNavigation, clearSearchBar, Color, Keyboard } from "@raycast/api";
-import { useState } from "react";
-import { Branch, MergeMode } from "../../types";
+import { useMemo, useState } from "react";
+import { Branch, MergeMode, Remote } from "../../types";
 import { usePromise } from "@raycast/utils";
 import InteractiveRebaseEditorView from "../views/InteractiveRebaseEditorView";
 import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
+import { RemoteWebPageAction } from "./RemoteActions";
 
 /**
  * Unified action for checking out a branch (local or remote).
@@ -502,3 +503,47 @@ function BranchRenameForm(context: RepositoryContext & { branch: Branch }) {
   );
 }
 
+/**
+ * Action for opening the attached links of a branch.
+ */
+export function BranchAttachedLinksAction(context: RepositoryContext & { branch: Branch }) {
+  const branchContext: { remote: Remote, branch: string } | undefined = useMemo(() => {
+    if (context.branch.upstream) {
+      if (context.branch.isGone) return undefined;
+
+      return {
+        remote: context.remotes.data[context.branch.upstream.remote],
+        branch: context.branch.upstream.name
+      };
+    }
+
+    if (context.branch.remote) {
+      return {
+        remote: context.remotes.data[context.branch.remote],
+        branch: context.branch.name
+      };
+    }
+
+    return undefined;
+  }, [context.branch]);
+
+  if (!branchContext) {
+    return undefined;
+  }
+
+  return (
+    <ActionPanel.Submenu
+      title="Attached Links"
+      icon={Icon.Link}
+      shortcut={{ modifiers: ["cmd"], key: "l" }}
+    >
+      <RemoteWebPageAction.Branch
+        remote={branchContext.remote}
+        branch={branchContext.branch}
+      />
+      <RemoteWebPageAction.Base
+        remote={branchContext.remote}
+      />
+    </ActionPanel.Submenu>
+  );
+}

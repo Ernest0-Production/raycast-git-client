@@ -3,7 +3,7 @@ import { RepositoryContext, NavigationContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
 import { RemoteFetchAction } from "../actions/RemoteActions";
 import { useMemo, useState } from "react";
-import { TagCheckoutAction, TagCopyCommitHashAction, TagCopyNameAction, TagCreateAction, TagDetailsView, TagPushAction, TagRemoveAction, TagRenameAction } from "../actions/TagActions";
+import { TagAttachedLinksAction, TagCheckoutAction, TagCopyCommitHashAction, TagCopyNameAction, TagCreateAction, TagDetailsView, TagPushAction, TagRemoveAction, TagRenameAction } from "../actions/TagActions";
 import { Tag } from "../../types";
 
 export default function TagsView(context: RepositoryContext & NavigationContext) {
@@ -126,6 +126,7 @@ function TagListItem(context: RepositoryContext & NavigationContext & {
               shortcut={{ modifiers: ["cmd"], key: "n" }}
             />
           }
+          <TagAttachedLinksAction {...context} />
           <RefreshTagsAction {...context} />
           <WorkspaceNavigationActions {...context} />
         </ActionPanel>

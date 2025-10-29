@@ -2,10 +2,13 @@ import { ActionPanel, Action, Icon, confirmAlert, Alert, clearSearchBar, useNavi
 import { Commit } from "../../types";
 import InteractiveRebaseEditorView from "../views/InteractiveRebaseEditorView";
 import { ResetMode } from "simple-git";
-import { useCachedState } from "@raycast/utils";
+import { getFavicon, useCachedState } from "@raycast/utils";
 import { existsSync } from "fs";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { CommitMessageForm } from "../views/CommitMessageView";
+import { useMemo } from "react";
+import { useIssueTracker } from "../../hooks/useIssueTracker";
+import { RemoteWebPageAction } from "./RemoteActions";
 
 /**
  * Action for checking out a commit.
@@ -343,5 +346,85 @@ export function CommitCopyInfoActions({ commit }: { commit: Commit }) {
         content={commit.authorEmail}
       />
     </>
+  );
+}
+
+/**
+ * Action for opening the attached links of a commit.
+ */
+export function CommitAttachedLinksAction(context: RepositoryContext & { commit: Commit }) {
+  const { findUrls } = useIssueTracker();
+
+  const commitUrls = useMemo(
+    () => findUrls(context.commit.message),
+    [context.commit.message]
+  );
+
+  const selectedBranch: string | undefined = useMemo(() => {
+    if (context.commits.selectedBranch?.kind !== 'branch') {
+      return undefined;
+    }
+
+    if (context.commits.selectedBranch?.remote) {
+      return context.commits.selectedBranch.name;
+    }
+
+    if (context.commits.selectedBranch?.upstream) {
+      return context.commits.selectedBranch.upstream.name;
+    }
+
+    return undefined;
+  }, [context.commits.selectedBranch]);
+
+  return (
+    <ActionPanel.Submenu
+      title="Attached Links"
+      icon={Icon.Link}
+      shortcut={{ modifiers: ["cmd"], key: "l" }}
+    >
+      <ActionPanel.Section>
+        {commitUrls.map((urlInfo: { title: string; url: string }, index: number) => (
+          <Action.OpenInBrowser
+            key={`${urlInfo.title}-${index}`}
+            title={`Open ${urlInfo.title}`}
+            url={urlInfo.url}
+            icon={getFavicon(urlInfo.url, { fallback: Icon.Link })}
+          />
+        ))}
+      </ActionPanel.Section>
+
+      <RemoteWebPageAction.Menu remotes={context.remotes.data}>{(remote) => (
+        <>
+          <RemoteWebPageAction.Commit
+            remote={remote}
+            commit={context.commit}
+          />
+
+          {selectedBranch &&
+            <RemoteWebPageAction.Branch
+              remote={remote}
+              branch={selectedBranch}
+            />
+          }
+
+          <RemoteWebPageAction.Branches
+            remote={remote}
+            branches={
+              context.commit.remoteBranches
+                // show only branches that are attached to the remote
+                .filter((remoteBranch) => remoteBranch.remote === remote.name)
+                .map((remoteBranch) => remoteBranch.name)}
+          />
+
+          <RemoteWebPageAction.Tags
+            remote={remote}
+            tags={context.commit.tags}
+          />
+
+          <RemoteWebPageAction.Base remote={remote} />
+        </>
+      )}
+      </RemoteWebPageAction.Menu>
+    </ActionPanel.Submenu >
   );
 }

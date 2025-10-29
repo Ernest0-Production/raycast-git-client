@@ -2,7 +2,7 @@
 /**
  * Represents a Git repository with access information.
  */
-import { Image } from "@raycast/api";
+import { Action, Image } from "@raycast/api";
 
 export interface Repository {
   /** Unique identifier for the repository. */
@@ -226,6 +226,7 @@ export type RemoteProvider =
   | "Gitea"
   | undefined;
 
+export type RemoteWebPage = Action.OpenInBrowser.Props;
 /**
  * Extended remote info with parser-computed properties.
  */
@@ -239,14 +240,13 @@ export type Remote = {
   repositoryName?: string;
   provider: RemoteProvider;
   avatarUrl?: string;
-  pages: {
-    mainPage?: string;
-    pullRequests?: string;
-    commitPage: (sha: string) => string | undefined;
-    createPullRequestForm: (branchName: string) => string | undefined;
-    filePage: (filePath: string, ref: string) => string | undefined;
-    repositoryBranchUrl: (branchName: string) => string | undefined;
-  }
+  webPages: {
+    fileRelated: (filePath: string, ref?: string) => RemoteWebPage[];
+    commitRelated: (commit: Pick<Commit, "hash" | "message">) => RemoteWebPage[];
+    branchRelated: (branch: string) => RemoteWebPage[];
+    tagRelated: (tag: string) => RemoteWebPage[];
+    other: () => RemoteWebPage[];
+  };
 };
 
 /**

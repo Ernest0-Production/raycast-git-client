@@ -1,6 +1,6 @@
 import { useCachedPromise, useCachedState } from "@raycast/utils";
 import { GitManager } from "../utils/git-manager";
-import { BranchFilter, RepositoryContext } from "../open-repository";
+import { BranchFilter, RepositoryContext, SelectedBranch } from "../open-repository";
 import { Branch, BranchesState, DetachedHead } from "../types";
 import { useMemo } from "react";
 
@@ -17,7 +17,7 @@ export function useGitCommits(
     { kind: 'current', upstream: false }
   );
 
-  const selectedBranch: Branch | DetachedHead | undefined = useMemo(() => {
+  const selectedBranch: SelectedBranch | undefined = useMemo(() => {
     if (!branchesState) {
       return undefined;
     }
@@ -28,14 +28,25 @@ export function useGitCommits(
 
       case 'current':
         if (branchesState.detachedHead) {
-          return branchesState.detachedHead;
+          return {
+            kind: 'detached',
+            ...branchesState.detachedHead
+          } as SelectedBranch;
+
         } else if (branchesState.currentBranch) {
           if (branchFilter.upstream) {
             if (!branchesState.currentBranch.upstream) return undefined;
             const upstreamName = branchesState.currentBranch.upstream!.fullName;
-            return branchesState.remoteBranches[branchesState.currentBranch.upstream.remote]?.find((branch) => branch.displayName === upstreamName);
+            return {
+              kind: 'branch',
+              ...branchesState.remoteBranches[branchesState.currentBranch.upstream.remote]?.find((branch) => branch.displayName === upstreamName)
+            } as SelectedBranch;
+
           } else {
-            return branchesState.currentBranch;
+            return {
+              kind: 'branch',
+              ...branchesState.currentBranch
+            } as SelectedBranch;
           }
         } else {
           return undefined;
@@ -45,13 +56,20 @@ export function useGitCommits(
         switch (branchFilter.value.type) {
           case 'current':
           case 'local':
-            return branchesState.localBranches.find((branch) => branch.name === branchFilter.value.name);
+            return {
+              kind: 'branch',
+              ...branchesState.localBranches.find((branch) => branch.name === branchFilter.value.name)
+            } as SelectedBranch;
+
           case 'remote':
             if (!branchesState.remoteBranches[branchFilter.value.remote!]) {
               return undefined;
             }
 
-            return branchesState.remoteBranches[branchFilter.value.remote!].find((branch) => branch.name === branchFilter.value.name);
+            return {
+              kind: 'branch',
+              ...branchesState.remoteBranches[branchFilter.value.remote!].find((branch) => branch.name === branchFilter.value.name)
+            } as SelectedBranch;
         }
     }
   }, [branchFilter, branchesState]);

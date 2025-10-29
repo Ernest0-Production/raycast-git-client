@@ -8,7 +8,7 @@ import { existsSync } from "fs";
 import { search, sortKind } from "fast-fuzzy";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
-import { RemoteWebPageActions } from "../actions/RemoteActions";
+import { FileAttachedLinksAction } from "../actions/StatusActions";
 
 const MAX_RESULTS = 60;
 
@@ -150,15 +150,14 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
                         />
 
                         <FileManagerActions filePath={absolutePath} />
-
-                        <RemoteWebPageActions
-                            {...context}
-                            file={context.branches.data.currentBranch?.upstream
-                                ? { path: context.filePath, ref: context.branches.data.currentBranch.upstream.name }
-                                : undefined}
-                        />
                     </ActionPanel.Section>
 
+                    <ActionPanel.Section>
+                        <FileAttachedLinksAction
+                            {...context}
+                            filePath={context.filePath}
+                        />
+                    </ActionPanel.Section>
                     <SharedActionsSection {...context} />
                 </ActionPanel>
             }

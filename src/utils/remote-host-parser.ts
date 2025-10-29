@@ -1,4 +1,14 @@
-import { RemoteProvider } from "../types";
+import { Icon, Image } from "@raycast/api";
+import { RemoteProvider, Remote, RemoteWebPage, Commit } from "../types";
+import { basename } from "path";
+
+type RemoteHostParserResult = Pick<Remote,
+    "provider"
+    | "organizationName"
+    | "repositoryName"
+    | "avatarUrl"
+    | "webPages"
+>;
 
 /**
  * Remote host parser.
@@ -6,7 +16,7 @@ import { RemoteProvider } from "../types";
  * @param url - The URL to parse.
  * @returns The parsed remote host info.
  */
-export function remoteHostParser(url: string) {
+export function remoteHostParser(url: string): RemoteHostParserResult {
     const parsed = parse(url);
 
     if (!parsed) {
@@ -34,121 +44,301 @@ export function remoteHostParser(url: string) {
 
 // --- provider-specific parsers ----------------------------------------------
 
-function githubParser(_url: string, parsed: URLComponents) {
+// GitHub provider parser
+function githubParser(_url: string, parsed: URLComponents): RemoteHostParserResult {
     const { protocol: scheme, hostname, path } = parsed;
 
     return {
         provider: "GitHub" as RemoteProvider,
-        get organizationName() {
+        organizationName: (() => {
             const match = path.match(/^([^\/]+)/);
             return match ? match[1] : undefined;
-        },
-        get repositoryName() {
+        })(),
+        repositoryName: (() => {
             const match = path.match(/\/([^\/]+)$/);
             return match ? match[1] : undefined;
-        },
-        get repositoryWebUrl() {
-            return `${scheme}://${hostname}/${path}`;
-        },
+        })(),
         get avatarUrl() {
-            return `${scheme}://${hostname}/${this.organizationName}.png?size=64`;
+            return this.organizationName ? `${scheme}://${hostname}/${this.organizationName}.png?size=64` : undefined;
         },
-        get pullRequestsListUrl() {
-            return `${scheme}://${hostname}/${path}/pulls`;
-        },
-        commitUrl(sha: string) {
-            return `${scheme}://${hostname}/${path}/commit/${encodeURIComponent(sha)}`;
-        },
-        createPullRequestUrl(branchName: string) {
-            return `${scheme}://${hostname}/${path}/compare/${encodeURIComponent(branchName)}?expand=1`;
-        },
-        fileUrl(filePath: string, ref: string) {
-            return `${scheme}://${hostname}/${path}/blob/${encodeURIComponent(ref)}/${filePath}`;
-        },
-        repositoryBranchUrl(branchName: string) {
-            return `${scheme}://${hostname}/${path}/tree/${encodeURIComponent(branchName)}`;
-        },
+        webPages: {
+            fileRelated(filePath: string, ref?: string): RemoteWebPage[] {
+                return [
+                    {
+                        title: "File Page",
+                        url: `${scheme}://${hostname}/${path}/blob/${encodeURIComponent(ref ?? "HEAD")}/${filePath}`,
+                        icon: Icon.Document,
+                    },
+                    {
+                        title: "Blame",
+                        url: `${scheme}://${hostname}/${path}/blame/${encodeURIComponent(ref ?? "HEAD")}/${filePath}`,
+                        icon: Icon.TextSelection,
+                    },
+                    {
+                        title: "File History",
+                        url: `${scheme}://${hostname}/${path}/commits/${encodeURIComponent(ref ?? "HEAD")}/${filePath}`,
+                        icon: Icon.Clock
+                    }
+                ]
+            },
+            commitRelated(commit: Pick<Commit, "hash" | "message">): RemoteWebPage[] {
+                const issueNumber = commit.message.match(/#(\d+)/)?.[1];
+
+                return [
+                    ...(issueNumber ? [{
+                        title: `${issueNumber}`,
+                        url: `${scheme}://${hostname}/${path}/issues/${issueNumber}`,
+                        icon: Icon.Hashtag,
+                    }] : []),
+                    {
+                        title: `Commit Page`,
+                        url: `${scheme}://${hostname}/${path}/commit/${encodeURIComponent(commit.hash)}`,
+                        icon: { source: "git-commit.svg" },
+                    },
+                    {
+                        title: `Builds`,
+                        url: `${scheme}://${hostname}/${path}/commit/${encodeURIComponent(commit.hash)}/checks`,
+                        icon: Icon.Hammer,
+                    }
+                ];
+            },
+            branchRelated(branch: string): RemoteWebPage[] {
+                return [
+                    {
+                        title: "Branch Page",
+                        url: `${scheme}://${hostname}/${path}/tree/${encodeURIComponent(branch)}`,
+                        icon: { source: "git-branch.svg" },
+                    },
+                    {
+                        title: "Create Pull Request",
+                        url: `${scheme}://${hostname}/${path}/compare/${encodeURIComponent(branch)}?expand=1`,
+                        icon: Icon.Plus,
+                    }
+                ];
+            },
+            tagRelated(tag: string): RemoteWebPage[] {
+                return [{
+                    title: `Release Page`,
+                    url: `${scheme}://${hostname}/${path}/releases/tag/${encodeURIComponent(tag)}`,
+                    icon: Icon.Tag,
+                }];
+            },
+            other(): RemoteWebPage[] {
+                return [
+                    {
+                        title: "Pull Requests",
+                        url: `${scheme}://${hostname}/${path}/pulls`,
+                        icon: { source: "git-merge.svg" },
+                    },
+                    {
+                        title: "Issues",
+                        url: `${scheme}://${hostname}/${path}/issues`,
+                        icon: Icon.Bug,
+                    },
+                    {
+                        title: "Home Page",
+                        url: `${scheme}://${hostname}/${path}`,
+                        icon: { source: "git-project.svg" },
+                    },
+                    {
+                        title: "Settings",
+                        url: `${scheme}://${hostname}/${path}/settings`,
+                        icon: Icon.Gear,
+                    }
+                ];
+            }
+        }
     };
 }
 
-function gitlabParser(_url: string, parsed: URLComponents) {
+function gitlabParser(_url: string, parsed: URLComponents): RemoteHostParserResult {
     const { protocol: scheme, hostname, path } = parsed;
 
     return {
         provider: "GitLab" as RemoteProvider,
-        get organizationName() {
+        organizationName: (() => {
             const match = path.match(/^([^\/]+)/);
             return match ? match[1] : undefined;
-        },
-        get repositoryName() {
+        })(),
+        repositoryName: (() => {
             const match = path.match(/\/([^\/]+)$/);
             return match ? match[1] : undefined;
-        },
-        get repositoryWebUrl() {
-            return `${scheme}://${hostname}/${path}`;
-        },
-        get avatarUrl() {
-            return undefined;
-        },
-        get pullRequestsListUrl() {
-            return `${scheme}://${hostname}/${path}/-/merge_requests`;
-        },
-        commitUrl(sha: string) {
-            return `${scheme}://${hostname}/${path}/-/commit/${encodeURIComponent(sha)}`;
-        },
-        createPullRequestUrl(branchName: string) {
-            return `${scheme}://${hostname}/${path}/-/merge_requests/new?merge_request[source_branch]=${encodeURIComponent(branchName)}`;
-        },
-        fileUrl(filePath: string, ref: string) {
-            return `${scheme}://${hostname}/${path}/-/blob/${encodeURIComponent(ref)}/${filePath}`;
-        },
-        repositoryBranchUrl(branchName: string) {
-            return `${scheme}://${hostname}/${path}/-/tree/${encodeURIComponent(branchName)}`;
-        },
+        })(),
+        avatarUrl: undefined,
+        webPages: {
+            fileRelated(filePath: string, ref?: string): RemoteWebPage[] {
+                return [
+                    {
+                        title: "File Page",
+                        url: `${scheme}://${hostname}/${path}/-/blob/${encodeURIComponent(ref ?? "HEAD")}/${filePath}`,
+                        icon: Icon.Document,
+                    },
+                    {
+                        title: "Blame",
+                        url: `${scheme}://${hostname}/${path}/-/blame/${encodeURIComponent(ref ?? "HEAD")}/${filePath}`,
+                        icon: Icon.TextSelection,
+                    },
+                    {
+                        title: "History",
+                        url: `${scheme}://${hostname}/${path}/-/commits/${encodeURIComponent(ref ?? "HEAD")}/${filePath}`,
+                        icon: Icon.Clock,
+                    }
+                ];
+            },
+            commitRelated(commit: Pick<Commit, "hash" | "message">): RemoteWebPage[] {
+                return [
+                    {
+                        title: `Commit Page`,
+                        url: `${scheme}://${hostname}/${path}/-/commit/${encodeURIComponent(commit.hash)}`,
+                        icon: { source: "git-commit.svg" },
+                    },
+                    {
+                        title: "Pipelines",
+                        url: `${scheme}://${hostname}/${path}/-/commit/${encodeURIComponent(commit.hash)}/pipelines`,
+                        icon: Icon.Hammer,
+                    }
+                ];
+            },
+            branchRelated(branch: string): RemoteWebPage[] {
+                return [
+                    {
+                        title: "Branch Page",
+                        url: `${scheme}://${hostname}/${path}/-/tree/${encodeURIComponent(branch)}`,
+                        icon: { source: "git-branch.svg" },
+                    },
+                    {
+                        title: "Create Merge Request",
+                        url: `${scheme}://${hostname}/${path}/-/merge_requests/new?merge_request[source_branch]=${encodeURIComponent(branch)}`,
+                        icon: Icon.Plus,
+                    }
+                ];
+            },
+            tagRelated(tag: string): RemoteWebPage[] {
+                return [{
+                    title: "Release Page",
+                    url: `${scheme}://${hostname}/${path}/-/tags/${encodeURIComponent(tag)}`,
+                    icon: Icon.Tag,
+                }];
+            },
+            other(): RemoteWebPage[] {
+                return [
+                    {
+                        title: "Merge Requests",
+                        url: `${scheme}://${hostname}/${path}/-/merge_requests`,
+                        icon: { source: "git-merge.svg" },
+                    },
+                    {
+                        title: "Home Page",
+                        url: `${scheme}://${hostname}/${path}`,
+                        icon: { source: "git-project.svg" },
+                    },
+                    {
+                        title: "Settings",
+                        url: `${scheme}://${hostname}/${path}/-/settings`,
+                        icon: Icon.Gear,
+                    }
+                ];
+            }
+        }
     };
 }
 
-function giteaParser(_url: string, parsed: URLComponents) {
+function giteaParser(_url: string, parsed: URLComponents): RemoteHostParserResult {
     const { protocol: scheme, hostname, path } = parsed;
 
     return {
         provider: "Gitea" as RemoteProvider,
-        get organizationName() {
+        organizationName: (() => {
             const match = path.match(/^([^\/]+)/);
             return match ? match[1] : undefined;
-        },
-        get repositoryName() {
+        })(),
+        repositoryName: (() => {
             const match = path.match(/\/([^\/]+)$/);
             return match ? match[1] : undefined;
-        },
-        get repositoryWebUrl() {
-            return `${scheme}://${hostname}/${path}`;
-        },
+        })(),
         get avatarUrl() {
-            if (!this.organizationName) return undefined;
-            return `${scheme}://${hostname}/${this.organizationName}.png`;
+            return this.organizationName ? `${scheme}://${hostname}/${this.organizationName}.png` : undefined;
         },
-        get pullRequestsListUrl() {
-            return `${scheme}://${hostname}/${path}/pulls`;
-        },
-        commitUrl(sha: string) {
-            return `${scheme}://${hostname}/${path}/commit/${encodeURIComponent(sha)}`;
-        },
-        createPullRequestUrl(_branchName: string) {
-            return undefined;
-        },
-        fileUrl(filePath: string, ref: string) {
-            return `${scheme}://${hostname}/${path}/src/branch/${encodeURIComponent(ref)}/${filePath}`;
-        },
-        repositoryBranchUrl(branchName: string) {
-            return `${scheme}://${hostname}/${path}/src/branch/${encodeURIComponent(branchName)}`;
-        },
+        webPages: {
+            fileRelated(filePath: string, ref?: string): RemoteWebPage[] {
+                return [
+                    {
+                        title: "File Page",
+                        url: `${scheme}://${hostname}/${path}/src/commit/${encodeURIComponent(ref ?? "HEAD")}/${filePath}`,
+                        icon: Icon.Document,
+                    },
+                    {
+                        title: "Blame",
+                        url: `${scheme}://${hostname}/${path}/blame/commit/${encodeURIComponent(ref ?? "HEAD")}/${filePath}`,
+                        icon: Icon.TextSelection,
+                    },
+                    {
+                        title: "History",
+                        url: `${scheme}://${hostname}/${path}/commits/commit/${encodeURIComponent(ref ?? "HEAD")}/${filePath}`,
+                        icon: Icon.Clock,
+                    }
+                ];
+            },
+            commitRelated(commit: Pick<Commit, "hash" | "message">): RemoteWebPage[] {
+                const issueNumber = commit.message.match(/#(\d+)/)?.[1];
+
+                return [
+                    ...(issueNumber ? [{
+                        title: `${issueNumber}`,
+                        url: `${scheme}://${hostname}/${path}/issues/${issueNumber}`,
+                        icon: Icon.Hashtag,
+                    }] : []),
+                    {
+                        title: `Commit Page`,
+                        url: `${scheme}://${hostname}/${path}/commit/${encodeURIComponent(commit.hash)}`,
+                        icon: { source: "git-commit.svg" },
+                    }
+                ];
+            },
+            branchRelated(branch: string): RemoteWebPage[] {
+                return [{
+                    title: "Branch Page",
+                    url: `${scheme}://${hostname}/${path}/src/branch/${encodeURIComponent(branch)}`,
+                    icon: { source: "git-branch.svg" },
+                }];
+            },
+            tagRelated(_tag: string): RemoteWebPage[] {
+                return [{
+                    title: "Release Page",
+                    url: `${scheme}://${hostname}/${path}/releases/tag/${encodeURIComponent(_tag)}`,
+                    icon: Icon.Tag,
+                }];
+            },
+            other(): RemoteWebPage[] {
+                return [
+                    {
+                        title: "Issues",
+                        url: `${scheme}://${hostname}/${path}/issues`,
+                        icon: Icon.Bug,
+                    },
+                    {
+                        title: "Pull Requests",
+                        url: `${scheme}://${hostname}/${path}/pulls`,
+                        icon: { source: "git-merge.svg" },
+                    },
+                    {
+                        title: "Home Page",
+                        url: `${scheme}://${hostname}/${path}`,
+                        icon: { source: "git-project.svg" },
+                    },
+                    {
+                        title: "Settings",
+                        url: `${scheme}://${hostname}/${path}/settings`,
+                        icon: Icon.Gear,
+                    }
+                ];
+            }
+        }
     };
 }
 
-function bitbucketParser(_url: string, parsed: URLComponents) {
+function bitbucketParser(_url: string, parsed: URLComponents): RemoteHostParserResult {
     const { protocol: scheme, hostname, path } = parsed;
-
     const isSelfHosted = hostname === "bitbucket.org";
 
     const repoBase = (() => {
@@ -165,58 +355,103 @@ function bitbucketParser(_url: string, parsed: URLComponents) {
 
     return {
         provider: "Bitbucket" as RemoteProvider,
-        get organizationName() {
-            const m = path.match(/^([^\/]+)/);
-            return m ? m[1] : undefined;
-        },
-        get repositoryName() {
+        organizationName: (() => {
+            const match = path.match(/^([^\/]+)/);
+            return match ? match[1] : undefined;
+        })(),
+        repositoryName: (() => {
             if (isSelfHosted) {
-                const m = path.match(/\/([^\/]+)$/);
-                return m ? m[1] : undefined;
+                const match = path.match(/\/([^\/]+)$/);
+                return match ? match[1] : undefined;
             }
-            const m = path.match(/^([^\/]+)\/([^\/]+)/);
-            return m ? m[2] : undefined;
-        },
-        get repositoryWebUrl() {
-            return repoBase;
-        },
+            const match = path.match(/^([^\/]+)\/([^\/]+)/);
+            return match ? match[2] : undefined;
+        })(),
         get avatarUrl() {
             if (isSelfHosted) {
                 return undefined;
             }
-            return `${scheme}://${hostname}/projects/${this.organizationName}/avatar.png?s=64`;
+            return this.organizationName ? `${scheme}://${hostname}/projects/${this.organizationName}/avatar.png?s=64` : undefined;
         },
-        get pullRequestsListUrl() {
-            return repoBase ? `${repoBase}/pull-requests` : undefined;
-        },
-        commitUrl(sha: string) {
-            return repoBase ? `${repoBase}/commits/${encodeURIComponent(sha)}` : undefined;
-        },
-        createPullRequestUrl(branchName: string) {
-            if (!repoBase) return undefined;
-            if (repoBase.includes("/projects/")) {
-                return `${repoBase}/pull-requests?create&sourceBranch=${encodeURIComponent(`refs/heads/${branchName}`)}`;
+        webPages: {
+            fileRelated(filePath: string, ref?: string): RemoteWebPage[] {
+                if (!repoBase) return [];
+                const fileUrl = repoBase.includes("/projects/")
+                    ? `${repoBase}/browse/${filePath}?at=${encodeURIComponent(ref ?? "HEAD")}`
+                    : `${repoBase}/src/${encodeURIComponent(ref ?? "HEAD")}/${filePath}`;
+
+                return [{
+                    title: "File Page",
+                    url: fileUrl,
+                    icon: Icon.Document,
+                }];
+            },
+            commitRelated(commit: Pick<Commit, "hash" | "message">): RemoteWebPage[] {
+                if (!repoBase) return [];
+                return [
+                    {
+                        title: `Commit Page`,
+                        url: `${repoBase}/commits/${encodeURIComponent(commit.hash)}`,
+                        icon: { source: "git-commit.svg" },
+                    },
+                    {
+                        title: "Builds",
+                        url: `${repoBase}/builds?at=${encodeURIComponent(commit.hash)}`,
+                        icon: Icon.Hammer,
+                    }
+                ];
+            },
+            branchRelated(branch: string): RemoteWebPage[] {
+                if (!repoBase) return [];
+                const branchUrl = repoBase.includes("/projects/")
+                    ? `${repoBase}/browse?at=${encodeURIComponent(`refs/heads/${branch}`)}`
+                    : `${repoBase}/src/${encodeURIComponent(branch)}`;
+
+                const createPrUrl = repoBase.includes("/projects/")
+                    ? `${repoBase}/pull-requests?create&sourceBranch=${encodeURIComponent(`refs/heads/${branch}`)}`
+                    : `${repoBase}/pull-requests/new?source=${encodeURIComponent(branch)}`;
+
+                return [
+                    {
+                        title: "Branch Page",
+                        url: branchUrl,
+                        icon: { source: "git-branch.svg" },
+                    },
+                    {
+                        title: "Create Pull Request",
+                        url: createPrUrl,
+                        icon: Icon.Plus,
+                    }
+                ];
+            },
+            tagRelated(_tag: string): RemoteWebPage[] {
+                return [];
+            },
+            other(): RemoteWebPage[] {
+                if (!repoBase) return [];
+                return [
+                    {
+                        title: "Pull Requests",
+                        url: `${repoBase}/pull-requests`,
+                        icon: { source: "git-merge.svg" },
+                    },
+                    {
+                        title: "Home Page",
+                        url: repoBase,
+                        icon: { source: "git-project.svg" },
+                    },
+                    {
+                        title: "Settings",
+                        url: `${repoBase}/settings`,
+                        icon: Icon.Gear,
+                    }
+                ];
             }
-            return `${repoBase}/pull-requests/new?source=${encodeURIComponent(branchName)}`;
-        },
-        fileUrl(filePath: string, ref: string) {
-            if (!repoBase) return undefined;
-            if (repoBase.includes("/projects/")) {
-                return `${repoBase}/browse/${filePath}?at=${encodeURIComponent(ref)}`;
-            }
-            return `${repoBase}/src/${encodeURIComponent(ref)}/${filePath}`;
-        },
-        repositoryBranchUrl(branchName: string) {
-            if (!repoBase) return undefined;
-            if (repoBase.includes("/projects/")) {
-                return `${repoBase}/browse?at=${encodeURIComponent(`refs/heads/${branchName}`)}`;
-            }
-            return `${repoBase}/src/${encodeURIComponent(branchName)}`;
         },
     };
 }
 
-function azureDevopsParser(_url: string, parsed: URLComponents) {
+function azureDevopsParser(_url: string, parsed: URLComponents): RemoteHostParserResult {
     const { hostname, path } = parsed;
 
     const repoBase = (() => {
@@ -250,7 +485,7 @@ function azureDevopsParser(_url: string, parsed: URLComponents) {
 
     return {
         provider: "Azure DevOps" as RemoteProvider,
-        get organizationName() {
+        organizationName: (() => {
             if (hostname === "ssh.dev.azure.com" || hostname === "vs-ssh.visualstudio.com") {
                 const pathPattern = path.startsWith("v3/")
                     ? /^v3\/(?<org>[^\/]+)\/(?<project>[^\/]+)\/(?<repo>[^\/]+)$/
@@ -264,75 +499,87 @@ function azureDevopsParser(_url: string, parsed: URLComponents) {
                 return match?.groups?.org;
             }
             if (hostname.endsWith(".visualstudio.com")) {
-                const m = hostname.match(/^([^\.]+)\.visualstudio\.com$/);
-                return m ? m[1] : undefined;
+                const match = hostname.match(/^([^\.]+)\.visualstudio\.com$/);
+                return match ? match[1] : undefined;
             }
             return undefined;
-        },
-        get repositoryName() {
+        })(),
+        repositoryName: (() => {
             if (hostname === "ssh.dev.azure.com" || hostname === "vs-ssh.visualstudio.com") {
-                const m = path.match(/^(?:v3\/)?[^\/]+\/[^\/]+\/([^\/]+)$/);
-                return m ? m[1] : undefined;
+                const match = path.match(/^(?:v3\/)?[^\/]+\/[^\/]+\/([^\/]+)$/);
+                return match ? match[1] : undefined;
             }
-            const m = path.match(/_git\/([^\/]+)/);
-            return m ? m[1] : undefined;
-        },
-        get repositoryWebUrl() {
-            return repoBase;
-        },
-        get avatarUrl() {
-            return undefined;
-        },
-        get pullRequestsListUrl() {
-            return repoBase ? `${repoBase}/pullrequests` : undefined;
-        },
-        commitUrl(sha: string) {
-            return repoBase ? `${repoBase}/commit/${encodeURIComponent(sha)}` : undefined;
-        },
-        createPullRequestUrl(branchName: string) {
-            return repoBase ? `${repoBase}/pullrequestcreate?sourceRef=${encodeURIComponent(`refs/heads/${branchName}`)}` : undefined;
-        },
-        fileUrl(filePath: string, ref: string) {
-            return repoBase ? `${repoBase}?path=/${filePath}&version=GB${encodeURIComponent(ref)}` : undefined;
-        },
-        repositoryBranchUrl(branchName: string) {
-            return repoBase ? `${repoBase}?version=GB${encodeURIComponent(branchName)}` : undefined;
+            const match = path.match(/_git\/([^\/]+)/);
+            return match ? match[1] : undefined;
+        })(),
+        avatarUrl: undefined,
+        webPages: {
+            fileRelated(filePath: string, ref?: string): RemoteWebPage[] {
+                if (!repoBase) return [];
+                return [{
+                    title: "File Page",
+                    url: `${repoBase}?path=/${filePath}&version=GB${encodeURIComponent(ref ?? "HEAD")}`,
+                    icon: Icon.Document,
+                }];
+            },
+            commitRelated(commit: Pick<Commit, "hash" | "message">): RemoteWebPage[] {
+                if (!repoBase) return [];
+                return [{
+                    title: `Commit Page`,
+                    url: `${repoBase}/commit/${encodeURIComponent(commit.hash)}`,
+                    icon: { source: "git-commit.svg" },
+                }];
+            },
+            branchRelated(branch: string): RemoteWebPage[] {
+                if (!repoBase) return [];
+                return [
+                    {
+                        title: "Branch Page",
+                        url: `${repoBase}?version=GB${encodeURIComponent(branch)}`,
+                        icon: { source: "git-branch.svg" },
+                    },
+                    {
+                        title: "Create Pull Request",
+                        url: `${repoBase}/pullrequestcreate?sourceRef=${encodeURIComponent(`refs/heads/${branch}`)}`,
+                        icon: Icon.Plus,
+                    }
+                ];
+            },
+            tagRelated(_tag: string): RemoteWebPage[] {
+                return [];
+            },
+            other(): RemoteWebPage[] {
+                if (!repoBase) return [];
+                return [
+                    {
+                        title: "Pull Requests",
+                        url: `${repoBase}/pullrequests`,
+                        icon: { source: "git-merge.svg" },
+                    },
+                    {
+                        title: "Home Page",
+                        url: repoBase,
+                        icon: { source: "git-project.svg" },
+                    }
+                ];
+            }
         },
     };
 }
 
-function unknownParser(_url: string, parsed?: URLComponents) {
-    const { protocol: scheme, hostname, path } = parsed || {};
-
+function unknownParser(_url: string, parsed?: URLComponents): RemoteHostParserResult {
     return {
         provider: undefined as RemoteProvider,
-        get organizationName() {
-            return undefined;
-        },
-        get repositoryWebUrl() {
-            return scheme && hostname && path ? `${scheme}://${hostname}/${path}` : undefined;
-        },
-        get repositoryName() {
-            return undefined;
-        },
-        get avatarUrl() {
-            return undefined;
-        },
-        get pullRequestsListUrl() {
-            return undefined;
-        },
-        commitUrl() {
-            return undefined;
-        },
-        createPullRequestUrl() {
-            return undefined;
-        },
-        fileUrl() {
-            return undefined;
-        },
-        repositoryBranchUrl() {
-            return undefined;
-        },
+        organizationName: undefined,
+        repositoryName: undefined,
+        avatarUrl: undefined,
+        webPages: {
+            fileRelated: () => [],
+            commitRelated: () => [],
+            branchRelated: () => [],
+            tagRelated: () => [],
+            other: () => []
+        }
     };
 }
 

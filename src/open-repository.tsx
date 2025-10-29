@@ -29,6 +29,10 @@ export type BranchFilter =
   { kind: 'current', upstream: boolean } |
   { kind: 'branch', value: Pick<Branch, 'name' | 'type' | 'remote'> }
 
+export type SelectedBranch =
+  ({ kind: 'branch' } & Branch) |
+  ({ kind: 'detached' } & DetachedHead)
+
 export type RepositoryContext = {
   gitManager: GitManager;
   remotes: {
@@ -50,7 +54,7 @@ export type RepositoryContext = {
   };
   commits: {
     data: Commit[];
-    selectedBranch: Branch | DetachedHead | undefined;
+    selectedBranch?: SelectedBranch;
     filter: BranchFilter;
     isLoading: boolean;
     error: Error | undefined;

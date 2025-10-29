@@ -56,21 +56,20 @@ export function useRepositoriesList() {
 
   const visitRepository = useCallback(
     async (repositoryPath: string) => {
+      const index = repositories.findIndex((repo) => repo.path === repositoryPath);
+
+      if (index === -1) {
+        return addRepository(repositoryPath);
+      }
+
       const stats = await detectRepositoryLanguages(repositoryPath);
-
-      setRepositories((currentRepositories) => {
-        return currentRepositories.map((repo) => {
-          if (repo.path !== repositoryPath) return repo;
-
-          return {
-            ...repo,
-            lastOpenedAt: Date.now(),
-            languageStats: stats
-          }
-        })
-      });
+      setRepositories((currentRepositories) => currentRepositories.with(index, {
+        ...currentRepositories[index],
+        lastOpenedAt: Date.now(),
+        languageStats: stats,
+      }));
     },
-    [setRepositories],
+    [repositories, setRepositories],
   );
 
   /**
