@@ -32,9 +32,15 @@ The Git extension allows:
 
 ## 🎁 Extra features:
 
-- 🔗 [**Issue Link** detection in commit messages](#-issue-link-detection)
+- 🔗 [**Issue Link** detection in commit messages](#-issue-link-detection) and most common **web page shortcuts of remote host** like:
+  - file blame & history
+  - pull requests
+  - commit details and builds
+  - tag release page
+  - linked `#issue`
+  - and more...
+  ![Issue Link](./media/attached-links.png)
 
-- 🌐 Open common **web pages of remote host**
 - ✨ [Generate **AI commit messages** with multiple presets](#-custom-ai-prompt-presents-for-commit-messages)
 
 - 🔄 Interactive rebase editor
@@ -92,7 +98,7 @@ You can parse information from commit messages to create links to specific issue
   - `Regex` should include a capture group for the issue number
   - `URL Template` should contain `@key` placeholder where the regex match should be inserted\
 
-3. Open `commits` tab and actions menu to find issue links in commit messages.
+3. Open `commits` tab and run action `Attached Links` that opens submenu with issue links in commit messages.
   ![Issue Link](./media/issue-tracker-detection.png)
 
 4. Profit 🎉
