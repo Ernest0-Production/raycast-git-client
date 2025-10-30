@@ -534,7 +534,7 @@ export function FileAttachedLinksAction(context: RepositoryContext & {
 
     return (
         <ActionPanel.Submenu
-            title="Attached Links"
+            title="Open Link to"
             icon={Icon.Link}
             shortcut={{ modifiers: ["cmd"], key: "l" }}
         >
