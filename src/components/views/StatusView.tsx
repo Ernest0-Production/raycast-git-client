@@ -241,8 +241,8 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
                 <ToggleDetailAction controller={context.toggleController} />
                 <FileManagerActions filePath={context.file.absolutePath} />
                 <CopyToClibpoardMenuAction contents={[
-                  { title: "Relative File Path", content: context.file.relativePath },
-                  { title: "Absolute File Path", content: context.file.absolutePath },
+                  { title: "Relative Path", content: context.file.relativePath, icon: Icon.Document },
+                  { title: "Absolute Path", content: context.file.absolutePath, icon: Icon.Document },
                 ]} />
               </>
             )}
@@ -257,8 +257,8 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
                 <ToggleDetailAction controller={context.toggleController} />
                 <FileManagerActions filePath={context.file.absolutePath} />
                 <CopyToClibpoardMenuAction contents={[
-                  { title: "Relative File Path", content: context.file.relativePath },
-                  { title: "Absolute File Path", content: context.file.absolutePath },
+                  { title: "Relative Path", content: context.file.relativePath, icon: Icon.Document },
+                  { title: "Absolute Path", content: context.file.absolutePath, icon: Icon.Document },
                 ]} />
                 {!context.file.isConflicted && (
                   <FileDiscardAction {...context} />

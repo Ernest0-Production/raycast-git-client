@@ -1,4 +1,4 @@
-import { Action, Icon, confirmAlert, Alert, ActionPanel, useNavigation, showToast, Toast, Form, List, Keyboard } from "@raycast/api";
+import { Action, Icon, confirmAlert, Alert, ActionPanel, useNavigation, showToast, Toast, Form, List, Keyboard, Color } from "@raycast/api";
 import { Commit, Tag } from "../../types";
 import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
@@ -75,7 +75,7 @@ export function TagRemoveAction(context: RepositoryContext & { tagName: string }
       <Action
         title={`Remove Tag`}
         onAction={() => handleRemoveTag(undefined)}
-        icon={Icon.Trash}
+        icon={{ source: Icon.Trash, tintColor: Color.Red }}
         style={Action.Style.Destructive}
         shortcut={{ modifiers: ["ctrl"], key: "x" }}
       />
@@ -84,8 +84,8 @@ export function TagRemoveAction(context: RepositoryContext & { tagName: string }
 
   return (
     <ActionPanel.Submenu
-      title={`Remove Tag from'`}
-      icon={Icon.Trash}
+      title={`Remove Tag from`}
+      icon={{ source: Icon.Trash, tintColor: Color.Red }}
       shortcut={{ modifiers: ["ctrl"], key: "x" }}
     >
       <Action
@@ -98,7 +98,6 @@ export function TagRemoveAction(context: RepositoryContext & { tagName: string }
           key={`${remote}:remove-tag`}
           title={`Local and ${remote}`}
           onAction={() => handleRemoveTag(remote)}
-          style={Action.Style.Destructive}
           icon={RemoteHostIcon(context.remotes.data[remote])}
         />
       ))}
@@ -193,8 +192,8 @@ export function TagsPushAction(context: RepositoryContext) {
 export function TagRenameAction(context: RepositoryContext & { tagName: string }) {
   return (
     <Action.Push
-      title="Rename Tag"
-      icon={Icon.Pencil}
+      title="Rename"
+      icon={{ source: Icon.Pencil, tintColor: Color.Yellow }}
       target={<TagRenameForm {...context} />}
       shortcut={{ modifiers: ["cmd"], key: "e" }}
     />

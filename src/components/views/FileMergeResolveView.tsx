@@ -205,8 +205,8 @@ function ConflictSegmentOptionItem({
           <ActionPanel.Section>
             <FileManagerActions filePath={filePath} />
             <CopyToClibpoardMenuAction contents={[
-              { title: "File Path", content: `${filePath}:${segment.startLine}` },
-              { title: "Selected Content", content: content },
+              { title: "File Path", content: `${filePath}:${segment.startLine}`, icon: Icon.Document },
+              { title: "Selected Content", content: content, icon: Icon.Text },
             ]} />
           </ActionPanel.Section>
         </ActionPanel>

@@ -117,8 +117,10 @@ function RemoteListItem(context: RepositoryContext & NavigationContext & {
             />
 
             <CopyToClibpoardMenuAction contents={[
-              { title: "Fetch URL", content: context.remote.fetchUrl },
-              ...(context.remote.pushUrl !== context.remote.fetchUrl ? [{ title: "Push URL", content: context.remote.pushUrl }] : []),
+              { title: "Fetch URL", content: context.remote.fetchUrl, icon: Icon.Link },
+              ...(context.remote.pushUrl !== context.remote.fetchUrl ? [
+                { title: "Push URL", content: context.remote.pushUrl, icon: Icon.Link }
+              ] : []),
             ]} />
             <RemoteDeleteAction {...context} />
           </ActionPanel.Section>

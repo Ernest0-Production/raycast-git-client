@@ -214,13 +214,13 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
           </ActionPanel.Section>
           <ActionPanel.Section>
             <CopyToClibpoardMenuAction contents={[
-              { title: "Relative File Path", content: context.file.path },
-              { title: "Absolute File Path", content: absolutePath },
-              { title: "Commit Hash", content: context.commit.hash },
-              { title: "Short Hash", content: context.commit.shortHash },
-              { title: "Commit Message", content: context.commit.message },
-              { title: "Author Name", content: context.commit.author },
-              { title: "Author Email", content: context.commit.authorEmail },
+              { title: "Relative Path", content: context.file.path, icon: Icon.Document },
+              { title: "Absolute Path", content: absolutePath, icon: Icon.Document },
+              { title: "Commit Hash", content: context.commit.hash, icon: Icon.Hashtag },
+              { title: "Short Hash", content: context.commit.shortHash, icon: Icon.Hashtag },
+              { title: "Commit Message", content: context.commit.message, icon: Icon.Message },
+              { title: "Author Name", content: context.commit.author, icon: Icon.Person },
+              { title: "Author Email", content: context.commit.authorEmail, icon: Icon.Envelope },
             ]} />
             <FileAttachedLinksAction
               {...context}

@@ -336,7 +336,7 @@ export function BranchInteractiveRebaseAction(context: RepositoryContext & Navig
   return (
     <Action.Push
       title="Interactive Rebase from Here"
-      icon={`arrow-rebase.svg`}
+      icon={{ source: `arrow-rebase.svg`, tintColor: Color.Blue }}
       target={
         <InteractiveRebaseEditorView
           {...context}
@@ -354,7 +354,7 @@ export function BranchInteractiveRebaseAction(context: RepositoryContext & Navig
 export function BranchCreateAction(context: RepositoryContext) {
   return (
     <Action.Push
-      title="Create Branch"
+      title="Create New Branch"
       target={<BranchCreateForm {...context} />}
       icon={Icon.Plus}
       shortcut={{ modifiers: ["cmd"], key: "n" }}
@@ -370,7 +370,7 @@ export function BranchRenameAction(context: RepositoryContext & NavigationContex
     <Action.Push
       title="Rename"
       target={<BranchRenameForm {...context} />}
-      icon={Icon.Pencil}
+      icon={{ source: Icon.Pencil, tintColor: Color.Yellow }}
       shortcut={{ modifiers: ["cmd"], key: "e" }}
     />
   );

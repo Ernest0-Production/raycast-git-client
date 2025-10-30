@@ -114,8 +114,8 @@ function TagListItem(context: RepositoryContext & NavigationContext & {
             <TagCheckoutAction tagName={context.tag.name} {...context} />
             <TagRenameAction tagName={context.tag.name} {...context} />
             <CopyToClibpoardMenuAction contents={[
-              { title: "Tag Name", content: context.tag.name },
-              { title: "Commit Hash", content: context.tag.commitHash },
+              { title: "Tag Name", content: context.tag.name, icon: Icon.Tag },
+              { title: "Commit Hash", content: context.tag.commitHash, icon: Icon.Hashtag },
             ]} />
             <TagRemoveAction tagName={context.tag.name} {...context} />
           </ActionPanel.Section>

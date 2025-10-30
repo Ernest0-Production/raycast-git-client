@@ -152,8 +152,8 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
 
                         <FileManagerActions filePath={absolutePath} />
                         <CopyToClibpoardMenuAction contents={[
-                            { title: "Relative File Path", content: context.filePath },
-                            { title: "Absolute File Path", content: absolutePath },
+                            { title: "Relative Path", content: context.filePath, icon: Icon.Document },
+                            { title: "Absolute Path", content: absolutePath, icon: Icon.Document },
                         ]} />
                     </ActionPanel.Section>
 

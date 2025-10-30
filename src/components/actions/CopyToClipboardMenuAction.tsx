@@ -12,7 +12,10 @@ export function CopyToClibpoardMenuAction({ contents }: { contents: Action.CopyT
         return <Action.CopyToClipboard
             shortcut={{ modifiers: ["cmd"], key: "c" }}
             {...contents[0]}
+            // Add "Copy" to the title because submenu title is skipped
             title={`Copy ${contents[0].title}`}
+            // Ignore custom icon if passed, to save original action icon
+            icon={Icon.Clipboard}
         />;
     }
 
@@ -23,7 +26,10 @@ export function CopyToClibpoardMenuAction({ contents }: { contents: Action.CopyT
             shortcut={{ modifiers: ["cmd"], key: "c" }}
         >
             {contents.map((content, index) => (
-                <Action.CopyToClipboard key={index} {...content} />
+                <Action.CopyToClipboard
+                    key={index}
+                    {...content}
+                />
             ))}
         </ActionPanel.Submenu>
     );

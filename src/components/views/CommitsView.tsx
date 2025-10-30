@@ -281,16 +281,26 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
           <ActionPanel.Section>
             <CommitAttachedLinksAction {...context} />
             <CopyToClibpoardMenuAction contents={[
-              { title: "Commit Hash", content: context.commit.hash },
-              { title: "Short Hash", content: context.commit.shortHash },
-              { title: "Commit Message", content: context.commit.message },
-              { title: "Author Name", content: context.commit.author },
-              { title: "Author Email", content: context.commit.authorEmail },
-              ...(context.commits.filter.kind === "branch" ? [{ title: "Branch Name", content: context.commits.filter.value.name }] : []),
-              ...(context.commit.currentBranchName ? [{ title: `Branch "${context.commit.currentBranchName}"`, content: context.commit.currentBranchName }] : []),
-              ...(context.commit.localBranches.map((branch) => ({ title: `Branch "${branch}"`, content: branch }))),
-              ...(context.commit.remoteBranches.map((branch) => ({ title: `Branch "${branch.fullName}"`, content: branch.fullName }))),
-              ...(context.commit.tags.map((tag) => ({ title: `Tag "${tag}"`, content: tag }))),
+              { title: "Commit Hash", content: context.commit.hash, icon: Icon.Hashtag },
+              { title: "Short Hash", content: context.commit.shortHash, icon: Icon.Hashtag },
+              { title: "Commit Message", content: context.commit.message, icon: Icon.Message },
+              { title: "Author Name", content: context.commit.author, icon: Icon.Person },
+              { title: "Author Email", content: context.commit.authorEmail, icon: Icon.Envelope },
+              ...(context.commits.filter.kind === "branch" ? [
+                { title: "Branch Name", content: context.commits.filter.value.name, icon: `git-branch.svg` }
+              ] : []),
+              ...(context.commit.currentBranchName ? [
+                { title: `Branch "${context.commit.currentBranchName}"`, content: context.commit.currentBranchName, icon: `git-branch.svg` }
+              ] : []),
+              ...(context.commit.localBranches.map((branch) => (
+                { title: `Branch "${branch}"`, content: branch, icon: `git-branch.svg` }
+              ))),
+              ...(context.commit.remoteBranches.map((branch) => (
+                { title: `Branch "${branch.fullName}"`, content: branch.fullName, icon: `git-branch.svg` }
+              ))),
+              ...(context.commit.tags.map((tag) => (
+                { title: `Tag "${tag}"`, content: tag, icon: Icon.Tag }
+              ))),
             ]} />
           </ActionPanel.Section>
 

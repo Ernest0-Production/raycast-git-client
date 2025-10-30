@@ -19,6 +19,7 @@ import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
 import { RemoteFetchAction, RemotePullAction } from "../actions/RemoteActions";
 import { CopyToClibpoardMenuAction } from "../actions/CopyToClipboardMenuAction";
+import { TagCreateAction } from "../actions/TagActions";
 
 export function BranchesView(context: RepositoryContext & NavigationContext) {
   return (
@@ -201,61 +202,100 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
       ].filter((keyword): keyword is string => Boolean(keyword))}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title={context.branch.displayName}>
-            {/* Actions for current branch */}
-            {context.branch.type === "current" && (
-              <>
+          {/* Actions for current branch */}
+          {context.branch.type === "current" && (
+            <>
+              <ActionPanel.Section title={context.branch.displayName}>
                 <RemotePullAction {...context} />
                 <BranchShowCommitsAction {...context} />
+              </ActionPanel.Section>
+
+              <ActionPanel.Section>
                 <BranchPushAction {...context} />
                 <BranchPushForceAction {...context} />
+              </ActionPanel.Section>
+
+              <ActionPanel.Section>
                 <BranchRenameAction {...context} />
                 <CopyToClibpoardMenuAction contents={[
-                  { title: "Branch Name", content: context.branch.displayName },
-                  ...(context.branch.upstream ? [{ title: "Upstream Name", content: context.branch.upstream.fullName }] : []),
+                  { title: "Branch Name", content: context.branch.displayName, icon: icon },
+                  ...(context.branch.upstream ? [
+                    { title: "Upstream Name", content: context.branch.upstream.fullName, icon: RemoteHostIcon(context.remotes.data[context.branch.upstream.remote]) }
+                  ] : []),
                 ]} />
-              </>
-            )}
+                <BranchAttachedLinksAction {...context} />
+              </ActionPanel.Section>
+            </>
+          )}
 
-            {/* Actions for local branches */}
-            {context.branch.type === "local" && (
-              <>
+          {/* Actions for local branches */}
+          {context.branch.type === "local" && (
+            <>
+              <ActionPanel.Section title={context.branch.displayName}>
                 <BranchCkeckoutAction {...context} />
                 <BranchShowCommitsAction {...context} />
+              </ActionPanel.Section>
+
+              <ActionPanel.Section>
                 <BranchPushAction {...context} />
                 <BranchPushForceAction {...context} />
+              </ActionPanel.Section>
+
+              <ActionPanel.Section>
                 <BranchRebaseAction {...context} />
+                <BranchInteractiveRebaseAction {...context} />
                 <BranchMergeAction {...context} />
+              </ActionPanel.Section>
+
+              <ActionPanel.Section>
                 <BranchRenameAction {...context} />
                 <CopyToClibpoardMenuAction contents={[
-                  { title: "Branch Name", content: context.branch.displayName },
-                  ...(context.branch.upstream ? [{ title: "Upstream Name", content: context.branch.upstream.fullName }] : []),
+                  { title: "Branch Name", content: context.branch.displayName, icon: icon },
+                  ...(context.branch.upstream ? [
+                    { title: "Upstream Name", content: context.branch.upstream.fullName, icon: RemoteHostIcon(context.remotes.data[context.branch.upstream.remote]) }
+                  ] : []),
                 ]} />
+                <BranchAttachedLinksAction {...context} />
                 <BranchDeleteAction {...context} />
-                <BranchInteractiveRebaseAction {...context} />
-              </>
-            )}
+              </ActionPanel.Section>
+            </>
+          )}
 
-            {/* Actions for remote branches */}
-            {context.branch.type === "remote" && (
-              <>
+          {/* Actions for remote branches */}
+          {context.branch.type === "remote" && (
+            <>
+              <ActionPanel.Section title={context.branch.displayName}>
                 <BranchCkeckoutAction {...context} />
                 <BranchShowCommitsAction {...context} />
+              </ActionPanel.Section>
+
+              <ActionPanel.Section>
                 <BranchPushAction {...context} />
+                <BranchPushForceAction {...context} />
+              </ActionPanel.Section>
+
+              <ActionPanel.Section>
                 <CopyToClibpoardMenuAction contents={[
                   { title: "Branch Name", content: context.branch.displayName },
                 ]} />
                 <BranchDeleteAction {...context} />
-              </>
-            )}
+              </ActionPanel.Section>
+            </>
+          )}
+
+          <ActionPanel.Section>
           </ActionPanel.Section>
 
           <ActionPanel.Section>
-            <BranchAttachedLinksAction {...context} />
+            <BranchCreateAction {...context} />
+            <TagCreateAction
+              {...context}
+              ref={context.branch.displayName}
+              shortcut={{ modifiers: ["cmd"], key: "n" }}
+            />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Branches">
-            <BranchCreateAction {...context} />
             <RemoteFetchAction {...context} />
             <RefreshBranchesAction {...context} />
           </ActionPanel.Section>
