@@ -9,6 +9,7 @@ import { search, sortKind } from "fast-fuzzy";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
 import { FileAttachedLinksAction } from "../actions/StatusActions";
+import { CopyToClibpoardMenuAction } from "../actions/CopyToClipboardMenuAction";
 
 const MAX_RESULTS = 60;
 
@@ -150,6 +151,10 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
                         />
 
                         <FileManagerActions filePath={absolutePath} />
+                        <CopyToClibpoardMenuAction contents={[
+                            { title: "Relative File Path", content: context.filePath },
+                            { title: "Absolute File Path", content: absolutePath },
+                        ]} />
                     </ActionPanel.Section>
 
                     <ActionPanel.Section>

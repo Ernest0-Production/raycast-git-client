@@ -227,24 +227,6 @@ export function RemoteDeleteAction(context: RepositoryContext & { remote: Remote
     );
 }
 
-export function RemoteCopyURLActions({ remote }: { remote: Remote }) {
-    return (
-        <>
-            <Action.CopyToClipboard
-                title="Copy Fetch URL"
-                content={remote.fetchUrl}
-                icon={Icon.Clipboard}
-                shortcut={{ modifiers: ["cmd"], key: "c" }}
-            />
-            <Action.CopyToClipboard
-                title="Copy Push URL"
-                content={remote.pushUrl}
-                icon={Icon.Clipboard}
-            />
-        </>
-    );
-}
-
 /**
  * Actions for opening the attached links of a remote.
  */

@@ -6,6 +6,7 @@ import { RepositoryContext } from "../../open-repository";
 import { basename } from "path";
 import { FileManagerActions } from "../actions/FileActions";
 import { existsSync } from "fs";
+import { CopyToClibpoardMenuAction } from "../actions/CopyToClipboardMenuAction";
 
 export default function FileMergeResolveView(context: RepositoryContext & { filePath: string }) {
   const { pop } = useNavigation();
@@ -117,10 +118,10 @@ function ConflictSegmentOptionItem({
   onApplyAll?: () => void;
 }) {
   const label = type === "current" ? segment.current.label : segment.incoming.label;
+  const content = type === "current" ? segment.current.content : segment.incoming.content;
 
   const title = useMemo(() => {
-    const selectingContent = type === "current" ? segment.current.content : segment.incoming.content
-    const firstLine = selectingContent.split("\n").find((line) => line.trim() !== "");
+    const firstLine = content.split("\n").find((line) => line.trim() !== "");
     return `${firstLine ? `${firstLine}` : "<empty>"}`;
   }, [type]);
 
@@ -144,13 +145,11 @@ function ConflictSegmentOptionItem({
   }, [segment.resolution, type]);
 
   const detailMarkdown = useMemo(() => {
-    const selectedSegmentContent = type === "current" ? segment.current.content : segment.incoming.content;
-
     return [
       `${label}`,
       "~~~diff",
       `  ${segment.beforeContent.replace(/\n/g, `\n  `)}`,
-      selectedSegmentContent ? `+ ${selectedSegmentContent.replace(/\n/g, `\n+ `)}` : undefined,
+      content ? `+ ${content.replace(/\n/g, `\n+ `)}` : undefined,
       `  ${segment.afterContent.replace(/\n/g, `\n  `)}`,
       "~~~"
     ].filter(Boolean).join("\n");
@@ -203,7 +202,13 @@ function ConflictSegmentOptionItem({
               shortcut={{ modifiers: ["cmd"], key: "s" }}
             />
           </ActionPanel.Section>
-          <FileManagerActions filePath={filePath} />
+          <ActionPanel.Section>
+            <FileManagerActions filePath={filePath} />
+            <CopyToClibpoardMenuAction contents={[
+              { title: "File Path", content: `${filePath}:${segment.startLine}` },
+              { title: "Selected Content", content: content },
+            ]} />
+          </ActionPanel.Section>
         </ActionPanel>
       }
     />

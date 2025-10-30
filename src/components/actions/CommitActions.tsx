@@ -319,37 +319,6 @@ function PatchCreateForm(context: RepositoryContext & NavigationContext & { comm
 }
 
 /**
- * Action for copying commit info to clipboard.
- */
-export function CommitCopyInfoActions({ commit }: { commit: Commit }) {
-  return (
-    <>
-      <Action.CopyToClipboard
-        title="Copy Commit Hash"
-        content={commit.hash}
-        shortcut={{ modifiers: ["cmd"], key: "c" }}
-      />
-      <Action.CopyToClipboard
-        title="Copy Short Hash"
-        content={commit.shortHash}
-      />
-      <Action.CopyToClipboard
-        title="Copy Commit Message"
-        content={commit.message}
-      />
-      <Action.CopyToClipboard
-        title="Copy Author Name"
-        content={commit.author}
-      />
-      <Action.CopyToClipboard
-        title="Copy Author Email"
-        content={commit.authorEmail}
-      />
-    </>
-  );
-}
-
-/**
  * Action for opening the attached links of a commit.
  */
 export function CommitAttachedLinksAction(context: RepositoryContext & { commit: Commit }) {

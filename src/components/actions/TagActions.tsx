@@ -107,25 +107,6 @@ export function TagRemoveAction(context: RepositoryContext & { tagName: string }
 }
 
 /**
- * Action for copying tag name to clipboard.
- */
-export function TagCopyNameAction({ tagName, shortcut }: { tagName: string, shortcut?: Keyboard.Shortcut }) {
-  return <Action.CopyToClipboard
-    title={`Copy Tag Name`}
-    content={tagName} icon={Icon.Clipboard}
-    shortcut={shortcut}
-  />;
-}
-
-export function TagCopyCommitHashAction({ commitHash, shortcut }: { commitHash: string, shortcut?: Keyboard.Shortcut }) {
-  return <Action.CopyToClipboard
-    title={'Copy Commit Hash'}
-    content={commitHash} icon={Icon.Clipboard}
-    shortcut={shortcut}
-  />;
-}
-
-/**
  * Action for checking out a tag (detached HEAD).
  */
 export function TagCheckoutAction(context: RepositoryContext & NavigationContext & { tagName: string }) {

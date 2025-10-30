@@ -104,7 +104,6 @@ export function WorkspaceNavigationActions(context: NavigationContext & Reposito
                 />
             </ActionPanel.Section>
 
-            {/* Repository directory actions */}
             <RepositoryDirectoryActions
                 repositoryPath={context.gitManager.repoPath}
             />

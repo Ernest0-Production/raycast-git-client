@@ -142,31 +142,6 @@ export function BranchDeleteAction(context: RepositoryContext & { branch: Branch
 }
 
 /**
- * Action for copying current branch name to clipboard.
- */
-export function BranchCopyNameAction({ branch, shortcut }: { branch: string, shortcut?: Keyboard.Shortcut }) {
-  return (
-    <Action.CopyToClipboard
-      title="Copy Branch Name"
-      content={branch}
-      shortcut={shortcut}
-    />
-  );
-}
-
-/**
- * Action for copying upstream branch name to clipboard.
- */
-export function BranchCopyUpstreamNameAction({ branch }: { branch: string }) {
-  return (
-    <Action.CopyToClipboard
-      title="Copy Upstream Branch Name"
-      content={branch}
-    />
-  );
-}
-
-/**
  * Action for pushing the current branch.
  */
 export function BranchPushAction(context: RepositoryContext & { branch: Branch }) {
@@ -258,7 +233,6 @@ export function BranchPushForceAction(context: RepositoryContext & { branch: Bra
           title={remote}
           icon={RemoteHostIcon(context.remotes.data[remote])}
           onAction={() => handleForcePushToRemote(remote)}
-          style={Action.Style.Destructive}
         />
       ))}
     </ActionPanel.Submenu>

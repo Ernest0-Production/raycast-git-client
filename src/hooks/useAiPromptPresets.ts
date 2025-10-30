@@ -32,7 +32,7 @@ export interface AiPromptPresetsData {
  */
 const CONVENTIONAL_MESSAGE_PROMPT: AiPromptPreset = {
     id: "conventional-commits-style",
-    name: "Conventional",
+    name: "Conventional Style",
     prompt: `
 You are a Git commit message generator. Analyze the git diff and create a conventional commit message.
 
@@ -59,7 +59,7 @@ Output only the commit message, no markdown or extra text.
  */
 const GITMOJI_MESSAGE_PROMPT: AiPromptPreset = {
     id: "gitmoji-style",
-    name: "Gitmoji",
+    name: "Gitmoji Style",
     icon: "🎨",
     prompt: `
 You are a Git commit message generator. Analyze the git diff and create a gitmoji-style commit message.
@@ -98,7 +98,7 @@ Output only the commit message, no markdown or extra text.
  */
 const MINIMALIST_MESSAGE_PROMPT: AiPromptPreset = {
     id: "minimalist-style",
-    name: "Minimalist",
+    name: "Minimalist Style",
     icon: "🔘",
     prompt: `
 You are a Git commit message generator. Analyze the git diff and create a short, one-line commit message.

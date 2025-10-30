@@ -7,11 +7,9 @@ import {
   BranchRebaseAction,
   BranchRenameAction,
   BranchCreateAction,
-  BranchCopyNameAction,
   BranchInteractiveRebaseAction,
   BranchPushForceAction,
   BranchShowCommitsAction,
-  BranchCopyUpstreamNameAction,
   BranchAttachedLinksAction,
 } from "../actions/BranchActions";
 import { Branch, DetachedHead } from "../../types";
@@ -20,6 +18,7 @@ import { RemoteHostIcon, RemoteHostProviderIcon } from "../icons/RemoteHostIcons
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
 import { RemoteFetchAction, RemotePullAction } from "../actions/RemoteActions";
+import { CopyToClibpoardMenuAction } from "../actions/CopyToClipboardMenuAction";
 
 export function BranchesView(context: RepositoryContext & NavigationContext) {
   return (
@@ -211,15 +210,10 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
                 <BranchPushAction {...context} />
                 <BranchPushForceAction {...context} />
                 <BranchRenameAction {...context} />
-                <BranchCopyNameAction
-                  branch={context.branch.displayName}
-                  shortcut={{ modifiers: ["cmd"], key: "c" }}
-                />
-                {context.branch.upstream && (
-                  <BranchCopyUpstreamNameAction
-                    branch={context.branch.upstream.fullName}
-                  />
-                )}
+                <CopyToClibpoardMenuAction contents={[
+                  { title: "Branch Name", content: context.branch.displayName },
+                  ...(context.branch.upstream ? [{ title: "Upstream Name", content: context.branch.upstream.fullName }] : []),
+                ]} />
               </>
             )}
 
@@ -233,15 +227,10 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
                 <BranchRebaseAction {...context} />
                 <BranchMergeAction {...context} />
                 <BranchRenameAction {...context} />
-                <BranchCopyNameAction
-                  branch={context.branch.displayName}
-                  shortcut={{ modifiers: ["cmd"], key: "c" }}
-                />
-                {context.branch.upstream && (
-                  <BranchCopyUpstreamNameAction
-                    branch={context.branch.upstream.fullName}
-                  />
-                )}
+                <CopyToClibpoardMenuAction contents={[
+                  { title: "Branch Name", content: context.branch.displayName },
+                  ...(context.branch.upstream ? [{ title: "Upstream Name", content: context.branch.upstream.fullName }] : []),
+                ]} />
                 <BranchDeleteAction {...context} />
                 <BranchInteractiveRebaseAction {...context} />
               </>
@@ -253,10 +242,9 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
                 <BranchCkeckoutAction {...context} />
                 <BranchShowCommitsAction {...context} />
                 <BranchPushAction {...context} />
-                <BranchCopyNameAction
-                  branch={context.branch.displayName}
-                  shortcut={{ modifiers: ["cmd"], key: "c" }}
-                />
+                <CopyToClibpoardMenuAction contents={[
+                  { title: "Branch Name", content: context.branch.displayName },
+                ]} />
                 <BranchDeleteAction {...context} />
               </>
             )}

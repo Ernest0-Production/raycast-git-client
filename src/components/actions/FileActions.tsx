@@ -24,11 +24,6 @@ export function FileManagerActions({ filePath, onOpen }: { filePath: string, onO
       <Action.ToggleQuickLook
         shortcut={{ modifiers: ["cmd"], key: "y" }}
       />
-      <Action.CopyToClipboard
-        title="Copy File Path"
-        content={filePath}
-        shortcut={{ modifiers: ["cmd", "opt"], key: "," }}
-      />
     </>
   );
 }

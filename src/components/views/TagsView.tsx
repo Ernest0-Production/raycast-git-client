@@ -3,8 +3,9 @@ import { RepositoryContext, NavigationContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
 import { RemoteFetchAction } from "../actions/RemoteActions";
 import { useMemo, useState } from "react";
-import { TagAttachedLinksAction, TagCheckoutAction, TagCopyCommitHashAction, TagCopyNameAction, TagCreateAction, TagDetailsView, TagsPushAction, TagRemoveAction, TagRenameAction } from "../actions/TagActions";
+import { TagAttachedLinksAction, TagCheckoutAction, TagCreateAction, TagDetailsView, TagsPushAction, TagRemoveAction, TagRenameAction } from "../actions/TagActions";
 import { Tag } from "../../types";
+import { CopyToClibpoardMenuAction } from "../actions/CopyToClipboardMenuAction";
 
 export default function TagsView(context: RepositoryContext & NavigationContext) {
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
@@ -112,14 +113,10 @@ function TagListItem(context: RepositoryContext & NavigationContext & {
             />
             <TagCheckoutAction tagName={context.tag.name} {...context} />
             <TagRenameAction tagName={context.tag.name} {...context} />
-            <TagCopyNameAction
-              tagName={context.tag.name}
-              shortcut={{ modifiers: ["cmd"], key: "c" }}
-            />
-            <TagCopyCommitHashAction
-              commitHash={context.tag.commitHash}
-              shortcut={{ modifiers: ["cmd", "opt"], key: "c" }}
-            />
+            <CopyToClibpoardMenuAction contents={[
+              { title: "Tag Name", content: context.tag.name },
+              { title: "Commit Hash", content: context.tag.commitHash },
+            ]} />
             <TagRemoveAction tagName={context.tag.name} {...context} />
           </ActionPanel.Section>
 

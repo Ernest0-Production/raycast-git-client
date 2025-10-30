@@ -15,6 +15,7 @@ import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../
 import { basename } from "path";
 import { BranchAttachedLinksAction, BranchPushAction, BranchPushForceAction } from "../actions/BranchActions";
 import { RemoteFetchAction, RemotePullAction } from "../actions/RemoteActions";
+import { CopyToClibpoardMenuAction } from "../actions/CopyToClipboardMenuAction";
 
 export function StatusView(context: RepositoryContext & NavigationContext) {
   const toggleController = useToggleDetail("Status Diff", "Changes", true);
@@ -239,6 +240,10 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
                 <FileUnstageAction {...context} />
                 <ToggleDetailAction controller={context.toggleController} />
                 <FileManagerActions filePath={context.file.absolutePath} />
+                <CopyToClibpoardMenuAction contents={[
+                  { title: "Relative File Path", content: context.file.relativePath },
+                  { title: "Absolute File Path", content: context.file.absolutePath },
+                ]} />
               </>
             )}
 
@@ -251,6 +256,10 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
                 <FileStageAction {...context} />
                 <ToggleDetailAction controller={context.toggleController} />
                 <FileManagerActions filePath={context.file.absolutePath} />
+                <CopyToClibpoardMenuAction contents={[
+                  { title: "Relative File Path", content: context.file.relativePath },
+                  { title: "Absolute File Path", content: context.file.absolutePath },
+                ]} />
                 {!context.file.isConflicted && (
                   <FileDiscardAction {...context} />
                 )}

@@ -1,7 +1,7 @@
 import { ActionPanel, List, Icon, Action, Color, Image } from "@raycast/api";
-import { CommitCheckoutAction, CommitCherryPickAction, CommitRevertAction, CommitResetAction, CommitInteractiveRebaseAction, CommitPatchCreateAction, CommitCopyInfoActions, CommitRewordAction, CommitRebaseAction, CommitAttachedLinksAction } from "../actions/CommitActions";
-import { TagCreateAction, TagRemoveAction, TagCopyNameAction, TagRenameAction } from "../actions/TagActions";
-import { BranchCopyNameAction, BranchPushAction, BranchPushForceAction } from "../actions/BranchActions";
+import { CommitCheckoutAction, CommitCherryPickAction, CommitRevertAction, CommitResetAction, CommitInteractiveRebaseAction, CommitPatchCreateAction, CommitRewordAction, CommitRebaseAction, CommitAttachedLinksAction } from "../actions/CommitActions";
+import { TagCreateAction, TagRemoveAction, TagRenameAction } from "../actions/TagActions";
+import { BranchPushAction, BranchPushForceAction } from "../actions/BranchActions";
 import { CommitDetailsView } from "./CommitDetailsView";
 import { useIssueTracker, replaceUrlPatternsWithLinks } from "../../hooks/useIssueTracker";
 import "../../utils/date-utils";
@@ -13,6 +13,7 @@ import { RepositoryContext, NavigationContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
 import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../actions/ToggleDetailAction";
 import { basename } from "path";
+import { CopyToClibpoardMenuAction } from "../actions/CopyToClipboardMenuAction";
 
 export function CommitsView(context: RepositoryContext & NavigationContext) {
   const toggleDetailController = useToggleDetail("Commits-Detail", "Detail", false);
@@ -279,19 +280,31 @@ function CommitListItem(context: NavigationContext & RepositoryContext & {
 
           <ActionPanel.Section>
             <CommitAttachedLinksAction {...context} />
-          </ActionPanel.Section>
-          <ActionPanel.Section>
-            <CommitCopyInfoActions {...context} />
+            <CopyToClibpoardMenuAction contents={[
+              { title: "Commit Hash", content: context.commit.hash },
+              { title: "Short Hash", content: context.commit.shortHash },
+              { title: "Commit Message", content: context.commit.message },
+              { title: "Author Name", content: context.commit.author },
+              { title: "Author Email", content: context.commit.authorEmail },
+              ...(context.commits.filter.kind === "branch" ? [{ title: "Branch Name", content: context.commits.filter.value.name }] : []),
+              ...(context.commit.currentBranchName ? [{ title: `Branch "${context.commit.currentBranchName}"`, content: context.commit.currentBranchName }] : []),
+              ...(context.commit.localBranches.map((branch) => ({ title: `Branch "${branch}"`, content: branch }))),
+              ...(context.commit.remoteBranches.map((branch) => ({ title: `Branch "${branch.fullName}"`, content: branch.fullName }))),
+              ...(context.commit.tags.map((tag) => ({ title: `Tag "${tag}"`, content: tag }))),
+            ]} />
           </ActionPanel.Section>
 
-          {context.commit.tags.map((tag) => (
-            <ActionPanel.Section key={`tag-${tag}`} title={`Tag '${tag}'`}>
-              <TagCopyNameAction key={`copy-${tag}`} tagName={tag} />
-              <TagRenameAction tagName={tag} {...context} />
-              <TagRemoveAction key={`remove-${tag}`} tagName={tag} {...context} />
-            </ActionPanel.Section>
-          ))}
-          <ActionPanel.Section>
+          <ActionPanel.Section title="Tags">
+            {context.commit.tags.map((tag) => (
+              <ActionPanel.Submenu
+                key={`tag-${tag}`}
+                title={`Tag ${tag}`}
+                icon={Icon.Tag}
+              >
+                <TagRenameAction tagName={tag} {...context} />
+                <TagRemoveAction tagName={tag} {...context} />
+              </ActionPanel.Submenu>
+            ))}
             <TagCreateAction
               {...context}
               ref={context.commit.hash}
@@ -359,9 +372,6 @@ function SharedActionsSection(context: RepositoryContext & NavigationContext & {
             />
           </>
         )}
-        {context.commits.filter.kind === 'branch' && 'value' in context.commits.filter && 'name' in context.commits.filter.value &&
-          <BranchCopyNameAction branch={context.commits.filter.value.name} />
-        }
         <RemoteFetchAction {...context} />
       </ActionPanel.Section>
 

@@ -5,7 +5,8 @@ import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 import { usePromise } from "@raycast/utils";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
-import { RemoteAddAction, RemoteCopyURLActions, RemoteDeleteAction, RemoteEditAction } from "../actions/RemoteActions";
+import { RemoteAddAction, RemoteDeleteAction, RemoteEditAction } from "../actions/RemoteActions";
+import { CopyToClibpoardMenuAction } from "../actions/CopyToClipboardMenuAction";
 
 type RemoteConnectivity = {
   reachable: boolean,
@@ -115,9 +116,10 @@ function RemoteListItem(context: RepositoryContext & NavigationContext & {
               {...context}
             />
 
-            <RemoteCopyURLActions
-              remote={context.remote}
-            />
+            <CopyToClibpoardMenuAction contents={[
+              { title: "Fetch URL", content: context.remote.fetchUrl },
+              ...(context.remote.pushUrl !== context.remote.fetchUrl ? [{ title: "Push URL", content: context.remote.pushUrl }] : []),
+            ]} />
             <RemoteDeleteAction {...context} />
           </ActionPanel.Section>
           <SharedActionsSection {...context} />

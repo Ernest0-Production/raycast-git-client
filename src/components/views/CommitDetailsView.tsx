@@ -12,7 +12,7 @@ import { WorkspaceNavigationActions } from "../actions/WorkspaceNavigationAction
 import { FileAttachedLinksAction, FileRestoreAction } from "../actions/StatusActions";
 import { FileHistoryAction } from "./FileHistoryView";
 import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../actions/ToggleDetailAction";
-import { CommitCopyInfoActions } from "../actions/CommitActions";
+import { CopyToClibpoardMenuAction } from "../actions/CopyToClipboardMenuAction";
 
 export function CommitDetailsView(context: RepositoryContext & NavigationContext & {
   index: number,
@@ -213,13 +213,21 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
             />
           </ActionPanel.Section>
           <ActionPanel.Section>
+            <CopyToClibpoardMenuAction contents={[
+              { title: "Relative File Path", content: context.file.path },
+              { title: "Absolute File Path", content: absolutePath },
+              { title: "Commit Hash", content: context.commit.hash },
+              { title: "Short Hash", content: context.commit.shortHash },
+              { title: "Commit Message", content: context.commit.message },
+              { title: "Author Name", content: context.commit.author },
+              { title: "Author Email", content: context.commit.authorEmail },
+            ]} />
             <FileAttachedLinksAction
               {...context}
               filePath={context.file.path}
               commit={context.commit}
             />
           </ActionPanel.Section>
-          <CommitCopyInfoActions {...context} />
 
           {context.onMoveToCommit && (
             <CommitNavigationActions onMoveToCommit={context.onMoveToCommit} />
