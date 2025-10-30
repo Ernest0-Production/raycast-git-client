@@ -18,7 +18,8 @@ const LANGUAGES_COLORS: Record<string, Image.ImageLike> = {
     Swift: "https://api.iconify.design/vscode-icons/file-type-swift.svg",
     Kotlin: "https://api.iconify.design/material-icon-theme/kotlin.svg",
     Zig: "https://api.iconify.design/material-icon-theme/zig.svg",
-    Shell: "https://api.iconify.design/simple-icons/gnubash.svg"
+    Shell: "https://api.iconify.design/simple-icons/gnubash.svg",
+    Groovy: "https://api.iconify.design/material-icon-theme/groovy.svg"
 };
 
 const LANGUAGE_EXTENSION: Record<string, string> = {
@@ -29,27 +30,18 @@ const LANGUAGE_EXTENSION: Record<string, string> = {
     mjs: "JavaScript",
     cjs: "JavaScript",
     vue: "JavaScript",
-    py: "Python",
-    java: "Java",
+
+    c: "C",
     cs: "C#",
     cpp: "C++",
     cxx: "C++",
     cc: "C++",
     hpp: "C++",
     hh: "C++",
+    hxx: "C++",
     h: "Objective-C",
     m: "Objective-C",
-    hxx: "C++",
-    c: "C",
-    rb: "Ruby",
-    php: "PHP",
-    go: "Go",
-    swift: "Swift",
-    kt: "Kotlin",
-    kts: "Kotlin",
-    rs: "Rust",
-    dart: "Dart",
-    zig: "Zig",
+
     sh: "Shell",
     bash: "Shell",
     zsh: "Shell",
@@ -59,6 +51,20 @@ const LANGUAGE_EXTENSION: Record<string, string> = {
     dash: "Shell",
     ash: "Shell",
     ksh: "Shell",
+
+    java: "Java",
+    kt: "Kotlin",
+    kts: "Kotlin",
+
+    py: "Python",
+    rb: "Ruby",
+    php: "PHP",
+    go: "Go",
+    rs: "Rust",
+    dart: "Dart",
+    zig: "Zig",
+    groovy: "Groovy",
+    swift: "Swift",
 };
 
 function getExtension(filePath: string): string | undefined {

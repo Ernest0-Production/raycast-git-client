@@ -96,7 +96,7 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
     if (gitManager && repositoryPath) {
       visitRepository(repositoryPath);
     }
-  }, [gitManager, repositoryPath, visitRepository]);
+  }, [repositoryPath, visitRepository]);
 
   // Validation error state
   if (error || !gitManager) {

@@ -163,10 +163,10 @@ export function TagCheckoutAction(context: RepositoryContext & NavigationContext
 /**
  * Action for pushing a tag to remote.
  */
-export function TagPushAction(context: RepositoryContext & { tagName: string }) {
+export function TagsPushAction(context: RepositoryContext) {
   const handlePush = async (remote: string) => {
     try {
-      await context.gitManager.pushTag(context.tagName, remote);
+      await context.gitManager.pushTags(remote);
       context.tags.revalidate();
     } catch (error) {
       // handled by GitManager
@@ -180,7 +180,7 @@ export function TagPushAction(context: RepositoryContext & { tagName: string }) 
   if (Object.keys(context.remotes.data).length === 1) {
     return (
       <Action
-        title="Push Tag"
+        title="Push Tags"
         icon={`git-push.svg`}
         onAction={() => handlePush(Object.keys(context.remotes.data)[0])}
         shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
@@ -190,7 +190,7 @@ export function TagPushAction(context: RepositoryContext & { tagName: string }) 
 
   return (
     <ActionPanel.Submenu
-      title="Push Tag to"
+      title="Push Tags to"
       icon={`git-push.svg`}
       shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
     >

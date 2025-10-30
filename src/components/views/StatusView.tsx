@@ -206,7 +206,7 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
     }
 
     return contentParts.join("\n\n");
-  }, [context.file.relativePath, diff, isLoading, error, isFocused]);
+  }, [context.file, diff, isLoading, error, isFocused]);
 
   return (
     <List.Item

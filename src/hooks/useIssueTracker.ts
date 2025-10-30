@@ -1,6 +1,7 @@
 import { useCachedState } from "@raycast/utils";
 import { IssueTrackerConfig } from "../types";
 import { nanoid } from "nanoid";
+import { useCallback } from "react";
 
 /**
  * Hook to manage URL tracker configurations (global across the extension).
@@ -8,7 +9,7 @@ import { nanoid } from "nanoid";
 export function useIssueTracker() {
     const [configs, setConfigs] = useCachedState<IssueTrackerConfig[]>("issue-tracker-configs", []);
 
-    const addConfig = (title: string, regex: string, urlPlaceholder: string) => {
+    const addConfig = useCallback((title: string, regex: string, urlPlaceholder: string) => {
         const newConfig: IssueTrackerConfig = {
             id: nanoid(),
             title: title,
@@ -17,17 +18,17 @@ export function useIssueTracker() {
         };
         setConfigs((current) => [newConfig, ...current]);
         return newConfig;
-    };
+    }, [setConfigs]);
 
-    const updateConfig = (id: string, title: string, regex: string, urlPlaceholder: string) => {
+    const updateConfig = useCallback((id: string, title: string, regex: string, urlPlaceholder: string) => {
         setConfigs((current) =>
             current.map((c) => (c.id === id ? { ...c, title: title, regex: regex, urlPlaceholder: urlPlaceholder } : c)),
         );
-    };
+    }, [setConfigs]);
 
-    const deleteConfig = (configId: string) => {
+    const deleteConfig = useCallback((configId: string) => {
         setConfigs((current) => current.filter((c) => c.id !== configId));
-    };
+    }, [setConfigs]);
 
     const validateConfig = (config: { title: string; regex: string; urlPlaceholder: string }) => {
         try {
@@ -44,7 +45,7 @@ export function useIssueTracker() {
         }
     }
 
-    const findUrls = (text: string) => {
+    const findUrls = useCallback((text: string) => {
         const results: Array<{ title: string; url: string }> = [];
 
         for (const config of configs) {
@@ -73,7 +74,7 @@ export function useIssueTracker() {
         }
 
         return results;
-    }
+    }, [configs]);
 
     return {
         configs,

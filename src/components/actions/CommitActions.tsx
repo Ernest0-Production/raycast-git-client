@@ -413,6 +413,7 @@ export function CommitAttachedLinksAction(context: RepositoryContext & { commit:
               context.commit.remoteBranches
                 // show only branches that are attached to the remote
                 .filter((remoteBranch) => remoteBranch.remote === remote.name)
+                .filter((remoteBranch) => remoteBranch.name !== selectedBranch)
                 .map((remoteBranch) => remoteBranch.name)}
           />
 

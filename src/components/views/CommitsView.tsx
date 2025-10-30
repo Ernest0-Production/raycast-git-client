@@ -1,5 +1,4 @@
 import { ActionPanel, List, Icon, Action, Color, Image } from "@raycast/api";
-import { getFavicon } from "@raycast/utils";
 import { CommitCheckoutAction, CommitCherryPickAction, CommitRevertAction, CommitResetAction, CommitInteractiveRebaseAction, CommitPatchCreateAction, CommitCopyInfoActions, CommitRewordAction, CommitRebaseAction, CommitAttachedLinksAction } from "../actions/CommitActions";
 import { TagCreateAction, TagRemoveAction, TagCopyNameAction, TagRenameAction } from "../actions/TagActions";
 import { BranchCopyNameAction, BranchPushAction, BranchPushForceAction } from "../actions/BranchActions";
@@ -9,7 +8,7 @@ import "../../utils/date-utils";
 import { Branch, Commit, IssueTrackerConfig } from "../../types";
 import { useMemo, useState } from "react";
 import { RemoteHostIcon, RemoteHostProviderIcon } from "../icons/RemoteHostIcons";
-import { RemoteFetchAction, RemotePullAction, RemoteWebPageActions } from "../actions/RemoteActions";
+import { RemoteFetchAction, RemotePullAction } from "../actions/RemoteActions";
 import { RepositoryContext, NavigationContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
 import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../actions/ToggleDetailAction";

@@ -1400,6 +1400,13 @@ __REBASE_TODO__
   }
 
   /**
+   * Pushes all tags to remote.
+   */
+  async pushTags(remote: string): Promise<void> {
+    await this.git.push(remote, undefined, ["--tags"]);
+  }
+
+  /**
    * Pushes tags to remote with optional delete flag.
    */
   async pushTag(tagName: string, remote: string, deleteTag: boolean = false): Promise<void> {

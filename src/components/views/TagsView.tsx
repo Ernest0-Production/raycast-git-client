@@ -3,7 +3,7 @@ import { RepositoryContext, NavigationContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
 import { RemoteFetchAction } from "../actions/RemoteActions";
 import { useMemo, useState } from "react";
-import { TagAttachedLinksAction, TagCheckoutAction, TagCopyCommitHashAction, TagCopyNameAction, TagCreateAction, TagDetailsView, TagPushAction, TagRemoveAction, TagRenameAction } from "../actions/TagActions";
+import { TagAttachedLinksAction, TagCheckoutAction, TagCopyCommitHashAction, TagCopyNameAction, TagCreateAction, TagDetailsView, TagsPushAction, TagRemoveAction, TagRenameAction } from "../actions/TagActions";
 import { Tag } from "../../types";
 
 export default function TagsView(context: RepositoryContext & NavigationContext) {
@@ -25,8 +25,13 @@ export default function TagsView(context: RepositoryContext & NavigationContext)
               shortcut={{ modifiers: ["cmd"], key: "n" }}
             />
           }
+
+          <ActionPanel.Section>
+            <TagsPushAction {...context} />
+            <RemoteFetchAction {...context} />
+          </ActionPanel.Section>
+
           <RefreshTagsAction {...context} />
-          <RemoteFetchAction {...context} />
           <WorkspaceNavigationActions {...context} />
         </ActionPanel>
       }
@@ -107,7 +112,6 @@ function TagListItem(context: RepositoryContext & NavigationContext & {
             />
             <TagCheckoutAction tagName={context.tag.name} {...context} />
             <TagRenameAction tagName={context.tag.name} {...context} />
-            <TagPushAction tagName={context.tag.name} {...context} />
             <TagCopyNameAction
               tagName={context.tag.name}
               shortcut={{ modifiers: ["cmd"], key: "c" }}
@@ -126,6 +130,12 @@ function TagListItem(context: RepositoryContext & NavigationContext & {
               shortcut={{ modifiers: ["cmd"], key: "n" }}
             />
           }
+
+          <ActionPanel.Section>
+            <TagsPushAction {...context} />
+            <RemoteFetchAction {...context} />
+          </ActionPanel.Section>
+
           <TagAttachedLinksAction {...context} />
           <RefreshTagsAction {...context} />
           <WorkspaceNavigationActions {...context} />

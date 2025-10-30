@@ -32,7 +32,7 @@ export default function InteractiveRebaseEditorView(context: RepositoryContext &
                 setIsLoading(false);
             }
         })();
-    }, [context.gitManager, context.startFromCommit]);
+    }, [context.gitManager.repoPath, context.startFromCommit]);
 
     const setAction = (hash: string, action: RebaseAction, newMessage?: string) => {
         setPlan((prev) => ({ ...prev, [hash]: { ...prev[hash], action, newMessage } }));

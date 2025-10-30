@@ -23,6 +23,8 @@ export function useRepositoriesList() {
       catch { return true; }
     });
 
+    if (invalidRepositories.length === 0) return;
+
     setRepositories((current) => current.filter((r) => !invalidRepositories.includes(r)));
   }, []);
 
@@ -69,7 +71,7 @@ export function useRepositoriesList() {
         languageStats: stats,
       }));
     },
-    [repositories, setRepositories],
+    [setRepositories],
   );
 
   /**

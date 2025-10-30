@@ -13,24 +13,24 @@ type RemoteConnectivity = {
 };
 
 export default function RemotesView(context: RepositoryContext & NavigationContext) {
-  const items: Remote[] = useMemo(() => Object.values(context.remotes.data), [context.remotes.data]);
+  const items: Remote[] = Object.values(context.remotes.data)
 
   const { data: connectivity, isLoading: isChecking, revalidate: revalidateConnectivity } = usePromise(
-    async (repoPath: string, remoteHosts: Remote[]) => {
+    async (repoPath: string, remoteHosts: string[]) => {
       const entries = await Promise.all(
-        remoteHosts.map(async (remote) => {
+        remoteHosts.map(async (remoteName) => {
           try {
-            await context.gitManager.checkRemoteConnectivity(remote.name);
-            return [remote.name, { reachable: true }] as const;
+            await context.gitManager.checkRemoteConnectivity(remoteName);
+            return [remoteName, { reachable: true }] as const;
           } catch (error) {
-            return [remote.name, { reachable: false, reason: error instanceof Error ? error.message : "Unknown error" }] as const;
+            return [remoteName, { reachable: false, reason: error instanceof Error ? error.message : "Unknown error" }] as const;
           }
         })
       );
 
       return Object.fromEntries(entries) as Record<string, RemoteConnectivity>;
     },
-    [context.gitManager.repoPath, items]
+    [context.gitManager.repoPath, items.map(remote => remote.name)]
   );
 
   return (

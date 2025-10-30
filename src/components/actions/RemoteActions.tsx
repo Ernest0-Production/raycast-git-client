@@ -1,9 +1,9 @@
 import { Action, ActionPanel, Alert, confirmAlert, Form, Icon, showToast, Toast, useNavigation } from "@raycast/api";
 import { RemotesHosts } from "../../hooks/useGitRemotes";
-import { RemoteHostIcon, RemoteHostProviderIcon } from "../icons/RemoteHostIcons";
+import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { Commit, Remote } from "../../types";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { basename } from "path";
 
 /**

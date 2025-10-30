@@ -1,7 +1,6 @@
 import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast, Form, useNavigation, clearSearchBar, Color, Keyboard } from "@raycast/api";
 import { useMemo, useState } from "react";
 import { Branch, MergeMode, Remote } from "../../types";
-import { usePromise } from "@raycast/utils";
 import InteractiveRebaseEditorView from "../views/InteractiveRebaseEditorView";
 import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
@@ -407,7 +406,6 @@ function BranchCreateForm(context: RepositoryContext) {
   const { pop } = useNavigation();
   const [branchName, setBranchName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { data: currentBranch } = usePromise(async () => await context.branches.data.currentBranch, []);
 
   const handleSubmit = async (values: { branchName: string }) => {
     setIsLoading(true);
@@ -440,7 +438,9 @@ function BranchCreateForm(context: RepositoryContext) {
         value={branchName}
         onChange={(value) => setBranchName(value.replace(/ /g, "-"))}
       />
-      {currentBranch && <Form.Description text={`From branch '${currentBranch.displayName}'`} />}
+      {context.branches.data.currentBranch && (
+        <Form.Description text={`From branch '${context.branches.data.currentBranch.displayName}'`} />
+      )}
     </Form>
   );
 }
