@@ -3,6 +3,7 @@ import { GitManager } from "../utils/git-manager";
 import { FileStatus } from "../types";
 import { join } from "path";
 import { fileTypeFromFile } from "file-type";
+import { existsSync } from "fs";
 
 interface UseGitDiffProps {
   gitManager: GitManager;
@@ -28,13 +29,16 @@ export function useGitDiff({ gitManager, options, execute = true }: UseGitDiffPr
   } = usePromise(
     async (file, commitHash, status, repoPath) => {
       const absolutePath = join(repoPath, file);
-      const binaryFormatInfo = await fileTypeFromFile(absolutePath);
 
-      if (binaryFormatInfo) {
-        if (binaryFormatInfo.mime.startsWith("image/")) {
-          return `![$(${file})](${absolutePath})`
-        } else {
-          return "<binary content>"
+      if (existsSync(absolutePath)) {
+        const binaryFormatInfo = await fileTypeFromFile(absolutePath);
+
+        if (binaryFormatInfo) {
+          if (binaryFormatInfo.mime.startsWith("image/")) {
+            return `![$(${file})](${absolutePath})`
+          } else {
+            return "<binary content>"
+          }
         }
       }
 

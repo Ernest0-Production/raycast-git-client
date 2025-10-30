@@ -4,6 +4,8 @@
   "title": "Git",
   "keywords": [
     "repository",
+    "project",
+    "clone",
     "commit",
     "worktree",
     "github",
@@ -59,18 +61,27 @@
       ]
     },
     {
-      "name": "configure-url-trackers",
+      "name": "configure-issue-trackers",
       "icon": "issue-trackers-icon.png",
-      "title": "Configure URL Trackers",
+      "title": "Configure Issue Trackers",
       "description": "Manage URL tracker rules for linking commit messages",
-      "mode": "view"
+      "mode": "view",
+      "keywords": [
+        "link",
+        "url"
+      ]
     },
     {
       "name": "manage-ai-message-prompts",
       "title": "Manage AI Message Prompts",
       "icon": "presets-icon.png",
       "description": "Configure AI commit message prompt presets",
-      "mode": "view"
+      "mode": "view",
+      "keywords": [
+        "preset",
+        "commit",
+        "message"
+      ]
     }
   ],
   "preferences": [
