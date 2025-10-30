@@ -1,6 +1,8 @@
 import { usePromise } from "@raycast/utils";
 import { GitManager } from "../utils/git-manager";
 import { FileStatus } from "../types";
+import { join } from "path";
+import { fileTypeFromFile } from "file-type";
 
 interface UseGitDiffProps {
   gitManager: GitManager;
@@ -25,6 +27,17 @@ export function useGitDiff({ gitManager, options, execute = true }: UseGitDiffPr
     revalidate,
   } = usePromise(
     async (file, commitHash, status, repoPath) => {
+      const absolutePath = join(repoPath, file);
+      const binaryFormatInfo = await fileTypeFromFile(absolutePath);
+
+      if (binaryFormatInfo) {
+        if (binaryFormatInfo.mime.startsWith("image/")) {
+          return `![$(${file})](${absolutePath})`
+        } else {
+          return "<binary content>"
+        }
+      }
+
       let rawDiff = await gitManager.getDiff({ file, commitHash, status });
 
       // Remove leading whitespace from diff lines

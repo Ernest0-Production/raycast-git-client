@@ -2,33 +2,54 @@
 
 **Manage your Git repositories from anywhere on your Mac.**
 
-The Git extension allows:
-- 🚦 Control working tree status (staged, unstaged, conflicted, etc.)
+
+### 🚦 Control working tree status
+
+- List staged and unstaged files with their status (added, modified, deleted, conflicted, etc.)
+- View diff of files
+
 ![Status View](./metadata/git-2.png)
 
-- 🧰 Resolve merge/rebase **conflicts**
+### 🧰 Resolve merge/rebase **conflicts**
+
+- Pick per-segment resolution for merge conflicts
+
 ![Merge Conflict](./media/merge-conflcit-resolve.png)
 
-- 🔎 Search in **commits** and **files history**
-  <p float="left">
-    <img src="./metadata/git-5.png" width="49%" />
-    <img src="./media/file-history.png" width="49%" />
-  </p>
+### 🔎 Search in **commits** and **files history**
 
-- ↪️ Checkout, cherry-pick, rebase, reset, revert, merge on commit, branch, tag
-  <p float="left">
-    <img src="./media/branch-actions.png" width="49%" />
-    <img src="./media/commit-actions.png" width="49%" />
-  </p>
+- Search commit by commit hash, author, message body, creation date, etc.
+- View commit history of a specific file
 
-- 🌳 Manage **branches**, **tags** and multiple **remotes**
- ![Branches](./metadata/git-6.png)
+<p float="left">
+  <img src="./metadata/git-5.png" width="49%" />
+  <img src="./media/file-history.png" width="49%" />
+</p>
 
-- 📦 Save and apply **stashes** and **patches**
-  ![Apply Stash](./media/stash-apply.png)
+### ↪️ Checkout, cherry-pick, rebase, reset, revert, merge on commit, branch, tag
 
-- 📥 Clone repositories from URL **in background**
-  ![Clone Repository](./media/clone-repository.png)
+- Absolutely all the actions you need to change history
+
+<p float="left">
+  <img src="./media/branch-actions.png" width="49%" />
+  <img src="./media/commit-actions.png" width="49%" />
+</p>
+
+### 🌳 Manage **branches**, **tags** and multiple **remotes**
+
+- Create, delete, rename branche/tag/remote/etc.
+
+![Branches](./metadata/git-6.png)
+
+### 📦 Save and apply **stashes** and **patches**
+
+![Apply Stash](./media/stash-apply.png)
+
+### 📥 Clone repositories from URL **in background**
+
+- Fast clone repositories from URL in background
+
+![Clone Repository](./media/clone-repository.png)
 
 ## 🎁 Extra features:
 
@@ -114,6 +135,7 @@ Extension loads:
 ## 🧑‍🚀 Future Features
 
 - [ ] AI Tools
+- [ ] More fluent commit search
 - [ ] Background fetching
 - [ ] Menu Bar Commands
 - [ ] Submodules support

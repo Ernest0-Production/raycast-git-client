@@ -60,6 +60,7 @@
     },
     {
       "name": "configure-url-trackers",
+      "icon": "issue-trackers-icon.png",
       "title": "Configure URL Trackers",
       "description": "Manage URL tracker rules for linking commit messages",
       "mode": "view"
@@ -67,6 +68,7 @@
     {
       "name": "manage-ai-message-prompts",
       "title": "Manage AI Message Prompts",
+      "icon": "presets-icon.png",
       "description": "Configure AI commit message prompt presets",
       "mode": "view"
     }
@@ -125,6 +127,7 @@
     "@raycast/api": "^1.102.7",
     "@raycast/utils": "^2.2.1",
     "fast-fuzzy": "^1.12.0",
+    "file-type": "^21.0.0",
     "nanoid": "^5.1.5",
     "simple-git": "^3.27.0"
   },
