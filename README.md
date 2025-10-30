@@ -120,3 +120,7 @@ Extension loads:
 - [ ] Windows support
 - [ ] Manage Hooks
 - [ ] Manage Git Config
+
+## 💸 Support for the development
+
+[!["Buy Me A Coffee"](https://cdn.buymeacoffee.com/buttons/v2/arial-orange.png)](https://buymeacoffee.com/ernest0n)
