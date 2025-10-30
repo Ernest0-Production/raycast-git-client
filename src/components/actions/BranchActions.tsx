@@ -172,7 +172,7 @@ export function BranchCopyUpstreamNameAction({ branch }: { branch: string }) {
 export function BranchPushAction(context: RepositoryContext & { branch: Branch }) {
   const handlePushToRemote = async (remote: string) => {
     try {
-      await context.gitManager.push(false, context.branch, remote);
+      await context.gitManager.pushBranch(context.branch, remote);
       context.branches.revalidate();
       context.status.revalidate();
     } catch {
@@ -222,7 +222,7 @@ export function BranchPushForceAction(context: RepositoryContext & { branch: Bra
 
     if (!confirmed) return;
     try {
-      await context.gitManager.push(true, context.branch, remote);
+      await context.gitManager.pushBranch(context.branch, remote, true);
       context.branches.revalidate();
       context.status.revalidate();
     } catch {

@@ -1015,7 +1015,7 @@ __REBASE_TODO__
   /**
    * Pushes changes to a specific remote.
    */
-  async push(force = false, branch: Branch, remote: string): Promise<void> {
+  async pushBranch(branch: Branch, remote: string, force = false): Promise<void> {
     const options = [] as string[];
 
     if (force) {
@@ -1041,7 +1041,7 @@ __REBASE_TODO__
           }
         });
         if (confirmed) {
-          await this.push(true, branch, remote);
+          await this.pushBranch(branch, remote, true);
         }
       } else {
         throw error;
@@ -1402,8 +1402,34 @@ __REBASE_TODO__
   /**
    * Pushes all tags to remote.
    */
-  async pushTags(remote: string): Promise<void> {
-    await this.git.push(remote, undefined, ["--tags"]);
+  async pushTags(remote: string, force = false): Promise<void> {
+    const options = [] as string[];
+
+    options.push("--tags");
+    if (force) {
+      options.push("--force-with-lease");
+    }
+
+    try {
+      await this.git.push(remote, undefined, options);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (!force) {
+        const confirmed = await confirmAlert({
+          title: "Push rejected",
+          message: "Reason: " + errorMessage,
+          primaryAction: {
+            title: "Force Push",
+            style: Alert.ActionStyle.Destructive,
+          }
+        });
+        if (confirmed) {
+          await this.pushTags(remote, true);
+        }
+      } else {
+        throw error;
+      }
+    }
   }
 
   /**

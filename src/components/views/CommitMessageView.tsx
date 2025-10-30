@@ -169,7 +169,7 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
 
     // Push if requested
     if (push && remote) {
-      try { await context.gitManager.push(forcePush, context.branches.data.currentBranch!, remote); }
+      try { await context.gitManager.pushBranch(context.branches.data.currentBranch!, remote, forcePush); }
       // Git error is already shown by GitManager
       catch (error) { }
     }
