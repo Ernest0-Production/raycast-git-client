@@ -12,18 +12,18 @@ Manage your Git repositories from anywhere on your Mac.
 - [Core Features](#core-features)
   - [🚦 Control **working tree** status](#-control-working-tree-status)
   - [🧰 Resolve merge/rebase **conflicts**](#-resolve-mergerebase-conflicts)
-  - [🔎 Search in **commits** and **files history**](#-search-in-commits-and-files-history)
-  - [↪️ Checkout, cherry-pick, rebase, reset, revert, merge on commit, branch, tag](#️-checkout-cherry-pick-rebase-reset-revert-merge-on-commit-branch-tag)
-  - [🌳 Manage **branches**, **tags** and multiple **remotes**](#-manage-branches-tags-and-multiple-remotes)
+  - [🔎 Search in **commits** and **file history**](#-search-in-commits-and-file-history)
+  - [↪️ Checkout, cherry-pick, rebase, reset, revert, and merge on commit, branch, tag](#️-checkout-cherry-pick-rebase-reset-revert-and-merge-on-commit-branch-tag)
+  - [🌳 Manage **branches**, **tags**, and multiple **remotes**](#-manage-branches-tags-and-multiple-remotes)
   - [📦 Save and apply **stashes** and **patches**](#-save-and-apply-stashes-and-patches)
-  - [📥 Clone repositories from URL **in background**](#-clone-repositories-from-url-in-background)
+  - [📥 Clone repositories from a URL **in the background**](#-clone-repositories-from-a-url-in-the-background)
 - [Extra Features](#extra-features)
   - [🔗 Issue Link Detection](#-issue-link-detection)
   - [✨ Generate **AI commit messages**](#-generate-ai-commit-messages)
   - [🔄 Interactive rebase editor](#-interactive-rebase-editor)
 - [Tips \& Tricks](#tips--tricks)
   - [🎛️ Fast Navigation](#️-fast-navigation)
-  - [⚡ QuickLink on specific repository](#-quicklink-on-specific-repository)
+  - [⚡ Quicklink for a specific repository](#-quicklink-for-a-specific-repository)
 - [⁉️ FAQ](#️-faq)
 - [🧑‍🚀 Future Features](#-future-features)
 - [💸 Support for the development](#-support-for-the-development)
@@ -44,7 +44,7 @@ Manage your Git repositories from anywhere on your Mac.
 
 ![Merge Conflict](./media/merge-conflcit-resolve.png)
 
-### 🔎 Search in **commits** and **files history**
+### 🔎 Search in **commits** and **file history**
 
 - Search commit by commit hash, author, message body, creation date, etc.
 - View commit history of a specific file
@@ -54,7 +54,7 @@ Manage your Git repositories from anywhere on your Mac.
   <img src="./media/file-history.png" width="49%" />
 </p>
 
-### ↪️ Checkout, cherry-pick, rebase, reset, revert, merge on commit, branch, tag
+### ↪️ Checkout, cherry-pick, rebase, reset, revert, and merge on commit, branch, tag
 
 - Absolutely all the actions you need to change history
 
@@ -63,10 +63,10 @@ Manage your Git repositories from anywhere on your Mac.
   <img src="./media/commit-actions.png" width="49%" />
 </p>
 
-### 🌳 Manage **branches**, **tags** and multiple **remotes**
+### 🌳 Manage **branches**, **tags**, and multiple **remotes**
 
-- Create, delete, rename branche and tag
-- Setup multiple remotes
+- Create, delete, and rename branches and tags
+- Set up multiple remotes
 
 ![Branches](./metadata/git-6.png)
 
@@ -74,9 +74,9 @@ Manage your Git repositories from anywhere on your Mac.
 
 ![Apply Stash](./media/stash-apply.png)
 
-### 📥 Clone repositories from URL **in background**
+### 📥 Clone repositories from a URL **in the background**
 
-- Fast clone multiple repositories from URL via HTTPS or SSH protocol in background
+- Quickly clone multiple repositories from a URL over HTTPS or SSH in the background
 - Track cloning progress
 
 ![Clone Repository](./media/clone-repository.png)
@@ -85,7 +85,7 @@ Manage your Git repositories from anywhere on your Mac.
 
 ### 🔗 Issue Link Detection
 
-Detect links based on some markers in commit messages and most common web page shortcuts of remote host like:
+Detect links based on markers in commit messages and the most common web page shortcuts of the remote host, such as:
 - file blame & history
 - pull requests
 - commit details and builds
@@ -94,17 +94,17 @@ Detect links based on some markers in commit messages and most common web page s
 - and more...
   ![Issue Link](./media/attached-links.png)
 
-💡 Also you can setup custom rules to parse information from commit messages based on regex patterns and create links to specific issue trackers.
+💡 You can also set up custom rules to parse information from commit messages based on regex patterns and create links to specific issue trackers.
 
 1. Run command `Configure URL Trackers` to list all your URL tracker rules.
   ![Issue Link](./media/issue-trackers-list.png)
 
-2. Run `Add New Rule` to add a new URL tracker rule and fill fielads.
+2. Run `Add New Rule` to add a new URL tracker rule and fill in the fields.
   ![Issue Link](./media/issue-tracker-editor.png)
   - `Regex` should include a capture group for the issue number
-  - `URL Template` should contain `@key` placeholder where the regex match should be inserted\
+  - `URL Template` should contain the `@key` placeholder where the regex match should be inserted
 
-3. Open `commits` tab and run action `Attached Links` that opens submenu with issue links in commit messages.
+3. Open the `Commits` tab and run the `Attached Links` action to open a submenu with issue links found in commit messages.
   ![Issue Link](./media/issue-tracker-detection.png){width="50%"}
 
 4. Profit 🎉
@@ -113,19 +113,19 @@ Detect links based on some markers in commit messages and most common web page s
 
 ### ✨ Generate **AI commit messages**
 
-Generate commit messages using AI based on diff content of the staged changes.
+Generate commit messages using AI based on the diff content of the staged changes.
 
 ![Generate Commit Message](./media/generate-commit-message.png)
 
-💡 Also you can setup custom AI prompts with multiple presets for different styles of commit messages.
+💡 You can also set up custom AI prompts with multiple presets for different styles of commit messages.
 
-1. Run command `Manage AI Message Prompts` to list all existing AI prompt presents.
+1. Run the `Manage AI Message Prompts` command to list all existing AI prompt presets.
   ![AI Commit Message](./media/custom-presets-list.png)
 
-2. Create (`⌘ + N`) or duplicate (`⌘ + D`) from existing preset and edit it for your own needs.
+2. Create (`⌘ + N`) or duplicate (`⌘ + D`) an existing preset and edit it to your needs.
   ![AI Commit Message](./media/custom-preset-prompt.png)
 
-3. Run `Generate Commit Message` (or `⌘ + shift + G`) and pick your preset from submenu.
+3. Run `Generate Commit Message` (or `⌘ + Shift + G`) and pick your preset from the submenu.
   ![AI Commit Message](./media/custom-preset-action.png)
 
 4. Profit 🎉
@@ -140,7 +140,7 @@ Generate commit messages using AI based on diff content of the staged changes.
 
 ### 🎛️ Fast Navigation
 
-Use `⌘ + N` to fast navigate between tabs (aka dropdown items) of the extension.
+Use `⌘ + N` to quickly navigate between tabs (aka dropdown items) of the extension.
   - `⌘ + 1` to go to Status
   - `⌘ + 2` to go to Commits
   - `⌘ + 3` to go to Branches
@@ -151,9 +151,9 @@ Use `⌘ + N` to fast navigate between tabs (aka dropdown items) of the extensio
 
 ---
 
-### ⚡ QuickLink on specific repository
+### ⚡ Quicklink for a specific repository
 
-You can create a QuickLink to open a specific repository without needing to select it in `Manage Git Repositories` list.
+You can create a Quicklink to open a specific repository without needing to select it in the `Manage Git Repositories` list.
 
 1. Run command `Manage Git Repositories` to list all your repositories.
 2. Run `Create Quicklink` (or `⌘ + L`) on the repository list item.
@@ -163,11 +163,11 @@ You can create a QuickLink to open a specific repository without needing to sele
 
 ## ⁉️ FAQ
 
-> Whish environment variables are used when performing git commands?
+> Which environment variables are used when performing Git commands?
 
-Extension loads:
-- All environment variables from interactive ZSH shell.
-- `SSH_AUTH_SOCK` from launchctl to access the system ssh-agent with already set up SSH keys.
+The extension loads:
+- All environment variables from your interactive Zsh shell.
+- `SSH_AUTH_SOCK` from `launchctl` to access the system SSH agent with already set up SSH keys.
 
 ## 🧑‍🚀 Future Features
 
