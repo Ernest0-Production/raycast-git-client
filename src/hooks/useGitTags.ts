@@ -7,13 +7,13 @@ import { RepositoryContext } from "../open-repository";
  */
 export function useGitTags(gitManager: GitManager): RepositoryContext["tags"] {
   return useCachedPromise(
-    async (repoPath: string) => {
-      const tags = gitManager.getTags()
-      return tags
+    async (_repoPath: string) => {
+      const tags = gitManager.getTags();
+      return tags;
     },
     [gitManager.repoPath], // Include repository path for separate cache per repository
     {
       initialData: [],
-    }
+    },
   ) as RepositoryContext["tags"];
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ConflictSegment } from "../types"
+import { ConflictSegment } from "../types";
 import { readFileSync, writeFileSync } from "fs";
 import { nanoid } from "nanoid";
 
@@ -10,7 +10,7 @@ export type ConflictResolveState = {
   isLoading: boolean;
   resolveSegment: (segmentId: string, resolution: "current" | "incoming" | null) => void;
   applyResolution: () => void;
-}
+};
 
 /**
  * Custom hook for managing conflict resolution in a file.
@@ -34,11 +34,7 @@ export function useConflictResolver(filePath: string): ConflictResolveState {
   }, [filePath]);
 
   const resolveSegment = (segmentId: string, resolution: "current" | "incoming" | null) => {
-    setSegments((prev) =>
-      prev.map((seg) =>
-        seg.id === segmentId ? { ...seg, resolution } : seg
-      )
-    );
+    setSegments((prev) => prev.map((seg) => (seg.id === segmentId ? { ...seg, resolution } : seg)));
   };
 
   const applyResolution = () => {
@@ -88,8 +84,12 @@ function parseConflictedFile(filePath: string): ConflictSegment[] {
         const incomingContent = lines.slice(separatorIndex + 1, endIndex).join("\n");
         const incomingLabel = lines[endIndex].replace(/^>{7}\s*/, "").trim() || "incoming";
 
-        const beforeContent = lines.slice(Math.max(0, startLine - MAX_CONTENT_PREVIEW_OFFSET_LINES), startLine - 1).join("\n");
-        const afterContent = lines.slice(endIndex + 1, Math.min(lines.length, endIndex + MAX_CONTENT_PREVIEW_OFFSET_LINES)).join("\n");
+        const beforeContent = lines
+          .slice(Math.max(0, startLine - MAX_CONTENT_PREVIEW_OFFSET_LINES), startLine - 1)
+          .join("\n");
+        const afterContent = lines
+          .slice(endIndex + 1, Math.min(lines.length, endIndex + MAX_CONTENT_PREVIEW_OFFSET_LINES))
+          .join("\n");
 
         segments.push({
           id: nanoid(),
@@ -162,9 +162,7 @@ function applyConflictResolutions(filePath: string, segments: ConflictSegment[])
 
         if (segment && segment.resolution) {
           // Apply the resolution
-          const resolvedContent = segment.resolution === "current"
-            ? segment.current.content
-            : segment.incoming.content;
+          const resolvedContent = segment.resolution === "current" ? segment.current.content : segment.incoming.content;
 
           resolvedLines.push(resolvedContent);
         } else {

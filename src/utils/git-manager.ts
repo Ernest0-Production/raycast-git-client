@@ -1,8 +1,38 @@
-import { CleanOptions, DiffNameStatus, DiffResult, DiffResultBinaryFile, DiffResultNameStatusFile, DiffResultTextFile, FileStatusResult, ResetMode, simpleGit, SimpleGit } from "simple-git";
+import {
+  CleanOptions,
+  DiffNameStatus,
+  DiffResult,
+  DiffResultBinaryFile,
+  DiffResultNameStatusFile,
+  DiffResultTextFile,
+  FileStatusResult,
+  ResetMode,
+  simpleGit,
+  SimpleGit,
+} from "simple-git";
 import { showToast, Toast, getPreferenceValues, Alert, confirmAlert } from "@raycast/api";
 import { readFileSync, writeFileSync, mkdtempSync, chmodSync, rmSync, existsSync } from "fs";
 import { tmpdir } from "os";
-import { Branch, FileStatus, Commit, Stash, BranchesState, DetachedHead, CommitFileChange, Preferences, RebasePlanItem, FileChangeStats, StatusState, MergeMode, PatchScope, RepositoryCloningProcess, RepositoryCloningState, Tag, StatusMode, StashScope } from "../types";
+import {
+  Branch,
+  FileStatus,
+  Commit,
+  Stash,
+  BranchesState,
+  DetachedHead,
+  CommitFileChange,
+  Preferences,
+  RebasePlanItem,
+  FileChangeStats,
+  StatusState,
+  MergeMode,
+  PatchScope,
+  RepositoryCloningProcess,
+  RepositoryCloningState,
+  Tag,
+  StatusMode,
+  StashScope,
+} from "../types";
 import { basename, join } from "path";
 import { promises as fs } from "fs";
 import { showFailureToast } from "@raycast/utils";
@@ -25,7 +55,7 @@ export class GitManager {
           showFailureToast(error, { title: `Error running command` });
         }
         return error;
-      }
+      },
     });
 
     this.git = this.git.env(shellEnvironmentVariables);
@@ -57,13 +87,9 @@ export class GitManager {
    */
   private setupGlobalLogging(): void {
     this.git.outputHandler((command, stdout, stderr, args) => {
-      const ignoredCommands = [
-        'ls-files',
-        'ls-remote',
-        'remote'
-      ];
+      const ignoredCommands = ["ls-files", "ls-remote", "remote"];
       // Skip logging for ls-files command
-      if (ignoredCommands.some(command => args.includes(command))) {
+      if (ignoredCommands.some((command) => args.includes(command))) {
         return;
       }
 
@@ -109,10 +135,19 @@ export class GitManager {
   async getBranches(): Promise<BranchesState> {
     const summary = await this.git.branch(["--all", "-vv", "--sort=-committerdate"]);
 
-    const parseBranchInfo = (label: string): { ahead: number; behind: number; upstream?: { name: string; fullName: string; remote: string }; isGone?: boolean } => {
+    const parseBranchInfo = (
+      label: string,
+    ): {
+      ahead: number;
+      behind: number;
+      upstream?: { name: string; fullName: string; remote: string };
+      isGone?: boolean;
+    } => {
       // Single regex to parse all possible branch info patterns with named groups
       // Handles: no upstream, [upstream], [upstream: ahead X], [upstream: behind Y], [upstream: ahead X, behind Y], [upstream: gone]
-      const match = label.match(/(?:\[(?<upstream>.*?)(?:: (?:ahead (?<ahead>\d+))?(?:, )?(?:behind (?<behind>\d+))?(?<gone>gone)?)?\])?/);
+      const match = label.match(
+        /(?:\[(?<upstream>.*?)(?:: (?:ahead (?<ahead>\d+))?(?:, )?(?:behind (?<behind>\d+))?(?<gone>gone)?)?\])?/,
+      );
 
       if (!match?.groups) {
         return { ahead: 0, behind: 0 };
@@ -121,11 +156,13 @@ export class GitManager {
       return {
         ahead: match.groups.ahead ? parseInt(match.groups.ahead, 10) : 0,
         behind: match.groups.behind ? parseInt(match.groups.behind, 10) : 0,
-        upstream: match.groups.upstream ? {
-          name: match.groups.upstream.split("/").slice(1).join("/"),
-          fullName: match.groups.upstream,
-          remote: match.groups.upstream.split("/")[0],
-        } : undefined,
+        upstream: match.groups.upstream
+          ? {
+              name: match.groups.upstream.split("/").slice(1).join("/"),
+              fullName: match.groups.upstream,
+              remote: match.groups.upstream.split("/")[0],
+            }
+          : undefined,
         isGone: !!match.groups.gone,
       };
     };
@@ -177,9 +214,7 @@ export class GitManager {
       }
     }
 
-    const maxBranchesToLoad = parseInt(
-      getPreferenceValues<Preferences>().maxBranchesToLoad
-    );
+    const maxBranchesToLoad = parseInt(getPreferenceValues<Preferences>().maxBranchesToLoad);
 
     // Local Branches
     Object.values(summary.branches).forEach((branch) => {
@@ -265,15 +300,23 @@ export class GitManager {
       mode = {
         kind: "rebase",
         conflict: existsSync(join(interactiveRebaseMergePath, "conflict")),
-        current: await fs.readFile(join(interactiveRebaseMergePath, "msgnum"), "utf-8").then(content => parseInt(content.trim()) || 0),
-        total: await fs.readFile(join(interactiveRebaseMergePath, "end"), "utf-8").then(content => parseInt(content.trim()) || 0),
+        current: await fs
+          .readFile(join(interactiveRebaseMergePath, "msgnum"), "utf-8")
+          .then((content) => parseInt(content.trim()) || 0),
+        total: await fs
+          .readFile(join(interactiveRebaseMergePath, "end"), "utf-8")
+          .then((content) => parseInt(content.trim()) || 0),
       };
     } else if (existsSync(nonInteractiveRebaseMergePath)) {
       mode = {
         kind: "rebase",
         conflict: existsSync(join(nonInteractiveRebaseMergePath, "conflict")),
-        current: await fs.readFile(join(nonInteractiveRebaseMergePath, "next"), "utf-8").then(content => parseInt(content.trim()) || 0),
-        total: await fs.readFile(join(nonInteractiveRebaseMergePath, "last"), "utf-8").then(content => parseInt(content.trim()) || 0),
+        current: await fs
+          .readFile(join(nonInteractiveRebaseMergePath, "next"), "utf-8")
+          .then((content) => parseInt(content.trim()) || 0),
+        total: await fs
+          .readFile(join(nonInteractiveRebaseMergePath, "last"), "utf-8")
+          .then((content) => parseInt(content.trim()) || 0),
       };
     } else if (existsSync(mergeHeadPath)) {
       mode = { kind: "merge" };
@@ -316,7 +359,11 @@ export class GitManager {
     const { index, working_dir, path, from } = fileStatus;
 
     // Helper function to create file status object
-    const createFileStatus = (status: FileStatus["status"], type: FileStatus["type"], isConflicted: boolean = false): FileStatus => ({
+    const createFileStatus = (
+      status: FileStatus["status"],
+      type: FileStatus["type"],
+      isConflicted: boolean = false,
+    ): FileStatus => ({
       absolutePath: this.getAbsolutePath(path),
       relativePath: path,
       status,
@@ -531,7 +578,7 @@ export class GitManager {
           result.remoteBranches.push({
             name: remoteBranch.split("/").slice(1).join("/"),
             remote: remoteBranch.split("/")[0],
-            fullName: remoteBranch
+            fullName: remoteBranch,
           });
         } else if (ref.startsWith("refs/heads/")) {
           const localBranch = ref.replace(/^refs\/heads\//, "");
@@ -577,16 +624,14 @@ export class GitManager {
    * @param page Page number for pagination (optional, default 0)
    */
   async getCommits(branch?: string, page: number = 0): Promise<Commit[]> {
-    const commitsPerPage = parseInt(
-      getPreferenceValues<Preferences>().commitsPerPage
-    );
+    const commitsPerPage = parseInt(getPreferenceValues<Preferences>().commitsPerPage);
     const log = await this.git.log([
       `--max-count=${commitsPerPage}`,
       `--skip=${page * commitsPerPage}`,
       "--name-status",
       "--first-parent",
       ...(branch ? [branch] : ["--all"]),
-      '--decorate=full',
+      "--decorate=full",
     ]);
 
     return log.all.map(
@@ -640,11 +685,7 @@ export class GitManager {
   async getCommitsSince(startHash: string): Promise<Commit[]> {
     const parent = await this.getFirstParentOfCommit(startHash);
 
-    const options = [
-      "--reverse",
-      "--name-status",
-      "--decorate=full",
-    ];
+    const options = ["--reverse", "--name-status", "--decorate=full"];
 
     if (parent) {
       options.push(`${parent}..HEAD`);
@@ -745,10 +786,7 @@ __REBASE_TODO__
 
     try {
       const parentCommit = await this.getFirstParentOfCommit(startHash);
-      const options = [
-        "-c", `sequence.editor=${editorPath}`,
-        "rebase", "--interactive"
-      ];
+      const options = ["-c", `sequence.editor=${editorPath}`, "rebase", "--interactive"];
       if (parentCommit) {
         options.push(parentCommit);
       } else {
@@ -756,8 +794,11 @@ __REBASE_TODO__
       }
       await this.git.raw(options);
     } finally {
-      try { rmSync(tempDirectory, { recursive: true, force: true }); }
-      catch (error) { /* ignore */ }
+      try {
+        rmSync(tempDirectory, { recursive: true, force: true });
+      } catch {
+        // ignore
+      }
     }
   }
 
@@ -859,7 +900,7 @@ __REBASE_TODO__
   /**
    * Deletes a local branch.
    */
-  async deleteBranch(name: string, force = false): Promise<void> {
+  async deleteBranch(name: string): Promise<void> {
     await this.git.deleteLocalBranch(name, true);
   }
 
@@ -883,10 +924,10 @@ __REBASE_TODO__
   async resolveConflict(filePath: string, side: "ours" | "theirs"): Promise<void> {
     switch (side) {
       case "ours":
-        await this.git.raw(['checkout', '--ours', '--', filePath]);
+        await this.git.raw(["checkout", "--ours", "--", filePath]);
         break;
       case "theirs":
-        await this.git.raw(['checkout', '--theirs', '--', filePath]);
+        await this.git.raw(["checkout", "--theirs", "--", filePath]);
         break;
     }
   }
@@ -974,7 +1015,6 @@ __REBASE_TODO__
         } else {
           throw error;
         }
-
       } else {
         throw error;
       }
@@ -1038,7 +1078,7 @@ __REBASE_TODO__
           primaryAction: {
             title: "Force Push",
             style: Alert.ActionStyle.Destructive,
-          }
+          },
         });
         if (confirmed) {
           await this.pushBranch(branch, remote, true);
@@ -1066,9 +1106,9 @@ __REBASE_TODO__
   async fetch(remote?: string): Promise<void> {
     await this.git.fetch([
       remote ? remote : "--all",
-      ...(await this.isShallow() ? ["--unshallow"] : []),
+      ...((await this.isShallow()) ? ["--unshallow"] : []),
       "--prune",
-      "--tags"
+      "--tags",
     ]);
   }
 
@@ -1082,7 +1122,6 @@ __REBASE_TODO__
    */
   async stash(message: string, scope?: StashScope): Promise<void> {
     const args: string[] = [];
-
 
     // Handle all/staged/unstaged stash
     if (scope === "staged") {
@@ -1130,15 +1169,23 @@ __REBASE_TODO__
    */
   async getStashes(): Promise<Stash[]> {
     // Check if stash reference exists before proceeding
-    const stashPath = join(this.repoPath, '.git', 'refs', 'stash');
+    const stashPath = join(this.repoPath, ".git", "refs", "stash");
     if (!existsSync(stashPath)) return [];
 
-    const stashList = await this.git.raw(["reflog", "show", "refs/stash", "--date=iso-strict", "--format='òòòòòò %H ò %ad ò %gs ò %gd ò %gN ò %gE òò'"]);
+    const stashList = await this.git.raw([
+      "reflog",
+      "show",
+      "refs/stash",
+      "--date=iso-strict",
+      "--format='òòòòòò %H ò %ad ò %gs ò %gd ò %gN ò %gE òò'",
+    ]);
 
-    return stashList.trim()
+    return stashList
+      .trim()
       .split("\n")
       .map((rawLine) => {
-        const regex = /^'òòòòòò (?<hash>[0-9a-f]+) ò (?<date>[^ò]+) ò (?<message>[^ò]+) ò stash@\{[^}]+\} ò (?<author>[^ò]+) ò (?<authorEmail>[^ò]+) òò'$/;
+        const regex =
+          /^'òòòòòò (?<hash>[0-9a-f]+) ò (?<date>[^ò]+) ò (?<message>[^ò]+) ò stash@\{[^}]+\} ò (?<author>[^ò]+) ò (?<authorEmail>[^ò]+) òò'$/;
         const stash = rawLine.trim().match(regex);
 
         if (!stash || !stash?.groups) {
@@ -1163,11 +1210,7 @@ __REBASE_TODO__
    * - drop the stash reference
    * - store it back with a new message
    */
-  async renameStash(
-    index: number,
-    stash: Stash,
-    newMessage: string
-  ): Promise<void> {
+  async renameStash(index: number, stash: Stash, newMessage: string): Promise<void> {
     // Drop original stash reference
     await this.git.stash(["drop", `stash@{${index}}`]);
 
@@ -1279,9 +1322,7 @@ __REBASE_TODO__
    * Continues an ongoing rebase.
    */
   async continueRebase(): Promise<void> {
-    await this.git
-      .env("GIT_EDITOR", "true")
-      .rebase(["--continue"]);
+    await this.git.env("GIT_EDITOR", "true").rebase(["--continue"]);
   }
 
   /**
@@ -1363,9 +1404,7 @@ __REBASE_TODO__
    * Gets a list of all local tags with basic metadata.
    */
   async getTags(): Promise<Tag[]> {
-    const maxTagsToLoad = parseInt(
-      getPreferenceValues<Preferences>().maxTagsToLoad
-    );
+    const maxTagsToLoad = parseInt(getPreferenceValues<Preferences>().maxTagsToLoad);
 
     const raw = await this.git.raw([
       "for-each-ref",
@@ -1386,7 +1425,7 @@ __REBASE_TODO__
         const message = subject?.trim();
         const date = dateStr && dateStr.trim() ? new Date(dateStr.trim()) : undefined;
         const author = authorStr?.trim();
-        const authorEmail = authorEmailStr?.trim().replace(/[<>]/g, '');
+        const authorEmail = authorEmailStr?.trim().replace(/[<>]/g, "");
 
         return { name, commitHash, message, date, author, authorEmail } as Tag;
       });
@@ -1421,7 +1460,7 @@ __REBASE_TODO__
           primaryAction: {
             title: "Force Push",
             style: Alert.ActionStyle.Destructive,
-          }
+          },
         });
         if (confirmed) {
           await this.pushTags(remote, true);
@@ -1492,17 +1531,9 @@ __REBASE_TODO__
     await this.git.raw(["branch", "-m", oldName, newName]);
 
     if (upstream) {
-      await this.git.push(
-        upstream.remote,
-        undefined,
-        [`${newName}`, `:${upstream.name}`]
-      );
+      await this.git.push(upstream.remote, undefined, [`${newName}`, `:${upstream.name}`]);
 
-      await this.git.branch([
-        '--set-upstream-to',
-        `${upstream.remote}/${newName}`,
-        newName
-      ]);
+      await this.git.branch(["--set-upstream-to", `${upstream.remote}/${newName}`, newName]);
     }
   }
 
@@ -1524,22 +1555,14 @@ __REBASE_TODO__
    * Returns list of tracked file paths.
    */
   async getTrackedFilePaths(): Promise<string[]> {
-    return (await this.git.raw(["ls-files"]))
-      .trim()
-      .split("\n")
+    return (await this.git.raw(["ls-files"])).trim().split("\n");
   }
 
   /**
    * Returns commit history for a specific file (follows renames).
    */
   async getFileHistory(relativePath: string): Promise<Commit[]> {
-    const log = await this.git.log([
-      "--name-status",
-      "--decorate=full",
-      "--follow",
-      "--",
-      relativePath,
-    ]);
+    const log = await this.git.log(["--name-status", "--decorate=full", "--follow", "--", relativePath]);
 
     return log.all.map(
       (commit: {
@@ -1675,7 +1698,7 @@ __REBASE_TODO__
     }
 
     // Prepare simple-git instance bound to repo directory
-    let gitManager = new GitManager(targetPath);
+    const gitManager = new GitManager(targetPath);
 
     // Initialize repository and add remote using simple-git
     await gitManager.initRepository(url);
@@ -1722,10 +1745,7 @@ rm -f "${scriptPath}"
     chmodSync(scriptPath, 0o755);
 
     // Run script detached so it survives the parent process
-    exec(
-      `nohup "${scriptPath}" > /dev/null 2>&1 &`,
-      { shell: "/bin/zsh" }
-    );
+    exec(`nohup "${scriptPath}" > /dev/null 2>&1 &`, { shell: "/bin/zsh" });
 
     return { url, stderrPath, pidPath, exitCodePath, scriptPath };
   }
@@ -1747,13 +1767,11 @@ rm -f "${scriptPath}"
     }
 
     const pid = parseInt(readFileSync(cloningProcess.pidPath, "utf8").trim(), 10);
-    const output = readFileSync(cloningProcess.stderrPath, "utf8")
-      .replace(/\r/g, '\n')
-      .split('\n')
-      .filter(Boolean)
-      .pop()
-      || "";
-    const exitCode = existsSync(cloningProcess.exitCodePath) ? parseInt(readFileSync(cloningProcess.exitCodePath, "utf8").trim(), 10) : undefined;
+    const output =
+      readFileSync(cloningProcess.stderrPath, "utf8").replace(/\r/g, "\n").split("\n").filter(Boolean).pop() || "";
+    const exitCode = existsSync(cloningProcess.exitCodePath)
+      ? parseInt(readFileSync(cloningProcess.exitCodePath, "utf8").trim(), 10)
+      : undefined;
 
     return {
       pid,

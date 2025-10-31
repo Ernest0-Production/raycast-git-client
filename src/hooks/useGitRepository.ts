@@ -7,19 +7,22 @@ import { resolveTildePath } from "../utils/path-utils";
  * Validates the path synchronously and creates a GitManager to perform operations.
  * Supports tilde (~) paths.
  */
-export function useGitRepository(repositoryPath: string): { gitManager: GitManager | undefined; error: Error | undefined } {
+export function useGitRepository(repositoryPath: string): {
+  gitManager: GitManager | undefined;
+  error: Error | undefined;
+} {
   return useMemo(() => {
     try {
       GitManager.validateDirectory(repositoryPath);
       const resolvedPath = resolveTildePath(repositoryPath);
       return {
         gitManager: new GitManager(resolvedPath),
-        error: undefined
+        error: undefined,
       };
     } catch (error) {
       return {
         gitManager: undefined,
-        error: new Error(error instanceof Error ? error.message : "Unknown error")
+        error: new Error(error instanceof Error ? error.message : "Unknown error"),
       };
     }
   }, [repositoryPath]);

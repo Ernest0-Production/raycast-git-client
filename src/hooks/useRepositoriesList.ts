@@ -19,8 +19,12 @@ export function useRepositoriesList() {
   useEffect(() => {
     const invalidRepositories = repositories.filter((repo) => {
       // Check if the directory exists and is a git repository
-      try { GitManager.validateDirectory(repo.path); return false; }
-      catch { return true; }
+      try {
+        GitManager.validateDirectory(repo.path);
+        return false;
+      } catch {
+        return true;
+      }
     });
 
     if (invalidRepositories.length === 0) return;
@@ -65,11 +69,13 @@ export function useRepositoriesList() {
       }
 
       const stats = await detectRepositoryLanguages(repositoryPath);
-      setRepositories((currentRepositories) => currentRepositories.with(index, {
-        ...currentRepositories[index],
-        lastOpenedAt: Date.now(),
-        languageStats: stats,
-      }));
+      setRepositories((currentRepositories) =>
+        currentRepositories.with(index, {
+          ...currentRepositories[index],
+          lastOpenedAt: Date.now(),
+          languageStats: stats,
+        }),
+      );
     },
     [setRepositories],
   );
@@ -112,6 +118,6 @@ export function useRepositoriesList() {
     addRepository,
     visitRepository,
     removeRepository,
-    updateCloningState
+    updateCloningState,
   };
 }

@@ -45,7 +45,7 @@ export function BranchesView(context: RepositoryContext & NavigationContext) {
             </ActionPanel>
           }
         />
-      ) : (!context.branches.isLoading && !context.branches.data.currentBranch && !context.branches.data.detachedHead) ? (
+      ) : !context.branches.isLoading && !context.branches.data.currentBranch && !context.branches.data.detachedHead ? (
         <List.EmptyView
           title="No branches"
           description="No branches found in the repository."
@@ -89,44 +89,30 @@ export function BranchesView(context: RepositoryContext & NavigationContext) {
           {context.branches.data.localBranches.length > 0 && (
             <List.Section title="Local Branches">
               {context.branches.data.localBranches.map((branch) => (
-                <BranchListItem
-                  key={branch.displayName}
-                  branch={branch}
-                  {...context}
-                />
+                <BranchListItem key={branch.displayName} branch={branch} {...context} />
               ))}
             </List.Section>
           )}
 
           {/* Remote Branches Sections */}
           {Object.entries(context.branches.data.remoteBranches).map(([remoteName, remoteBranches]) => (
-            <List.Section
-              key={remoteName}
-              title={remoteName}
-              subtitle={context.remotes.data[remoteName]?.displayName}
-            >
+            <List.Section key={remoteName} title={remoteName} subtitle={context.remotes.data[remoteName]?.displayName}>
               {remoteBranches.map((branch) => (
-                <BranchListItem
-                  key={branch.displayName}
-                  branch={branch}
-                  {...context}
-                />
+                <BranchListItem key={branch.displayName} branch={branch} {...context} />
               ))}
             </List.Section>
           ))}
         </>
-      )
-      }
-    </List >
+      )}
+    </List>
   );
 }
 
 function BranchListItem(context: RepositoryContext & NavigationContext & { branch: Branch }) {
-  const hasConflicts = context.branch.type === "current"
-    && context.status.data?.files?.some((file) => file.isConflicted);
+  const hasConflicts =
+    context.branch.type === "current" && context.status.data?.files?.some((file) => file.isConflicted);
 
-  const hasUncommittedChanges = context.branch.type === "current"
-    && context.status.data?.files?.length !== 0;
+  const hasUncommittedChanges = context.branch.type === "current" && context.status.data?.files?.length !== 0;
 
   const accessories: List.Item.Accessory[] = useMemo(() => {
     const result = [];
@@ -172,7 +158,9 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
           color: context.branch.isGone ? Color.Yellow : Color.SecondaryText,
         },
         tooltip: context.branch.isGone ? "Upstream was removed from remote" : "Tracked upstream",
-        icon: context.branch.isGone ? Icon.ExclamationMark : RemoteHostIcon(context.remotes.data[context.branch.upstream!.remote])
+        icon: context.branch.isGone
+          ? Icon.ExclamationMark
+          : RemoteHostIcon(context.remotes.data[context.branch.upstream!.remote]),
       });
     }
 
@@ -196,10 +184,9 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
       title={context.branch.displayName}
       icon={icon}
       accessories={accessories}
-      keywords={[
-        context.branch.upstream?.fullName,
-        context.branch.remote
-      ].filter((keyword): keyword is string => Boolean(keyword))}
+      keywords={[context.branch.upstream?.fullName, context.branch.remote].filter((keyword): keyword is string =>
+        Boolean(keyword),
+      )}
       actions={
         <ActionPanel>
           {/* Actions for current branch */}
@@ -217,12 +204,20 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
 
               <ActionPanel.Section>
                 <BranchRenameAction {...context} />
-                <CopyToClibpoardMenuAction contents={[
-                  { title: "Branch Name", content: context.branch.displayName, icon: icon },
-                  ...(context.branch.upstream ? [
-                    { title: "Upstream Name", content: context.branch.upstream.fullName, icon: RemoteHostIcon(context.remotes.data[context.branch.upstream.remote]) }
-                  ] : []),
-                ]} />
+                <CopyToClibpoardMenuAction
+                  contents={[
+                    { title: "Branch Name", content: context.branch.displayName, icon: icon },
+                    ...(context.branch.upstream
+                      ? [
+                          {
+                            title: "Upstream Name",
+                            content: context.branch.upstream.fullName,
+                            icon: RemoteHostIcon(context.remotes.data[context.branch.upstream.remote]),
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
                 <BranchAttachedLinksAction {...context} />
               </ActionPanel.Section>
             </>
@@ -249,12 +244,20 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
 
               <ActionPanel.Section>
                 <BranchRenameAction {...context} />
-                <CopyToClibpoardMenuAction contents={[
-                  { title: "Branch Name", content: context.branch.displayName, icon: icon },
-                  ...(context.branch.upstream ? [
-                    { title: "Upstream Name", content: context.branch.upstream.fullName, icon: RemoteHostIcon(context.remotes.data[context.branch.upstream.remote]) }
-                  ] : []),
-                ]} />
+                <CopyToClibpoardMenuAction
+                  contents={[
+                    { title: "Branch Name", content: context.branch.displayName, icon: icon },
+                    ...(context.branch.upstream
+                      ? [
+                          {
+                            title: "Upstream Name",
+                            content: context.branch.upstream.fullName,
+                            icon: RemoteHostIcon(context.remotes.data[context.branch.upstream.remote]),
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
                 <BranchAttachedLinksAction {...context} />
                 <BranchDeleteAction {...context} />
               </ActionPanel.Section>
@@ -275,16 +278,13 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
               </ActionPanel.Section>
 
               <ActionPanel.Section>
-                <CopyToClibpoardMenuAction contents={[
-                  { title: "Branch Name", content: context.branch.displayName },
-                ]} />
+                <CopyToClibpoardMenuAction contents={[{ title: "Branch Name", content: context.branch.displayName }]} />
                 <BranchDeleteAction {...context} />
               </ActionPanel.Section>
             </>
           )}
 
-          <ActionPanel.Section>
-          </ActionPanel.Section>
+          <ActionPanel.Section></ActionPanel.Section>
 
           <ActionPanel.Section>
             <BranchCreateAction {...context} />

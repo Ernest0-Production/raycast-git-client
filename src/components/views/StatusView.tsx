@@ -9,7 +9,18 @@ import { existsSync } from "fs";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
 import { PatchApplyAction, PatchCreateAction } from "../actions/PatchActions";
-import { CommitChangesAction, ConflictAbortAction, FileAttachedLinksAction, FileDiscardAction, FileDiscardAllAction, FileResolveConflictAction, FileStageAction, FileStageAllAction, FileUnstageAction, FileUnstageAllAction } from "../actions/StatusActions";
+import {
+  CommitChangesAction,
+  ConflictAbortAction,
+  FileAttachedLinksAction,
+  FileDiscardAction,
+  FileDiscardAllAction,
+  FileResolveConflictAction,
+  FileStageAction,
+  FileStageAllAction,
+  FileUnstageAction,
+  FileUnstageAllAction,
+} from "../actions/StatusActions";
 import { FileHistoryAction } from "./FileHistoryView";
 import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../actions/ToggleDetailAction";
 import { basename } from "path";
@@ -21,8 +32,14 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
   const toggleController = useToggleDetail("Status Diff", "Changes", true);
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
 
-  const stagedFiles = useMemo(() => context.status.data.files.filter((f) => f.status === "staged"), [context.status.data.files]);
-  const unstagedFiles = useMemo(() => context.status.data.files.filter((f) => f.status === "unstaged" || f.status === "untracked"), [context.status.data.files]);
+  const stagedFiles = useMemo(
+    () => context.status.data.files.filter((f) => f.status === "staged"),
+    [context.status.data.files],
+  );
+  const unstagedFiles = useMemo(
+    () => context.status.data.files.filter((f) => f.status === "unstaged" || f.status === "untracked"),
+    [context.status.data.files],
+  );
 
   const navigationTitle = useMemo(() => {
     switch (context.status.data.mode.kind) {
@@ -37,21 +54,19 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
       case "revert":
         return `⚠️ Revert Conflict`;
       case "regular":
-        return "Repository Status";
+        return context.gitManager.repoName;
     }
   }, [context.status.data.mode.kind]);
 
   return (
     <List
       isLoading={context.status.isLoading}
-      navigationTitle={context.gitManager.repoName}
+      navigationTitle={navigationTitle}
       searchBarPlaceholder="Search files by name, path..."
       onSelectionChange={(id) => setSelectedFilePath(id)}
       filtering={{ keepSectionOrder: true }}
       isShowingDetail={toggleController.isShowingDetail}
-      searchBarAccessory={
-        WorkspaceNavigationDropdown(context)
-      }
+      searchBarAccessory={WorkspaceNavigationDropdown(context)}
     >
       {context.status.error ? (
         <List.EmptyView
@@ -69,7 +84,7 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
             </ActionPanel>
           }
         />
-      ) : (!context.status.isLoading && context.status.data.files.length === 0) ? (
+      ) : !context.status.isLoading && context.status.data.files.length === 0 ? (
         <List.EmptyView
           {...emptyViewProperties(context.status.data.mode.kind)}
           actions={
@@ -83,22 +98,14 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
                 <PatchApplyAction {...context} />
               </ActionPanel.Section>
 
-              {context.status.data && (
-                <ConflictAbortAction {...context} />
-              )}
+              {context.status.data && <ConflictAbortAction {...context} />}
 
               <ActionPanel.Section title="History">
                 <RemotePullAction {...context} />
                 {context.branches.data.currentBranch && context.branches.data.currentBranch.type === "current" && (
                   <>
-                    <BranchPushAction
-                      branch={context.branches.data.currentBranch}
-                      {...context}
-                    />
-                    <BranchPushForceAction
-                      branch={context.branches.data.currentBranch}
-                      {...context}
-                    />
+                    <BranchPushAction branch={context.branches.data.currentBranch} {...context} />
+                    <BranchPushForceAction branch={context.branches.data.currentBranch} {...context} />
                   </>
                 )}
                 <RemoteFetchAction {...context} />
@@ -106,10 +113,7 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
 
               <ActionPanel.Section>
                 {context.branches.data.currentBranch && (
-                  <BranchAttachedLinksAction
-                    {...context}
-                    branch={context.branches.data.currentBranch}
-                  />
+                  <BranchAttachedLinksAction {...context} branch={context.branches.data.currentBranch} />
                 )}
               </ActionPanel.Section>
 
@@ -152,11 +156,14 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
   );
 }
 
-function FileListItem(context: NavigationContext & RepositoryContext & {
-  file: FileStatus;
-  selectedFilePath: string | null;
-  toggleController: ToggleDetailController;
-}) {
+function FileListItem(
+  context: NavigationContext &
+    RepositoryContext & {
+      file: FileStatus;
+      selectedFilePath: string | null;
+      toggleController: ToggleDetailController;
+    },
+) {
   // Create a unique identifier for each file item
   const fileId = `${context.file.relativePath}-${context.file.status}`;
 
@@ -181,29 +188,34 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
     if (diff) {
       contentParts.push(diff);
     } else if (error) {
-      contentParts.push(
-        "Error loading diff",
-        `~~~\n${error.message}\n~~~`
-      );
+      contentParts.push("Error loading diff", `~~~\n${error.message}\n~~~`);
     } else if (context.file.isConflicted) {
       const currentSource = context.file.status === "staged" ? "local version" : "remote version";
       const otherSource = context.file.status === "staged" ? "remote version" : "local version";
 
       switch (context.file.type) {
         case "deleted":
-          contentParts.push(`~~~\n⚠️ File was deleted in ${currentSource} but added or modified in ${otherSource}\n~~~`);
+          contentParts.push(
+            `~~~\n⚠️ File was deleted in ${currentSource} but added or modified in ${otherSource}\n~~~`,
+          );
           break;
         case "added":
-          contentParts.push(`~~~\n⚠️ File was added in ${currentSource} but deleted or modified in ${otherSource}\n~~~`);
+          contentParts.push(
+            `~~~\n⚠️ File was added in ${currentSource} but deleted or modified in ${otherSource}\n~~~`,
+          );
           break;
         case "modified":
-          contentParts.push(`~~~\n⚠️ File was modified in ${currentSource} but deleted or added in ${otherSource}\n~~~`);
+          contentParts.push(
+            `~~~\n⚠️ File was modified in ${currentSource} but deleted or added in ${otherSource}\n~~~`,
+          );
           break;
       }
     }
 
     if (context.file.isConflicted) {
-      contentParts.push("\n\n > 💡 **Tips**: \n > - Resolve the conflict manually by running `Resolve Conflicts` action.");
+      contentParts.push(
+        "\n\n > 💡 **Tips**: \n > - Resolve the conflict manually by running `Resolve Conflicts` action.",
+      );
     }
 
     return contentParts.join("\n\n");
@@ -213,24 +225,24 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
     <List.Item
       id={fileId}
       title={basename(context.file.absolutePath)}
-      subtitle={context.toggleController.isShowingDetail ? undefined : {
-        value: context.file.relativePath,
-        tooltip: context.file.relativePath
-      }}
-      icon={FileStatusIcon(context.file)}
-      keywords={[
-        context.file.absolutePath,
-        context.file.relativePath,
-        context.file.oldPath
-      ].filter((keyword): keyword is string => Boolean(keyword))}
-      detail={
-        <List.Item.Detail
-          isLoading={isLoading}
-          markdown={diffMarkdown}
-          metadata
-        />
+      subtitle={
+        context.toggleController.isShowingDetail
+          ? undefined
+          : {
+              value: context.file.relativePath,
+              tooltip: context.file.relativePath,
+            }
       }
-      quickLook={existsSync(context.file.absolutePath) ? { path: context.file.absolutePath, name: context.file.relativePath } : undefined}
+      icon={FileStatusIcon(context.file)}
+      keywords={[context.file.absolutePath, context.file.relativePath, context.file.oldPath].filter(
+        (keyword): keyword is string => Boolean(keyword),
+      )}
+      detail={<List.Item.Detail isLoading={isLoading} markdown={diffMarkdown} metadata />}
+      quickLook={
+        existsSync(context.file.absolutePath)
+          ? { path: context.file.absolutePath, name: context.file.relativePath }
+          : undefined
+      }
       actions={
         <ActionPanel>
           <ActionPanel.Section title={basename(context.file.absolutePath)}>
@@ -240,41 +252,36 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
                 <FileUnstageAction {...context} />
                 <ToggleDetailAction controller={context.toggleController} />
                 <FileManagerActions filePath={context.file.absolutePath} />
-                <CopyToClibpoardMenuAction contents={[
-                  { title: "Relative Path", content: context.file.relativePath, icon: Icon.Document },
-                  { title: "Absolute Path", content: context.file.absolutePath, icon: Icon.Document },
-                ]} />
+                <CopyToClibpoardMenuAction
+                  contents={[
+                    { title: "Relative Path", content: context.file.relativePath, icon: Icon.Document },
+                    { title: "Absolute Path", content: context.file.absolutePath, icon: Icon.Document },
+                  ]}
+                />
               </>
             )}
 
             {/* Actions for unstaged/untracked files */}
             {(context.file.status === "unstaged" || context.file.status === "untracked") && (
               <>
-                {context.file.isConflicted && (
-                  <FileResolveConflictAction {...context} />
-                )}
+                {context.file.isConflicted && <FileResolveConflictAction {...context} />}
                 <FileStageAction {...context} />
                 <ToggleDetailAction controller={context.toggleController} />
                 <FileManagerActions filePath={context.file.absolutePath} />
-                <CopyToClibpoardMenuAction contents={[
-                  { title: "Relative Path", content: context.file.relativePath, icon: Icon.Document },
-                  { title: "Absolute Path", content: context.file.absolutePath, icon: Icon.Document },
-                ]} />
-                {!context.file.isConflicted && (
-                  <FileDiscardAction {...context} />
-                )}
+                <CopyToClibpoardMenuAction
+                  contents={[
+                    { title: "Relative Path", content: context.file.relativePath, icon: Icon.Document },
+                    { title: "Absolute Path", content: context.file.absolutePath, icon: Icon.Document },
+                  ]}
+                />
+                {!context.file.isConflicted && <FileDiscardAction {...context} />}
               </>
             )}
-            <FileHistoryAction
-              filePath={context.file.absolutePath}
-              {...context}
-            />
+            <FileHistoryAction filePath={context.file.absolutePath} {...context} />
           </ActionPanel.Section>
 
           <ActionPanel.Section>
-            {context.branches.data.currentBranch && (
-              <CommitChangesAction {...context} />
-            )}
+            {context.branches.data.currentBranch && <CommitChangesAction {...context} />}
             <ConflictAbortAction {...context} />
             <FileStageAllAction {...context} />
             <FileUnstageAllAction {...context} />
@@ -292,24 +299,15 @@ function FileListItem(context: NavigationContext & RepositoryContext & {
             <RemotePullAction {...context} />
             {context.branches.data.currentBranch?.type === "current" && (
               <>
-                <BranchPushAction
-                  branch={context.branches.data.currentBranch}
-                  {...context}
-                />
-                <BranchPushForceAction
-                  branch={context.branches.data.currentBranch}
-                  {...context}
-                />
+                <BranchPushAction branch={context.branches.data.currentBranch} {...context} />
+                <BranchPushForceAction branch={context.branches.data.currentBranch} {...context} />
               </>
             )}
             <RemoteFetchAction {...context} />
           </ActionPanel.Section>
 
           <ActionPanel.Section>
-            <FileAttachedLinksAction
-              {...context}
-              filePath={context.file.relativePath}
-            />
+            <FileAttachedLinksAction {...context} filePath={context.file.relativePath} />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Workspace">
@@ -346,31 +344,31 @@ function emptyViewProperties(kind: StatusMode["kind"]): Pick<List.EmptyView.Prop
       return {
         icon: { source: `git - merge.svg`, tintColor: Color.Yellow },
         title: "Merge Conflict",
-        description: "Please run \"Commit Merge\" action to finish.",
+        description: 'Please run "Commit Merge" action to finish.',
       };
     case "squash":
       return {
         icon: { source: `arrow - bounce.svg`, tintColor: Color.Yellow },
         title: "Squash Conflict",
-        description: "Please run \"Commit Squash\" action to finish.",
+        description: 'Please run "Commit Squash" action to finish.',
       };
     case "cherryPick":
       return {
         icon: { source: Icon.ExclamationMark, tintColor: Color.Yellow },
         title: "Cherry Pick Conflict",
-        description: "Please run \"Continue Cherry Pick\" action to finish.",
+        description: 'Please run "Continue Cherry Pick" action to finish.',
       };
     case "revert":
       return {
         icon: { source: Icon.ArrowCounterClockwise, tintColor: Color.Yellow },
         title: "Revert Conflict",
-        description: "Please run \"Continue Revert\" action to finish.",
+        description: 'Please run "Continue Revert" action to finish.',
       };
     case "rebase":
       return {
         icon: { source: `arrow - rebase.svg`, tintColor: Color.Yellow },
         title: "Rebase Progress",
-        description: "Please run \"Continue Rebase\" action to finish.",
+        description: 'Please run "Continue Rebase" action to finish.',
       };
   }
 }

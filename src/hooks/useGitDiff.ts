@@ -21,12 +21,7 @@ const MAX_DIFF_LINES = 200;
 export function useGitDiff({ gitManager, options, execute = true }: UseGitDiffProps) {
   const { file, commitHash, status } = options;
 
-  const {
-    data,
-    isLoading,
-    error,
-    revalidate,
-  } = usePromise(
+  const { data, isLoading, error, revalidate } = usePromise(
     async (file, commitHash, status, repoPath) => {
       const absolutePath = join(repoPath, file);
 
@@ -35,9 +30,9 @@ export function useGitDiff({ gitManager, options, execute = true }: UseGitDiffPr
 
         if (binaryFormatInfo) {
           if (binaryFormatInfo.mime.startsWith("image/")) {
-            return `![$(${file})](${absolutePath})`
+            return `![$(${file})](${absolutePath})`;
           } else {
-            return "<binary content>"
+            return "<binary content>";
           }
         }
       }
@@ -64,7 +59,7 @@ export function useGitDiff({ gitManager, options, execute = true }: UseGitDiffPr
     },
     [file, commitHash, status, gitManager.repoPath],
     {
-      execute
+      execute,
     },
   );
 

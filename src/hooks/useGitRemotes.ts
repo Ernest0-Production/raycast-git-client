@@ -13,41 +13,43 @@ export type RemotesHosts = Record<string, Remote>;
  * Repository path is included in cache dependencies to ensure separate cache per repository.
  */
 export function useGitRemotes(gitManager: GitManager): RepositoryContext["remotes"] {
-  const { data: remotes, isLoading, revalidate } = useCachedPromise(
-    async (repoPath: string) => gitManager.getRemotes(),
-    [gitManager.repoPath],
-    {
-      initialData: []
-    }
-  );
+  const {
+    data: remotes,
+    isLoading,
+    revalidate,
+  } = useCachedPromise(async (_repoPath: string) => gitManager.getRemotes(), [gitManager.repoPath], {
+    initialData: [],
+  });
 
-  const remotesRecords: RemotesHosts = useMemo(() => remotes.reduce<RemotesHosts>((dictionary, remote) => {
-    const primaryUrl = remote.fetchUrl || remote.pushUrl || "";
-    const parser = remoteHostParser(primaryUrl);
+  const remotesRecords: RemotesHosts = useMemo(
+    () =>
+      remotes.reduce<RemotesHosts>((dictionary, remote) => {
+        const primaryUrl = remote.fetchUrl || remote.pushUrl || "";
+        const parser = remoteHostParser(primaryUrl);
 
-    const info: Remote = {
-      name: remote.name,
-      fetchUrl: remote.fetchUrl,
-      pushUrl: remote.pushUrl,
-      type: detectRemoteProtocol(primaryUrl),
-      organizationName: parser.organizationName,
-      displayName: `${parser.organizationName}/${parser.repositoryName}`,
-      repositoryName: parser.repositoryName,
-      provider: parser.provider,
-      avatarUrl: parser.avatarUrl,
-      webPages: parser.webPages
-    };
-    dictionary[remote.name] = info;
+        const info: Remote = {
+          name: remote.name,
+          fetchUrl: remote.fetchUrl,
+          pushUrl: remote.pushUrl,
+          type: detectRemoteProtocol(primaryUrl),
+          organizationName: parser.organizationName,
+          displayName: `${parser.organizationName}/${parser.repositoryName}`,
+          repositoryName: parser.repositoryName,
+          provider: parser.provider,
+          avatarUrl: parser.avatarUrl,
+          webPages: parser.webPages,
+        };
+        dictionary[remote.name] = info;
 
-    return dictionary;
-  }, {} as RemotesHosts),
-    [remotes]
+        return dictionary;
+      }, {} as RemotesHosts),
+    [remotes],
   );
 
   return {
     data: remotesRecords,
     isLoading,
-    revalidate
+    revalidate,
   };
 }
 

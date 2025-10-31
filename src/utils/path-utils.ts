@@ -7,13 +7,13 @@ import { join } from "path";
  * @returns The absolute path.
  */
 export function resolveTildePath(path: string): string {
-    if (path.startsWith("~/")) {
-        return join(homedir(), path.slice(2));
-    }
-    if (path === "~") {
-        return homedir();
-    }
-    return path;
+  if (path.startsWith("~/")) {
+    return join(homedir(), path.slice(2));
+  }
+  if (path === "~") {
+    return homedir();
+  }
+  return path;
 }
 
 /**
@@ -22,5 +22,5 @@ export function resolveTildePath(path: string): string {
  * @returns The replaced path.
  */
 export function prettyPath(path: string): string {
-    return path.replace(homedir(), "~");
+  return path.replace(homedir(), "~");
 }

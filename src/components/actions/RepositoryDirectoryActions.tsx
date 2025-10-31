@@ -1,4 +1,4 @@
-import { Action, ActionPanel, Icon, getPreferenceValues, getApplications, open, confirmAlert, Alert, Application } from "@raycast/api";
+import { Action, ActionPanel, Icon, getPreferenceValues, getApplications, open, Application } from "@raycast/api";
 import { useCachedState, usePromise } from "@raycast/utils";
 import { Preferences } from "../../types";
 import { basename } from "path";
@@ -17,7 +17,10 @@ interface RepositoryDirectoryActionsProps {
 export function RepositoryDirectoryActions({ repositoryPath, onOpen }: RepositoryDirectoryActionsProps) {
   const preferences = getPreferenceValues<Preferences>();
   const { data: applications } = usePromise(() => getApplications(repositoryPath));
-  const [defaultApp, setDefaultApp] = useCachedState<Application | undefined>(`${repositoryPath}:repo-default-app`, undefined);
+  const [defaultApp, setDefaultApp] = useCachedState<Application | undefined>(
+    `${repositoryPath}:repo-default-app`,
+    undefined,
+  );
 
   async function handleRememberDefaultApp(app: Application) {
     await open(repositoryPath, app);
@@ -52,7 +55,9 @@ export function RepositoryDirectoryActions({ repositoryPath, onOpen }: Repositor
               key={app.path}
               title={app.name}
               icon={{ fileIcon: app.path }}
-              onAction={() => { handleRememberDefaultApp(app) }}
+              onAction={() => {
+                handleRememberDefaultApp(app);
+              }}
             />
           ))}
         </ActionPanel.Submenu>
@@ -82,10 +87,7 @@ export function RepositoryDirectoryActions({ repositoryPath, onOpen }: Repositor
         shortcut={{ modifiers: ["cmd", "shift", "opt"], key: "o" }}
       />
       {defaultApp && (
-        <ActionPanel.Submenu
-          title="Change Repository Default App"
-          icon={Icon.AppWindow}
-        >
+        <ActionPanel.Submenu title="Change Repository Default App" icon={Icon.AppWindow}>
           {applications?.map((app: Application) => (
             <Action
               key={app.path}
@@ -96,10 +98,7 @@ export function RepositoryDirectoryActions({ repositoryPath, onOpen }: Repositor
           ))}
         </ActionPanel.Submenu>
       )}
-      <Action.CopyToClipboard
-        title="Copy Repository Path"
-        content={repositoryPath}
-      />
+      <Action.CopyToClipboard title="Copy Repository Path" content={repositoryPath} />
     </ActionPanel.Section>
   );
 }

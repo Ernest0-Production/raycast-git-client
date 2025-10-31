@@ -5,35 +5,35 @@ import { nanoid } from "nanoid";
  * Represents an AI commit message prompt preset.
  */
 export interface AiPromptPreset {
-    /** Unique identifier of the preset */
-    id: string;
-    /** Human-friendly preset name */
-    name: string;
-    /** Prompt template text to guide AI */
-    prompt: string;
-    /** AI model to use for the prompt */
-    model?: string;
-    /** Icon to use for the preset */
-    icon?: string;
+  /** Unique identifier of the preset */
+  id: string;
+  /** Human-friendly preset name */
+  name: string;
+  /** Prompt template text to guide AI */
+  prompt: string;
+  /** AI model to use for the prompt */
+  model?: string;
+  /** Icon to use for the preset */
+  icon?: string;
 }
 
 /**
  * Represents the data structure for storing AI prompt presets.
  */
 export interface AiPromptPresetsData {
-    /** List of all presets */
-    presets: AiPromptPreset[];
-    /** ID of the default preset */
-    defaultPresetId: string;
+  /** List of all presets */
+  presets: AiPromptPreset[];
+  /** ID of the default preset */
+  defaultPresetId: string;
 }
 
 /**
  * Default prompt used when there are no saved presets.
  */
 const CONVENTIONAL_MESSAGE_PROMPT: AiPromptPreset = {
-    id: "conventional-commits-style",
-    name: "Conventional Style",
-    prompt: `
+  id: "conventional-commits-style",
+  name: "Conventional Style",
+  prompt: `
 You are a Git commit message generator. Analyze the git diff and create a conventional commit message.
 
 Format:
@@ -50,18 +50,17 @@ Types: feat, fix, refactor, docs, style, test, chore, perf, ci, build
 
 Output only the commit message, no markdown or extra text.
 `.trim(),
-    model: "Google_Gemini_2.5_Flash"
+  model: "Google_Gemini_2.5_Flash",
 };
-
 
 /**
  * Gitmoji style commit message prompt.
  */
 const GITMOJI_MESSAGE_PROMPT: AiPromptPreset = {
-    id: "gitmoji-style",
-    name: "Gitmoji Style",
-    icon: "🎨",
-    prompt: `
+  id: "gitmoji-style",
+  name: "Gitmoji Style",
+  icon: "🎨",
+  prompt: `
 You are a Git commit message generator. Analyze the git diff and create a gitmoji-style commit message.
 
 Format:
@@ -90,17 +89,17 @@ Common emojis:
 
 Output only the commit message, no markdown or extra text.
 `.trim(),
-    model: "Google_Gemini_2.5_Flash"
+  model: "Google_Gemini_2.5_Flash",
 };
 
 /**
  * Minimalist style commit message prompt.
  */
 const MINIMALIST_MESSAGE_PROMPT: AiPromptPreset = {
-    id: "minimalist-style",
-    name: "Minimalist Style",
-    icon: "🔘",
-    prompt: `
+  id: "minimalist-style",
+  name: "Minimalist Style",
+  icon: "🔘",
+  prompt: `
 You are a Git commit message generator. Analyze the git diff and create a short, one-line commit message.
 
 - Keep it under 50 characters.
@@ -109,7 +108,7 @@ You are a Git commit message generator. Analyze the git diff and create a short,
 
 Output only the commit message, no markdown or extra text.
 `.trim(),
-    model: "Google_Gemini_2.5_Flash"
+  model: "Google_Gemini_2.5_Flash",
 };
 
 /**
@@ -117,63 +116,61 @@ Output only the commit message, no markdown or extra text.
  * Presets are global for the extension (not per repository).
  */
 export function useAiPromptPresets() {
-    const [data, setData] = useCachedState<AiPromptPresetsData>("ai-prompt-presets", {
-        presets: [
-            CONVENTIONAL_MESSAGE_PROMPT,
-            GITMOJI_MESSAGE_PROMPT,
-            MINIMALIST_MESSAGE_PROMPT,
-        ],
-        defaultPresetId: CONVENTIONAL_MESSAGE_PROMPT.id,
+  const [data, setData] = useCachedState<AiPromptPresetsData>("ai-prompt-presets", {
+    presets: [CONVENTIONAL_MESSAGE_PROMPT, GITMOJI_MESSAGE_PROMPT, MINIMALIST_MESSAGE_PROMPT],
+    defaultPresetId: CONVENTIONAL_MESSAGE_PROMPT.id,
+  });
+
+  const defaultPreset = data.presets.find((p) => p.id === data.defaultPresetId) ?? CONVENTIONAL_MESSAGE_PROMPT;
+  const otherPresets = data.presets.filter((p) => p.id !== data.defaultPresetId);
+
+  const addPreset = (name: string, prompt: string, model?: string) => {
+    const newPreset: AiPromptPreset = { id: nanoid(), ...parsePresetName(name), prompt: prompt, model };
+    setData((current) => {
+      return {
+        ...current,
+        presets: [...current.presets, newPreset],
+      };
     });
+  };
 
-    const defaultPreset = data.presets.find((p) => p.id === data.defaultPresetId) ?? CONVENTIONAL_MESSAGE_PROMPT;
-    const otherPresets = data.presets.filter((p) => p.id !== data.defaultPresetId);
+  const updatePreset = (id: string, name: string, prompt: string, model?: string) => {
+    setData((current) => {
+      return {
+        ...current,
+        presets: current.presets.map((p) =>
+          p.id === id ? { ...p, ...parsePresetName(name), prompt: prompt, model } : p,
+        ),
+      };
+    });
+  };
 
-    const addPreset = (name: string, prompt: string, model?: string) => {
-        const newPreset: AiPromptPreset = { id: nanoid(), ...parsePresetName(name), prompt: prompt, model };
-        setData((current) => {
-            return {
-                ...current,
-                presets: [...current.presets, newPreset],
-            };
-        });
-    };
+  const deletePreset = (id: string) => {
+    setData((current) => {
+      return {
+        ...current,
+        presets: current.presets.filter((p) => p.id !== id),
+      };
+    });
+  };
 
-    const updatePreset = (id: string, name: string, prompt: string, model?: string) => {
-        setData((current) => {
-            return {
-                ...current,
-                presets: current.presets.map((p) => (p.id === id ? { ...p, ...parsePresetName(name), prompt: prompt, model } : p)),
-            };
-        });
-    };
+  const setDefault = (id: string) => {
+    setData((current) => {
+      if (current.presets.some((p) => p.id === id)) {
+        return { ...current, defaultPresetId: id };
+      }
+      return current;
+    });
+  };
 
-    const deletePreset = (id: string) => {
-        setData((current) => {
-            return {
-                ...current,
-                presets: current.presets.filter((p) => p.id !== id),
-            };
-        });
-    };
-
-    const setDefault = (id: string) => {
-        setData((current) => {
-            if (current.presets.some((p) => p.id === id)) {
-                return { ...current, defaultPresetId: id };
-            }
-            return current;
-        });
-    };
-
-    return {
-        defaultPreset,
-        otherPresets,
-        addPreset,
-        updatePreset,
-        deletePreset,
-        setDefault,
-    };
+  return {
+    defaultPreset,
+    otherPresets,
+    addPreset,
+    updatePreset,
+    deletePreset,
+    setDefault,
+  };
 }
 
 /**
@@ -182,14 +179,14 @@ export function useAiPromptPresets() {
  * @param name - The name of the preset.
  * @returns The icon and name.
  */
-function parsePresetName(name: string): { icon?: string; name: string; } {
-    // This regex captures both standard emojis and country flag emojis (which are composed of two Unicode characters)
-    const emojiMatch = name.match(/^(\p{Emoji}(\p{Emoji_Modifier}|\p{Emoji_Component})*)\s+(.+)$/u);
+function parsePresetName(name: string): { icon?: string; name: string } {
+  // This regex captures both standard emojis and country flag emojis (which are composed of two Unicode characters)
+  const emojiMatch = name.match(/^(\p{Emoji}(\p{Emoji_Modifier}|\p{Emoji_Component})*)\s+(.+)$/u);
 
-    if (emojiMatch) {
-        const [, emoji, , actualName] = emojiMatch;
-        return { icon: emoji, name: actualName };
-    }
+  if (emojiMatch) {
+    const [, emoji, , actualName] = emojiMatch;
+    return { icon: emoji, name: actualName };
+  }
 
-    return { name: name };
+  return { name: name };
 }

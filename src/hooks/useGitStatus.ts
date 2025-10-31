@@ -9,7 +9,7 @@ import { StatusState } from "../types";
  */
 export function useGitStatus(gitManager: GitManager): RepositoryContext["status"] {
   return useCachedPromise(
-    async (repoPath: string) => {
+    async (_repoPath: string) => {
       const status = await gitManager.getStatus();
       return status;
     },
@@ -18,8 +18,8 @@ export function useGitStatus(gitManager: GitManager): RepositoryContext["status"
       initialData: {
         branch: null,
         files: [],
-        mode: { kind: "regular" }
-      } as StatusState
-    }
+        mode: { kind: "regular" },
+      } as StatusState,
+    },
   ) as RepositoryContext["status"];
 }

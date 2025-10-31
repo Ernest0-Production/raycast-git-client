@@ -1,5 +1,18 @@
-import { Action, Icon, confirmAlert, Alert, ActionPanel, useNavigation, showToast, Toast, Form, List, Keyboard, Color } from "@raycast/api";
-import { Commit, Tag } from "../../types";
+import {
+  Action,
+  Icon,
+  confirmAlert,
+  Alert,
+  ActionPanel,
+  useNavigation,
+  showToast,
+  Toast,
+  Form,
+  List,
+  Keyboard,
+  Color,
+} from "@raycast/api";
+import { Tag } from "../../types";
 import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { useState } from "react";
@@ -11,10 +24,12 @@ import { RemoteWebPageAction } from "./RemoteActions";
 /**
  * Action for creating a tag on a commit.
  */
-export function TagCreateAction(context: RepositoryContext & {
-  ref: string
-  shortcut?: Keyboard.Shortcut
-}) {
+export function TagCreateAction(
+  context: RepositoryContext & {
+    ref: string;
+    shortcut?: Keyboard.Shortcut;
+  },
+) {
   return (
     <Action.Push
       title="Create New Tag"
@@ -65,7 +80,7 @@ export function TagRemoveAction(context: RepositoryContext & { tagName: string }
       await context.gitManager.deleteTag(context.tagName);
       context.commits.revalidate();
       context.tags.revalidate();
-    } catch (error) {
+    } catch {
       // Git error is already shown by GitManager
     }
   };
@@ -88,11 +103,7 @@ export function TagRemoveAction(context: RepositoryContext & { tagName: string }
       icon={{ source: Icon.Trash, tintColor: Color.Red }}
       shortcut={{ modifiers: ["ctrl"], key: "x" }}
     >
-      <Action
-        title={`Local Only`}
-        onAction={() => handleRemoveTag(undefined)}
-        icon={Icon.Dot}
-      />
+      <Action title={`Local Only`} onAction={() => handleRemoveTag(undefined)} icon={Icon.Dot} />
       {Object.keys(context.remotes.data).map((remote) => (
         <Action
           key={`${remote}:remove-tag`}
@@ -126,18 +137,12 @@ export function TagCheckoutAction(context: RepositoryContext & NavigationContext
       context.branches.revalidate();
       context.commits.revalidate();
       context.navigateTo("status");
-    } catch (error) {
+    } catch {
       // handled by GitManager
     }
   };
 
-  return (
-    <Action
-      title="Checkout Tag"
-      onAction={handleCheckout}
-      icon={`arrow-checkout.svg`}
-    />
-  );
+  return <Action title="Checkout Tag" onAction={handleCheckout} icon={`arrow-checkout.svg`} />;
 }
 
 /**
@@ -148,7 +153,7 @@ export function TagsPushAction(context: RepositoryContext) {
     try {
       await context.gitManager.pushTags(remote);
       context.tags.revalidate();
-    } catch (error) {
+    } catch {
       // handled by GitManager
     }
   };
@@ -212,7 +217,7 @@ function TagRenameForm(context: RepositoryContext & { tagName: string }) {
       context.commits.revalidate();
       context.tags.revalidate();
       pop();
-    } catch (error) {
+    } catch {
       // handled by GitManager
     }
     setIsLoading(false);
@@ -243,18 +248,24 @@ function TagRenameForm(context: RepositoryContext & { tagName: string }) {
 /**
  * Action to open tag details.
  */
-export function TagDetailsView(context: RepositoryContext & NavigationContext & {
-  index: number,
-  onMoveToTag: (tagName: string) => void
-}) {
+export function TagDetailsView(
+  context: RepositoryContext &
+    NavigationContext & {
+      index: number;
+      onMoveToTag: (tagName: string) => void;
+    },
+) {
   const [currentIndex, setCurrentIndex] = useState(context.index);
   const toggleController = useToggleDetail("Tag Details", "Diff", false);
 
-  const { data: commit, isLoading } = usePromise(async (index: number) => {
-    return await context.gitManager.getCommitByHash(context.tags.data[index].commitHash);
-  }, [currentIndex]);
+  const { data: commit, isLoading } = usePromise(
+    async (index: number) => {
+      return await context.gitManager.getCommitByHash(context.tags.data[index].commitHash);
+    },
+    [currentIndex],
+  );
 
-  const switchToCommit = async (direction: ("next" | "previous")) => {
+  const switchToCommit = async (direction: "next" | "previous") => {
     let nextIndex = currentIndex;
     switch (direction) {
       case "previous":
@@ -281,7 +292,6 @@ export function TagDetailsView(context: RepositoryContext & NavigationContext & 
         message: "This is the last tag in the repository.",
       });
       return;
-
     }
 
     setCurrentIndex(nextIndex);
@@ -289,17 +299,19 @@ export function TagDetailsView(context: RepositoryContext & NavigationContext & 
   };
 
   if (isLoading || !commit) {
-    return <List
-      isLoading={isLoading}
-      navigationTitle={`Commit Changes`}
-      searchBarPlaceholder="Search files by name, path..."
-    >
-      <List.EmptyView
-        title={`Loading tag ${context.tags.data[currentIndex].name}...`}
-        description="Please wait while we load the tag details..."
-        icon={Icon.Hourglass}
-      />
-    </List>
+    return (
+      <List
+        isLoading={isLoading}
+        navigationTitle={`Commit Changes`}
+        searchBarPlaceholder="Search files by name, path..."
+      >
+        <List.EmptyView
+          title={`Loading tag ${context.tags.data[currentIndex].name}...`}
+          description="Please wait while we load the tag details..."
+          icon={Icon.Hourglass}
+        />
+      </List>
+    );
   }
 
   return (
@@ -356,7 +368,7 @@ function TagCreateForm(context: RepositoryContext & { ref: string }) {
       context.commits.revalidate();
       context.tags.revalidate();
       pop();
-    } catch (error) {
+    } catch {
       // Git error is already shown by GitManager
     } finally {
       setIsLoading(false);
@@ -369,14 +381,8 @@ function TagCreateForm(context: RepositoryContext & { ref: string }) {
       isLoading={isLoading}
       actions={
         <ActionPanel>
-          <Action title="Create Tag"
-            onAction={() => handleSubmit(undefined)}
-            icon={Icon.Tag}
-          />
-          <TagCreateAndPushAction
-            {...context}
-            handleSubmit={(remote) => handleSubmit(remote)}
-          />
+          <Action title="Create Tag" onAction={() => handleSubmit(undefined)} icon={Icon.Tag} />
+          <TagCreateAndPushAction {...context} handleSubmit={(remote) => handleSubmit(remote)} />
         </ActionPanel>
       }
     >
@@ -401,10 +407,12 @@ function TagCreateForm(context: RepositoryContext & { ref: string }) {
   );
 }
 
-function TagCreateAndPushAction(context: RepositoryContext & {
-  ref: string
-  handleSubmit: (remote: string) => void;
-}) {
+function TagCreateAndPushAction(
+  context: RepositoryContext & {
+    ref: string;
+    handleSubmit: (remote: string) => void;
+  },
+) {
   if (Object.keys(context.remotes.data).length === 0) {
     return undefined;
   }
@@ -420,21 +428,16 @@ function TagCreateAndPushAction(context: RepositoryContext & {
   }
 
   return (
-    <ActionPanel.Submenu
-      title="Create Tag and Push to"
-      icon={Icon.Tag}
-    >
-      {
-        Object.keys(context.remotes.data).map((remote) => (
-          <Action
-            key={`${remote}:create-tag-and-push`}
-            title={remote}
-            onAction={() => context.handleSubmit(remote)}
-            icon={RemoteHostIcon(context.remotes.data[remote])}
-          />
-        ))
-      }
-    </ActionPanel.Submenu >
+    <ActionPanel.Submenu title="Create Tag and Push to" icon={Icon.Tag}>
+      {Object.keys(context.remotes.data).map((remote) => (
+        <Action
+          key={`${remote}:create-tag-and-push`}
+          title={remote}
+          onAction={() => context.handleSubmit(remote)}
+          icon={RemoteHostIcon(context.remotes.data[remote])}
+        />
+      ))}
+    </ActionPanel.Submenu>
   );
 }
 
@@ -443,17 +446,14 @@ function TagCreateAndPushAction(context: RepositoryContext & {
  */
 export function TagAttachedLinksAction(context: RepositoryContext & { tag: Tag }) {
   return (
-    <ActionPanel.Submenu
-      title="Open Link to"
-      icon={Icon.Link}
-      shortcut={{ modifiers: ["cmd"], key: "l" }}
-    >
-      <RemoteWebPageAction.Menu remotes={context.remotes.data}>{(remote) => (
-        <>
-          <RemoteWebPageAction.Tag remote={remote} tag={context.tag.name} />
-          <RemoteWebPageAction.Base remote={remote} />
-        </>
-      )}
+    <ActionPanel.Submenu title="Open Link to" icon={Icon.Link} shortcut={{ modifiers: ["cmd"], key: "l" }}>
+      <RemoteWebPageAction.Menu remotes={context.remotes.data}>
+        {(remote) => (
+          <>
+            <RemoteWebPageAction.Tag remote={remote} tag={context.tag.name} />
+            <RemoteWebPageAction.Base remote={remote} />
+          </>
+        )}
       </RemoteWebPageAction.Menu>
     </ActionPanel.Submenu>
   );

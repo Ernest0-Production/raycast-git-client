@@ -4,7 +4,7 @@ import { existsSync } from "fs";
 /**
  * Basic actions for managing a file.
  */
-export function FileManagerActions({ filePath, onOpen }: { filePath: string, onOpen?: () => void }) {
+export function FileManagerActions({ filePath, onOpen }: { filePath: string; onOpen?: () => void }) {
   if (!existsSync(filePath)) return null;
 
   return (
@@ -16,14 +16,8 @@ export function FileManagerActions({ filePath, onOpen }: { filePath: string, onO
         shortcut={{ modifiers: ["cmd"], key: "o" }}
         onOpen={onOpen}
       />
-      <Action.OpenWith
-        path={filePath}
-        shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
-        onOpen={onOpen}
-      />
-      <Action.ToggleQuickLook
-        shortcut={{ modifiers: ["cmd"], key: "y" }}
-      />
+      <Action.OpenWith path={filePath} shortcut={{ modifiers: ["cmd", "opt"], key: "o" }} onOpen={onOpen} />
+      <Action.ToggleQuickLook shortcut={{ modifiers: ["cmd"], key: "y" }} />
     </>
   );
 }

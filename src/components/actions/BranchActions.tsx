@@ -1,4 +1,16 @@
-import { ActionPanel, Action, Icon, confirmAlert, Alert, showToast, Toast, Form, useNavigation, clearSearchBar, Color, Keyboard } from "@raycast/api";
+import {
+  ActionPanel,
+  Action,
+  Icon,
+  confirmAlert,
+  Alert,
+  showToast,
+  Toast,
+  Form,
+  useNavigation,
+  clearSearchBar,
+  Color,
+} from "@raycast/api";
 import { useMemo, useState } from "react";
 import { Branch, MergeMode, Remote } from "../../types";
 import InteractiveRebaseEditorView from "../views/InteractiveRebaseEditorView";
@@ -33,7 +45,7 @@ export function BranchCkeckoutAction(context: RepositoryContext & NavigationCont
         context.branches.revalidate();
         context.status.revalidate();
         context.commits.revalidate();
-      } catch (error) {
+      } catch {
         context.branches.revalidate();
         context.status.revalidate();
         context.commits.revalidate();
@@ -42,13 +54,7 @@ export function BranchCkeckoutAction(context: RepositoryContext & NavigationCont
     }
   };
 
-  return (
-    <Action
-      title="Checkout"
-      onAction={handleCheckout}
-      icon={`arrow-checkout.svg`}
-    />
-  );
+  return <Action title="Checkout" onAction={handleCheckout} icon={`arrow-checkout.svg`} />;
 }
 
 /**
@@ -60,9 +66,9 @@ export function BranchShowCommitsAction(context: RepositoryContext & NavigationC
       title="Show Commits"
       onAction={() => {
         if (context.branch.type === "current") {
-          context.commits.setFilter({ kind: 'current', upstream: false });
+          context.commits.setFilter({ kind: "current", upstream: false });
         } else {
-          context.commits.setFilter({ kind: 'branch', value: context.branch });
+          context.commits.setFilter({ kind: "branch", value: context.branch });
         }
         context.navigateTo("commits");
       }}
@@ -112,7 +118,7 @@ export function BranchDeleteAction(context: RepositoryContext & { branch: Branch
               if (summaryConfirm) {
                 await context.gitManager.deleteRemoteBranch(
                   context.branch.upstream!.remote,
-                  context.branch.upstream!.name
+                  context.branch.upstream!.name,
                 );
               }
             }
@@ -124,7 +130,7 @@ export function BranchDeleteAction(context: RepositoryContext & { branch: Branch
 
         context.branches.revalidate();
         context.status.revalidate();
-      } catch (error) {
+      } catch {
         // Git error is already shown by GitManager
       }
     }
@@ -258,7 +264,7 @@ export function BranchMergeAction(context: RepositoryContext & NavigationContext
         await context.gitManager.mergeBranch(context.branch.name, mode);
         context.branches.revalidate();
         context.status.revalidate();
-      } catch (error) {
+      } catch {
         context.branches.revalidate();
         context.status.revalidate();
         context.navigateTo("status");
@@ -267,26 +273,11 @@ export function BranchMergeAction(context: RepositoryContext & NavigationContext
   };
 
   return (
-    <ActionPanel.Submenu
-      title="Merge into Current"
-      icon={`git-merge.svg`}
-      shortcut={{ modifiers: ["cmd"], key: "m" }}>
-      <Action
-        title="Fast Forward (if possible)"
-        onAction={() => handleMergeBranch(MergeMode.FAST_FORWARD)}
-      />
-      <Action
-        title="No Fast Forward"
-        onAction={() => handleMergeBranch(MergeMode.NO_FF)}
-      />
-      <Action
-        title="Squash"
-        onAction={() => handleMergeBranch(MergeMode.SQUASH)}
-      />
-      <Action
-        title="No Commit"
-        onAction={() => handleMergeBranch(MergeMode.NO_COMMIT)}
-      />
+    <ActionPanel.Submenu title="Merge into Current" icon={`git-merge.svg`} shortcut={{ modifiers: ["cmd"], key: "m" }}>
+      <Action title="Fast Forward (If Possible)" onAction={() => handleMergeBranch(MergeMode.FAST_FORWARD)} />
+      <Action title="No Fast Forward" onAction={() => handleMergeBranch(MergeMode.NO_FF)} />
+      <Action title="Squash" onAction={() => handleMergeBranch(MergeMode.SQUASH)} />
+      <Action title="No Commit" onAction={() => handleMergeBranch(MergeMode.NO_COMMIT)} />
     </ActionPanel.Submenu>
   );
 }
@@ -311,7 +302,7 @@ export function BranchRebaseAction(context: RepositoryContext & NavigationContex
         context.branches.revalidate();
         context.commits.revalidate();
         context.status.revalidate();
-      } catch (error) {
+      } catch {
         context.branches.revalidate();
         context.status.revalidate();
         context.navigateTo("status");
@@ -337,12 +328,7 @@ export function BranchInteractiveRebaseAction(context: RepositoryContext & Navig
     <Action.Push
       title="Interactive Rebase from Here"
       icon={{ source: `arrow-rebase.svg`, tintColor: Color.Blue }}
-      target={
-        <InteractiveRebaseEditorView
-          {...context}
-          startFromCommit={context.branch.name}
-        />
-      }
+      target={<InteractiveRebaseEditorView {...context} startFromCommit={context.branch.name} />}
       shortcut={{ modifiers: ["cmd", "shift", "opt"], key: "e" }}
     />
   );
@@ -388,7 +374,7 @@ function BranchCreateForm(context: RepositoryContext) {
       context.branches.revalidate();
       context.status.revalidate();
       pop();
-    } catch (error) {
+    } catch {
       // Git error is already shown by GitManager
     }
     setIsLoading(false);
@@ -429,17 +415,21 @@ function BranchRenameForm(context: RepositoryContext & { branch: Branch }) {
     setIsLoading(true);
 
     try {
-      await context.gitManager.renameBranch(values.newBranchName, context.branch.name, renameRemote ? context.branch.upstream : undefined);
+      await context.gitManager.renameBranch(
+        values.newBranchName,
+        context.branch.name,
+        renameRemote ? context.branch.upstream : undefined,
+      );
 
       await showToast({
         style: Toast.Style.Success,
-        title: "Branch renamed successfully"
+        title: "Branch renamed successfully",
       });
 
       context.branches.revalidate();
       context.status.revalidate();
       pop();
-    } catch (error) {
+    } catch {
       // Git error is already shown by GitManager
     }
     setIsLoading(false);
@@ -481,20 +471,20 @@ function BranchRenameForm(context: RepositoryContext & { branch: Branch }) {
  * Action for opening the attached links of a branch.
  */
 export function BranchAttachedLinksAction(context: RepositoryContext & { branch: Branch }) {
-  const branchContext: { remote: Remote, branch: string } | undefined = useMemo(() => {
+  const branchContext: { remote: Remote; branch: string } | undefined = useMemo(() => {
     if (context.branch.upstream) {
       if (context.branch.isGone) return undefined;
 
       return {
         remote: context.remotes.data[context.branch.upstream.remote],
-        branch: context.branch.upstream.name
+        branch: context.branch.upstream.name,
       };
     }
 
     if (context.branch.remote) {
       return {
         remote: context.remotes.data[context.branch.remote],
-        branch: context.branch.name
+        branch: context.branch.name,
       };
     }
 
@@ -506,18 +496,9 @@ export function BranchAttachedLinksAction(context: RepositoryContext & { branch:
   }
 
   return (
-    <ActionPanel.Submenu
-      title="Open Link to"
-      icon={Icon.Link}
-      shortcut={{ modifiers: ["cmd"], key: "l" }}
-    >
-      <RemoteWebPageAction.Branch
-        remote={branchContext.remote}
-        branch={branchContext.branch}
-      />
-      <RemoteWebPageAction.Base
-        remote={branchContext.remote}
-      />
+    <ActionPanel.Submenu title="Open Link to" icon={Icon.Link} shortcut={{ modifiers: ["cmd"], key: "l" }}>
+      <RemoteWebPageAction.Branch remote={branchContext.remote} branch={branchContext.branch} />
+      <RemoteWebPageAction.Base remote={branchContext.remote} />
     </ActionPanel.Submenu>
   );
 }

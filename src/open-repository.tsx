@@ -25,13 +25,11 @@ interface Arguments {
 }
 
 export type BranchFilter =
-  { kind: 'all' } |
-  { kind: 'current', upstream: boolean } |
-  { kind: 'branch', value: Pick<Branch, 'name' | 'type' | 'remote'> }
+  | { kind: "all" }
+  | { kind: "current"; upstream: boolean }
+  | { kind: "branch"; value: Pick<Branch, "name" | "type" | "remote"> };
 
-export type SelectedBranch =
-  ({ kind: 'branch' } & Branch) |
-  ({ kind: 'detached' } & DetachedHead)
+export type SelectedBranch = ({ kind: "branch" } & Branch) | ({ kind: "detached" } & DetachedHead);
 
 export type RepositoryContext = {
   gitManager: GitManager;
@@ -79,7 +77,7 @@ export type RepositoryContext = {
 export type NavigationContext = {
   currentView: GitView;
   navigateTo: (destination: GitView) => void;
-}
+};
 
 export default function OpenRepository({ arguments: args }: { arguments: Arguments }) {
   const [currentView, setCurrentView] = useCachedState<GitView>("git-current-view", "branches");
@@ -134,33 +132,19 @@ export default function OpenRepository({ arguments: args }: { arguments: Argumen
   // Render the corresponding view
   switch (currentView) {
     case "status":
-      return (
-        <StatusView {...rootContext} />
-      );
+      return <StatusView {...rootContext} />;
     case "commits":
-      return (
-        <CommitsView {...rootContext} />
-      );
+      return <CommitsView {...rootContext} />;
     case "branches":
-      return (
-        <BranchesView {...rootContext} />
-      );
+      return <BranchesView {...rootContext} />;
     case "tags":
-      return (
-        <TagsView {...rootContext} />
-      );
+      return <TagsView {...rootContext} />;
     case "remotes":
-      return (
-        <RemotesView {...rootContext} />
-      );
+      return <RemotesView {...rootContext} />;
     case "stashes":
-      return (
-        <StashesView {...rootContext} />
-      );
+      return <StashesView {...rootContext} />;
     case "files":
-      return (
-        <FilesView {...rootContext} />
-      );
+      return <FilesView {...rootContext} />;
     default:
       setCurrentView("branches");
   }

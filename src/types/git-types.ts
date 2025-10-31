@@ -1,4 +1,3 @@
-
 /**
  * Represents a Git repository with access information.
  */
@@ -52,7 +51,6 @@ export interface LanguageStats {
   /** Optional UI color to display for the language. */
   color?: Image.ImageLike;
 }
-
 
 /**
  * Represents a Git branch with status information.
@@ -218,13 +216,7 @@ export interface Stash {
 /**
  * Known Git hosting providers.
  */
-export type RemoteProvider =
-  | "GitHub"
-  | "GitLab"
-  | "Bitbucket"
-  | "Azure DevOps"
-  | "Gitea"
-  | undefined;
+export type RemoteProvider = "GitHub" | "GitLab" | "Bitbucket" | "Azure DevOps" | "Gitea" | undefined;
 
 export type RemoteWebPage = Action.OpenInBrowser.Props;
 /**
@@ -281,12 +273,12 @@ export interface FileChangeStats {
  * Represents the state of a git conflict.
  */
 export type StatusMode =
-  { kind: "regular" }
-  | { kind: "rebase", conflict: boolean, current: number, total: number }
+  | { kind: "regular" }
+  | { kind: "rebase"; conflict: boolean; current: number; total: number }
   | { kind: "merge" }
   | { kind: "squash" }
   | { kind: "cherryPick" }
-  | { kind: "revert" }
+  | { kind: "revert" };
 
 // /** The type of the conflict. */
 // type: "rebase" | "merge" | "squash" | "cherryPick" | "revert";
@@ -323,20 +315,12 @@ export enum MergeMode {
 /**
  * Represents the scope of a patch.
  */
-export type PatchScope =
-  | "all"
-  | "staged"
-  | "unstaged"
-  | Pick<FileStatus, "absolutePath" | "status">;
+export type PatchScope = "all" | "staged" | "unstaged" | Pick<FileStatus, "absolutePath" | "status">;
 
 /**
  * Represents the scope of a stash.
  */
-export type StashScope =
-  | "all"
-  | "staged"
-  | "unstaged"
-  | { filePath: string };
+export type StashScope = "all" | "staged" | "unstaged" | { filePath: string };
 
 /**
  * Represents a single conflict segment in a file.

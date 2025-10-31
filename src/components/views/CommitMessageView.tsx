@@ -12,13 +12,13 @@ import { RepositoryContext } from "../../open-repository";
 /**
  * Form for creating a commit with AI generation support.
  */
-export function CommitMessageForm(context: RepositoryContext & { commit?: Commit; }) {
+export function CommitMessageForm(context: RepositoryContext & { commit?: Commit }) {
   const preferences = getPreferenceValues<Preferences>();
 
   // Use useState for autoGenerateCommitMessage mode, and useCachedState for amendOnly mode
-  const [draftMessage, setDraftMessage] = context.commit ?
-    useState(`${context.commit.message}\n\n${context.commit.body}`.trim()) :
-    preferences.autoGenerateCommitMessage
+  const [draftMessage, setDraftMessage] = context.commit
+    ? useState(`${context.commit.message}\n\n${context.commit.body}`.trim())
+    : preferences.autoGenerateCommitMessage
       ? useState("")
       : useCachedState(`commit-draft-${context.gitManager.repoPath}`, "");
 
@@ -41,7 +41,7 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
   const handleAmendChange = async (newAmendValue: boolean) => {
     let lastCommit = null;
     if (newAmendValue) {
-      lastCommit = await context.gitManager.getLastCommit()
+      lastCommit = await context.gitManager.getLastCommit();
     }
 
     setAmend(newAmendValue);
@@ -61,7 +61,6 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
   };
 
   const generateCommitMessage = async (presetPrompt: AiPromptPreset) => {
-    const gitManager = context.gitManager;
     try {
       setIsGenerating(true);
 
@@ -69,7 +68,7 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
       const diff = await context.gitManager.getDiff();
       let lastCommit = null;
       if (amend) {
-        lastCommit = await context.gitManager.getLastCommit()
+        lastCommit = await context.gitManager.getLastCommit();
       }
 
       // Form a more structured and readable prompt for AI generation of commit message using selected preset
@@ -140,7 +139,8 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
     if (push && forcePush && remote) {
       const confirmed = await confirmAlert({
         title: "Force Push Confirmation",
-        message: "Force push will rewrite Git history on the remote repository. This can cause problems for other collaborators. Are you sure you want to continue?",
+        message:
+          "Force push will rewrite Git history on the remote repository. This can cause problems for other collaborators. Are you sure you want to continue?",
         primaryAction: {
           title: "Force",
           style: Alert.ActionStyle.Destructive,
@@ -160,18 +160,20 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
       // Commit changes
       await context.gitManager.commit(draftMessage.trim(), amend);
       context.status.revalidate();
-    } catch (error) {
+    } catch {
       // Git error is already shown by GitManager
-      return
+      return;
     } finally {
       setIsSubmitting(false);
     }
 
     // Push if requested
     if (push && remote) {
-      try { await context.gitManager.pushBranch(context.branches.data.currentBranch!, remote, forcePush); }
-      // Git error is already shown by GitManager
-      catch (error) { }
+      try {
+        await context.gitManager.pushBranch(context.branches.data.currentBranch!, remote, forcePush);
+      } catch {
+        // Git error is already shown by GitManager
+      }
     }
     // Clear draft after successful commit
     clearDraft();
@@ -223,7 +225,9 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
                 <Action
                   key={defaultPreset.id}
                   title={defaultPreset.name}
-                  icon={defaultPreset.icon ? defaultPreset.icon : { source: Icon.Message, tintColor: Color.SecondaryText }}
+                  icon={
+                    defaultPreset.icon ? defaultPreset.icon : { source: Icon.Message, tintColor: Color.SecondaryText }
+                  }
                   onAction={() => generateCommitMessage(defaultPreset)}
                 />
                 {otherPresets.map((preset) => (
@@ -235,11 +239,7 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
                   />
                 ))}
                 <ActionPanel.Section>
-                  <Action.Push
-                    icon={Icon.Plus}
-                    title="Add New Preset"
-                    target={<AiMessagePresetEditorForm />}
-                  />
+                  <Action.Push icon={Icon.Plus} title="Add New Preset" target={<AiMessagePresetEditorForm />} />
                 </ActionPanel.Section>
               </ActionPanel.Submenu>
             </ActionPanel.Section>
@@ -265,23 +265,18 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
         onChange={setDraftMessage}
         info={!context.commit ? "Draft is automatically saved until a successful commit" : undefined}
       />
-      {!context.commit &&
-        <Form.Checkbox
-          id="amend"
-          label="Amend"
-          value={amend}
-          onChange={handleAmendChange}
-        />
-      }
+      {!context.commit && <Form.Checkbox id="amend" label="Amend" value={amend} onChange={handleAmendChange} />}
     </Form>
   );
 }
 
-function CommitAndPushAction(context: RepositoryContext & {
-  amend: boolean;
-  forcePush: boolean;
-  handleCommit: (remote: string) => void;
-}) {
+function CommitAndPushAction(
+  context: RepositoryContext & {
+    amend: boolean;
+    forcePush: boolean;
+    handleCommit: (remote: string) => void;
+  },
+) {
   if (Object.keys(context.remotes.data).length === 0) {
     return undefined;
   }
@@ -305,9 +300,11 @@ function CommitAndPushAction(context: RepositoryContext & {
         onAction={() => context.handleCommit(Object.keys(context.remotes.data)[0])}
         icon={context.forcePush ? Icon.ExclamationMark : Icon.Upload}
         style={context.forcePush ? Action.Style.Destructive : undefined}
-        shortcut={context.forcePush
-          ? { modifiers: ["cmd", "opt", "shift"], key: "enter" }
-          : { modifiers: ["cmd", "shift"], key: "enter" }}
+        shortcut={
+          context.forcePush
+            ? { modifiers: ["cmd", "opt", "shift"], key: "enter" }
+            : { modifiers: ["cmd", "shift"], key: "enter" }
+        }
       />
     );
   }
@@ -316,9 +313,11 @@ function CommitAndPushAction(context: RepositoryContext & {
     <ActionPanel.Submenu
       title={`${title} to`}
       icon={context.forcePush ? Icon.ExclamationMark : Icon.Upload}
-      shortcut={context.forcePush
-        ? { modifiers: ["cmd", "opt", "shift"], key: "enter" }
-        : { modifiers: ["cmd", "shift"], key: "enter" }}
+      shortcut={
+        context.forcePush
+          ? { modifiers: ["cmd", "opt", "shift"], key: "enter" }
+          : { modifiers: ["cmd", "shift"], key: "enter" }
+      }
     >
       {Object.keys(context.remotes.data).map((remote) => (
         <Action

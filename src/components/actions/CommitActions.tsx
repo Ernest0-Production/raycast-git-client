@@ -1,4 +1,15 @@
-import { ActionPanel, Action, Icon, confirmAlert, Alert, clearSearchBar, useNavigation, Clipboard, Form, Color } from "@raycast/api";
+import {
+  ActionPanel,
+  Action,
+  Icon,
+  confirmAlert,
+  Alert,
+  clearSearchBar,
+  useNavigation,
+  Clipboard,
+  Form,
+  Color,
+} from "@raycast/api";
 import { Commit } from "../../types";
 import InteractiveRebaseEditorView from "../views/InteractiveRebaseEditorView";
 import { ResetMode } from "simple-git";
@@ -15,7 +26,7 @@ import { RemoteWebPageAction } from "./RemoteActions";
  */
 export function CommitCheckoutAction(context: RepositoryContext & NavigationContext & { commit: Commit }) {
   const handleCheckoutCommit = async () => {
-    const isBranch = context.commit.localBranches.length > 0
+    const isBranch = context.commit.localBranches.length > 0;
     const targetName = isBranch ? context.commit.localBranches[0] : context.commit.shortHash;
 
     const confirmed = await confirmAlert({
@@ -30,8 +41,8 @@ export function CommitCheckoutAction(context: RepositoryContext & NavigationCont
     if (confirmed) {
       try {
         await context.gitManager.checkoutCommit(targetName);
-        await context.commits.setFilter({ kind: 'current', upstream: false });
-      } catch (error) {
+        await context.commits.setFilter({ kind: "current", upstream: false });
+      } catch {
         // Git error is already shown by GitManager
       } finally {
         context.branches.revalidate();
@@ -41,11 +52,7 @@ export function CommitCheckoutAction(context: RepositoryContext & NavigationCont
     }
   };
 
-  return <Action
-    title="Checkout Commit"
-    onAction={handleCheckoutCommit}
-    icon={`arrow-checkout.svg`}
-  />;
+  return <Action title="Checkout Commit" onAction={handleCheckoutCommit} icon={`arrow-checkout.svg`} />;
 }
 
 /**
@@ -81,7 +88,7 @@ export function CommitCherryPickAction(context: RepositoryContext & NavigationCo
         await context.gitManager.cherryPick(context.commit.hash);
         context.commits.revalidate();
         context.status.revalidate();
-      } catch (error) {
+      } catch {
         context.commits.revalidate();
         context.status.revalidate();
         context.navigateTo("status");
@@ -89,11 +96,7 @@ export function CommitCherryPickAction(context: RepositoryContext & NavigationCo
     }
   };
 
-  return <Action
-    title="Cherry-Pick Commit"
-    onAction={handleCherryPick}
-    icon={`arrow-bounce.svg`}
-  />;
+  return <Action title="Cherry-Pick Commit" onAction={handleCherryPick} icon={`arrow-bounce.svg`} />;
 }
 
 /**
@@ -116,7 +119,7 @@ export function CommitRevertAction(context: RepositoryContext & NavigationContex
         context.branches.revalidate();
         context.commits.revalidate();
         context.status.revalidate();
-      } catch (error) {
+      } catch {
         context.branches.revalidate();
         context.commits.revalidate();
         context.status.revalidate();
@@ -157,7 +160,7 @@ export function CommitResetAction(context: RepositoryContext & NavigationContext
         await context.gitManager.reset(context.commit.hash, mode);
         context.commits.revalidate();
         context.status.revalidate();
-      } catch (error) {
+      } catch {
         context.commits.revalidate();
         context.status.revalidate();
         context.navigateTo("status");
@@ -192,13 +195,13 @@ export function CommitResetAction(context: RepositoryContext & NavigationContext
   );
 }
 
-
 /**
  * Action for rebasing the current commit onto another commit.
  */
 export function CommitRebaseAction(context: RepositoryContext & NavigationContext & { commit: Commit }) {
   const handleRebaseCommit = async () => {
-    const targetName = context.commit.localBranches.length > 0 ? context.commit.localBranches[0] : context.commit.shortHash;
+    const targetName =
+      context.commit.localBranches.length > 0 ? context.commit.localBranches[0] : context.commit.shortHash;
 
     const confirmed = await confirmAlert({
       title: "Rebase commit",
@@ -215,7 +218,7 @@ export function CommitRebaseAction(context: RepositoryContext & NavigationContex
         context.branches.revalidate();
         context.commits.revalidate();
         context.status.revalidate();
-      } catch (error) {
+      } catch {
         context.branches.revalidate();
         context.status.revalidate();
         context.navigateTo("status");
@@ -235,7 +238,6 @@ export function CommitRebaseAction(context: RepositoryContext & NavigationContex
   );
 }
 
-
 /**
  * Action to open Interactive Rebase Editor starting from selected commit.
  */
@@ -244,12 +246,7 @@ export function CommitInteractiveRebaseAction(context: RepositoryContext & Navig
     <Action.Push
       title="Interactive Rebase from Here"
       icon={{ source: `arrow-rebase.svg`, tintColor: Color.Blue }}
-      target={
-        <InteractiveRebaseEditorView
-          startFromCommit={context.commit.hash}
-          {...context}
-        />
-      }
+      target={<InteractiveRebaseEditorView startFromCommit={context.commit.hash} {...context} />}
       shortcut={{ modifiers: ["cmd"], key: "e" }}
     />
   );
@@ -290,7 +287,7 @@ function PatchCreateForm(context: RepositoryContext & NavigationContext & { comm
       const patchPath = await context.gitManager.createPatchFromCommit(context.commit.hash, values.directoryPath[0]);
       await Clipboard.copy(patchPath);
       pop();
-    } catch (error) {
+    } catch {
       // Git error is already shown by GitManager
     }
   };
@@ -324,13 +321,10 @@ function PatchCreateForm(context: RepositoryContext & NavigationContext & { comm
 export function CommitAttachedLinksAction(context: RepositoryContext & { commit: Commit }) {
   const { findUrls } = useIssueTracker();
 
-  const commitUrls = useMemo(
-    () => findUrls(context.commit.message),
-    [context.commit.message]
-  );
+  const commitUrls = useMemo(() => findUrls(context.commit.message), [context.commit.message]);
 
   const selectedBranch: string | undefined = useMemo(() => {
-    if (context.commits.selectedBranch?.kind !== 'branch') {
+    if (context.commits.selectedBranch?.kind !== "branch") {
       return undefined;
     }
 
@@ -346,11 +340,7 @@ export function CommitAttachedLinksAction(context: RepositoryContext & { commit:
   }, [context.commits.selectedBranch]);
 
   return (
-    <ActionPanel.Submenu
-      title="Open Link to"
-      icon={Icon.Link}
-      shortcut={{ modifiers: ["cmd"], key: "l" }}
-    >
+    <ActionPanel.Submenu title="Open Link to" icon={Icon.Link} shortcut={{ modifiers: ["cmd"], key: "l" }}>
       <ActionPanel.Section>
         {commitUrls.map((urlInfo: { title: string; url: string }, index: number) => (
           <Action.OpenInBrowser
@@ -362,39 +352,28 @@ export function CommitAttachedLinksAction(context: RepositoryContext & { commit:
         ))}
       </ActionPanel.Section>
 
-      <RemoteWebPageAction.Menu remotes={context.remotes.data}>{(remote) => (
-        <>
-          <RemoteWebPageAction.Commit
-            remote={remote}
-            commit={context.commit}
-          />
+      <RemoteWebPageAction.Menu remotes={context.remotes.data}>
+        {(remote) => (
+          <>
+            <RemoteWebPageAction.Commit remote={remote} commit={context.commit} />
 
-          {selectedBranch &&
-            <RemoteWebPageAction.Branch
+            {selectedBranch && <RemoteWebPageAction.Branch remote={remote} branch={selectedBranch} />}
+
+            <RemoteWebPageAction.Branches
               remote={remote}
-              branch={selectedBranch}
-            />
-          }
-
-          <RemoteWebPageAction.Branches
-            remote={remote}
-            branches={
-              context.commit.remoteBranches
+              branches={context.commit.remoteBranches
                 // show only branches that are attached to the remote
                 .filter((remoteBranch) => remoteBranch.remote === remote.name)
                 .filter((remoteBranch) => remoteBranch.name !== selectedBranch)
                 .map((remoteBranch) => remoteBranch.name)}
-          />
+            />
 
-          <RemoteWebPageAction.Tags
-            remote={remote}
-            tags={context.commit.tags}
-          />
+            <RemoteWebPageAction.Tags remote={remote} tags={context.commit.tags} />
 
-          <RemoteWebPageAction.Base remote={remote} />
-        </>
-      )}
+            <RemoteWebPageAction.Base remote={remote} />
+          </>
+        )}
       </RemoteWebPageAction.Menu>
-    </ActionPanel.Submenu >
+    </ActionPanel.Submenu>
   );
 }

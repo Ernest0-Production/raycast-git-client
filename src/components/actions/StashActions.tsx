@@ -7,7 +7,7 @@ import { basename } from "path";
 /**
  * Action for applying a stash.
  */
-export function StashApplyAction(context: RepositoryContext & NavigationContext & { stash: Stash, index: number }) {
+export function StashApplyAction(context: RepositoryContext & NavigationContext & { stash: Stash; index: number }) {
   const handleApply = async () => {
     if (
       await confirmAlert({
@@ -27,7 +27,7 @@ export function StashApplyAction(context: RepositoryContext & NavigationContext 
             message: `Stash "${context.stash.message}" has been applied. Do you want to drop it?`,
             primaryAction: {
               title: "Drop",
-              style: Alert.ActionStyle.Destructive
+              style: Alert.ActionStyle.Destructive,
             },
           })
         ) {
@@ -37,7 +37,7 @@ export function StashApplyAction(context: RepositoryContext & NavigationContext 
 
         // Automatically switch to StatusView after applying stash
         context.navigateTo("status");
-      } catch (error) {
+      } catch {
         // Git error is already shown by GitManager
       }
     }
@@ -49,7 +49,7 @@ export function StashApplyAction(context: RepositoryContext & NavigationContext 
 /**
  * Action for dropping a stash.
  */
-export function StashDropAction(context: RepositoryContext & NavigationContext & { stash: Stash, index: number }) {
+export function StashDropAction(context: RepositoryContext & NavigationContext & { stash: Stash; index: number }) {
   const handleDrop = async () => {
     const confirmed = await confirmAlert({
       title: "Drop Stash?",
@@ -57,15 +57,15 @@ export function StashDropAction(context: RepositoryContext & NavigationContext &
       primaryAction: {
         title: "Drop",
 
-        style: Alert.ActionStyle.Destructive
+        style: Alert.ActionStyle.Destructive,
       },
-    })
+    });
     if (!confirmed) return;
 
     try {
       await context.gitManager.dropStash(context.index);
       context.stashes.revalidate();
-    } catch (error) {
+    } catch {
       // Git error is already shown by GitManager
     }
   };
@@ -83,29 +83,16 @@ export function StashDropAction(context: RepositoryContext & NavigationContext &
 
 export function StashCreateAction(context: RepositoryContext & { file?: FileStatus }) {
   return (
-    <ActionPanel.Submenu
-      title="Create Stash"
-      icon={Icon.Bookmark}
-      shortcut={{ modifiers: ["cmd"], key: "s" }}
-    >
-      <Action.Push
-        title="All Changes"
-        target={<StashCreateForm scope="all" {...context} />}
-      />
+    <ActionPanel.Submenu title="Create Stash" icon={Icon.Bookmark} shortcut={{ modifiers: ["cmd"], key: "s" }}>
+      <Action.Push title="All Changes" target={<StashCreateForm scope="all" {...context} />} />
       {context.file && (
         <Action.Push
           title={`Only ${basename(context.file.absolutePath)}`}
           target={<StashCreateForm scope={{ filePath: context.file.absolutePath }} {...context} />}
         />
       )}
-      <Action.Push
-        title="Only Staged"
-        target={<StashCreateForm scope="staged" {...context} />}
-      />
-      <Action.Push
-        title="Only Unstaged"
-        target={<StashCreateForm scope="unstaged" {...context} />}
-      />
+      <Action.Push title="Only Staged" target={<StashCreateForm scope="staged" {...context} />} />
+      <Action.Push title="Only Unstaged" target={<StashCreateForm scope="unstaged" {...context} />} />
     </ActionPanel.Submenu>
   );
 }
@@ -119,7 +106,7 @@ function StashCreateForm(context: RepositoryContext & { scope: StashScope }) {
       await context.gitManager.stash(values.message, context.scope);
       context.stashes.revalidate();
       pop();
-    } catch (error) {
+    } catch {
       // Git error is already shown by GitManager
     }
   };
@@ -149,7 +136,7 @@ function StashCreateForm(context: RepositoryContext & { scope: StashScope }) {
 /**
  * Action for renaming a stash.
  */
-export function StashRenameAction(context: RepositoryContext & NavigationContext & { stash: Stash, index: number }) {
+export function StashRenameAction(context: RepositoryContext & NavigationContext & { stash: Stash; index: number }) {
   return (
     <Action.Push
       title="Rename Stash"
@@ -171,7 +158,7 @@ function StashRenameForm(context: RepositoryContext & NavigationContext & { stas
       await context.gitManager.renameStash(context.index, context.stash, values.newName);
       context.stashes.revalidate();
       pop();
-    } catch (error) {
+    } catch {
       // Git error is already shown by GitManager
     }
     setIsLoading(false);

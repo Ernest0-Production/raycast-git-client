@@ -50,7 +50,7 @@ function formatRelativeDate(date: Date): string {
   return `${day} ${month} ${year}`;
 }
 
-export { };
+export {};
 /**
  * Extend Date prototype with toRelativeDateString method
  */

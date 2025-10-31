@@ -1,4 +1,19 @@
-import { ActionPanel, Action, Icon, List, confirmAlert, Alert, showToast, Toast, Form, useNavigation, Color, Image, LaunchType, launchCommand } from "@raycast/api";
+import {
+  ActionPanel,
+  Action,
+  Icon,
+  List,
+  confirmAlert,
+  Alert,
+  showToast,
+  Toast,
+  Form,
+  useNavigation,
+  Color,
+  Image,
+  LaunchType,
+  launchCommand,
+} from "@raycast/api";
 import { useMemo, useState } from "react";
 import { useRepositoriesList } from "./hooks/useRepositoriesList";
 import { RepositoryDirectoryActions } from "./components/actions/RepositoryDirectoryActions";
@@ -50,7 +65,7 @@ export default function ManageRepositories() {
   };
 
   const handleKillClone = async (repoPath: string) => {
-    await removeRepository(repoPath)
+    await removeRepository(repoPath);
   };
 
   return (
@@ -152,13 +167,11 @@ function RepositoryListItem({
       title={repo.name}
       subtitle={{
         value: prettyPath(repo.path),
-        tooltip: repo.path
+        tooltip: repo.path,
       }}
-      keywords={[
-        repo.path,
-        prettyPath(repo.path),
-        ...(repo.languageStats?.map((lang) => lang.name) || [])
-      ].filter((keyword): keyword is string => Boolean(keyword))}
+      keywords={[repo.path, prettyPath(repo.path), ...(repo.languageStats?.map((lang) => lang.name) || [])].filter(
+        (keyword): keyword is string => Boolean(keyword),
+      )}
       accessories={accessories}
       actions={
         <ActionPanel>
@@ -212,11 +225,13 @@ function AddRepositoryAction({ onAddRepository }: { onAddRepository: (repoPath: 
       />
       <Action
         title="Clone Repository"
-        onAction={async () => await launchCommand({
-          name: "clone-repository",
-          type: LaunchType.UserInitiated,
-          arguments: { url: "", },
-        })}
+        onAction={async () =>
+          await launchCommand({
+            name: "clone-repository",
+            type: LaunchType.UserInitiated,
+            arguments: { url: "" },
+          })
+        }
         icon={Icon.Download}
         shortcut={{ modifiers: ["cmd", "shift"], key: "n" }}
       />
@@ -238,7 +253,7 @@ function AddRepositoryForm({ onAddRepository }: { onAddRepository: (repoPath: st
     paths.forEach((path) => {
       try {
         GitManager.validateDirectory(path);
-      } catch (error) {
+      } catch {
         const repoName = basename(path);
         invalidRepos.push(repoName);
       }
@@ -255,13 +270,13 @@ function AddRepositoryForm({ onAddRepository }: { onAddRepository: (repoPath: st
 
       await showToast({
         style: Toast.Style.Animated,
-        title: `${repoName} added to recent list`
+        title: `${repoName} added to recent list`,
       });
     }
 
     await showToast({
       style: Toast.Style.Success,
-      title: repositoryPaths.length > 1 ? "All repositories added" : "Repository added"
+      title: repositoryPaths.length > 1 ? "All repositories added" : "Repository added",
     });
     pop();
   };
@@ -330,25 +345,31 @@ function CloningRepositoryListItem({
     }
 
     return { source: Icon.CircleProgress25, tintColor: Color.Blue };
-  })()
+  })();
 
   const accessories: List.Item.Accessory[] = (() => {
     if (progressState && progressState.exitCode !== undefined && progressState.exitCode !== 0) {
-      return [{
-        text: { value: "Failed to Clone", color: Color.Red },
-        tooltip: `${progressState.exitCode}: ${progressState.output}`,
-      }];
+      return [
+        {
+          text: { value: "Failed to Clone", color: Color.Red },
+          tooltip: `${progressState.exitCode}: ${progressState.output}`,
+        },
+      ];
     } else if (progressState && progressState.output.length > 0) {
       // Still cloning
-      return [{
-        text: { value: progressState.output, color: Color.SecondaryText },
-      }];
+      return [
+        {
+          text: { value: progressState.output, color: Color.SecondaryText },
+        },
+      ];
     } else {
-      return [{
-        text: { value: "Prepare to clone...", color: Color.SecondaryText },
-      }];
+      return [
+        {
+          text: { value: "Prepare to clone...", color: Color.SecondaryText },
+        },
+      ];
     }
-  })()
+  })();
 
   const handleKill = async () => {
     const confirmed = await confirmAlert({
@@ -368,7 +389,7 @@ function CloningRepositoryListItem({
       fs.rm(repo.path, { recursive: true, force: true });
       onKill();
     }
-  }
+  };
 
   const handleRetry = async () => {
     await fs.rm(repo.path, { recursive: true, force: true });
@@ -376,7 +397,7 @@ function CloningRepositoryListItem({
 
     const cloningProcess = await GitManager.startCloneRepository(repo.cloning!.url, repo.path);
     onRetry(cloningProcess);
-  }
+  };
 
   return (
     <List.Item
@@ -388,11 +409,7 @@ function CloningRepositoryListItem({
         <ActionPanel>
           {progressState && progressState.exitCode !== undefined && progressState.exitCode !== 0 ? (
             <>
-              <Action.Open
-                title="Show Logs"
-                icon={Icon.Document}
-                target={repo.cloning!.stderrPath}
-              />
+              <Action.Open title="Show Logs" icon={Icon.Document} target={repo.cloning!.stderrPath} />
               <Action
                 title="Retry Clone"
                 icon={Icon.Repeat}
@@ -409,19 +426,11 @@ function CloningRepositoryListItem({
             </>
           ) : (
             <>
-              <Action
-                title="Kill Process"
-                icon={Icon.Stop}
-                style={Action.Style.Destructive}
-                onAction={handleKill}
-              />
+              <Action title="Kill Process" icon={Icon.Stop} style={Action.Style.Destructive} onAction={handleKill} />
             </>
           )}
 
-          <Action.CopyToClipboard
-            title="Copy Clone URL"
-            content={repo.cloning!.url}
-          />
+          <Action.CopyToClipboard title="Copy Clone URL" content={repo.cloning!.url} />
           <RepositoryDirectoryActions repositoryPath={repo.path} onOpen={onOpen} />
           <RepositoriesOrderActionsSection />
         </ActionPanel>
@@ -432,10 +441,7 @@ function CloningRepositoryListItem({
 
 function RepositoriesOrderActionsSection() {
   const { repositories } = useRepositoriesList();
-  const {
-    currentView: displayView,
-    setCurrentView: setDisplayView,
-  } = useRepositoriesView(repositories);
+  const { currentView: displayView, setCurrentView: setDisplayView } = useRepositoriesView(repositories);
 
   return (
     <ActionPanel.Section title="View">
@@ -447,7 +453,9 @@ function RepositoriesOrderActionsSection() {
         />
         <Action
           title="Alphabetically"
-          icon={displayView.order === "alphabetical" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Lowercase}
+          icon={
+            displayView.order === "alphabetical" ? { source: Icon.Checkmark, tintColor: Color.Green } : Icon.Lowercase
+          }
           onAction={() => setDisplayView({ ...displayView, order: "alphabetical" })}
         />
       </ActionPanel.Submenu>

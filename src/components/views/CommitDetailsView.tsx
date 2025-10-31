@@ -14,14 +14,17 @@ import { FileHistoryAction } from "./FileHistoryView";
 import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../actions/ToggleDetailAction";
 import { CopyToClibpoardMenuAction } from "../actions/CopyToClipboardMenuAction";
 
-export function CommitDetailsView(context: RepositoryContext & NavigationContext & {
-  index: number,
-  onMoveToCommit: (commitHash: string) => void
-}) {
+export function CommitDetailsView(
+  context: RepositoryContext &
+    NavigationContext & {
+      index: number;
+      onMoveToCommit: (commitHash: string) => void;
+    },
+) {
   const [currentIndex, setCurrentIndex] = useState(context.index);
   const toggleController = useToggleDetail("Commit Details", "Diff", true);
 
-  const switchToCommit = async (direction: ("next" | "previous")) => {
+  const switchToCommit = async (direction: "next" | "previous") => {
     let nextIndex = currentIndex;
     switch (direction) {
       case "previous":
@@ -71,18 +74,21 @@ export function CommitDetailsView(context: RepositoryContext & NavigationContext
   );
 }
 
-export function ConcreteCommitView(context: RepositoryContext & NavigationContext & {
-  commit: Commit,
-  navigationTitle?: string,
-  onMoveToCommit?: (direction: ("next" | "previous")) => void
-  toggleController: ToggleDetailController
-}) {
+export function ConcreteCommitView(
+  context: RepositoryContext &
+    NavigationContext & {
+      commit: Commit;
+      navigationTitle?: string;
+      onMoveToCommit?: (direction: "next" | "previous") => void;
+      toggleController: ToggleDetailController;
+    },
+) {
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
   const { data: statsMap, isLoading } = usePromise(
     async (repoPath, commitHash) => {
       return await context.gitManager.getCommitFileStats(commitHash);
     },
-    [context.gitManager.repoPath, context.commit.hash]
+    [context.gitManager.repoPath, context.commit.hash],
   );
 
   return (
@@ -95,19 +101,13 @@ export function ConcreteCommitView(context: RepositoryContext & NavigationContex
       isLoading={isLoading}
       actions={
         <ActionPanel>
-          {context.onMoveToCommit && (
-            <CommitNavigationActions onMoveToCommit={context.onMoveToCommit} />
-          )}
+          {context.onMoveToCommit && <CommitNavigationActions onMoveToCommit={context.onMoveToCommit} />}
           <WorkspaceNavigationActions {...context} />
         </ActionPanel>
       }
     >
       {!context.commit.changedFiles || context.commit.changedFiles.length === 0 ? (
-        <List.EmptyView
-          title="No file changes"
-          description="This commit has no file changes."
-          icon={Icon.Document}
-        />
+        <List.EmptyView title="No file changes" description="This commit has no file changes." icon={Icon.Document} />
       ) : (
         <List.Section title={context.commit.message}>
           {context.commit.changedFiles.map((file) => (
@@ -125,14 +125,17 @@ export function ConcreteCommitView(context: RepositoryContext & NavigationContex
   );
 }
 
-function FileListItem(context: RepositoryContext & NavigationContext & {
-  file: CommitFileChange;
-  commit: Commit;
-  statsMap: Record<string, { insertions: number; deletions: number }> | undefined;
-  toggleController: ToggleDetailController;
-  selectedFilePath: string | null;
-  onMoveToCommit?: (direction: ("next" | "previous")) => void;
-}) {
+function FileListItem(
+  context: RepositoryContext &
+    NavigationContext & {
+      file: CommitFileChange;
+      commit: Commit;
+      statsMap: Record<string, { insertions: number; deletions: number }> | undefined;
+      toggleController: ToggleDetailController;
+      selectedFilePath: string | null;
+      onMoveToCommit?: (direction: "next" | "previous") => void;
+    },
+) {
   // Create a unique identifier for each file item
   const fileId = `${context.file.path}-${context.commit.hash}`;
 
@@ -178,60 +181,44 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
     <List.Item
       id={fileId}
       title={basename(context.file.path)}
-      subtitle={context.toggleController.isShowingDetail ? undefined : {
-        value: context.file.path,
-        tooltip: context.file.path
-      }}
+      subtitle={
+        context.toggleController.isShowingDetail
+          ? undefined
+          : {
+              value: context.file.path,
+              tooltip: context.file.path,
+            }
+      }
       icon={CommitFileIcon(context.file)}
       accessories={accessories}
       keywords={[context.file.path, context.file.oldPath].filter((keyword): keyword is string => Boolean(keyword))}
-      detail={
-        <List.Item.Detail
-          isLoading={isLoading}
-          markdown={diffMarkdown}
-        />
-      }
+      detail={<List.Item.Detail isLoading={isLoading} markdown={diffMarkdown} />}
       quickLook={fileExists ? { path: absolutePath, name: context.file.path } : undefined}
       actions={
         <ActionPanel>
           <ActionPanel.Section title={basename(context.file.path)}>
             <ToggleDetailAction controller={context.toggleController} />
             <FileManagerActions filePath={absolutePath} />
-            <FileHistoryAction
-              filePath={absolutePath}
-              {...context}
-            />
-            <FileRestoreAction
-              filePath={absolutePath}
-              before={false}
-              {...context}
-            />
-            <FileRestoreAction
-              before={true}
-              filePath={absolutePath}
-              {...context}
-            />
+            <FileHistoryAction filePath={absolutePath} {...context} />
+            <FileRestoreAction filePath={absolutePath} before={false} {...context} />
+            <FileRestoreAction before={true} filePath={absolutePath} {...context} />
           </ActionPanel.Section>
           <ActionPanel.Section>
-            <CopyToClibpoardMenuAction contents={[
-              { title: "Relative Path", content: context.file.path, icon: Icon.Document },
-              { title: "Absolute Path", content: absolutePath, icon: Icon.Document },
-              { title: "Commit Hash", content: context.commit.hash, icon: Icon.Hashtag },
-              { title: "Short Hash", content: context.commit.shortHash, icon: Icon.Hashtag },
-              { title: "Commit Message", content: context.commit.message, icon: Icon.Message },
-              { title: "Author Name", content: context.commit.author, icon: Icon.Person },
-              { title: "Author Email", content: context.commit.authorEmail, icon: Icon.Envelope },
-            ]} />
-            <FileAttachedLinksAction
-              {...context}
-              filePath={context.file.path}
-              commit={context.commit}
+            <CopyToClibpoardMenuAction
+              contents={[
+                { title: "Relative Path", content: context.file.path, icon: Icon.Document },
+                { title: "Absolute Path", content: absolutePath, icon: Icon.Document },
+                { title: "Commit Hash", content: context.commit.hash, icon: Icon.Hashtag },
+                { title: "Short Hash", content: context.commit.shortHash, icon: Icon.Hashtag },
+                { title: "Commit Message", content: context.commit.message, icon: Icon.Message },
+                { title: "Author Name", content: context.commit.author, icon: Icon.Person },
+                { title: "Author Email", content: context.commit.authorEmail, icon: Icon.Envelope },
+              ]}
             />
+            <FileAttachedLinksAction {...context} filePath={context.file.path} commit={context.commit} />
           </ActionPanel.Section>
 
-          {context.onMoveToCommit && (
-            <CommitNavigationActions onMoveToCommit={context.onMoveToCommit} />
-          )}
+          {context.onMoveToCommit && <CommitNavigationActions onMoveToCommit={context.onMoveToCommit} />}
           <WorkspaceNavigationActions {...context} />
         </ActionPanel>
       }
@@ -239,7 +226,7 @@ function FileListItem(context: RepositoryContext & NavigationContext & {
   );
 }
 
-function CommitNavigationActions({ onMoveToCommit }: { onMoveToCommit: (direction: ("next" | "previous")) => void }) {
+function CommitNavigationActions({ onMoveToCommit }: { onMoveToCommit: (direction: "next" | "previous") => void }) {
   return (
     <ActionPanel.Section title="History">
       <Action

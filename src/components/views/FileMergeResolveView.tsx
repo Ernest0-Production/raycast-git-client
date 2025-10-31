@@ -1,4 +1,16 @@
-import { Action, ActionPanel, Alert, Color, confirmAlert, Icon, Image, List, showToast, Toast, useNavigation } from "@raycast/api";
+import {
+  Action,
+  ActionPanel,
+  Alert,
+  Color,
+  confirmAlert,
+  Icon,
+  Image,
+  List,
+  showToast,
+  Toast,
+  useNavigation,
+} from "@raycast/api";
 import { useMemo } from "react";
 import { ConflictSegment } from "../../types";
 import { useConflictResolver } from "../../hooks/useConflictResolver";
@@ -10,12 +22,7 @@ import { CopyToClibpoardMenuAction } from "../actions/CopyToClipboardMenuAction"
 
 export default function FileMergeResolveView(context: RepositoryContext & { filePath: string }) {
   const { pop } = useNavigation();
-  const {
-    segments,
-    isLoading,
-    resolveSegment,
-    applyResolution,
-  } = useConflictResolver(context.filePath);
+  const { segments, isLoading, resolveSegment, applyResolution } = useConflictResolver(context.filePath);
 
   const setAllResolution = (type: "current" | "incoming") => {
     for (const segment of segments) {
@@ -44,7 +51,7 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
         message: `File "${basename(context.filePath)}" has been updated`,
       });
 
-      const isAllResolved = segments.every(segment => segment.resolution !== null);
+      const isAllResolved = segments.every((segment) => segment.resolution !== null);
       if (isAllResolved) {
         await context.gitManager.stageFile(context.filePath);
         context.status.revalidate();
@@ -60,11 +67,7 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
   };
 
   return (
-    <List
-      isLoading={isLoading}
-      navigationTitle={"Resolve Conflicts"}
-      isShowingDetail={true}
-    >
+    <List isLoading={isLoading} navigationTitle={"Resolve Conflicts"} isShowingDetail={true}>
       {segments.length === 0 ? (
         <List.EmptyView
           title="No conflicts found"
@@ -74,10 +77,7 @@ export default function FileMergeResolveView(context: RepositoryContext & { file
       ) : (
         <>
           {segments.map((segment) => (
-            <List.Section
-              key={segment.id}
-              title={`Lines ${segment.startLine}-${segment.endLine}`}
-            >
+            <List.Section key={segment.id} title={`Lines ${segment.startLine}-${segment.endLine}`}>
               <ConflictSegmentOptionItem
                 filePath={context.filePath}
                 segment={segment}
@@ -125,22 +125,22 @@ function ConflictSegmentOptionItem({
     return `${firstLine ? `${firstLine}` : "<empty>"}`;
   }, [type]);
 
-  const icon: { value: Image.ImageLike, tooltip: string } = useMemo(() => {
+  const icon: { value: Image.ImageLike; tooltip: string } = useMemo(() => {
     if (segment.resolution === null) {
       return {
         tooltip: "Unresolved",
-        value: { source: `tag-solid.svg`, tintColor: Color.SecondaryText }
+        value: { source: `tag-solid.svg`, tintColor: Color.SecondaryText },
       };
     }
     if (segment.resolution === type) {
       return {
         tooltip: "Selected",
-        value: { source: `tag-solid.svg`, tintColor: Color.Blue }
+        value: { source: `tag-solid.svg`, tintColor: Color.Blue },
       };
     }
     return {
       tooltip: "Unselected",
-      value: { source: `tag-outline.svg`, tintColor: Color.SecondaryText }
+      value: { source: `tag-outline.svg`, tintColor: Color.SecondaryText },
     };
   }, [segment.resolution, type]);
 
@@ -151,8 +151,10 @@ function ConflictSegmentOptionItem({
       `  ${segment.beforeContent.replace(/\n/g, `\n  `)}`,
       content ? `+ ${content.replace(/\n/g, `\n+ `)}` : undefined,
       `  ${segment.afterContent.replace(/\n/g, `\n  `)}`,
-      "~~~"
-    ].filter(Boolean).join("\n");
+      "~~~",
+    ]
+      .filter(Boolean)
+      .join("\n");
   }, [type, segment]);
 
   return (
@@ -162,20 +164,12 @@ function ConflictSegmentOptionItem({
         tooltip: label,
       }}
       icon={icon}
-      detail={
-        <List.Item.Detail
-          markdown={detailMarkdown}
-        />
-      }
+      detail={<List.Item.Detail markdown={detailMarkdown} />}
       quickLook={existsSync(filePath) ? { path: filePath, name: basename(filePath) } : undefined}
       actions={
         <ActionPanel>
           <ActionPanel.Section title={`Lines ${segment.startLine}-${segment.endLine}`}>
-            <SelectSegmentAction
-              segment={segment}
-              type={type}
-              onSetResolution={onSetResolution}
-            />
+            <SelectSegmentAction segment={segment} type={type} onSetResolution={onSetResolution} />
             <SelectSegmentAction
               segment={segment}
               type={type === "current" ? "incoming" : "current"}
@@ -184,14 +178,8 @@ function ConflictSegmentOptionItem({
           </ActionPanel.Section>
 
           <ActionPanel.Section title="All Lines">
-            <Action
-              title={`Select ${segment.current.label}`}
-              onAction={() => onSetAllResolution("current")}
-            />
-            <Action
-              title={`Select ${segment.incoming.label}`}
-              onAction={() => onSetAllResolution("incoming")}
-            />
+            <Action title={`Select ${segment.current.label}`} onAction={() => onSetAllResolution("current")} />
+            <Action title={`Select ${segment.incoming.label}`} onAction={() => onSetAllResolution("incoming")} />
           </ActionPanel.Section>
 
           <ActionPanel.Section title={basename(filePath)}>
@@ -204,10 +192,12 @@ function ConflictSegmentOptionItem({
           </ActionPanel.Section>
           <ActionPanel.Section>
             <FileManagerActions filePath={filePath} />
-            <CopyToClibpoardMenuAction contents={[
-              { title: "File Path", content: `${filePath}:${segment.startLine}`, icon: Icon.Document },
-              { title: "Selected Content", content: content, icon: Icon.Text },
-            ]} />
+            <CopyToClibpoardMenuAction
+              contents={[
+                { title: "File Path", content: `${filePath}:${segment.startLine}`, icon: Icon.Document },
+                { title: "Selected Content", content: content, icon: Icon.Text },
+              ]}
+            />
           </ActionPanel.Section>
         </ActionPanel>
       }
@@ -218,7 +208,7 @@ function ConflictSegmentOptionItem({
 function SelectSegmentAction({
   segment,
   type,
-  onSetResolution
+  onSetResolution,
 }: {
   segment: ConflictSegment;
   type: "current" | "incoming";

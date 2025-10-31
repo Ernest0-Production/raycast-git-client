@@ -9,7 +9,7 @@ import { BranchesState } from "../types";
  */
 export function useGitBranches(gitManager: GitManager): RepositoryContext["branches"] {
   return useCachedPromise(
-    async (repoPath: string) => {
+    async (_repoPath: string) => {
       return await gitManager.getBranches();
     },
     [gitManager.repoPath], // Include repository path for separate cache per repository
@@ -19,7 +19,7 @@ export function useGitBranches(gitManager: GitManager): RepositoryContext["branc
         detachedHead: undefined,
         localBranches: [],
         remoteBranches: {},
-      } as BranchesState
-    }
+      } as BranchesState,
+    },
   ) as RepositoryContext["branches"];
 }

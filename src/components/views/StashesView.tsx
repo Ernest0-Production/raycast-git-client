@@ -20,37 +20,33 @@ export function StashesView(context: RepositoryContext & NavigationContext) {
       }
     >
       {!context.stashes.isLoading && context.stashes.data.length === 0 ? (
-        <List.EmptyView
-          title="No stashes"
-          description="No saved changes in the stash."
-          icon={Icon.Bookmark}
-        />
+        <List.EmptyView title="No stashes" description="No saved changes in the stash." icon={Icon.Bookmark} />
       ) : (
         context.stashes.data.map((stash, index) => (
-          <StashListItem
-            key={index}
-            stash={stash}
-            index={index}
-            {...context}
-          />
+          <StashListItem key={index} stash={stash} index={index} {...context} />
         ))
       )}
-    </List >
+    </List>
   );
 }
 
-function StashListItem(context: RepositoryContext & NavigationContext & {
-  stash: Stash;
-  index: number;
-}) {
+function StashListItem(
+  context: RepositoryContext &
+    NavigationContext & {
+      stash: Stash;
+      index: number;
+    },
+) {
   return (
     <List.Item
       title={context.stash.message}
       accessories={[
         {
           text: context.stash.date.toRelativeDateString(),
-          tooltip: Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(context.stash.date)
-        }
+          tooltip: Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(
+            context.stash.date,
+          ),
+        },
       ]}
       keywords={[context.stash.hash, context.stash.author, context.stash.authorEmail].filter(Boolean)}
       actions={
@@ -62,7 +58,7 @@ function StashListItem(context: RepositoryContext & NavigationContext & {
           </ActionPanel.Section>
           <RefreshStashesAction {...context} />
           <WorkspaceNavigationActions {...context} />
-        </ActionPanel >
+        </ActionPanel>
       }
     />
   );
