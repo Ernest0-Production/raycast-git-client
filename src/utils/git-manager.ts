@@ -773,7 +773,7 @@ export class GitManager {
     // Create temporary sequence editor script that writes our todo
     const tempDirectory = mkdtempSync(join(tmpdir(), "raycast-git-"));
     const editorPath = join(tempDirectory, "sequence-editor.sh");
-    // Используем многострочный шаблонный литерал для генерации shell-скрипта sequence editor
+    // Use template literal to generate shell script for sequence editor
     const script = `#!/bin/sh
 TODO_FILE="$1"
 /bin/cat > "$TODO_FILE" <<'__REBASE_TODO__'
@@ -1222,7 +1222,7 @@ __REBASE_TODO__
    * Creates a tag.
    */
   async createTag(tagName: string, commitHash: string, message?: string): Promise<void> {
-    this.git.raw(["tag", "-a", tagName, "-m", message || "", commitHash]);
+    await this.git.raw(["tag", "-a", tagName, "-m", message || "", commitHash]);
   }
 
   /**
