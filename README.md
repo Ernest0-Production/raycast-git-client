@@ -1,9 +1,37 @@
-# Git Client
 
-**Manage your Git repositories from anywhere on your Mac.**
+<p align="center">
+<img width=180 src="./assets/extension-icon.png">
+</p>
+
+# Git Client for Raycast <!-- omit from toc -->
+
+Manage your Git repositories from anywhere on your Mac.
+
+## Overview <!-- omit from toc -->
+
+- [Core Features](#core-features)
+  - [🚦 Control **working tree** status](#-control-working-tree-status)
+  - [🧰 Resolve merge/rebase **conflicts**](#-resolve-mergerebase-conflicts)
+  - [🔎 Search in **commits** and **files history**](#-search-in-commits-and-files-history)
+  - [↪️ Checkout, cherry-pick, rebase, reset, revert, merge on commit, branch, tag](#️-checkout-cherry-pick-rebase-reset-revert-merge-on-commit-branch-tag)
+  - [🌳 Manage **branches**, **tags** and multiple **remotes**](#-manage-branches-tags-and-multiple-remotes)
+  - [📦 Save and apply **stashes** and **patches**](#-save-and-apply-stashes-and-patches)
+  - [📥 Clone repositories from URL **in background**](#-clone-repositories-from-url-in-background)
+- [Extra Features](#extra-features)
+  - [🔗 Issue Link Detection](#-issue-link-detection)
+  - [✨ Generate **AI commit messages**](#-generate-ai-commit-messages)
+  - [🔄 Interactive rebase editor](#-interactive-rebase-editor)
+- [Tips \& Tricks](#tips--tricks)
+  - [🎛️ Fast Navigation](#️-fast-navigation)
+  - [⚡ QuickLink on specific repository](#-quicklink-on-specific-repository)
+- [⁉️ FAQ](#️-faq)
+- [🧑‍🚀 Future Features](#-future-features)
+- [💸 Support for the development](#-support-for-the-development)
 
 
-### 🚦 Control working tree status
+## Core Features
+
+### 🚦 Control **working tree** status
 
 - List staged and unstaged files with their status (added, modified, deleted, conflicted, etc.)
 - View diff of files
@@ -37,7 +65,8 @@
 
 ### 🌳 Manage **branches**, **tags** and multiple **remotes**
 
-- Create, delete, rename branche/tag/remote/etc.
+- Create, delete, rename branche and tag
+- Setup multiple remotes
 
 ![Branches](./metadata/git-6.png)
 
@@ -47,27 +76,67 @@
 
 ### 📥 Clone repositories from URL **in background**
 
-- Fast clone repositories from URL in background
+- Fast clone multiple repositories from URL via HTTPS or SSH protocol in background
+- Track cloning progress
 
 ![Clone Repository](./media/clone-repository.png)
 
-## 🎁 Extra features:
+## Extra Features
 
-- 🔗 [**Issue Link** detection in commit messages](#-issue-link-detection) and most common **web page shortcuts of remote host** like:
-  - file blame & history
-  - pull requests
-  - commit details and builds
-  - tag release page
-  - linked `#issue`
-  - and more...
+### 🔗 Issue Link Detection
+
+Detect links based on some markers in commit messages and most common web page shortcuts of remote host like:
+- file blame & history
+- pull requests
+- commit details and builds
+- tag release page
+- linked `#issue`
+- and more...
   ![Issue Link](./media/attached-links.png)
 
-- ✨ [Generate **AI commit messages** with multiple presets](#-custom-ai-prompt-presents-for-commit-messages)
+💡 Also you can setup custom rules to parse information from commit messages based on regex patterns and create links to specific issue trackers.
 
-- 🔄 Interactive rebase editor
-  ![Interactive Rebase Editor](./media/interactive-rebase.png)
+1. Run command `Configure URL Trackers` to list all your URL tracker rules.
+  ![Issue Link](./media/issue-trackers-list.png)
 
-## 💡 Tips
+2. Run `Add New Rule` to add a new URL tracker rule and fill fielads.
+  ![Issue Link](./media/issue-tracker-editor.png)
+  - `Regex` should include a capture group for the issue number
+  - `URL Template` should contain `@key` placeholder where the regex match should be inserted\
+
+3. Open `commits` tab and run action `Attached Links` that opens submenu with issue links in commit messages.
+  ![Issue Link](./media/issue-tracker-detection.png){width="50%"}
+
+4. Profit 🎉
+
+---
+
+### ✨ Generate **AI commit messages**
+
+Generate commit messages using AI based on diff content of the staged changes.
+
+![Generate Commit Message](./media/generate-commit-message.png)
+
+💡 Also you can setup custom AI prompts with multiple presets for different styles of commit messages.
+
+1. Run command `Manage AI Message Prompts` to list all existing AI prompt presents.
+  ![AI Commit Message](./media/custom-presets-list.png)
+
+2. Create (`⌘ + N`) or duplicate (`⌘ + D`) from existing preset and edit it for your own needs.
+  ![AI Commit Message](./media/custom-preset-prompt.png)
+
+3. Run `Generate Commit Message` (or `⌘ + shift + G`) and pick your preset from submenu.
+  ![AI Commit Message](./media/custom-preset-action.png)
+
+4. Profit 🎉
+
+---
+
+### 🔄 Interactive rebase editor
+
+![Interactive Rebase Editor](./media/interactive-rebase.png)
+
+## Tips & Tricks
 
 ### 🎛️ Fast Navigation
 
@@ -91,38 +160,6 @@ You can create a QuickLink to open a specific repository without needing to sele
 3. Profit 🎉
 
 ---
-
-### 💬 Custom AI Prompt Presents for commit messages
-
-1. Run command `Manage AI Message Prompts` to add custom AI prompt presents for commit messages.
-  ![AI Commit Message](./media/custom-presets-list.png)
-
-2. Create or Duplicate existing preset and edit it for your own needs.
-  ![AI Commit Message](./media/custom-preset-prompt.png)
-
-3. Run `Generate Commit Message` (or `⌘ + shift + G`) and pick your preset from submenu.
-  ![AI Commit Message](./media/custom-preset-action.png)
-
-4. Profit 🎉
-
----
-
-### 🔗 Issue Link Detection
-
-You can parse information from commit messages to create links to specific issues in issue trackers.
-
-1. Run command `Configure URL Trackers` to list all your URL tracker rules.
-  ![Issue Link](./media/issue-trackers-list.png)
-
-2. Run `Add New Rule` to add a new URL tracker rule and fill fielads.
-  ![Issue Link](./media/issue-tracker-editor.png)
-  - `Regex` should include a capture group for the issue number
-  - `URL Template` should contain `@key` placeholder where the regex match should be inserted\
-
-3. Open `commits` tab and run action `Attached Links` that opens submenu with issue links in commit messages.
-  ![Issue Link](./media/issue-tracker-detection.png)
-
-4. Profit 🎉
 
 ## ⁉️ FAQ
 
