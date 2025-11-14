@@ -182,6 +182,8 @@ function RepositoryListItem({
               icon={Icon.Book}
               onPush={onOpen}
             />
+          </ActionPanel.Section>
+          <ActionPanel.Section>
             <Action.CreateQuicklink
               title="Create Quicklink"
               quicklink={{
