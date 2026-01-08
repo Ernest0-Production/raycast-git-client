@@ -18,7 +18,8 @@
   "icon": "extension-icon.png",
   "author": "ernest0n",
   "platforms": [
-    "macOS"
+    "macOS",
+    "Windows"
   ],
   "categories": [
     "Developer Tools",

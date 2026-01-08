@@ -83,13 +83,13 @@ function githubParser(_url: string, parsed: URLComponents): RemoteHostParserResu
         return [
           ...(issueNumber
             ? ([
-              {
-                title: `${issueNumber}`,
-                url: `${scheme}://${hostname}/${path}/issues/${issueNumber}`,
-                icon: Icon.Hashtag,
-                shortcut: { modifiers: ["cmd"], key: "i" },
-              },
-            ] as RemoteWebPage[])
+                {
+                  title: `${issueNumber}`,
+                  url: `${scheme}://${hostname}/${path}/issues/${issueNumber}`,
+                  icon: Icon.Hashtag,
+                  shortcut: { modifiers: ["cmd"], key: "i" },
+                },
+              ] as RemoteWebPage[])
             : []),
           {
             title: `Commit Page`,
@@ -138,7 +138,7 @@ function githubParser(_url: string, parsed: URLComponents): RemoteHostParserResu
           {
             title: "Issues",
             url: `${scheme}://${hostname}/${path}/issues`,
-            icon: { source: `https://api.iconify.design/ri/issues-line.svg`, fallback: Icon.Bug }
+            icon: { source: `https://api.iconify.design/ri/issues-line.svg`, fallback: Icon.Bug },
           },
           {
             title: "Pull Requests",
@@ -259,7 +259,10 @@ function gitlabParser(_url: string, parsed: URLComponents): RemoteHostParserResu
           {
             title: "Issue Board",
             url: `${scheme}://${hostname}/${path}/-/boards`,
-            icon: { source: `https://api.iconify.design/material-symbols/view-kanban-outline-rounded.svg`, fallback: Icon.List },
+            icon: {
+              source: `https://api.iconify.design/material-symbols/view-kanban-outline-rounded.svg`,
+              fallback: Icon.List,
+            },
           },
           {
             title: "Wiki",
@@ -279,7 +282,7 @@ function gitlabParser(_url: string, parsed: URLComponents): RemoteHostParserResu
           {
             title: "Releases",
             url: `${scheme}://${hostname}/${path}/-/releases`,
-            icon: Icon.Box
+            icon: Icon.Box,
           },
           {
             title: "Settings",
@@ -334,13 +337,13 @@ function giteaParser(_url: string, parsed: URLComponents): RemoteHostParserResul
         return [
           ...(issueNumber
             ? ([
-              {
-                title: `${issueNumber}`,
-                url: `${scheme}://${hostname}/${path}/issues/${issueNumber}`,
-                icon: Icon.Hashtag,
-                shortcut: { modifiers: ["cmd"], key: "i" },
-              },
-            ] as RemoteWebPage[])
+                {
+                  title: `${issueNumber}`,
+                  url: `${scheme}://${hostname}/${path}/issues/${issueNumber}`,
+                  icon: Icon.Hashtag,
+                  shortcut: { modifiers: ["cmd"], key: "i" },
+                },
+              ] as RemoteWebPage[])
             : []),
           {
             title: `Commit Page`,

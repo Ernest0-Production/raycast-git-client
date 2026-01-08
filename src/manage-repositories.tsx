@@ -183,9 +183,9 @@ function RepositoryListItem({
               icon={Icon.Book}
               onPush={onOpen}
             />
-            <RepositoryAttachedLinksAction remotes={remotes} />
           </ActionPanel.Section>
           <ActionPanel.Section>
+            <RepositoryAttachedLinksAction remotes={remotes} />
             <Action.CreateQuicklink
               title="Create Quicklink"
               quicklink={{
@@ -494,7 +494,8 @@ function RepositoryAttachedLinksAction({ remotes }: { remotes: Record<string, Re
         <RemoteWebPageAction.Base
           key={`remote-web-page-other-${remote.name}`}
           remote={remote}
-          showTitle={Object.values(remotes).length > 1} />
+          showTitle={Object.values(remotes).length > 1}
+        />
       ))}
     </ActionPanel.Submenu>
   );

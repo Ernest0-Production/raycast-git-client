@@ -251,7 +251,10 @@ export namespace RemoteWebPageAction {
 
   export function Base({ remote, showTitle = false }: { remote: Remote; showTitle?: boolean }) {
     return (
-      <ActionPanel.Section key={`remote-web-page-other-${remote.name}`} title={showTitle ? remote.displayName : undefined}>
+      <ActionPanel.Section
+        key={`remote-web-page-other-${remote.name}`}
+        title={showTitle ? remote.displayName : undefined}
+      >
         {remote.webPages.other().map((page, index) => (
           <Action.OpenInBrowser key={`remote-web-page-other-${remote.name}-${index}`} {...page} />
         ))}
