@@ -14,6 +14,6 @@
 - **Manage Repositories**: Adjust `RepositoryAttachedLinksAction` placement
 - **Manage Repositories**: Separate quicklink action section
 
-## [Initial Version] - 2025-10-31
+## [Initial Version] - 2025-11-13
 
 - Added Git Client extension
