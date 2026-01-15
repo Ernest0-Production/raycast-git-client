@@ -3,7 +3,6 @@
 ## [Unreleased] - {PR_MERGE_DATE}
 
 ### Added
-- **Core**: Add Windows platform support
 - **Remotes**: Add submenu for remote links and pages
   - Introduce `RepositoryAttachedLinksAction` submenu
   - Enhance `RemoteWebPageAction.Base` to show remote title
