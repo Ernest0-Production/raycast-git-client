@@ -86,13 +86,13 @@ function githubParser(_url: string, parsed: URLComponents): RemoteHostParserResu
         return [
           ...(issueNumber
             ? ([
-              {
-                title: `${issueNumber}`,
-                url: `${scheme}://${hostname}/${path}/issues/${issueNumber}`,
-                icon: Icon.Hashtag,
-                shortcut: { modifiers: ["cmd"], key: "i" },
-              },
-            ] as RemoteWebPage[])
+                {
+                  title: `${issueNumber}`,
+                  url: `${scheme}://${hostname}/${path}/issues/${issueNumber}`,
+                  icon: Icon.Hashtag,
+                  shortcut: { modifiers: ["cmd"], key: "i" },
+                },
+              ] as RemoteWebPage[])
             : []),
           {
             title: `Commit Page`,
@@ -164,7 +164,7 @@ function githubParser(_url: string, parsed: URLComponents): RemoteHostParserResu
           {
             title: "GitHub Page",
             url: `${scheme}://${organizationName}.github.io/${repositoryName}/`,
-            icon: Icon.Globe
+            icon: Icon.Globe,
           },
           {
             title: "Projects",
@@ -355,13 +355,13 @@ function giteaParser(_url: string, parsed: URLComponents): RemoteHostParserResul
         return [
           ...(issueNumber
             ? ([
-              {
-                title: `${issueNumber}`,
-                url: `${scheme}://${hostname}/${path}/issues/${issueNumber}`,
-                icon: Icon.Hashtag,
-                shortcut: { modifiers: ["cmd"], key: "i" },
-              },
-            ] as RemoteWebPage[])
+                {
+                  title: `${issueNumber}`,
+                  url: `${scheme}://${hostname}/${path}/issues/${issueNumber}`,
+                  icon: Icon.Hashtag,
+                  shortcut: { modifiers: ["cmd"], key: "i" },
+                },
+              ] as RemoteWebPage[])
             : []),
           {
             title: `Commit Page`,
