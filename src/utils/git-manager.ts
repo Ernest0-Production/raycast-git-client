@@ -1559,6 +1559,39 @@ __REBASE_TODO__
   }
 
   /**
+   * Checks which files would be ignored by a given pattern.
+   * Temporarily adds the pattern to .gitignore for checking.
+   */
+  async checkIgnorePattern(filePaths: string[]): Promise<string[]> {
+    const ignored = await this.git.raw([
+      "ls-files",
+      "--cached",
+      "--others",
+      "--exclude-standard",
+      ...filePaths.map((pattern) => pattern),
+    ]);
+
+    return ignored.trim().split("\n").filter(Boolean);
+  }
+
+  /**
+   * Adds a pattern to .gitignore.
+   */
+  async addToGitignore(patterns: string[]): Promise<void> {
+    const gitignorePath = join(this.repoPath, ".gitignore");
+    const originalContent = existsSync(gitignorePath) ? readFileSync(gitignorePath, "utf-8") : "";
+    const tempContent =
+      originalContent +
+      (originalContent.endsWith("\n") || originalContent === "" ? "" : "\n") +
+      patterns.join("\n") +
+      "\n";
+    await fs.writeFile(gitignorePath, tempContent, { encoding: "utf-8" });
+
+    // Remove all tracked files that match the patterns
+    await this.git.raw(["rm", "--cached", "--ignore-unmatch", ...patterns]);
+  }
+
+  /**
    * Returns commit history for a specific file (follows renames).
    */
   async getFileHistory(relativePath: string): Promise<Commit[]> {

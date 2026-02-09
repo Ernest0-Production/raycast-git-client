@@ -96,8 +96,17 @@ export default function InteractiveRebaseEditorView(
     }
   };
 
+  // Prevent editing the search text
+  const [, setSearchText] = useState("");
+
   return (
-    <List isLoading={isLoading} navigationTitle="Interactive Rebase" filtering={false}>
+    <List
+      isLoading={isLoading}
+      navigationTitle="Interactive Rebase"
+      searchBarPlaceholder="Pick, reword, edit, drop, squash, fixup"
+      searchText="" // Prevent editing the search text
+      onSearchTextChange={setSearchText}
+    >
       {[...commits].reverse().map((commit) => (
         <List.Item
           key={commit.hash}
@@ -140,12 +149,18 @@ export default function InteractiveRebaseEditorView(
           actions={
             <ActionPanel>
               <Action
-                title="Pick"
-                icon={{ source: Icon.Dot, tintColor: Color.Green }}
-                onAction={() => setAction(commit.hash, "pick")}
+                title="Apply Rebase"
+                icon={{ source: Icon.Checkmark, tintColor: Color.Green }}
+                onAction={performRebase}
               />
               {/* Separate Section for prevent triggering on cmd + enter */}
               <ActionPanel.Section>
+                <Action
+                  title="Pick"
+                  icon={{ source: Icon.Dot, tintColor: Color.Green }}
+                  onAction={() => setAction(commit.hash, "pick")}
+                  shortcut={{ modifiers: [], key: "p" }}
+                />
                 <Action.Push
                   title="Reword"
                   icon={{ source: Icon.Message, tintColor: Color.Yellow }}
@@ -156,32 +171,32 @@ export default function InteractiveRebaseEditorView(
                       onSubmit={(newMessage) => setAction(commit.hash, "reword", newMessage)}
                     />
                   }
-                  shortcut={{ modifiers: ["cmd"], key: "r" }}
+                  shortcut={{ modifiers: [], key: "r" }}
                 />
                 <Action
                   title="Edit"
                   icon={{ source: Icon.Pencil, tintColor: Color.Yellow }}
                   onAction={() => setAction(commit.hash, "edit")}
-                  shortcut={{ modifiers: ["cmd"], key: "e" }}
+                  shortcut={{ modifiers: [], key: "e" }}
                 />
                 <Action
                   title="Drop"
                   icon={{ source: Icon.Trash, tintColor: Color.Red }}
                   style={Action.Style.Destructive}
                   onAction={() => setAction(commit.hash, "drop")}
-                  shortcut={{ modifiers: ["cmd"], key: "d" }}
+                  shortcut={{ modifiers: [], key: "d" }}
                 />
                 <Action
                   title="Squash"
                   icon={{ source: Icon.ArrowDown, tintColor: Color.Blue }}
                   onAction={() => setAction(commit.hash, "squash")}
-                  shortcut={{ modifiers: ["cmd"], key: "s" }}
+                  shortcut={{ modifiers: [], key: "s" }}
                 />
                 <Action
                   title="Fixup"
                   icon={{ source: Icon.Download, tintColor: Color.SecondaryText }}
                   onAction={() => setAction(commit.hash, "fixup")}
-                  shortcut={{ modifiers: ["cmd"], key: "f" }}
+                  shortcut={{ modifiers: [], key: "f" }}
                 />
               </ActionPanel.Section>
 
@@ -199,13 +214,6 @@ export default function InteractiveRebaseEditorView(
                   shortcut={{ modifiers: ["cmd", "opt"], key: "arrowDown" }}
                 />
               </ActionPanel.Section>
-
-              <Action
-                title="Apply Rebase"
-                icon={{ source: Icon.Checkmark, tintColor: Color.Green }}
-                onAction={performRebase}
-                shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
-              />
             </ActionPanel>
           }
         />
