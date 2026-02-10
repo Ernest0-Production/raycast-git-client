@@ -1,4 +1,4 @@
-import { ActionPanel, List, Icon, Action, Color, Image, getPreferenceValues } from "@raycast/api";
+import { ActionPanel, List, Icon, Action, Color, Image } from "@raycast/api";
 import {
   CommitCheckoutAction,
   CommitCherryPickAction,
@@ -15,7 +15,7 @@ import { BranchPushAction, BranchPushForceAction } from "../actions/BranchAction
 import { CommitDetailsView } from "./CommitDetailsView";
 import { useIssueTracker, replaceUrlPatternsWithLinks } from "../../hooks/useIssueTracker";
 import "../../utils/date-utils";
-import { Branch, Commit, IssueTrackerConfig, Preferences } from "../../types";
+import { Branch, Commit, IssueTrackerConfig } from "../../types";
 import { useMemo, useState } from "react";
 import { RemoteHostIcon, RemoteHostProviderIcon } from "../icons/RemoteHostIcons";
 import { RemoteFetchAction, RemotePullAction } from "../actions/RemoteActions";
@@ -107,18 +107,24 @@ function CommitListItem(
       onMoveToCommit: (commitHash: string) => void;
     },
 ) {
-  const icon: Image.ImageLike | undefined = useMemo(() => {
+  const icon: List.Item.Props["icon"] | undefined = useMemo(() => {
     if (
       context.commits.selectedBranch &&
       context.commits.selectedBranch.kind === "branch" &&
       context.commits.selectedBranch.ahead
     ) {
       if (context.commits.selectedBranch.ahead > context.index) {
-        return { source: Icon.Dot, tintColor: Color.Orange, tooltip: "Unpushed" };
+        return {
+          value: { source: Icon.Dot, tintColor: Color.Orange },
+          tooltip: "Unpushed"
+        };
       }
     }
 
-    return GravatarIcon(context.commit.author, context.commit.authorEmail);
+    return {
+      value: GravatarIcon(context.commit),
+      tooltip: context.commit.author
+    };
   }, [context.commits.selectedBranch, context.index, context.commit.authorEmail]);
 
   // Prepare accessories based on filter and detail view state
@@ -236,7 +242,7 @@ function CommitListItem(
                 <List.Item.Detail.Metadata.Label
                   title="Author"
                   text={context.commit.author}
-                  icon={GravatarIcon(context.commit.author, context.commit.authorEmail)}
+                  icon={GravatarIcon(context.commit)}
                 />
                 <List.Item.Detail.Metadata.Link
                   title="Email"
