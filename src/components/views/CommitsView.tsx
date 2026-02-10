@@ -249,8 +249,16 @@ function CommitListItem(
                   text={context.commit.authorEmail}
                   target={`mailto:${context.commit.authorEmail}`}
                 />
-                <List.Item.Detail.Metadata.Label title="Date" text={context.commit.date.toLocaleString()} />
-                <List.Item.Detail.Metadata.Label title="Hash" text={context.commit.hash} />
+                <List.Item.Detail.Metadata.Label
+                  title="Date"
+                  text={context.commit.date.toLocaleString()}
+                  icon={Icon.Calendar}
+                />
+                <List.Item.Detail.Metadata.Label
+                  title="SHA"
+                  text={context.commit.hash}
+                  icon={Icon.Hashtag}
+                />
                 {/* Tags as TagList */}
                 {context.commit.tags.length > 0 && (
                   <List.Item.Detail.Metadata.TagList title="Tags">
