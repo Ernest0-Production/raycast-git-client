@@ -10,7 +10,7 @@ import {
   simpleGit,
   SimpleGit,
 } from "simple-git";
-import { showToast, Toast, getPreferenceValues, Alert, confirmAlert } from "@raycast/api";
+import { showToast, Toast, getPreferenceValues, Alert, confirmAlert, environment } from "@raycast/api";
 import { readFileSync, writeFileSync, mkdtempSync, chmodSync, rmSync, existsSync } from "fs";
 import { tmpdir } from "os";
 import {
@@ -36,7 +36,7 @@ import {
 import { basename, join } from "path";
 import { promises as fs } from "fs";
 import { showFailureToast } from "@raycast/utils";
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import { shellEnvironmentVariables } from "./environment-utils";
 
 /**
@@ -158,10 +158,10 @@ export class GitManager {
         behind: match.groups.behind ? parseInt(match.groups.behind, 10) : 0,
         upstream: match.groups.upstream
           ? {
-              name: match.groups.upstream.split("/").slice(1).join("/"),
-              fullName: match.groups.upstream,
-              remote: match.groups.upstream.split("/")[0],
-            }
+            name: match.groups.upstream.split("/").slice(1).join("/"),
+            fullName: match.groups.upstream,
+            remote: match.groups.upstream.split("/")[0],
+          }
           : undefined,
         isGone: !!match.groups.gone,
       };
@@ -1737,7 +1737,7 @@ __REBASE_TODO__
     await gitManager.initRepository(url);
 
     // Create temp tracking directory and files outside of the repo dir
-    const tempDir = await fs.mkdtemp(join(tmpdir(), "raycast-git-clone-"));
+    const tempDir = environment.isDevelopment ? join(targetPath, "temp") : await fs.mkdtemp(join(tmpdir(), "raycast-git-clone-"));
     await fs.mkdir(tempDir, { recursive: true });
 
     const stderrPath = join(tempDir, ".git-clone-stderr.log");
@@ -1750,7 +1750,6 @@ __REBASE_TODO__
 
     // Detached bash script: fetch with progress, set default branch, checkout
     const bashScript = `#!/bin/zsh
-
 echo $$ > "${pidPath}"
 export PATH="${shellEnvironmentVariables.PATH}"
 cd "${targetPath}"
@@ -1775,9 +1774,17 @@ rm -f "${scriptPath}"
     await fs.writeFile(scriptPath, bashScript, { encoding: "utf-8" });
     // Set executable permissions for the script: 0o755 means rwxr-xr-x (owner can read/write/execute, group and others can read/execute)
     chmodSync(scriptPath, 0o755);
-
-    // Run script detached so it survives the parent process
-    exec(`nohup "${scriptPath}" > /dev/null 2>&1 &`, { shell: "/bin/zsh" });
+    // Run script detached so it survives Raycast extension process termination
+    const child = spawn(scriptPath, [], {
+      detached: true,
+      stdio: "ignore",
+      cwd: targetPath,
+      env: { ...process.env, PATH: shellEnvironmentVariables.PATH },
+    });
+    child.on("error", (err) => {
+      showFailureToast(err instanceof Error ? err.message : "Failed to start clone script");
+    });
+    child.unref();
 
     return { url, stderrPath, pidPath, exitCodePath, scriptPath };
   }

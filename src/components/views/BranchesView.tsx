@@ -160,7 +160,7 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
         tooltip: context.branch.isGone ? "Upstream was removed from remote" : "Tracked upstream",
         icon: context.branch.isGone
           ? Icon.ExclamationMark
-          : RemoteHostIcon(context.remotes.data[context.branch.upstream!.remote]),
+          : RemoteHostIcon(context.remotes.data[context.branch.upstream?.remote]),
       });
     }
 
@@ -172,7 +172,7 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
     if (context.branch.type === "current") {
       return { source: Icon.Dot, tintColor: Color.Green };
     } else if (context.branch.type === "remote") {
-      return RemoteHostProviderIcon(context.remotes.data[context.branch.remote!].provider);
+      return RemoteHostProviderIcon(context.remotes.data[context.branch.remote!]?.provider);
     } else {
       return { source: Icon.Dot, tintColor: Color.SecondaryText };
     }
@@ -209,12 +209,12 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
                     { title: "Branch Name", content: context.branch.displayName, icon: icon },
                     ...(context.branch.upstream
                       ? [
-                          {
-                            title: "Upstream Name",
-                            content: context.branch.upstream.fullName,
-                            icon: RemoteHostIcon(context.remotes.data[context.branch.upstream.remote]),
-                          },
-                        ]
+                        {
+                          title: "Upstream Name",
+                          content: context.branch.upstream.fullName,
+                          icon: RemoteHostIcon(context.remotes.data[context.branch.upstream.remote]),
+                        },
+                      ]
                       : []),
                   ]}
                 />
@@ -249,12 +249,12 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
                     { title: "Branch Name", content: context.branch.displayName, icon: icon },
                     ...(context.branch.upstream
                       ? [
-                          {
-                            title: "Upstream Name",
-                            content: context.branch.upstream.fullName,
-                            icon: RemoteHostIcon(context.remotes.data[context.branch.upstream.remote]),
-                          },
-                        ]
+                        {
+                          title: "Upstream Name",
+                          content: context.branch.upstream.fullName,
+                          icon: RemoteHostIcon(context.remotes.data[context.branch.upstream.remote]),
+                        },
+                      ]
                       : []),
                   ]}
                 />

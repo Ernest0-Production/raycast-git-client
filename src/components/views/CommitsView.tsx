@@ -1,4 +1,4 @@
-import { ActionPanel, List, Icon, Action, Color, Image } from "@raycast/api";
+import { ActionPanel, List, Icon, Action, Color, Image, getPreferenceValues } from "@raycast/api";
 import {
   CommitCheckoutAction,
   CommitCherryPickAction,
@@ -15,7 +15,7 @@ import { BranchPushAction, BranchPushForceAction } from "../actions/BranchAction
 import { CommitDetailsView } from "./CommitDetailsView";
 import { useIssueTracker, replaceUrlPatternsWithLinks } from "../../hooks/useIssueTracker";
 import "../../utils/date-utils";
-import { Branch, Commit, IssueTrackerConfig } from "../../types";
+import { Branch, Commit, IssueTrackerConfig, Preferences } from "../../types";
 import { useMemo, useState } from "react";
 import { RemoteHostIcon, RemoteHostProviderIcon } from "../icons/RemoteHostIcons";
 import { RemoteFetchAction, RemotePullAction } from "../actions/RemoteActions";
@@ -24,6 +24,7 @@ import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../acti
 import { ToggleDetailAction, ToggleDetailController, useToggleDetail } from "../actions/ToggleDetailAction";
 import { basename } from "path";
 import { CopyToClipboardMenuAction } from "../actions/CopyToClipboardMenuAction";
+import { GravatarIcon } from "../icons/GravatarIcon";
 
 export function CommitsView(context: RepositoryContext & NavigationContext) {
   const toggleDetailController = useToggleDetail("Commits-Detail", "Detail", false);
@@ -116,8 +117,9 @@ function CommitListItem(
         return { source: Icon.Dot, tintColor: Color.Orange, tooltip: "Unpushed" };
       }
     }
-    return undefined;
-  }, [context.commits.selectedBranch, context.index]);
+
+    return GravatarIcon(context.commit.author, context.commit.authorEmail);
+  }, [context.commits.selectedBranch, context.index, context.commit.authorEmail]);
 
   // Prepare accessories based on filter and detail view state
   const accessories: List.Item.Accessory[] = useMemo(() => {
@@ -231,8 +233,16 @@ function CommitListItem(
           metadata={
             context.toggleMetadataController.isShowingDetail ? (
               <List.Item.Detail.Metadata>
-                <List.Item.Detail.Metadata.Label title="Author" text={context.commit.author} />
-                <List.Item.Detail.Metadata.Label title="Email" text={context.commit.authorEmail} />
+                <List.Item.Detail.Metadata.Label
+                  title="Author"
+                  text={context.commit.author}
+                  icon={GravatarIcon(context.commit.author, context.commit.authorEmail)}
+                />
+                <List.Item.Detail.Metadata.Link
+                  title="Email"
+                  text={context.commit.authorEmail}
+                  target={`mailto:${context.commit.authorEmail}`}
+                />
                 <List.Item.Detail.Metadata.Label title="Date" text={context.commit.date.toLocaleString()} />
                 <List.Item.Detail.Metadata.Label title="Hash" text={context.commit.hash} />
                 {/* Tags as TagList */}
@@ -299,12 +309,12 @@ function CommitListItem(
                   : []),
                 ...(context.commit.currentBranchName
                   ? [
-                      {
-                        title: `Branch "${context.commit.currentBranchName}"`,
-                        content: context.commit.currentBranchName,
-                        icon: `git-branch.svg`,
-                      },
-                    ]
+                    {
+                      title: `Branch "${context.commit.currentBranchName}"`,
+                      content: context.commit.currentBranchName,
+                      icon: `git-branch.svg`,
+                    },
+                  ]
                   : []),
                 ...context.commit.localBranches.map((branch) => ({
                   title: `Branch "${branch}"`,
@@ -466,8 +476,8 @@ function CommitBranchFilterAction(context: RepositoryContext) {
               context.commits.filter.kind === "current" && context.commits.filter.upstream
                 ? { source: Icon.Checkmark }
                 : RemoteHostProviderIcon(
-                    context.remotes.data[context.branches.data.currentBranch.upstream.remote].provider,
-                  )
+                  context.remotes.data[context.branches.data.currentBranch.upstream.remote].provider,
+                )
             }
             autoFocus={context.commits.filter.kind === "current" && context.commits.filter.upstream}
             onAction={() => context.commits.setFilter({ kind: "current", upstream: true })}
