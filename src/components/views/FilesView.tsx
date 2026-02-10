@@ -60,7 +60,7 @@ export default function FilesView(context: RepositoryContext & NavigationContext
       searchText={searchText}
       actions={
         <ActionPanel>
-          <SharedActionsSection onClearRecent={handleClearRecent} files={recentFiles} {...context} />
+          <SharedActionsSection onClearRecent={handleClearRecent} isSearching={searchText.trim().length > 0} {...context} />
         </ActionPanel>
       }
     >
@@ -156,14 +156,14 @@ function FileListItem(
 function SharedActionsSection(
   context: RepositoryContext &
     NavigationContext & {
-      files?: string[];
+      isSearching?: boolean;
       onClearRecent: () => void;
     },
 ) {
   return (
     <>
       <ActionPanel.Section title="Recent">
-        {context.files && context.files.length > 0 && (
+        {!context.isSearching && (
           <Action
             title="Clear Recent Files"
             icon={Icon.Trash}

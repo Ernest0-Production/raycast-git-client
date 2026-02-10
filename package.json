@@ -140,14 +140,6 @@
       "description": "Automatically generate a commit message using AI when opening the commit message view."
     },
     {
-      "name": "showAuthorGravatar",
-      "required": true,
-      "type": "checkbox",
-      "label": "Show Author Gravatar",
-      "default": false,
-      "description": "Show Gravatar avatar next to commits in the commits list."
-    },
-    {
       "name": "userIconProvider",
       "required": true,
       "type": "dropdown",
