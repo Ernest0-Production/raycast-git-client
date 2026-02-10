@@ -99,6 +99,14 @@ export default function InteractiveRebaseEditorView(
   // Prevent editing the search text
   const [, setSearchText] = useState("");
 
+  const arrowDownIcon = (index: number) => {
+    const previousCommit = commits[commits.length - index];
+    if (!previousCommit) return Icon.ArrowDown;
+
+    const previousAction = plan[previousCommit.hash]?.action;
+    return (["squash", "fixup"].includes(previousAction)) ? Icon.ArrowDown : `arrow-down-left.svg`;
+  };
+
   return (
     <List
       isLoading={isLoading}
@@ -107,7 +115,7 @@ export default function InteractiveRebaseEditorView(
       searchText="" // Prevent editing the search text
       onSearchTextChange={setSearchText}
     >
-      {[...commits].reverse().map((commit) => (
+      {[...commits].reverse().map((commit, index) => (
         <List.Item
           key={commit.hash}
           title={plan[commit.hash]?.newMessage ?? commit.message}
@@ -136,12 +144,12 @@ export default function InteractiveRebaseEditorView(
                 return { value: { source: Icon.Trash, tintColor: Color.Red }, tooltip: "Drop: Remove commit" };
               case "squash":
                 return {
-                  value: { source: Icon.ArrowDown, tintColor: Color.Blue },
+                  value: { source: arrowDownIcon(index), tintColor: Color.Blue },
                   tooltip: "Squash: Meld commit into previous one and keep message",
                 };
               case "fixup":
                 return {
-                  value: { source: Icon.Download, tintColor: Color.SecondaryText },
+                  value: { source: arrowDownIcon(index), tintColor: Color.SecondaryText },
                   tooltip: "Fixup: Meld commit into previous one and discard message",
                 };
             }
@@ -194,7 +202,7 @@ export default function InteractiveRebaseEditorView(
                 />
                 <Action
                   title="Fixup"
-                  icon={{ source: Icon.Download, tintColor: Color.SecondaryText }}
+                  icon={{ source: Icon.ArrowDown, tintColor: Color.SecondaryText }}
                   onAction={() => setAction(commit.hash, "fixup")}
                   shortcut={{ modifiers: [], key: "f" }}
                 />
