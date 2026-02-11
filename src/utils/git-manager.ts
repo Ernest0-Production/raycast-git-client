@@ -158,10 +158,10 @@ export class GitManager {
         behind: match.groups.behind ? parseInt(match.groups.behind, 10) : 0,
         upstream: match.groups.upstream
           ? {
-            name: match.groups.upstream.split("/").slice(1).join("/"),
-            fullName: match.groups.upstream,
-            remote: match.groups.upstream.split("/")[0],
-          }
+              name: match.groups.upstream.split("/").slice(1).join("/"),
+              fullName: match.groups.upstream,
+              remote: match.groups.upstream.split("/")[0],
+            }
           : undefined,
         isGone: !!match.groups.gone,
       };
@@ -1737,7 +1737,9 @@ __REBASE_TODO__
     await gitManager.initRepository(url);
 
     // Create temp tracking directory and files outside of the repo dir
-    const tempDir = environment.isDevelopment ? join(targetPath, "temp") : await fs.mkdtemp(join(tmpdir(), "raycast-git-clone-"));
+    const tempDir = environment.isDevelopment
+      ? join(targetPath, "temp")
+      : await fs.mkdtemp(join(tmpdir(), "raycast-git-clone-"));
     await fs.mkdir(tempDir, { recursive: true });
 
     const stderrPath = join(tempDir, ".git-clone-stderr.log");

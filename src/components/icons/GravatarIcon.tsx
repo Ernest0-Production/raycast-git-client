@@ -27,6 +27,6 @@ export function GravatarIcon(author: Pick<Commit, "author" | "authorEmail">): Im
   return {
     source: url,
     mask: Image.Mask.Circle,
-    fallback: Icon.PersonCircle
+    fallback: Icon.PersonCircle,
   };
 }

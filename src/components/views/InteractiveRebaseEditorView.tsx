@@ -104,7 +104,7 @@ export default function InteractiveRebaseEditorView(
     if (!previousCommit) return Icon.ArrowDown;
 
     const previousAction = plan[previousCommit.hash]?.action;
-    return (["squash", "fixup"].includes(previousAction)) ? Icon.ArrowDown : `arrow-down-left.svg`;
+    return ["squash", "fixup"].includes(previousAction) ? Icon.ArrowDown : `arrow-down-left.svg`;
   };
 
   return (

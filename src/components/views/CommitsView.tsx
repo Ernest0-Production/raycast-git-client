@@ -116,14 +116,14 @@ function CommitListItem(
       if (context.commits.selectedBranch.ahead > context.index) {
         return {
           value: { source: Icon.Dot, tintColor: Color.Orange },
-          tooltip: "Unpushed"
+          tooltip: "Unpushed",
         };
       }
     }
 
     return {
       value: GravatarIcon(context.commit),
-      tooltip: context.commit.author
+      tooltip: context.commit.author,
     };
   }, [context.commits.selectedBranch, context.index, context.commit.authorEmail]);
 
@@ -254,11 +254,7 @@ function CommitListItem(
                   text={context.commit.date.toLocaleString()}
                   icon={Icon.Calendar}
                 />
-                <List.Item.Detail.Metadata.Label
-                  title="SHA"
-                  text={context.commit.hash}
-                  icon={Icon.Hashtag}
-                />
+                <List.Item.Detail.Metadata.Label title="SHA" text={context.commit.hash} icon={Icon.Hashtag} />
                 {/* Tags as TagList */}
                 {context.commit.tags.length > 0 && (
                   <List.Item.Detail.Metadata.TagList title="Tags">
@@ -323,12 +319,12 @@ function CommitListItem(
                   : []),
                 ...(context.commit.currentBranchName
                   ? [
-                    {
-                      title: `Branch "${context.commit.currentBranchName}"`,
-                      content: context.commit.currentBranchName,
-                      icon: `git-branch.svg`,
-                    },
-                  ]
+                      {
+                        title: `Branch "${context.commit.currentBranchName}"`,
+                        content: context.commit.currentBranchName,
+                        icon: `git-branch.svg`,
+                      },
+                    ]
                   : []),
                 ...context.commit.localBranches.map((branch) => ({
                   title: `Branch "${branch}"`,
@@ -459,7 +455,6 @@ function CommitBranchFilterAction(context: RepositoryContext) {
       <ActionPanel.Section title={context.branches.data.detachedHead ? "Detached HEAD" : "Current Branch"}>
         {context.branches.data.detachedHead && (
           <Action
-            // eslint-disable-next-line @raycast/prefer-title-case
             title={`HEAD (${context.branches.data.detachedHead.shortCommitHash})`}
             icon={context.commits.filter.kind === "current" ? Icon.Checkmark : Icon.Anchor}
             autoFocus={context.commits.filter.kind === "current"}
@@ -490,8 +485,8 @@ function CommitBranchFilterAction(context: RepositoryContext) {
               context.commits.filter.kind === "current" && context.commits.filter.upstream
                 ? { source: Icon.Checkmark }
                 : RemoteHostProviderIcon(
-                  context.remotes.data[context.branches.data.currentBranch.upstream.remote].provider,
-                )
+                    context.remotes.data[context.branches.data.currentBranch.upstream.remote].provider,
+                  )
             }
             autoFocus={context.commits.filter.kind === "current" && context.commits.filter.upstream}
             onAction={() => context.commits.setFilter({ kind: "current", upstream: true })}

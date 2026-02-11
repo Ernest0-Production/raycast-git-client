@@ -171,11 +171,7 @@ function CommitListItem(
                   text={context.commit.date.toLocaleString()}
                   icon={Icon.Calendar}
                 />
-                <List.Item.Detail.Metadata.Label
-                  title="SHA"
-                  text={context.commit.hash}
-                  icon={Icon.Hashtag}
-                />
+                <List.Item.Detail.Metadata.Label title="SHA" text={context.commit.hash} icon={Icon.Hashtag} />
               </List.Item.Detail.Metadata>
             ) : undefined
           }

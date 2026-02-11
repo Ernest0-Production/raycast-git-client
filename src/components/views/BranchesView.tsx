@@ -209,12 +209,12 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
                     { title: "Branch Name", content: context.branch.displayName, icon: icon },
                     ...(context.branch.upstream
                       ? [
-                        {
-                          title: "Upstream Name",
-                          content: context.branch.upstream.fullName,
-                          icon: RemoteHostIcon(context.remotes.data[context.branch.upstream.remote]),
-                        },
-                      ]
+                          {
+                            title: "Upstream Name",
+                            content: context.branch.upstream.fullName,
+                            icon: RemoteHostIcon(context.remotes.data[context.branch.upstream.remote]),
+                          },
+                        ]
                       : []),
                   ]}
                 />
@@ -249,12 +249,12 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
                     { title: "Branch Name", content: context.branch.displayName, icon: icon },
                     ...(context.branch.upstream
                       ? [
-                        {
-                          title: "Upstream Name",
-                          content: context.branch.upstream.fullName,
-                          icon: RemoteHostIcon(context.remotes.data[context.branch.upstream.remote]),
-                        },
-                      ]
+                          {
+                            title: "Upstream Name",
+                            content: context.branch.upstream.fullName,
+                            icon: RemoteHostIcon(context.remotes.data[context.branch.upstream.remote]),
+                          },
+                        ]
                       : []),
                   ]}
                 />

@@ -251,8 +251,7 @@ export function CommitInteractiveRebaseAction(context: RepositoryContext & Navig
     if (hasUncommittedChanges) {
       confirmAlert({
         title: "Cannot Start Interactive Rebase",
-        message:
-          "You have uncommitted changes. Please commit or stash them before starting an interactive rebase.",
+        message: "You have uncommitted changes. Please commit or stash them before starting an interactive rebase.",
         primaryAction: { title: "OK", style: Alert.ActionStyle.Default },
       });
       return;

@@ -60,7 +60,11 @@ export default function FilesView(context: RepositoryContext & NavigationContext
       searchText={searchText}
       actions={
         <ActionPanel>
-          <SharedActionsSection onClearRecent={handleClearRecent} isSearching={searchText.trim().length > 0} {...context} />
+          <SharedActionsSection
+            onClearRecent={handleClearRecent}
+            isSearching={searchText.trim().length > 0}
+            {...context}
+          />
         </ActionPanel>
       }
     >
@@ -77,6 +81,7 @@ export default function FilesView(context: RepositoryContext & NavigationContext
                     <FileListItem
                       key={`recent:${filePath}`}
                       filePath={filePath}
+                      isSearching={searchText.trim().length > 0}
                       onOpen={() => handleAddRecent(filePath)}
                       onClearRecent={handleClearRecent}
                       {...context}
@@ -113,6 +118,7 @@ function FileListItem(
   context: RepositoryContext &
     NavigationContext & {
       filePath: string;
+      isSearching?: boolean;
       onOpen?: () => void;
       onClearRecent: () => void;
     },
