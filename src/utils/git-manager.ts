@@ -1094,6 +1094,8 @@ __REBASE_TODO__
     const pullArgs = ["--prune", "--tags"];
     if (rebase) {
       pullArgs.push("--rebase");
+    } else {
+      pullArgs.push("--no-rebase");
     }
     await this.git.pull(undefined, undefined, pullArgs);
   }
