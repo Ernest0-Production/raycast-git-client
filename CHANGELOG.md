@@ -19,6 +19,7 @@
   - Add "Add New Submodule" action for adding new submodules
   - Add "Update All Submodules" action for updating all submodules
 - **Git Config**: Add "Git Config" view for managing local git config
+- **Git LFS**: Add "Git LFS" view for managing Git LFS filters
 - **Preferences**: Add "Initial Tab" preference for opening repositories
 
 ### Changed
