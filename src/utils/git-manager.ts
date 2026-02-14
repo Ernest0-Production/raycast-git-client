@@ -54,6 +54,7 @@ export class GitManager {
   constructor(repoPath: string) {
     this.repoPath = repoPath;
     this.git = simpleGit(repoPath, {
+      binary: getPreferenceValues<Preferences>().binaryPath,
       errors: (error, _result) => {
         if (error) {
           showFailureToast(error, { title: `Error running command` });

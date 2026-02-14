@@ -93,6 +93,14 @@
   ],
   "preferences": [
     {
+    "name": "binaryPath",
+    "required": false,
+    "type": "textfield",
+    "title": "Binary Path",
+    "default": "git",
+    "description": "The path to the git binary to use for git commands"
+    },
+    {
       "name": "defaultTerminal",
       "required": true,
       "type": "appPicker",
@@ -145,7 +153,7 @@
       "required": true,
       "type": "dropdown",
       "title": "User Icon Provider",
-      "default": "none",
+      "default": "retro",
       "description": "The user icon provider to use for displaying user icon in the commits list.",
       "data": [
         {

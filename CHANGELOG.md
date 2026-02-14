@@ -7,7 +7,7 @@
   - Introduce `GitIgnoreAction` with form for adding patterns to `.gitignore`
   - Add `checkIgnorePattern` and `addToGitignore` methods to `GitManager`
   - Preview matched files before adding patterns
-- **Preferences**: Add user icon display options in commits list
+- **Gravatar**: Add user icon display options in commits list
   - Add `userIconProvider` preference (None, Author's initials, Gravatar variants)
   - Implement `GravatarIcon` component for Gravatar and initials-based avatars
   - Support Retro, Identicon, Mystery Person, Monsterid, Robohash, Wavatar styles
@@ -20,7 +20,9 @@
   - Add "Update All Submodules" action for updating all submodules
 - **Git Config**: Add "Git Config" view for managing local git config
 - **Git LFS**: Add "Git LFS" view for managing Git LFS filters
-- **Preferences**: Add "Initial Tab" preference for opening repositories
+- **Preferences**: Add new preferences:
+  - "Initial Tab" preference for opening repositories
+  - "Binary Path" preference for git binary path
 
 ### Changed
 - **Interactive Rebase**: Improve UX and safety
