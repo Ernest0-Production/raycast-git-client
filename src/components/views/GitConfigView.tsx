@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { GitLocalConfig, GitLocalConfigUpdates } from "../../types";
 import React from "react";
 import { showFailureToast } from "@raycast/utils";
-import { prettyPath } from "../../utils/path-utils";
 
 type GitConfigField = {
   /**
@@ -126,7 +125,7 @@ const SUPPORTED_GIT_CONFIG_FIELDS: GitConfigField[] = [
     key: "user.signingkey",
     label: "Signing Key",
     icon: Icon.Key,
-    info: "GPG key to use for signing commits. Should be used with \"Sign commits with GPG\".",
+    info: 'GPG key to use for signing commits. Should be used with "Sign commits with GPG".',
     placeholder: "GPG key ID",
     type: "text",
   },
