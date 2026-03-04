@@ -5,7 +5,7 @@ import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 import { usePromise } from "@raycast/utils";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { WorkspaceNavigationActions, WorkspaceNavigationDropdown } from "../actions/WorkspaceNavigationActions";
-import { RemoteAddAction, RemoteDeleteAction, RemoteEditAction } from "../actions/RemoteActions";
+import { RemoteAddAction, RemoteDeleteAction, RemoteEditAction, RemoteOpenInDevAction } from "../actions/RemoteActions";
 import { CreateGitHubRepositoryAction } from "../actions/CreateGitHubRepositoryAction";
 import { CopyToClipboardMenuAction } from "../actions/CopyToClipboardMenuAction";
 
@@ -118,6 +118,7 @@ function RemoteListItem(
         <ActionPanel>
           <ActionPanel.Section title={context.remote.name}>
             <Action.OpenInBrowser title="Open in Browser" url={context.remote.fetchUrl} icon={Icon.Link} />
+            <RemoteOpenInDevAction remote={context.remote} />
             <RemoteEditAction initialRemote={context.remote} {...context} />
 
             <CopyToClipboardMenuAction

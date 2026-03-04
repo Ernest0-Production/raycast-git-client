@@ -1,4 +1,15 @@
-import { Action, ActionPanel, Alert, confirmAlert, Form, Icon, showToast, Toast, useNavigation } from "@raycast/api";
+import {
+  Action,
+  ActionPanel,
+  Alert,
+  Color,
+  confirmAlert,
+  Form,
+  Icon,
+  showToast,
+  Toast,
+  useNavigation,
+} from "@raycast/api";
 import { RemotesHosts } from "../../hooks/useGitRemotes";
 import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
@@ -167,6 +178,30 @@ function RemoteEditorForm(context: RepositoryContext & { initialRemote?: Remote 
         onChange={setPushUrl}
       />
     </Form>
+  );
+}
+
+/**
+ * Action submenu for opening the remote repository in github.dev or vscode.dev.
+ * Only rendered when remote.provider is "GitHub".
+ */
+export function RemoteOpenInDevAction(context: { remote: Remote }) {
+  const { remote } = context;
+
+  if (remote.provider !== "GitHub" || !remote.organizationName || !remote.repositoryName) {
+    return null;
+  }
+
+  const repoPath = `${remote.organizationName}/${remote.repositoryName.replace(/\.git$/, "")}`;
+  return (
+    <ActionPanel.Submenu title="Open in Web IDE" icon={Icon.CodeBlock} shortcut={{ modifiers: ["cmd"], key: "o" }}>
+      <Action.OpenInBrowser title="GitHub Dev" url={`https://github.dev/${repoPath}`} icon={`github.svg`} />
+      <Action.OpenInBrowser
+        title="VS Code Dev"
+        url={`https://vscode.dev/github/${repoPath}`}
+        icon={{ source: "vscode.svg", tintColor: Color.Blue }}
+      />
+    </ActionPanel.Submenu>
   );
 }
 
