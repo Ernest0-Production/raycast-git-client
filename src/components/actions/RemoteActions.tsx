@@ -122,11 +122,20 @@ export function RemoteEditAction(context: RepositoryContext & { initialRemote: R
   );
 }
 
-function RemoteEditorForm(context: RepositoryContext & { initialRemote?: Remote }) {
+/** Props for adding or editing a remote; use `default*` fields when creating with prefilled values (no `initialRemote`). */
+export type RemoteEditorFormProps = RepositoryContext & {
+  initialRemote?: Remote;
+  /** When adding a remote, prefills the name field (ignored if `initialRemote` is set). */
+  defaultRemoteName?: string;
+  defaultFetchUrl?: string;
+  defaultPushUrl?: string;
+};
+
+export function RemoteEditorForm(context: RemoteEditorFormProps) {
   const { pop } = useNavigation();
-  const [name, setName] = useState(context.initialRemote?.name ?? "");
-  const [fetchUrl, setFetchUrl] = useState(context.initialRemote?.fetchUrl ?? "");
-  const [pushUrl, setPushUrl] = useState(context.initialRemote?.pushUrl ?? "");
+  const [name, setName] = useState(context.initialRemote?.name ?? context.defaultRemoteName ?? "");
+  const [fetchUrl, setFetchUrl] = useState(context.initialRemote?.fetchUrl ?? context.defaultFetchUrl ?? "");
+  const [pushUrl, setPushUrl] = useState(context.initialRemote?.pushUrl ?? context.defaultPushUrl ?? "");
 
   const handleSubmit = async (_values: { name: string; fetchUrl: string; pushUrl: string }) => {
     try {

@@ -1,18 +1,33 @@
-import { Action } from "@raycast/api";
+import { Action, open, useNavigation } from "@raycast/api";
 import { RepositoryContext } from "../../open-repository";
+import { RemoteEditorForm } from "./RemoteActions";
 
 /**
- * Action that opens GitHub's "Create new repository" page with the repository name
- * pre-filled from the current repository's folder name.
+ * Opens GitHub's "Create new repository" page with the repository name pre-filled,
+ * then pushes the Add Remote form with typical origin + HTTPS URL placeholders.
  */
 export function CreateGitHubRepositoryAction(context: RepositoryContext) {
-  const url = `https://github.com/new?name=${encodeURIComponent(context.gitManager.repoName)}`;
+  const { push } = useNavigation();
+  const repoName = context.gitManager.repoName;
+  const createPageUrl = `https://github.com/new?name=${encodeURIComponent(repoName)}`;
+  const prefilledUrl = `https://github.com/YOUR_USERNAME/${repoName}.git`;
+
   return (
-    <Action.OpenInBrowser
+    <Action
       title="Create GitHub Repository"
-      url={url}
       icon={"github.svg"}
       shortcut={{ modifiers: ["shift", "cmd"], key: "n" }}
+      onAction={async () => {
+        await open(createPageUrl);
+        push(
+          <RemoteEditorForm
+            {...context}
+            defaultRemoteName="origin"
+            defaultFetchUrl={prefilledUrl}
+            defaultPushUrl={prefilledUrl}
+          />,
+        );
+      }}
     />
   );
 }
