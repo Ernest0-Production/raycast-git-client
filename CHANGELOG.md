@@ -9,6 +9,10 @@
 - **Remotes**: When adding a remote, use clipboard text as the default fetch/push URL when it looks like a valid Git URL
 - **Manage Repositories / Clone**: When cloning from the clipboard, validate the URL before starting clone
 
+### Changed
+- **Switch Repository**: Exclude the current repository from the list of repositories to switch to
+- **Switch Repository**: Remove grouping by parent directory and sort by visit date instead
+
 ## [Update] - 2026-02-19
 
 ### Added

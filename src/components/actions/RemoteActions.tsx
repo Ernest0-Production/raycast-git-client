@@ -118,11 +118,7 @@ export function RemoteAddAction(context: RepositoryContext & NavigationContext) 
           defaultUrl = trimmed;
         }
 
-        push(<RemoteEditorForm
-          {...context}
-          defaultFetchUrl={defaultUrl}
-          defaultPushUrl={defaultUrl}
-        />);
+        push(<RemoteEditorForm {...context} defaultFetchUrl={defaultUrl} defaultPushUrl={defaultUrl} />);
       }}
     />
   );

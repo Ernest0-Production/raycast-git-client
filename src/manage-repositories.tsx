@@ -230,7 +230,6 @@ function RepositoryListItem({
 }
 
 function AddRepositoryActions({ onAddRepository }: { onAddRepository: (repoPath: string) => void }) {
-
   const copiedUrl = useCallback(async () => {
     const text = await Clipboard.readText();
     const trimmed = text?.trim();
@@ -261,7 +260,7 @@ function AddRepositoryActions({ onAddRepository }: { onAddRepository: (repoPath:
             name: "clone-repository",
             type: LaunchType.UserInitiated,
             arguments: { url: defaultUrl },
-          })
+          });
         }}
         icon={Icon.Download}
       />
