@@ -9,7 +9,7 @@
 - **Remotes**: When adding a remote, use clipboard text as the default fetch/push URL when it looks like a valid Git URL
 - **Manage Repositories / Clone**: When cloning from the clipboard, validate the URL before starting clone
 
-## [Update] - {PR_MERGE_DATE}
+## [Update] - 2026-02-19
 
 ### Added
 - **GitIgnore**: Add "Add to .gitignore" action for files in status view
