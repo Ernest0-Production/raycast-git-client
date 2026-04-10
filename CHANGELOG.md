@@ -1,5 +1,14 @@
 # Changelog
 
+## [Update] - 2026-04-10
+
+### Added
+- **Remotes**: Add action to create a new repository on GitHub (`CreateGitHubRepositoryAction` in `RemotesView`)
+- **Remotes**: Add actions to open the remote repository in web IDEs (`github.dev`, `vscode.dev`) with VS Code Dev icon
+- **GitHub**: After creating a repo via the GitHub new-repository page, automatically navigate to Add Remote with `origin` and HTTPS URL prefilled (`RemoteEditorForm` default props)
+- **Remotes**: When adding a remote, use clipboard text as the default fetch/push URL when it looks like a valid Git URL
+- **Manage Repositories / Clone**: When cloning from the clipboard, validate the URL before starting clone
+
 ## [Update] - {PR_MERGE_DATE}
 
 ### Added
