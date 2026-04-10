@@ -2,6 +2,7 @@ import {
   Action,
   ActionPanel,
   Alert,
+  Clipboard,
   Color,
   confirmAlert,
   Form,
@@ -101,12 +102,28 @@ export function RemotePullAction(context: RepositoryContext & NavigationContext)
 }
 
 export function RemoteAddAction(context: RepositoryContext & NavigationContext) {
+  const { push } = useNavigation();
+
   return (
-    <Action.Push
+    <Action
       title="Add New Remote"
       icon={Icon.Plus}
-      target={<RemoteEditorForm {...context} />}
       shortcut={{ modifiers: ["cmd"], key: "n" }}
+      onAction={async () => {
+        let defaultUrl: string | undefined;
+
+        const text = await Clipboard.readText();
+        const trimmed = text?.trim();
+        if (trimmed && validateGitUrl(trimmed) === undefined) {
+          defaultUrl = trimmed;
+        }
+
+        push(<RemoteEditorForm
+          {...context}
+          defaultFetchUrl={defaultUrl}
+          defaultPushUrl={defaultUrl}
+        />);
+      }}
     />
   );
 }
