@@ -1,5 +1,14 @@
 # Changelog
 
+## [Update] - 2026-05-11
+
+### Added
+- **Remotes**: Add "Host Provider" dropdown to `RemoteEditorForm` for manually selecting the provider for unknown host URLs
+
+### Fixed
+- **Remote Host Parser**: Fix SSH URL parsing with port (e.g. `git@host:2224/org/repo.git`)
+- **Azure DevOps**: Fix logo icon path
+
 ## [Update] - 2026-04-10
 
 ### Added
