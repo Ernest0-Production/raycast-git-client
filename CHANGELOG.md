@@ -15,7 +15,7 @@
 - **Remote Host Parser**: Fix SSH URL parsing with port (e.g. `git@host:2224/org/repo.git`)
 - **Azure DevOps**: Fix logo icon path
 
-## [Update] - 2026-04-10
+## [Update] - 2026-04-13
 
 ### Added
 - **Remotes**: Add action to create a new repository on GitHub (`CreateGitHubRepositoryAction` in `RemotesView`)
