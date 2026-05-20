@@ -1,5 +1,11 @@
 # Changelog
 
+## [Update] - 2026-05-20
+
+### Fixed
+- **Diff**: Show raw Git diff output without stripping leading whitespace from added/removed lines, so indented code changes display correctly
+- **Commit Details**: Load changed files with `--first-parent` when fetching a commit by hash, matching the commits history view for merge commits
+
 ## [Update] - 2026-05-11
 
 ### Added

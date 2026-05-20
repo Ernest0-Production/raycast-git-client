@@ -169,10 +169,20 @@ export function RemoteEditorForm(context: RemoteEditorFormProps) {
     [fetchUrl.trim()],
   );
 
-  const handleSubmit = async (values: { name: string; fetchUrl: string; pushUrl: string, hostProvider: RemoteProvider | undefined }) => {
+  const handleSubmit = async (values: {
+    name: string;
+    fetchUrl: string;
+    pushUrl: string;
+    hostProvider: RemoteProvider | undefined;
+  }) => {
     try {
       if (context.initialRemote) {
-        await context.gitManager.updateRemote(context.initialRemote.name, values.fetchUrl.trim(), values.pushUrl.trim(), values.name.trim());
+        await context.gitManager.updateRemote(
+          context.initialRemote.name,
+          values.fetchUrl.trim(),
+          values.pushUrl.trim(),
+          values.name.trim(),
+        );
       } else {
         await context.gitManager.addRemote(values.name.trim(), values.fetchUrl.trim(), values.pushUrl.trim());
       }
@@ -226,23 +236,24 @@ export function RemoteEditorForm(context: RemoteEditorFormProps) {
 
       {needsManualProvider && (
         <>
-        <Form.Separator />
-        <Form.Dropdown
-          id="hostProvider"
-          title="Host Provider"
-          info="The fetch URL does not match any known host provider; pick the provider manually to provide respective provider integrations."
-          value={manualProvider ?? ""}
-          onChange={(value) => setManualProvider(value ? (value as RemoteProvider) : undefined)}
-        >
-          <Form.Dropdown.Item value="" title="Select provider…" />
-          {Object.values(RemoteProvider).map((provider) => (
-            <Form.Dropdown.Item
-            key={provider}
-            value={provider}
-            title={provider}
-            icon={RemoteHostProviderIcon(provider)} />
-          ))}
-        </Form.Dropdown>
+          <Form.Separator />
+          <Form.Dropdown
+            id="hostProvider"
+            title="Host Provider"
+            info="The fetch URL does not match any known host provider; pick the provider manually to provide respective provider integrations."
+            value={manualProvider ?? ""}
+            onChange={(value) => setManualProvider(value ? (value as RemoteProvider) : undefined)}
+          >
+            <Form.Dropdown.Item value="" title="Select provider…" />
+            {Object.values(RemoteProvider).map((provider) => (
+              <Form.Dropdown.Item
+                key={provider}
+                value={provider}
+                title={provider}
+                icon={RemoteHostProviderIcon(provider)}
+              />
+            ))}
+          </Form.Dropdown>
         </>
       )}
     </Form>
