@@ -2,6 +2,12 @@
 
 ## [Update] - {PR_MERGE_DATE}
 
+### Added
+- **Manage Repositories**: Add "Clear Cache" action for clearing the extension cache
+
+### Changed
+- **Storage**: Move stable data from `Cache` to `LocalStorage`
+
 ### Fixed
 - **Diff**: Show raw Git diff output without stripping leading whitespace from added/removed lines, so indented code changes display correctly
 - **Commit Details**: Load changed files with `--first-parent` when fetching a commit by hash, matching the commits history view for merge commits
