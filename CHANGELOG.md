@@ -1,6 +1,6 @@
 # Changelog
 
-## [Update] - 2026-05-20
+## [Update] - {PR_MERGE_DATE}
 
 ### Fixed
 - **Diff**: Show raw Git diff output without stripping leading whitespace from added/removed lines, so indented code changes display correctly
