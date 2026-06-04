@@ -5,6 +5,11 @@ import { showToast, Toast, getPreferenceValues, confirmAlert, environment, useNa
 import { AI } from "@raycast/api";
 import { Action, ActionPanel, Form, Icon, Alert } from "@raycast/api";
 import { AiPromptPreset, useAiPromptPresets } from "../../hooks/useAiPromptPresets";
+import {
+  AUTOMATIC_PRESET_ID,
+  buildAutomaticSystemPrompt,
+  resolveCommitMessagePattern,
+} from "../../utils/commit-pattern";
 import { AiMessagePresetEditorForm } from "../../manage-ai-message-prompts";
 import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 import { RepositoryContext } from "../../open-repository";
@@ -63,6 +68,21 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
   const generateCommitMessage = async (presetPrompt: AiPromptPreset) => {
     try {
       setIsGenerating(true);
+      await showToast({
+        style: Toast.Style.Animated,
+        title: "Generating commit message...",
+        message: "This may take a few seconds.",
+      });
+
+      const model = presetPrompt.model ? AI.Model[presetPrompt.model as keyof typeof AI.Model] : undefined;
+
+      // The "Automatic" preset derives its system prompt from the repository's
+      // own commit style, inferred from the last non-merge commits.
+      let systemPrompt = presetPrompt.prompt.trim();
+      if (presetPrompt.id === AUTOMATIC_PRESET_ID) {
+        const pattern = await resolveCommitMessagePattern(context.gitManager, model);
+        systemPrompt = buildAutomaticSystemPrompt(pattern);
+      }
 
       // Get staged changes diff
       const diff = await context.gitManager.getDiff();
@@ -72,7 +92,7 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
       }
 
       // Form a more structured and readable prompt for AI generation of commit message using selected preset
-      const promptParts = [presetPrompt.prompt.trim(), ""];
+      const promptParts = [systemPrompt, ""];
 
       if (!context.commit) {
         promptParts.push(
@@ -109,16 +129,9 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
         });
       }
 
-      const model = presetPrompt.model ? AI.Model[presetPrompt.model as keyof typeof AI.Model] : undefined;
-
       const aiResponse = AI.ask(prompt, {
         creativity: "none",
         model: model,
-      });
-      await showToast({
-        style: Toast.Style.Animated,
-        title: "Generating commit message...",
-        message: "This may take a few seconds.",
       });
       setDraftMessage(await aiResponse);
 
