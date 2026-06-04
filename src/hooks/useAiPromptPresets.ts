@@ -1,5 +1,6 @@
 import { nanoid } from "nanoid";
 import { useStorage } from "./useStorage";
+import { AUTOMATIC_PRESET_ID } from "../utils/commit-pattern";
 
 /**
  * Represents an AI commit message prompt preset.
@@ -26,6 +27,23 @@ export interface AiPromptPresetsData {
   /** ID of the default preset */
   defaultPresetId: string;
 }
+
+/**
+ * Adaptive preset that infers the repository's commit message style from recent
+ * history and generates a new message matching it. Generation for this preset is
+ * handled specially in the commit message form (see `AUTOMATIC_PRESET_ID`).
+ */
+const AUTOMATIC_MESSAGE_PROMPT: AiPromptPreset = {
+  id: AUTOMATIC_PRESET_ID,
+  name: "Automatic",
+  icon: "🤖",
+  prompt: `
+Automatically detect the commit message style used in the repository by analyzing the last 10 non-merge commits, then generate a new commit message that matches that style.
+
+This preset adapts to whatever convention the repository already uses (Conventional Commits, gitmoji, plain text, etc.). The detected style is cached for a short time to keep generation fast.
+`.trim(),
+  model: "Google_Gemini_2.5_Flash",
+};
 
 /**
  * Default prompt used when there are no saved presets.
@@ -117,11 +135,11 @@ Output only the commit message, no markdown or extra text.
  */
 export function useAiPromptPresets() {
   const [data, setData] = useStorage<AiPromptPresetsData>("ai-prompt-presets", {
-    presets: [CONVENTIONAL_MESSAGE_PROMPT, GITMOJI_MESSAGE_PROMPT, MINIMALIST_MESSAGE_PROMPT],
-    defaultPresetId: CONVENTIONAL_MESSAGE_PROMPT.id,
+    presets: [AUTOMATIC_MESSAGE_PROMPT, CONVENTIONAL_MESSAGE_PROMPT, GITMOJI_MESSAGE_PROMPT, MINIMALIST_MESSAGE_PROMPT],
+    defaultPresetId: AUTOMATIC_MESSAGE_PROMPT.id,
   });
 
-  const defaultPreset = data.presets.find((p) => p.id === data.defaultPresetId) ?? CONVENTIONAL_MESSAGE_PROMPT;
+  const defaultPreset = data.presets.find((p) => p.id === data.defaultPresetId) ?? AUTOMATIC_MESSAGE_PROMPT;
   const otherPresets = data.presets.filter((p) => p.id !== data.defaultPresetId);
 
   const addPreset = (name: string, prompt: string, model?: string) => {

@@ -639,6 +639,23 @@ export class GitManager {
   }
 
   /**
+   * Gets the full messages (subject and body) of the most recent non-merge commits.
+   * Useful for analyzing the commit message style used in the repository.
+   * @param count Maximum number of commits to read.
+   * @returns List of trimmed commit messages ordered from newest to oldest.
+   */
+  async getRecentCommitMessages(count: number): Promise<string[]> {
+    // Unlikely-to-appear separator used to split individual commit messages.
+    const separator = "òòòòòò";
+    const raw = await this.git.raw(["log", "--no-merges", `--max-count=${count}`, `--pretty=format:%B${separator}`]);
+
+    return raw
+      .split(separator)
+      .map((message) => message.trim())
+      .filter((message) => message.length > 0);
+  }
+
+  /**
    * Gets the commit history with optional offset for pagination.
    * @param branch Branch name to get commits from (optional)
    * @param page Page number for pagination (optional, default 0)
