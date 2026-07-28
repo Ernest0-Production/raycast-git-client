@@ -619,7 +619,7 @@ export class GitManager {
     if (!log.latest) return null;
 
     const commit = log.latest;
-    const changedFiles = this.parseCommitChangedFiles(commit.diff!);
+    const changedFiles = this.parseCommitChangedFiles(commit.diff);
     const parsedRefs = this.parseCommitRefs(commit.refs);
 
     return {
@@ -724,7 +724,7 @@ export class GitManager {
         refs?: string;
         diff?: DiffResult;
       }) => {
-        const changedFiles = this.parseCommitChangedFiles(commit.diff!);
+        const changedFiles = this.parseCommitChangedFiles(commit.diff);
         const parsedRefs = this.parseCommitRefs(commit.refs);
 
         return {
@@ -822,7 +822,7 @@ __REBASE_TODO__
   /**
    * Parses the changed files from git log --name-status diff output.
    */
-  private parseCommitChangedFiles(diff: DiffResult): CommitFileChange[] {
+  private parseCommitChangedFiles(diff: DiffResult | undefined): CommitFileChange[] {
     // Helper function to map DiffNameStatus to typed status names
     function mapDiffNameStatusToTypedStatus(status: DiffNameStatus): CommitFileChange["status"] {
       switch (status) {
@@ -1623,7 +1623,7 @@ __REBASE_TODO__
     if (!log.latest) return null;
 
     const commit = log.latest;
-    const changedFiles = this.parseCommitChangedFiles(commit.diff!);
+    const changedFiles = this.parseCommitChangedFiles(commit.diff);
     const parsedRefs = this.parseCommitRefs(commit.refs);
 
     return {
@@ -1796,7 +1796,7 @@ __REBASE_TODO__
         refs?: string;
         diff?: DiffResult;
       }) => {
-        const changedFiles = this.parseCommitChangedFiles(commit.diff!);
+        const changedFiles = this.parseCommitChangedFiles(commit.diff);
         const parsedRefs = this.parseCommitRefs(commit.refs);
 
         return {

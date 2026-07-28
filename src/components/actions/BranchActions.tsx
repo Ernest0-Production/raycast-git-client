@@ -478,21 +478,27 @@ export function BranchAttachedLinksAction(context: RepositoryContext & { branch:
     if (context.branch.upstream) {
       if (context.branch.isGone) return undefined;
 
+      const remote = context.remotes.data[context.branch.upstream.remote];
+      if (!remote) return undefined;
+
       return {
-        remote: context.remotes.data[context.branch.upstream.remote],
+        remote,
         branch: context.branch.upstream.name,
       };
     }
 
     if (context.branch.remote) {
+      const remote = context.remotes.data[context.branch.remote];
+      if (!remote) return undefined;
+
       return {
-        remote: context.remotes.data[context.branch.remote],
+        remote,
         branch: context.branch.name,
       };
     }
 
     return undefined;
-  }, [context.branch]);
+  }, [context.branch, context.remotes.data]);
 
   if (!branchContext) {
     return undefined;
