@@ -206,7 +206,7 @@ function RepositoryListItem({
               ]}
             />
             <RepositoryAttachedLinksAction remotes={remotes} />
-            <RepositoryQuickLinkAction repositoryPath={repo.path} />
+            <RepositoryQuickLinkAction currentWorktreePath={repo.path} />
           </ActionPanel.Section>
 
           <ActionPanel.Section>
@@ -221,7 +221,11 @@ function RepositoryListItem({
             <Action.Trash paths={[repo.path]} onTrash={onRemove} />
           </ActionPanel.Section>
 
-          <RepositoryDirectoryActions repositoryPath={repo.path} onOpen={onOpen} />
+          <RepositoryDirectoryActions
+            currentWorktreePath={repo.path}
+            repositoryRootPath={repo.worktree?.repositoryRootPath ?? repo.path}
+            onOpen={onOpen}
+          />
 
           <RepositoriesOrderActionsSection />
 
@@ -539,7 +543,11 @@ function CloningRepositoryListItem({
           )}
 
           <Action.CopyToClipboard title="Copy Clone URL" content={repo.cloning!.url} />
-          <RepositoryDirectoryActions repositoryPath={repo.path} onOpen={onOpen} />
+          <RepositoryDirectoryActions
+            currentWorktreePath={repo.path}
+            repositoryRootPath={repo.worktree?.repositoryRootPath ?? repo.path}
+            onOpen={onOpen}
+          />
           <RepositoriesOrderActionsSection />
         </ActionPanel>
       }

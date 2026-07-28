@@ -56,9 +56,13 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
       case "revert":
         return `⚠️ Revert Conflict`;
       case "regular":
-        return context.gitManager.repoName;
+        return context.gitManager.worktreeOrigin?.displayName ?? context.gitManager.repoName;
     }
-  }, [context.status.data.mode.kind]);
+  }, [
+    context.status.data.mode,
+    context.gitManager.repoName,
+    context.gitManager.worktreeOrigin,
+  ]);
 
   return (
     <List

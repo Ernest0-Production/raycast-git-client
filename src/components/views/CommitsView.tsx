@@ -38,7 +38,7 @@ export function CommitsView(context: RepositoryContext & NavigationContext) {
     <List
       isLoading={context.commits.isLoading}
       pagination={context.commits.pagination}
-      navigationTitle={context.gitManager.repoName}
+      navigationTitle={context.gitManager.worktreeOrigin?.displayName ?? context.gitManager.repoName}
       searchBarPlaceholder="Search commits by message, sha, author, tags, files..."
       selectedItemId={selectedCommitId || undefined}
       isShowingDetail={toggleDetailController.isShowingDetail}

@@ -22,7 +22,15 @@ import { RemoteWebPageAction } from "./RemoteActions";
  * Unified action for checking out a branch (local or remote).
  */
 export function BranchCkeckoutAction(context: RepositoryContext & NavigationContext & { branch: Branch }) {
+  const attachedWorktree = context.worktrees.attachedTo(context.branch.name);
+
   const handleCheckout = async () => {
+    // A branch checked out in another worktree cannot be checked out here, so open that worktree instead
+    if (attachedWorktree) {
+      context.switchTo(attachedWorktree.path);
+      return;
+    }
+
     const isRemote = context.branch.type === "remote";
 
     const confirmed = await confirmAlert({
