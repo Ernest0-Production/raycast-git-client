@@ -1,4 +1,4 @@
-import { Action, ActionPanel, useNavigation, Clipboard, Form, Icon, confirmAlert, Alert } from "@raycast/api";
+import { Action, ActionPanel, useNavigation, Clipboard, Form, Icon, confirmAlert, Alert, Keyboard } from "@raycast/api";
 import { FileStatus, PatchScope } from "../../types";
 import { RepositoryContext } from "../../open-repository";
 import { useCachedState } from "@raycast/utils";

@@ -1,4 +1,4 @@
-import { ActionPanel, Action, List, Icon, Color } from "@raycast/api";
+import { ActionPanel, Action, List, Icon, Color, Keyboard } from "@raycast/api";
 import {
   BranchCkeckoutAction,
   BranchDeleteAction,
@@ -175,11 +175,14 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
       return { source: Icon.Dot, tintColor: Color.Green };
     } else if (context.branch.type === "remote") {
       return RemoteHostProviderIcon(context.remotes.data[context.branch.remote!]?.provider);
-    }  else if (attachedWorktree) {
+    } else if (attachedWorktree) {
       // Indicate that the branch is checked out in another worktree
-      return {value : {
-        source: Icon.Layers, tintColor: Color.SecondaryText },
-        tooltip: `Worktree`
+      return {
+        value: {
+          source: Icon.Layers,
+          tintColor: Color.SecondaryText,
+        },
+        tooltip: `Worktree`,
       };
     } else {
       return { source: Icon.Dot, tintColor: Color.SecondaryText };
@@ -296,11 +299,7 @@ function BranchListItem(context: RepositoryContext & NavigationContext & { branc
 
           <ActionPanel.Section>
             <BranchCreateAction {...context} />
-            <TagCreateAction
-              {...context}
-              ref={context.branch.displayName}
-              shortcut={{ modifiers: ["cmd"], key: "n" }}
-            />
+            <TagCreateAction {...context} ref={context.branch.displayName} shortcut={Keyboard.Shortcut.Common.New} />
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Branches">
@@ -368,7 +367,7 @@ function RefreshBranchesAction(context: RepositoryContext & NavigationContext) {
       title="Refresh"
       icon={Icon.ArrowClockwise}
       onAction={context.branches.revalidate}
-      shortcut={{ modifiers: ["cmd"], key: "r" }}
+      shortcut={Keyboard.Shortcut.Common.Refresh}
     />
   );
 }

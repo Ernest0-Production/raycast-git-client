@@ -1,4 +1,13 @@
-import { Action, ActionPanel, Icon, getPreferenceValues, getApplications, open, Application } from "@raycast/api";
+import {
+  Action,
+  ActionPanel,
+  Icon,
+  getPreferenceValues,
+  getApplications,
+  open,
+  Application,
+  Keyboard,
+} from "@raycast/api";
 import { useCachedState, usePromise } from "@raycast/utils";
 import { Preferences } from "../../types";
 import { basename } from "path";
@@ -48,13 +57,13 @@ export function RepositoryDirectoryActions({
           application={defaultApp}
           target={currentWorktreePath}
           onOpen={() => onOpen?.()}
-          shortcut={{ modifiers: ["cmd", "shift"], key: "o" }}
+          shortcut={Keyboard.Shortcut.Common.OpenWith}
         />
       ) : (
         <ActionPanel.Submenu
           title="Open Repository in Default App"
           icon={Icon.AppWindow}
-          shortcut={{ modifiers: ["cmd", "shift"], key: "o" }}
+          shortcut={Keyboard.Shortcut.Common.OpenWith}
         >
           {applications?.map((app: Application) => (
             <Action
@@ -111,7 +120,9 @@ export function RepositoryDirectoryActions({
 /**
  * Action for creating a quicklink for a repository.
  */
-export function RepositoryQuickLinkAction({ currentWorktreePath }: Pick<RepositoryDirectoryActionsProps, "currentWorktreePath">) {
+export function RepositoryQuickLinkAction({
+  currentWorktreePath,
+}: Pick<RepositoryDirectoryActionsProps, "currentWorktreePath">) {
   return (
     <Action.CreateQuicklink
       title="Create Quicklink"

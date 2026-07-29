@@ -15,6 +15,7 @@ import {
   launchCommand,
   Clipboard,
   Cache,
+  Keyboard,
 } from "@raycast/api";
 import { useCallback, useMemo, useState } from "react";
 import { useRepositoriesList } from "./hooks/useRepositoriesList";
@@ -249,7 +250,7 @@ function AddRepositoryActions({ onAddRepository }: { onAddRepository: (repoPath:
   }, []);
 
   return (
-    <ActionPanel.Submenu title="Add Repository" icon={Icon.Plus} shortcut={{ modifiers: ["cmd"], key: "n" }}>
+    <ActionPanel.Submenu title="Add Repository" icon={Icon.Plus} shortcut={Keyboard.Shortcut.Common.New}>
       <Action.Push
         title="Create New Repository"
         target={<CreateRepositoryForm onAddRepository={onAddRepository} />}
@@ -525,7 +526,7 @@ function CloningRepositoryListItem({
                 title="Retry Clone"
                 icon={Icon.Repeat}
                 onAction={handleRetry}
-                shortcut={{ modifiers: ["cmd"], key: "r" }}
+                shortcut={Keyboard.Shortcut.Common.Refresh}
               />
               <Action
                 title="Remove from List"

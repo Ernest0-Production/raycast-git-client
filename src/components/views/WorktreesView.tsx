@@ -1,4 +1,4 @@
-import { Action, ActionPanel, Color, Icon, List } from "@raycast/api";
+import { Action, ActionPanel, Color, Icon, List, Keyboard } from "@raycast/api";
 import { useMemo } from "react";
 import { Worktree } from "../../types";
 import { NavigationContext, RepositoryContext } from "../../open-repository";
@@ -149,9 +149,7 @@ function WorktreeListItem(context: RepositoryContext & NavigationContext & { wor
 
           <ActionPanel.Section>
             <CopyToClipboardMenuAction
-              contents={[
-                { title: "Directory Path", content: context.worktree.path, icon: Icon.Folder },
-              ]}
+              contents={[{ title: "Directory Path", content: context.worktree.path, icon: Icon.Folder }]}
             />
             <WorktreeQuickLinkAction worktree={context.worktree} />
             <WorktreeDeleteAction {...context} />
@@ -180,7 +178,7 @@ function RefreshWorktreesAction(context: RepositoryContext) {
       title="Refresh"
       icon={Icon.ArrowClockwise}
       onAction={context.worktrees.revalidate}
-      shortcut={{ modifiers: ["cmd"], key: "r" }}
+      shortcut={Keyboard.Shortcut.Common.Refresh}
     />
   );
 }

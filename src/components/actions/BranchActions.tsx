@@ -10,6 +10,7 @@ import {
   useNavigation,
   clearSearchBar,
   Color,
+  Keyboard,
 } from "@raycast/api";
 import { useMemo, useState } from "react";
 import { Branch, MergeMode, Remote } from "../../types";
@@ -354,7 +355,7 @@ export function BranchCreateAction(context: RepositoryContext) {
       title="Create New Branch"
       target={<BranchCreateForm {...context} />}
       icon={Icon.Plus}
-      shortcut={{ modifiers: ["cmd"], key: "n" }}
+      shortcut={Keyboard.Shortcut.Common.New}
     />
   );
 }
@@ -368,7 +369,7 @@ export function BranchRenameAction(context: RepositoryContext & NavigationContex
       title="Rename"
       target={<BranchRenameForm {...context} />}
       icon={{ source: Icon.Pencil, tintColor: Color.Yellow }}
-      shortcut={{ modifiers: ["cmd"], key: "e" }}
+      shortcut={Keyboard.Shortcut.Common.Edit}
     />
   );
 }

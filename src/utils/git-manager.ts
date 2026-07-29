@@ -262,13 +262,14 @@ export class GitManager {
       return {
         ahead: match.groups.ahead ? parseInt(match.groups.ahead, 10) : 0,
         behind: match.groups.behind ? parseInt(match.groups.behind, 10) : 0,
-        upstream: upstreamFullName && upstreamRemote && upstreamName
-          ? {
-              name: upstreamName,
-              fullName: upstreamFullName,
-              remote: upstreamRemote,
-            }
-          : undefined,
+        upstream:
+          upstreamFullName && upstreamRemote && upstreamName
+            ? {
+                name: upstreamName,
+                fullName: upstreamFullName,
+                remote: upstreamRemote,
+              }
+            : undefined,
         isGone: !!match.groups.gone,
       };
     };

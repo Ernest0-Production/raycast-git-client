@@ -1,4 +1,4 @@
-import { ActionPanel, Action, List, Icon, Color } from "@raycast/api";
+import { ActionPanel, Action, List, Icon, Color, Keyboard } from "@raycast/api";
 import { useGitDiff } from "../../hooks/useGitDiff";
 import { FileManagerActions } from "../actions/FileActions";
 import { FileStatusIcon } from "../icons/StatusIcons";
@@ -58,11 +58,7 @@ export function StatusView(context: RepositoryContext & NavigationContext) {
       case "regular":
         return context.gitManager.worktreeOrigin?.displayName ?? context.gitManager.repoName;
     }
-  }, [
-    context.status.data.mode,
-    context.gitManager.repoName,
-    context.gitManager.worktreeOrigin,
-  ]);
+  }, [context.status.data.mode, context.gitManager.repoName, context.gitManager.worktreeOrigin]);
 
   return (
     <List
@@ -342,7 +338,7 @@ function RefreshStatusAction(context: RepositoryContext) {
       title="Refresh"
       onAction={context.status.revalidate}
       icon={Icon.ArrowClockwise}
-      shortcut={{ modifiers: ["cmd"], key: "r" }}
+      shortcut={Keyboard.Shortcut.Common.Refresh}
     />
   );
 }

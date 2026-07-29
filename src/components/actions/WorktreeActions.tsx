@@ -8,6 +8,7 @@ import {
   showToast,
   Toast,
   useNavigation,
+  Keyboard,
 } from "@raycast/api";
 import { showFailureToast } from "@raycast/utils";
 import { useEffect, useMemo, useState } from "react";
@@ -45,12 +46,14 @@ export function WorktreeOpenAction({
  * Action for creating a new linked worktree.
  */
 export function WorktreeCreateAction(context: RepositoryContext) {
-  return <Action.Push
-    title="Create New Worktree"
-    icon={Icon.Plus}
-    shortcut={{ modifiers: ["cmd"], key: "n" }}
-    target={<WorktreeCreateForm {...context} />}
-  />;
+  return (
+    <Action.Push
+      title="Create New Worktree"
+      icon={Icon.Plus}
+      shortcut={Keyboard.Shortcut.Common.New}
+      target={<WorktreeCreateForm {...context} />}
+    />
+  );
 }
 
 /**

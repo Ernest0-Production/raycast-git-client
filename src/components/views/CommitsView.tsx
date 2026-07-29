@@ -1,4 +1,4 @@
-import { ActionPanel, List, Icon, Action, Color, Image } from "@raycast/api";
+import { ActionPanel, List, Icon, Action, Color, Image, Keyboard } from "@raycast/api";
 import {
   CommitCheckoutAction,
   CommitCherryPickAction,
@@ -426,7 +426,7 @@ function SharedActionsSection(
             context.commits.revalidate();
           }}
           icon={Icon.ArrowClockwise}
-          shortcut={{ modifiers: ["cmd"], key: "r" }}
+          shortcut={Keyboard.Shortcut.Common.Refresh}
         />
       </ActionPanel.Section>
 

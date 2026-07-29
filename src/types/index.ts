@@ -4,15 +4,7 @@ import { Application } from "@raycast/api";
 export * from "./git-types";
 
 export type GitView =
-  | "branches"
-  | "status"
-  | "commits"
-  | "files"
-  | "stashes"
-  | "remotes"
-  | "submodules"
-  | "tags"
-  | "worktrees";
+  "branches" | "status" | "commits" | "files" | "stashes" | "remotes" | "submodules" | "tags" | "worktrees";
 
 /**
  * User preferences for the Git Client extension.

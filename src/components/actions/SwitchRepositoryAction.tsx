@@ -1,4 +1,4 @@
-import { Action, ActionPanel, Color, Icon, Image } from "@raycast/api";
+import { Action, ActionPanel, Color, Icon, Image, Keyboard } from "@raycast/api";
 import { useMemo } from "react";
 import { useRepositoriesList } from "../../hooks/useRepositoriesList";
 import { useRepositoriesView } from "../../hooks/useRepositoriesView";

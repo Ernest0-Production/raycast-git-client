@@ -1,4 +1,4 @@
-import { ActionPanel, Action, List, Icon } from "@raycast/api";
+import { ActionPanel, Action, List, Icon, Keyboard } from "@raycast/api";
 import { StashApplyAction, StashDropAction, StashRenameAction } from "../actions/StashActions";
 import "../../utils/date-utils";
 import { Stash } from "../../types";
@@ -70,7 +70,7 @@ function RefreshStashesAction(context: RepositoryContext & NavigationContext) {
       title="Refresh"
       icon={Icon.ArrowClockwise}
       onAction={context.stashes.revalidate}
-      shortcut={{ modifiers: ["cmd"], key: "r" }}
+      shortcut={Keyboard.Shortcut.Common.Refresh}
     />
   );
 }
