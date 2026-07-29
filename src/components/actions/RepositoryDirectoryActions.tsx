@@ -127,7 +127,7 @@ export function RepositoryQuickLinkAction({
     <Action.CreateQuicklink
       title="Create Quicklink"
       quicklink={{
-        link: `raycast://extensions/ernest0n/git/open-repository?arguments=${encodeURIComponent(JSON.stringify({ path: currentWorktreePath }))}`,
+        link: `${process.env.RAYCAST_SCHEME ?? "raycast"}://extensions/ernest0n/git/open-repository?arguments=${encodeURIComponent(JSON.stringify({ path: currentWorktreePath }))}`,
         name: `Show ${basename(currentWorktreePath)} in Git`,
       }}
     />
