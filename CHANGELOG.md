@@ -1,6 +1,6 @@
 # Changelog
 
-## [Update] - {PR_MERGE_DATE}
+## [Update] - 2026-07-30
 
 ### Fixed
 - **Diff**: Fix crash when opening the file diff view caused by a missing `strtok3` runtime import from `file-type`
