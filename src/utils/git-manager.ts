@@ -977,28 +977,98 @@ __REBASE_TODO__
   }
 
   /**
+   * Whether a Git error can be resolved by temporarily stashing local changes.
+   */
+  private static isBlockedByLocalChanges(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error);
+
+    return (
+      /would be overwritten by/i.test(message) ||
+      /please commit (your changes or )?stash them/i.test(message) ||
+      /please commit or stash them/i.test(message) ||
+      /please move or remove them before you (switch|merge|rebase)/i.test(message) ||
+      /cannot (rebase|pull with rebase): you have unstaged changes/i.test(message) ||
+      /cannot (rebase|pull with rebase): untracked files/i.test(message)
+    );
+  }
+
+  /**
+   * Stashes tracked and untracked changes so a blocked operation can be retried.
+   */
+  private async stashIncludingUntracked(message: string): Promise<void> {
+    await this.git.stash(["push", "--include-untracked", "--message", message]);
+  }
+
+  /**
+   * Runs a Git operation and, if it fails because of local changes, offers to stash,
+   * retry the operation, then reapply the stash.
+   */
+  private async withStashRetry(operation: () => Promise<unknown>, actionTitle: string): Promise<void> {
+    try {
+      await operation();
+      return;
+    } catch (error) {
+      if (!GitManager.isBlockedByLocalChanges(error)) {
+        throw error;
+      }
+
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const confirmed = await confirmAlert({
+        title: `${actionTitle} Failed`,
+        message: `${errorMessage}\n\nStash local changes, retry, then reapply the stash?`,
+        primaryAction: {
+          title: "Stash and Retry",
+          style: Alert.ActionStyle.Default,
+        },
+      });
+
+      if (!confirmed) {
+        throw error;
+      }
+
+      await this.stashIncludingUntracked(`WIP: auto-stash before ${actionTitle.toLowerCase()}`);
+
+      try {
+        await operation();
+      } catch (retryError) {
+        try {
+          await this.popStash(0);
+        } catch {
+          // Restore failed; the auto-stash remains in the stash list
+        }
+        throw retryError;
+      }
+
+      await this.popStash(0);
+    }
+  }
+
+  /**
    * Checks out the specified branch.
+   * Offers to stash and retry when local changes would be overwritten.
    */
   async checkoutLocalBranch(branchName: string): Promise<void> {
-    await this.git.checkout(branchName);
+    await this.withStashRetry(() => this.git.checkout(branchName), "Checkout");
   }
 
   async checkoutRemoteBranch(branchName: string, upstream: string): Promise<void> {
-    await this.git.checkout(["--track", "-B", branchName, upstream]);
+    await this.withStashRetry(() => this.git.checkout(["--track", "-B", branchName, upstream]), "Checkout");
   }
 
   /**
    * Checks out a specific commit (creates detached HEAD state).
+   * Offers to stash and retry when local changes would be overwritten.
    */
   async checkoutCommit(commitHash: string): Promise<void> {
-    await this.git.checkout(commitHash);
+    await this.withStashRetry(() => this.git.checkout(commitHash), "Checkout");
   }
 
   /**
    * Creates a new branch.
+   * Offers to stash and retry when local changes would be overwritten.
    */
   async createBranch(name: string): Promise<void> {
-    await this.git.checkoutLocalBranch(name);
+    await this.withStashRetry(() => this.git.checkoutLocalBranch(name), "Create Branch");
   }
 
   /**
@@ -1069,16 +1139,18 @@ __REBASE_TODO__
 
   /**
    * Cherry-picks a commit.
+   * Offers to stash and retry when local changes would be overwritten.
    */
   async cherryPick(commitHash: string): Promise<void> {
-    await this.git.raw(["cherry-pick", commitHash]);
+    await this.withStashRetry(() => this.git.raw(["cherry-pick", commitHash]), "Cherry-pick");
   }
 
   /**
    * Reverts a commit.
+   * Offers to stash and retry when local changes would be overwritten.
    */
   async revert(commitHash: string): Promise<void> {
-    await this.git.raw(["revert", "--no-edit", commitHash]);
+    await this.withStashRetry(() => this.git.raw(["revert", "--no-edit", commitHash]), "Revert");
   }
 
   /**
@@ -1195,6 +1267,7 @@ __REBASE_TODO__
 
   /**
    * Pulls changes.
+   * Offers to stash and retry when local changes would be overwritten.
    */
   async pull(rebase = false): Promise<void> {
     const pullArgs = ["--prune", "--tags"];
@@ -1203,7 +1276,7 @@ __REBASE_TODO__
     } else {
       pullArgs.push("--no-rebase");
     }
-    await this.git.pull(undefined, undefined, pullArgs);
+    await this.withStashRetry(() => this.git.pull(undefined, undefined, pullArgs), "Pull");
   }
 
   /**
@@ -1342,9 +1415,10 @@ __REBASE_TODO__
 
   /**
    * Checks out a tag (detached HEAD state).
+   * Offers to stash and retry when local changes would be overwritten.
    */
   async checkoutTag(tagName: string): Promise<void> {
-    await this.git.checkout([`refs/tags/${tagName}`]);
+    await this.withStashRetry(() => this.git.checkout([`refs/tags/${tagName}`]), "Checkout");
   }
 
   /**
@@ -1398,16 +1472,18 @@ __REBASE_TODO__
 
   /**
    * Merges a branch into the current branch.
+   * Offers to stash and retry when local changes would be overwritten.
    */
   async mergeBranch(branchName: string, mode: MergeMode): Promise<void> {
-    await this.git.merge([branchName, `--${mode}`]);
+    await this.withStashRetry(() => this.git.merge([branchName, `--${mode}`]), "Merge");
   }
 
   /**
    * Rebases the current branch onto the specified branch.
+   * Offers to stash and retry when local changes would be overwritten.
    */
   async rebase(targetBranch: string): Promise<void> {
-    await this.git.rebase([targetBranch]);
+    await this.withStashRetry(() => this.git.rebase([targetBranch]), "Rebase");
   }
 
   /**
