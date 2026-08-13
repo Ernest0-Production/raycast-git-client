@@ -10,6 +10,7 @@ import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 import { RepositoryContext } from "../../open-repository";
 
 const MAX_HISTORY_EXAMPLE_LENGTH = 400;
+const HISTORY_STYLE_EXAMPLE_COUNT = 15;
 
 function truncateCommitExample(message: string): string {
   if (message.length <= MAX_HISTORY_EXAMPLE_LENGTH) return message;
@@ -82,7 +83,17 @@ export function CommitMessageForm(context: RepositoryContext & { commit?: Commit
         lastCommit = await context.gitManager.getLastCommit();
       }
 
-      const recentMessages = presetPrompt ? [] : await context.gitManager.getRecentCommitMessages();
+      const recentMessages = presetPrompt
+        ? []
+        : (await context.gitManager.getCommits("HEAD", 0))
+            .slice(0, HISTORY_STYLE_EXAMPLE_COUNT)
+            .map((commit) => {
+              const subject = commit.message.trim();
+              const body = commit.body.trim();
+              if (!subject) return undefined;
+              return body ? `${subject}\n\n${body}` : subject;
+            })
+            .filter((message): message is string => Boolean(message));
       const useHistoryStyle = !presetPrompt && recentMessages.length > 0;
       const resolvedPreset = useHistoryStyle ? undefined : (presetPrompt ?? defaultPreset);
 

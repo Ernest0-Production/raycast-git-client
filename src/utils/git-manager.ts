@@ -727,27 +727,6 @@ export class GitManager {
   }
 
   /**
-   * Recent non-merge commit messages from the current first-parent history.
-   * Used to infer the repository's commit message style for AI generation.
-   */
-  async getRecentCommitMessages(limit = 15): Promise<string[]> {
-    try {
-      const log = await this.git.log([`--max-count=${limit}`, "--first-parent", "--no-merges"]);
-
-      return log.all
-        .map((commit) => {
-          const subject = commit.message?.trim() ?? "";
-          const body = commit.body?.trim() ?? "";
-          if (!subject) return undefined;
-          return body ? `${subject}\n\n${body}` : subject;
-        })
-        .filter((message): message is string => Boolean(message));
-    } catch {
-      return [];
-    }
-  }
-
-  /**
    * Gets the commit history with optional offset for pagination.
    * When `search` is set, Git filters by commit message (`--grep`) so the full
    * history can be searched without loading it into the extension.
