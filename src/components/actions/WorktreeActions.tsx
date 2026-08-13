@@ -45,7 +45,7 @@ export function WorktreeOpenAction({
 /**
  * Action for creating a new linked worktree.
  */
-export function WorktreeCreateAction(context: RepositoryContext) {
+export function WorktreeCreateAction(context: RepositoryContext & NavigationContext) {
   return (
     <Action.Push
       title="Create New Worktree"
@@ -113,7 +113,7 @@ export function WorktreeDeleteAction(context: RepositoryContext & { worktree: Wo
   );
 }
 
-function WorktreeCreateForm(context: RepositoryContext) {
+function WorktreeCreateForm(context: RepositoryContext & NavigationContext) {
   const { pop } = useNavigation();
   const [isLoading, setIsLoading] = useState(false);
   const [worktreeName, setWorktreeName] = useState("");
@@ -162,9 +162,8 @@ function WorktreeCreateForm(context: RepositoryContext) {
         style: Toast.Style.Success,
         title: `Worktree '${name}' created`,
       });
-      context.worktrees.revalidate();
-      context.branches.revalidate();
       pop();
+      await openWorktree(path, context.switchTo);
     } catch {
       // Git error is already shown by GitManager
     } finally {
