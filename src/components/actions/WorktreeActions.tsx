@@ -162,6 +162,8 @@ function WorktreeCreateForm(context: RepositoryContext & NavigationContext) {
         style: Toast.Style.Success,
         title: `Worktree '${name}' created`,
       });
+      context.worktrees.revalidate();
+      context.branches.revalidate();
       pop();
       await openWorktree(path, context.switchTo);
     } catch {

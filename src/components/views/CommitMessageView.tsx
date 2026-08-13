@@ -4,25 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import { showToast, Toast, getPreferenceValues, confirmAlert, environment, useNavigation, Color } from "@raycast/api";
 import { AI } from "@raycast/api";
 import { Action, ActionPanel, Form, Icon, Alert } from "@raycast/api";
-import { AiPromptPreset, useAiPromptPresets } from "../../hooks/useAiPromptPresets";
+import { AiPromptPreset, HISTORY_STYLE_PROMPT, useAiPromptPresets } from "../../hooks/useAiPromptPresets";
 import { AiMessagePresetEditorForm } from "../../manage-ai-message-prompts";
 import { RemoteHostIcon } from "../icons/RemoteHostIcons";
 import { RepositoryContext } from "../../open-repository";
-
-const HISTORY_STYLE_PROMPT = `
-You are a Git commit message generator.
-
-Infer the commit message template from the recent commit history.
-Match the repository's existing style: title format (type, scope, ticket, emoji, prefix), capitalization, and whether a body is used.
-
-Write a commit message for the staged diff that looks like it belongs in this history.
-
-Rules:
-- Output only the commit message, no markdown or extra text
-- Use imperative mood
-- Focus on WHAT changed
-- Omit a body if recent commits usually omit it
-`.trim();
 
 const MAX_HISTORY_EXAMPLE_LENGTH = 400;
 

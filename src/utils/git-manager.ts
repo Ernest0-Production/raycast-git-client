@@ -6,6 +6,7 @@ import {
   DiffResultNameStatusFile,
   DiffResultTextFile,
   FileStatusResult,
+  LogResult,
   ResetMode,
   simpleGit,
   SimpleGit,
@@ -748,47 +749,77 @@ export class GitManager {
 
   /**
    * Gets the commit history with optional offset for pagination.
+   * When `search` is set, Git filters by commit message (`--grep`) so the full
+   * history can be searched without loading it into the extension.
+   * Queries that look like a SHA are resolved as a commit object instead.
    * @param branch Branch name to get commits from (optional)
    * @param page Page number for pagination (optional, default 0)
+   * @param search Optional query to search messages, or a commit SHA
    */
-  async getCommits(branch?: string, page: number = 0): Promise<Commit[]> {
+  async getCommits(branch?: string, page: number = 0, search?: string): Promise<Commit[]> {
     const commitsPerPage = parseInt(getPreferenceValues<Preferences>().commitsPerPage);
+    const trimmedSearch = search?.trim() ?? "";
+    const revisions = branch ? [branch] : ["--all"];
+
+    if (!trimmedSearch) {
+      const log = await this.git.log([
+        `--max-count=${commitsPerPage}`,
+        `--skip=${page * commitsPerPage}`,
+        "--first-parent",
+        ...revisions,
+        "--decorate=full",
+      ]);
+      return this.mapLogToCommits(log);
+    }
+
+    if (GitManager.COMMIT_HASH_QUERY.test(trimmedSearch)) {
+      const byHash = await this.git.log([
+        "--ignore-missing",
+        "-1",
+        "--decorate=full",
+        "--end-of-options",
+        trimmedSearch,
+      ]);
+      if (byHash.all.length > 0) {
+        return this.mapLogToCommits(byHash);
+      }
+    }
+
     const log = await this.git.log([
-      `--max-count=${commitsPerPage}`,
-      `--skip=${page * commitsPerPage}`,
-      "--first-parent",
-      ...(branch ? [branch] : ["--all"]),
+      "--regexp-ignore-case",
+      "--fixed-strings",
+      `--grep=${trimmedSearch}`,
+      `--max-count=${(page + 1) * commitsPerPage}`,
+      ...revisions,
       "--decorate=full",
     ]);
+    return this.mapLogToCommits(log).slice(page * commitsPerPage, (page + 1) * commitsPerPage);
+  }
 
-    return log.all.map(
-      (commit: {
-        hash: string;
-        message: string;
-        body: string;
-        author_name: string;
-        author_email: string;
-        date: string;
-        refs?: string;
-        diff?: DiffResult;
-      }) => {
-        const parsedRefs = this.parseCommitRefs(commit.refs);
+  /** Matches a Git object name that is safe to resolve as a commit SHA. */
+  private static readonly COMMIT_HASH_QUERY = /^[0-9a-f]{7,40}$/i;
 
-        return {
-          hash: commit.hash,
-          shortHash: commit.hash.substring(0, 7),
-          message: commit.message,
-          body: commit.body,
-          author: commit.author_name,
-          authorEmail: commit.author_email,
-          date: new Date(commit.date),
-          localBranches: parsedRefs.localBranches,
-          remoteBranches: parsedRefs.remoteBranches,
-          tags: parsedRefs.tags,
-          currentBranchName: parsedRefs.currentBranchName,
-        } as Commit;
-      },
-    );
+  /**
+   * Maps a simple-git log result to commit models.
+   */
+  private mapLogToCommits(log: LogResult): Commit[] {
+    return log.all.map((commit) => {
+      const parsedRefs = this.parseCommitRefs(commit.refs);
+
+      return {
+        hash: commit.hash,
+        shortHash: commit.hash.substring(0, 7),
+        message: commit.message,
+        body: commit.body,
+        author: commit.author_name,
+        authorEmail: commit.author_email,
+        date: new Date(commit.date),
+        localBranches: parsedRefs.localBranches,
+        remoteBranches: parsedRefs.remoteBranches,
+        tags: parsedRefs.tags,
+        currentBranchName: parsedRefs.currentBranchName,
+      } as Commit;
+    });
   }
 
   /**
