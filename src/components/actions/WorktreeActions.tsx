@@ -10,7 +10,6 @@ import {
   useNavigation,
   Keyboard,
 } from "@raycast/api";
-import { showFailureToast } from "@raycast/utils";
 import { useEffect, useMemo, useState } from "react";
 import { basename, dirname, join } from "path";
 import { Worktree } from "../../types";
@@ -18,28 +17,10 @@ import { NavigationContext, RepositoryContext } from "../../open-repository";
 import { prettyPath } from "../../utils/path-utils";
 
 /**
- * Switches the current command context to a target worktree.
- * A worktree has its own HEAD and index, so it is opened as a separate repository context.
- */
-export async function openWorktree(worktreePath: string, switchTo: (repositoryPath: string) => void): Promise<void> {
-  try {
-    switchTo(worktreePath);
-  } catch (error) {
-    await showFailureToast(error, { title: "Failed to open worktree" });
-  }
-}
-
-/**
  * Action for opening a worktree as a repository.
  */
-export function WorktreeOpenAction({
-  worktree,
-  switchTo,
-}: {
-  worktree: Worktree;
-  switchTo: NavigationContext["switchTo"];
-}) {
-  return <Action title="Open Worktree" icon={Icon.Folder} onAction={() => openWorktree(worktree.path, switchTo)} />;
+export function WorktreeOpenAction(context: NavigationContext & { worktree: Worktree }) {
+  return <Action title="Open Worktree" icon={Icon.Folder} onAction={() => context.switchTo(context.worktree.path)} />;
 }
 
 /**
@@ -165,7 +146,7 @@ function WorktreeCreateForm(context: RepositoryContext & NavigationContext) {
       context.worktrees.revalidate();
       context.branches.revalidate();
       pop();
-      await openWorktree(path, context.switchTo);
+      context.switchTo(path);
     } catch {
       // Git error is already shown by GitManager
     } finally {
